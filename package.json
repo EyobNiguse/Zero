@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "check": "pnpm run check:format && pnpm run lint",
     "check:format": "prettier . --check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint-staged": "prettier --write --ignore-unknown"
   },
   "devDependencies": {
     "@mail0/tsconfig": "workspace:*",
@@ -25,9 +26,6 @@
     "onlyBuiltDependencies": [
       "sharp"
     ]
-  },
-  "lint-staged": {
-    "*": "prettier --write --ignore-unknown"
   },
   "packageManager": "pnpm@10.2.0"
 }
