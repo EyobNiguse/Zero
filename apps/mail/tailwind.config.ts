@@ -1,13 +1,15 @@
-const defaultTheme = require("tailwindcss/defaultTheme");
+import * as defaultTheme from "tailwindcss/defaultTheme";
+import sharedConfig from "@mail0/tailwind-config";
+import * as animate from "tailwindcss-animate";
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  presets: [sharedConfig],
   theme: {
     extend: {
       colors: {
@@ -73,5 +75,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animate],
 } satisfies Config;
