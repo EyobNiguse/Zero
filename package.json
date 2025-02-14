@@ -11,7 +11,10 @@
     "check": "pnpm run check:format && pnpm run lint",
     "check:format": "prettier . --check",
     "prepare": "husky",
-    "lint-staged": "prettier --write --ignore-unknown"
+    "lint-staged": "prettier --write --ignore-unknown",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:clean": "docker-compose down -v"
   },
   "devDependencies": {
     "@mail0/tsconfig": "workspace:*",

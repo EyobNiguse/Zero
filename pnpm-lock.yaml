@@ -38,6 +38,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^4.0.0
         version: 4.0.0(react-hook-form@7.54.2)
+      '@mail0/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@mail0/tailwind-config':
         specifier: workspace:*
         version: link:../../packages/tailwind-config
@@ -152,9 +155,6 @@ importers:
       nuqs:
         specifier: ^2.3.2
         version: 2.3.2(next@15.1.6)(react@19.0.0)
-      postgres:
-        specifier: ^3.4.5
-        version: 3.4.5
       posthog-js:
         specifier: ^1.215.6
         version: 1.217.4
@@ -245,6 +245,13 @@ importers:
         version: 5.7.3
 
   packages/db:
+    dependencies:
+      drizzle-orm:
+        specifier: ^0.39.2
+        version: 0.39.3(postgres@3.4.5)
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.5
     devDependencies:
       '@mail0/tsconfig':
         specifier: workspace:*
@@ -256,7 +263,7 @@ importers:
         specifier: ^16.4.7
         version: 16.4.7
       drizzle-kit:
-        specifier: ^0.30.2
+        specifier: ^0.30.4
         version: 0.30.4
       typescript:
         specifier: ^5.7.3
