@@ -1,11 +1,11 @@
-import { createDriver } from "../../../driver";
-import { connection } from "@mail0/db/schema";
+import { createDriver } from "@/app/api/driver";
 import { NextRequest } from "next/server";
-import { eq, and } from "drizzle-orm";
+import { connection } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 
-export const GET = async (
+export const POST = async (
   { headers }: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
@@ -15,7 +15,6 @@ export const GET = async (
 
   if (!session.connectionId) return new Response("Unauthorized", { status: 401 });
 
-  // Updated to use googleConnection table
   const [_connection] = await db
     .select()
     .from(connection)
@@ -32,6 +31,11 @@ export const GET = async (
     },
   });
 
-  const res = await driver.get(id);
-  return new Response(JSON.stringify(res));
+  try {
+    await driver.markAsRead(id);
+    return new Response("OK", { status: 200 });
+  } catch (error) {
+    console.error("Error marking message as read:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
 };

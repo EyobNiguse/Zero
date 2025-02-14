@@ -2,6 +2,7 @@
 
 import { ParsedMessage } from "@/types";
 import { google } from "googleapis";
+import { env } from "@/lib/env";
 import * as he from "he";
 
 interface MailManager {
@@ -16,6 +17,7 @@ interface MailManager {
   ): Promise<{ tokens: { access_token?: any; refresh_token?: any; expiry_date?: number } }>;
   getUserInfo(tokens: IConfig["auth"]): Promise<any>;
   getScope(): string;
+  markAsRead(id: string): Promise<void>;
 }
 
 interface IConfig {
@@ -53,9 +55,9 @@ const findHtmlBody = (parts: any[]): string => {
 
 const googleDriver = async (config: IConfig): Promise<MailManager> => {
   const auth = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID as string,
-    process.env.GOOGLE_CLIENT_SECRET as string,
-    process.env.GOOGLE_REDIRECT_URI as string,
+    env.GOOGLE_CLIENT_ID as string,
+    env.GOOGLE_CLIENT_SECRET as string,
+    env.GOOGLE_REDIRECT_URI as string,
   );
 
   const getScope = () =>
@@ -110,6 +112,15 @@ const googleDriver = async (config: IConfig): Promise<MailManager> => {
   };
   const gmail = google.gmail({ version: "v1", auth });
   return {
+    markAsRead: async (id: string) => {
+      await gmail.users.messages.modify({
+        userId: "me",
+        id,
+        requestBody: {
+          removeLabelIds: ["UNREAD"],
+        },
+      });
+    },
     getScope,
     getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
       auth.setCredentials({ ...tokens, scope: getScope() });

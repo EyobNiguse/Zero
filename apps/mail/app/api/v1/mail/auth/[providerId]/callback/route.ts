@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDriver } from "@/app/api/driver";
 import { connection } from "@mail0/db/schema";
+import { env } from "@/lib/env";
 import { db } from "@/db";
 
 export async function GET(
@@ -12,9 +13,7 @@ export async function GET(
   const state = searchParams.get("state");
 
   if (!code || !state) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/settings/email?error=missing_params`,
-    );
+    return NextResponse.redirect(`${env.NEXT_PUBLIC_APP_URL}/settings/email?error=missing_params`);
   }
 
   const { providerId } = await params;
@@ -61,7 +60,6 @@ export async function GET(
 
     return NextResponse.redirect(new URL("/connect-emails?success=true", request.url));
   } catch (error) {
-    console.error("Callback error:", error);
-    return new NextResponse(JSON.stringify({ error: true }));
+    return new NextResponse(JSON.stringify({ error }));
   }
 }

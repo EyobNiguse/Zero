@@ -2,6 +2,10 @@ import * as defaultTheme from "tailwindcss/defaultTheme";
 import sharedConfig from "@mail0/tailwind-config";
 import * as animate from "tailwindcss-animate";
 import type { Config } from "tailwindcss";
+import * as colors from "tailwindcss/colors";
+import * as svgToDataUri from "mini-svg-data-uri";
+import { default as flattenColorPalette } from "tailwindcss/lib/util/flattenColorPalette"
+
 
 export default {
   content: [
@@ -73,7 +77,71 @@ export default {
         sans: ["Geist", ...defaultTheme.fontFamily.sans],
         mono: ["Geist_Mono", ...defaultTheme.fontFamily.mono],
       },
+      keyframes: {
+        "fade-up": {
+          "0%": {
+            transform: "translateY(10px)",
+          },
+          "100%": {
+            transform: "translateY(0)",
+          },
+        },
+        moveUp: {
+          "0%": {
+            transform: "translateY(90px)",
+            opacity: "0",
+          },
+          "100%": {
+            transform: "translateY(0)",
+            opacity: "1",
+          },
+        },
+        fadeIn: {
+          "0%": {
+            opacity: "0",
+          },
+          "100%": {
+            opacity: "1",
+          },
+        },
+      },
+      animation: {
+        "fade-up": "fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "move-up": "moveUp 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "fade-in": "fadeIn 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+      },
     },
   },
-  plugins: [animate],
+  plugins: [
+    animate,
+    addVariablesForColors,
+    function ({ matchUtilities, theme }: any) {
+      matchUtilities(
+        {
+          "bg-grid": (value: any) => ({
+            backgroundImage: `url("${svgToDataUri(
+              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="${value}"><path d="M0 .5H31.5V32"/></svg>`,
+            )}")`,
+          }),
+          "bg-grid-small": (value: any) => ({
+            backgroundImage: `url("${svgToDataUri(
+              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="12" height="12" fill="none" stroke="${value}"><path d="M0 .5H31.5V32"/></svg>`,
+            )}")`,
+          }),
+        },
+        { values: flattenColorPalette(theme("backgroundColor")), type: "color" },
+      );
+    },
+  ],
 } satisfies Config;
+
+function addVariablesForColors({ addBase, theme }: any) {
+  const allColors = flattenColorPalette(theme("colors"));
+  const newVars = Object.fromEntries(
+    Object.entries(allColors).map(([key, val]) => [`--${key}`, val]),
+  );
+
+  addBase({
+    ":root": newVars,
+  });
+}
