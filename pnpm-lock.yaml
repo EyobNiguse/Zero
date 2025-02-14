@@ -225,9 +225,6 @@ importers:
       '@types/sanitize-html':
         specifier: ^2.13.0
         version: 2.13.0
-      drizzle-kit:
-        specifier: ^0.30.4
-        version: 0.30.4
       eslint:
         specifier: ^9.20.0
         version: 9.20.1

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { earlyAccess } from "@/db/schema";
+import { earlyAccess } from "@mail0/db/schema";
 import { randomUUID } from "node:crypto";
 import { db } from "@/db";
 

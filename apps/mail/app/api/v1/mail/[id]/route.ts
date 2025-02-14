@@ -1,6 +1,6 @@
 import { createDriver } from "../../../driver";
+import { connection } from "@mail0/db/schema";
 import { NextRequest } from "next/server";
-import { connection } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
