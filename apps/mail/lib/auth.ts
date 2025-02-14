@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { connection, user as _user, account } from "@/db/schema";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { connection, user as _user } from "@mail0/db/schema";
 import { betterAuth, BetterAuthOptions } from "better-auth";
 import { customSession } from "better-auth/plugins";
 import { randomUUID } from "node:crypto";
