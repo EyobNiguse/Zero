@@ -1,6 +1,8 @@
+"use client";
+
+import { preloadThread, useMarkAsRead, useThreads } from "@/hooks/use-threads";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
 import { ComponentProps, useEffect, useRef, useState } from "react";
-import { preloadThread, useMarkAsRead } from "@/hooks/use-threads";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useKeyPressed } from "@/hooks/use-key-pressed";
@@ -176,10 +178,69 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
   );
 };
 
-export function MailList({ items, isCompact, folder }: MailListProps) {
+export function MailList({ items: initialItems, isCompact, folder }: MailListProps) {
   const [mail, setMail] = useMail();
   const { data: session } = useSession();
-  const [searchValue, setSearchValue] = useSearchValue();
+  const [searchValue] = useSearchValue();
+  const [items, setItems] = useState(initialItems);
+  const [pageToken, setPageToken] = useState<string | undefined>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const loaderRef = useRef<HTMLDivElement>(null);
+
+  const { data: nextPage, error } = useThreads(folder, undefined, searchValue.value, 20, pageToken);
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error loading more emails:", error);
+      setIsLoading(false);
+      setHasMore(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    setItems(initialItems);
+    setPageToken(undefined);
+    setHasMore(true);
+  }, [initialItems]);
+
+  useEffect(() => {
+    if (nextPage?.threads) {
+      setItems((prev) => {
+        const existingIds = new Set(prev.map((item) => item.id));
+
+        const uniqueNewItems = nextPage.threads.filter((item) => !existingIds.has(item.id));
+
+        console.log(`Adding ${uniqueNewItems.length} new unique items`);
+        return [...prev, ...uniqueNewItems];
+      });
+
+      setIsLoading(false);
+      if (!nextPage.nextPageToken) {
+        setHasMore(false);
+      }
+    }
+  }, [nextPage]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !isLoading) {
+          console.log("Loading next page, current token:", nextPage?.nextPageToken);
+          setIsLoading(true);
+          setPageToken(nextPage?.nextPageToken);
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, nextPage?.nextPageToken]);
 
   const massSelectMode = useKeyPressed(["Control", "Meta"]);
   const rangeSelectMode = useKeyPressed("Shift");
@@ -200,7 +261,6 @@ export function MailList({ items, isCompact, folder }: MailListProps) {
       const lastSelectedItem =
         mail.bulkSelected[mail.bulkSelected.length - 1] ?? mail.selected ?? message.id;
 
-      // Get the index range between last selected and current
       const mailsIndex = items.map((m) => m.id);
       const startIdx = mailsIndex.indexOf(lastSelectedItem);
       const endIdx = mailsIndex.indexOf(message.id);
@@ -249,15 +309,31 @@ export function MailList({ items, isCompact, folder }: MailListProps) {
           selectMode === "range" && "select-none",
         )}
       >
-        {items.map((item) => (
-          <Thread
-            key={item.id}
-            message={item}
-            selectMode={selectMode}
-            onSelect={handleMailClick}
-            isCompact={isCompact}
-          />
-        ))}
+        <div className="flex flex-col gap-1.5">
+          {items.map((item) => (
+            <Thread
+              key={item.id}
+              message={item}
+              selectMode={selectMode}
+              onSelect={handleMailClick}
+              isCompact={isCompact}
+            />
+          ))}
+        </div>
+        {hasMore && (
+          <div ref={loaderRef} className="py-4 text-center">
+            {isLoading ? (
+              <div className="text-center">
+                <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                {/* <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                  Getting more emails...
+                </p> */}
+              </div>
+            ) : (
+              <div className="h-4" />
+            )}
+          </div>
+        )}
       </div>
     </ScrollArea>
   );

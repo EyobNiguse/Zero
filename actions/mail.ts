@@ -10,13 +10,15 @@ import { db } from "@/db";
 export const getMails = async ({
   folder,
   q,
-  max,
+  max = 20,
   labelIds,
+  pageToken,
 }: {
   folder: string;
   q?: string;
   max?: number;
   labelIds?: string[];
+  pageToken: string | undefined;
 }) => {
   if (!folder) {
     throw new Error("Missing required fields");
@@ -46,7 +48,7 @@ export const getMails = async ({
     },
   });
 
-  return await driver.list(folder, q, max, labelIds);
+  return await driver.list(folder, q, max, labelIds, pageToken);
 };
 
 export const getMail = async ({ id }: { id: string }) => {
