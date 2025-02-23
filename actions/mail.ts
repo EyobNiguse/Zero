@@ -10,7 +10,7 @@ import { db } from "@/db";
 export const getMails = async ({
   folder,
   q,
-  max = 20,
+  max,
   labelIds,
   pageToken,
 }: {

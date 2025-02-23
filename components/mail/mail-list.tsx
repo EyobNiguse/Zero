@@ -1,10 +1,11 @@
 "use client";
 
+import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { preloadThread, useMarkAsRead, useThreads } from "@/hooks/use-threads";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
-import { ComponentProps, useEffect, useRef, useState } from "react";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useKeyPressed } from "@/hooks/use-key-pressed";
 import { useMail } from "@/components/mail/use-mail";
 import { useSession } from "@/lib/auth-client";
@@ -186,7 +187,6 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   const [pageToken, setPageToken] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const loaderRef = useRef<HTMLDivElement>(null);
 
   const { data: nextPage, error } = useThreads(folder, undefined, searchValue.value, 20, pageToken);
 
@@ -208,13 +208,10 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
     if (nextPage?.threads) {
       setItems((prev) => {
         const existingIds = new Set(prev.map((item) => item.id));
-
         const uniqueNewItems = nextPage.threads.filter((item) => !existingIds.has(item.id));
-
         console.log(`Adding ${uniqueNewItems.length} new unique items`);
         return [...prev, ...uniqueNewItems];
       });
-
       setIsLoading(false);
       if (!nextPage.nextPageToken) {
         setHasMore(false);
@@ -222,25 +219,33 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
     }
   }, [nextPage]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0];
-        if (first.isIntersecting && hasMore && !isLoading) {
-          console.log("Loading next page, current token:", nextPage?.nextPageToken);
-          setIsLoading(true);
-          setPageToken(nextPage?.nextPageToken);
-        }
-      },
-      { threshold: 0.1 },
-    );
+  const parentRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const itemHeight = isCompact ? 64 : 96;
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => itemHeight,
+    overscan: 5,
+  });
 
-    return () => observer.disconnect();
-  }, [hasMore, isLoading, nextPage?.nextPageToken]);
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      if (!hasMore || isLoading) return;
+
+      const target = e.target as HTMLDivElement;
+      const { scrollTop, scrollHeight, clientHeight } = target;
+      const scrolledToBottom = scrollHeight - (scrollTop + clientHeight) < itemHeight * 2;
+
+      if (scrolledToBottom) {
+        console.log("Loading more items...");
+        setIsLoading(true);
+        setPageToken(nextPage?.nextPageToken);
+      }
+    },
+    [hasMore, isLoading, nextPage?.nextPageToken, itemHeight],
+  );
 
   const massSelectMode = useKeyPressed(["Control", "Meta"]);
   const rangeSelectMode = useKeyPressed("Shift");
@@ -301,33 +306,43 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   }
 
   return (
-    <ScrollArea className="h-full" type="scroll">
+    <ScrollArea ref={scrollRef} className="h-full" type="scroll" onScrollCapture={handleScroll}>
       <div
+        ref={parentRef}
         className={cn(
-          "flex flex-col gap-1.5 p-2",
-          // Prevents accidental text selection while in range select mode.
+          "relative min-h-[calc(100vh-4rem)] w-full",
           selectMode === "range" && "select-none",
         )}
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+        }}
       >
-        <div className="flex flex-col gap-1.5">
-          {items.map((item) => (
-            <Thread
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const item = items[virtualRow.index];
+          return (
+            <div
               key={item.id}
-              message={item}
-              selectMode={selectMode}
-              onSelect={handleMailClick}
-              isCompact={isCompact}
-            />
-          ))}
-        </div>
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              style={{
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+              className="absolute left-0 top-0 w-full p-[8px]"
+            >
+              <Thread
+                message={item}
+                selectMode={selectMode}
+                onSelect={handleMailClick}
+                isCompact={isCompact}
+              />
+            </div>
+          );
+        })}
         {hasMore && (
-          <div ref={loaderRef} className="py-4 text-center">
+          <div className="absolute bottom-0 left-0 w-full py-4 text-center">
             {isLoading ? (
               <div className="text-center">
                 <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                {/* <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                  Getting more emails...
-                </p> */}
               </div>
             ) : (
               <div className="h-4" />
