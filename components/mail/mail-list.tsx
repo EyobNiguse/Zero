@@ -321,11 +321,12 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
           const item = items[virtualRow.index];
           return (
             <div
-              key={item.id}
+              key={virtualRow.key}
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
                 transform: `translateY(${virtualRow.start}px)`,
+                height: `${virtualRow.size}px`,
               }}
               className="absolute left-0 top-0 w-full p-[8px]"
             >
