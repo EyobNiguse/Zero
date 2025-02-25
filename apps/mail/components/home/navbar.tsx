@@ -82,7 +82,7 @@ export default function Navbar() {
         </Sheet>
       </div>
 
-      {process.env.NODE_ENV !== "development" ? (
+      {process.env.NODE_ENV === "development" ? (
         <>
           <div className="hidden items-center gap-4 lg:flex">
             <Link
