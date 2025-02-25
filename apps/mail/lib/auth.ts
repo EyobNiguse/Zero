@@ -3,7 +3,6 @@ import { connection, user as _user, account } from "@/db/schema";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth, BetterAuthOptions } from "better-auth";
 import { customSession } from "better-auth/plugins";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { env } from "./env";
@@ -33,9 +32,13 @@ const options = {
       // Remove this before going to prod, it's to force to get `refresh_token` from google, some users don't have it yet.
       prompt: "consent",
       accessType: "offline",
-      scope: ["https://mail.google.com/"],
+      scope: ["https://www.googleapis.com/auth/gmail.modify"],
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
+    },
+    github: {
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
     },
   },
   emailAndPassword: {
@@ -98,7 +101,7 @@ const options = {
           if (userAccount) {
             // create a new connection
             const [newConnection] = await db.insert(connection).values({
-              id: randomUUID(),
+              id: crypto.randomUUID(),
               userId: user.id,
               email: user.email,
               name: user.name,
@@ -136,4 +139,5 @@ const options = {
 
 export const auth = betterAuth({
   ...options,
+  trustedOrigins: env.BETTER_AUTH_TRUSTED_ORIGINS ?? [],
 });

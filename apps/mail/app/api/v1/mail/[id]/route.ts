@@ -1,5 +1,5 @@
 import { createDriver } from "../../../driver";
-import { connection } from "@mail0/db/schema";
+import { connection } from "@/db/schema";
 import { NextRequest } from "next/server";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -35,3 +35,4 @@ export const GET = async (
   const res = await driver.get(id);
   return new Response(JSON.stringify(res));
 };
+

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connection } from "@mail0/db/schema";
+import { connection } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -23,8 +23,6 @@ export async function GET(request: NextRequest) {
       })
       .from(connection)
       .where(eq(connection.userId, userId));
-
-    console.log("Found connections:", connections);
 
     return NextResponse.json({ connections });
   } catch (error) {

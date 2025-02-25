@@ -1,106 +1,231 @@
 "use client";
 
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
-} from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useRef, useCallback } from "react";
 import * as React from "react";
 import Link from "next/link";
+
+import {
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarGroupLabel,
+  SidebarMenuButton,
+} from "./sidebar";
+import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { BASE_URL } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+
+interface IconProps extends React.SVGProps<SVGSVGElement> {
+  ref?: React.Ref<SVGSVGElement>;
+  startAnimation?: () => void;
+  stopAnimation?: () => void;
+}
+
+interface NavItemProps {
+  title: string;
+  url: string;
+  icon?: React.ComponentType<IconProps>;
+  badge?: number;
+  isActive?: boolean;
+  isExpanded?: boolean;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  suffix?: React.ComponentType<IconProps>;
+  isBackButton?: boolean;
+  isSettingsButton?: boolean;
+  isSettingsPage?: boolean;
+  disabled?: boolean;
+}
 
 interface NavMainProps {
   items: {
     title: string;
-    items: {
-      title: string;
-      url: string;
-      icon?: React.ComponentType<{ className?: string }>;
-      badge?: number;
-      items?: {
-        title: string;
-        url: string;
-        badge?: number;
-      }[];
-    }[];
+    items: NavItemProps[];
+    isActive?: boolean;
   }[];
 }
 
+type IconRefType = SVGSVGElement & {
+  startAnimation?: () => void;
+  stopAnimation?: () => void;
+};
+
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const isUrlActive = (url: string) => {
-    //remove trailing slashes
-    const cleanPath = pathname?.replace(/\/$/, "") || "";
-    const cleanUrl = url.replace(/\/$/, "");
-    return cleanPath === cleanUrl;
-  };
+  /**
+   * Validates URLs to prevent open redirect vulnerabilities.
+   * Only allows two types of URLs:
+   * 1. Absolute paths that start with '/' (e.g., '/mail', '/settings')
+   * 2. Full URLs that match our application's base URL
+   *
+   * @param url - The URL to validate
+   * @returns boolean - True if the URL is internal and safe to use
+   */
+  const isValidInternalUrl = useCallback((url: string) => {
+    if (!url) return false;
+    // Accept absolute paths as they are always internal
+    if (url.startsWith("/")) return true;
+    try {
+      const urlObj = new URL(url, BASE_URL);
+      // Prevent redirects to external domains by checking against our base URL
+      return urlObj.origin === BASE_URL;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const getHref = useCallback(
+    (item: NavItemProps) => {
+      // Get the current 'from' parameter
+      const currentFrom = searchParams.get("from");
+      const category = searchParams.get("category");
+
+      // Handle settings navigation
+      if (item.isSettingsButton) {
+        // Include current path with category query parameter if present
+        const currentPath = category
+          ? `${pathname}?category=${encodeURIComponent(category)}`
+          : pathname;
+        return `${item.url}?from=${encodeURIComponent(currentPath)}`;
+      }
+
+      // Handle settings pages navigation
+      if (item.isSettingsPage && currentFrom) {
+        // Validate and sanitize the 'from' parameter to prevent open redirects
+        const decodedFrom = decodeURIComponent(currentFrom);
+        if (isValidInternalUrl(decodedFrom)) {
+          return `${item.url}?from=${encodeURIComponent(currentFrom)}`;
+        }
+        // Fall back to safe default if URL validation fails
+        return `${item.url}?from=/mail`;
+      }
+
+      // Handle back button with redirect protection
+      if (item.isBackButton) {
+        if (currentFrom) {
+          const decodedFrom = decodeURIComponent(currentFrom);
+          if (isValidInternalUrl(decodedFrom)) {
+            return decodedFrom;
+          }
+        }
+        // Fall back to safe default if URL is missing or invalid
+        return "/mail";
+      }
+
+      // Handle category links
+      if (category && item.url.includes("category=")) {
+        return item.url;
+      }
+
+      return item.url;
+    },
+    [pathname, searchParams, isValidInternalUrl],
+  );
+
+  const isUrlActive = useCallback(
+    (url: string) => {
+      const urlObj = new URL(
+        url,
+        typeof window === "undefined" ? BASE_URL : window.location.origin,
+      );
+      const cleanPath = pathname.replace(/\/$/, "");
+      const cleanUrl = urlObj.pathname.replace(/\/$/, "");
+
+      if (cleanPath !== cleanUrl) return false;
+
+      const urlParams = new URLSearchParams(urlObj.search);
+      const currentParams = new URLSearchParams(searchParams);
+
+      for (const [key, value] of urlParams) {
+        if (currentParams.get(key) !== value) return false;
+      }
+      return true;
+    },
+    [pathname, searchParams],
+  );
 
   return (
-    <>
-      {items.map((group) => (
-        <SidebarGroup key={group.title}>
-          {group.title && <SidebarGroupLabel>{group.title}</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {group.items.map((item) => (
-                <Collapsible key={item.title}>
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <Link href={item.url}>
-                        <SidebarMenuButton
-                          isActive={isUrlActive(item.url)}
-                          className={isUrlActive(item.url) ? "bg-accent" : ""}
-                        >
-                          {item.icon && <item.icon className="mr-2 size-4" />}
-                          <span className="flex-1">{item.title}</span>
-                          {item.badge !== undefined && (
-                            <span className="ml-auto mr-2 text-muted-foreground">{item.badge}</span>
-                          )}
-                          {item.items && (
-                            <ChevronDown className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                          )}
-                        </SidebarMenuButton>
-                      </Link>
-                    </CollapsibleTrigger>
-                    {item.items && (
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.items.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton asChild>
-                                <Link
-                                  href={subItem.url}
-                                  className={`flex w-full justify-between ${
-                                    isUrlActive(subItem.url) ? "text-primary" : ""
-                                  }`}
-                                >
-                                  <span>{subItem.title}</span>
-                                  {subItem.badge !== undefined && (
-                                    <span className="text-muted-foreground">{subItem.badge}</span>
-                                  )}
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    )}
-                  </SidebarMenuItem>
-                </Collapsible>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      ))}
-    </>
+    <SidebarGroup className="space-y-2.5 py-0">
+      <SidebarMenu className="space-y-">
+        {items.map((section) => (
+          <Collapsible
+            key={section.title}
+            defaultOpen={section.isActive}
+            className="group/collapsible"
+          >
+            <SidebarMenuItem>
+              <div className="space-y-1">
+                {section.items.map((item) => (
+                  <NavItem
+                    key={item.url}
+                    {...item}
+                    isActive={isUrlActive(item.url)}
+                    href={getHref(item)}
+                  />
+                ))}
+              </div>
+            </SidebarMenuItem>
+          </Collapsible>
+        ))}
+      </SidebarMenu>
+    </SidebarGroup>
+  );
+}
+
+function NavItem(item: NavItemProps & { href: string }) {
+  const iconRef = useRef<IconRefType>(null);
+
+  if (item.disabled) {
+    return (
+      <SidebarMenuButton
+        tooltip={item.title}
+        className="flex cursor-not-allowed items-center opacity-50"
+      >
+        {item.icon && <item.icon ref={iconRef} className="relative mr-3 h-3 w-3.5" />}
+        <p className="mt-0.5 text-[13px]">{item.title}</p>
+      </SidebarMenuButton>
+    );
+  }
+
+  // Remove animation handlers for back button since ChevronLeft doesn't have animation
+  const linkProps = item.isBackButton
+    ? { href: item.href, onClick: item.onClick }
+    : {
+        href: item.href,
+        onClick: item.onClick,
+        onMouseEnter: () => iconRef.current?.startAnimation?.(),
+        onMouseLeave: () => iconRef.current?.stopAnimation?.(),
+      };
+
+  const buttonContent = (
+    <SidebarMenuButton
+      tooltip={item.title}
+      className={cn(
+        "flex items-center hover:bg-subtleWhite dark:hover:bg-subtleBlack",
+        item.isActive && "bg-subtleWhite text-accent-foreground dark:bg-subtleBlack",
+      )}
+    >
+      {item.icon && (
+        <item.icon
+          ref={!item.isBackButton ? iconRef : undefined}
+          className="relative mr-3 h-3 w-3.5"
+        />
+      )}
+      <p className="mt-0.5 text-[13px]">{item.title}</p>
+    </SidebarMenuButton>
+  );
+
+  if (item.isBackButton) {
+    return <Link {...linkProps}>{buttonContent}</Link>;
+  }
+
+  return (
+    <Collapsible defaultOpen={item.isActive}>
+      <CollapsibleTrigger asChild>
+        <Link {...linkProps}>{buttonContent}</Link>
+      </CollapsibleTrigger>
+    </Collapsible>
   );
 }
