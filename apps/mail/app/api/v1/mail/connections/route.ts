@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connection } from "@/db/schema";
+import { connection } from "@zero/db/schema";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 export async function GET(request: NextRequest) {
   try {

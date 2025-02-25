@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connection, user } from "@mail0/db/schema";
+import { connection, user } from "@zero/db/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 export async function DELETE(
   request: NextRequest,

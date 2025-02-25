@@ -12,7 +12,7 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(next@15.1.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
     devDependencies:
-      '@mail0/tsconfig':
+      '@zero/tsconfig':
         specifier: workspace:*
         version: link:packages/tsconfig
       '@types/node':
@@ -42,6 +42,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^4.1.0
         version: 4.1.0(react-hook-form@7.54.2(react@19.0.0))
+      '@zero/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@radix-ui/react-avatar':
         specifier: ^1.1.3
         version: 1.1.3(@types/react-dom@19.0.3(@types/react@19.0.8))(@types/react@19.0.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -290,7 +293,7 @@ importers:
         specifier: ^3.4.5
         version: 3.4.5
     devDependencies:
-      '@mail0/tsconfig':
+      '@zero/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/node':
@@ -308,7 +311,7 @@ importers:
 
   packages/tailwind-config:
     devDependencies:
-      '@mail0/tsconfig':
+      '@zero/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       tailwindcss:

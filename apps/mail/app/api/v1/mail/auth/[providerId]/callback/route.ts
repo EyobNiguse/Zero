@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDriver } from "@/app/api/driver";
-import { connection } from "@mail0/db/schema";
+import { connection } from "@zero/db/schema";
 import { env } from "@/lib/env";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 export async function GET(
   request: NextRequest,

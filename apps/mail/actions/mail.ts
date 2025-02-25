@@ -1,11 +1,11 @@
 "use server";
 
-import { account, connection } from "@/db/schema";
+import { account, connection } from "@zero/db/schema";
 import { createDriver } from "@/app/api/driver";
 import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 export const getMails = async ({
   folder,

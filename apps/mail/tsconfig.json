@@ -1,5 +1,5 @@
 {
-  "extends": "@mail0/tsconfig/nextjs.json",
+  "extends": "@zero/tsconfig/nextjs.json",
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],

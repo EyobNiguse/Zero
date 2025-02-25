@@ -74,16 +74,3 @@ export const useThread = (id: string) => {
 
   return { data, isLoading, error };
 };
-
-export const useMarkAsRead = () => {
-  const markAsRead = async (id: string) => {
-    try {
-      await markAsReadAction({ id });
-    } catch (error) {
-      console.error("Error marking email as read:", error);
-      return false;
-    }
-  };
-
-  return { markAsRead };
-};

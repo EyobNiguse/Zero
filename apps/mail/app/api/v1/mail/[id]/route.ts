@@ -1,9 +1,9 @@
 import { createDriver } from "../../../driver";
-import { connection } from "@/db/schema";
+import { connection } from "@zero/db/schema";
 import { NextRequest } from "next/server";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 export const GET = async (
   { headers }: NextRequest,

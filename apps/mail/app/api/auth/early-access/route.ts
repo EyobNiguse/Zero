@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { earlyAccess } from "@/db/schema";
+import { earlyAccess } from "@zero/db/schema";
 import { env } from "@/lib/env";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 type PostgresError = {
   code: string;

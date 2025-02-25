@@ -1,11 +1,11 @@
 "use server";
 
 import { createDriver } from "@/app/api/driver";
-import { connection } from "@/db/schema";
+import { connection } from "@zero/db/schema";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 export async function sendEmail({
   to,

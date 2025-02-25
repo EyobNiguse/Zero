@@ -1,5 +1,5 @@
 {
-  "name": "mail0",
+  "name": "zero",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,7 +17,7 @@
     "docker:clean": "docker-compose down -v"
   },
   "devDependencies": {
-    "@mail0/tsconfig": "workspace:*",
+    "@zero/tsconfig": "workspace:*",
     "@types/node": "^22.13.5",
     "husky": "^9.1.7",
     "prettier": "^3.5.0",

@@ -1,7 +1,7 @@
 "use client";
 
 import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
-import { preloadThread, useMarkAsRead, useThreads } from "@/hooks/use-threads";
+import { preloadThread, useThreads } from "@/hooks/use-threads";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,6 +12,7 @@ import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatDate } from "@/lib/utils";
 import { InitialThread } from "@/types";
+import { markAsRead } from "@/actions/mail";
 
 interface MailListProps {
   items: InitialThread[];
@@ -33,7 +34,6 @@ type ThreadProps = {
 const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: ThreadProps) => {
   const [message, setMessage] = useState(initialMessage);
   const [mail] = useMail();
-  const { markAsRead } = useMarkAsRead();
   const { data: session } = useSession();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isHovering = useRef<boolean>(false);
@@ -65,11 +65,10 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
 
   const handleMailClick = async () => {
     onSelect(message);
-
     if (!isMailSelected && message.unread) {
       try {
-        await markAsRead(message.id);
         setMessage((prev) => ({ ...prev, unread: false }));
+        await markAsRead({ id: message.id });
       } catch (error) {
         console.error("Error marking message as read:", error);
       }
@@ -163,7 +162,7 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
               isMailSelected && "opacity-100",
             )}
           >
-            {formatDate(message.receivedOn.split(".")[0])}
+            {formatDate(message.receivedOn.split(".")[0] ?? '')}
           </p>
         ) : null}
       </div>
@@ -322,7 +321,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const item = items[virtualRow.index];
-          return (
+          return item ? (
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
@@ -340,7 +339,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
                 isCompact={isCompact}
               />
             </div>
-          );
+          ) : null;
         })}
         {hasMore && (
           <div className="absolute bottom-0 left-0 w-full py-4 text-center">

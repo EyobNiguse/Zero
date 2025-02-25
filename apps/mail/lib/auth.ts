@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { connection, user as _user, account } from "@/db/schema";
+import { connection, user as _user, account } from "@zero/db/schema";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth, BetterAuthOptions } from "better-auth";
 import { customSession } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { env } from "./env";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 // If there is no resend key, it might be a local dev environment
 // In that case, we don't want to send emails and just log them
@@ -46,7 +46,7 @@ const options = {
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
-        from: "Mail0 <onboarding@mail0.io>",
+        from: "Mail0 <onboarding@zero.io>",
         to: user.email,
         subject: "Reset your password",
         html: `
@@ -65,7 +65,7 @@ const options = {
       const verificationUrl = `${env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/connect-emails`;
 
       await resend.emails.send({
-        from: "Mail0 <onboarding@mail0.io>",
+        from: "Mail0 <onboarding@zero.io>",
         to: user.email,
         subject: "Verify your Mail0 account",
         html: `

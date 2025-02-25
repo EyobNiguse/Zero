@@ -1,9 +1,9 @@
 import { createDriver } from "../../../driver";
-import { account } from "@mail0/db/schema";
+import { account } from "@zero/db/schema";
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@zero/db";
 
 export const GET = async ({ headers }: NextRequest) => {
   const session = await auth.api.getSession({ headers });

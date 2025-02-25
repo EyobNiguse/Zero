@@ -18,7 +18,7 @@ export function MailIframe({ html }: { html: string }) {
     iframeRef.current.src = url;
     const handler = () => {
       if (iframeRef.current?.contentWindow?.document.body) {
-        const height = iframeRef.current.contentWindow.document.body.getBoundingClientRect().height;
+        const { height } = iframeRef.current.contentWindow.document.body.getBoundingClientRect();
         setHeight(height);
         fixNonReadableColors(iframeRef.current.contentWindow.document.body);
       }
