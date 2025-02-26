@@ -28,8 +28,6 @@ export function dexieStorageProvider(_: Readonly<Cache>): Cache {
     .each((entry) => {
       if (Date.now() - entry.timestamp <= ONE_DAY) {
         memoryCache.set(entry.key, entry.state);
-      } else {
-        db.cache.delete(entry.key).catch(console.error);
       }
     })
     .catch(console.error);

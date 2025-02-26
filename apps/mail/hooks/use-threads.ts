@@ -2,7 +2,7 @@
 
 "use client";
 
-import { getMail, getMails, markAsRead as markAsReadAction } from "@/actions/mail";
+import { getMail, getMails } from "@/actions/mail";
 import { InitialThread, ParsedMessage } from "@/types";
 import { useSession } from "@/lib/auth-client";
 import useSWR, { preload } from "swr";

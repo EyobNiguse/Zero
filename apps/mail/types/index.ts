@@ -31,7 +31,6 @@ export interface SidebarData {
 
 export interface ParsedMessage {
   id: string;
-  threadId?: string;
   connectionId?: string;
   title: string;
   subject: string;
