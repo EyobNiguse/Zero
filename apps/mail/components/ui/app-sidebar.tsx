@@ -15,6 +15,7 @@ import { NavUser } from "./nav-user";
 import { Button } from "./button";
 import Image from "next/image";
 import useSWR from "swr";
+import { useRouter } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useSWR<number[]>("mail-count", mailCount);
@@ -103,10 +104,11 @@ function ComposeButton() {
   const { open } = useOpenComposeModal();
   const { state } = useSidebar();
   const isMobile = useIsMobile();
+  const router = useRouter();
 
   return (
     <Button
-      onClick={open}
+      onClick={() => router.push("/create")}
       className="relative isolate mt-1 h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap bg-secondary bg-subtleWhite text-primary shadow-inner hover:bg-subtleWhite dark:bg-subtleBlack dark:hover:bg-subtleBlack"
       onMouseEnter={() => () => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => () => iconRef.current?.stopAnimation?.()}
