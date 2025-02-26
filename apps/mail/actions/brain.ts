@@ -23,7 +23,7 @@ export const EnableBrain = async () => {
         throw new Error("Unauthorized, reconnect");
     }
 
-    return await axios.put(`https://mail-gateway.adam-397.workers.dev/subscribe/${_connection.providerId}`, {
+    return await axios.put(process.env.BRAIN_URL! + `/subscribe/${_connection.providerId}`, {
         connectionId: _connection.id,
     })
 } 
