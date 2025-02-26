@@ -76,3 +76,14 @@ export const connection = createTable("connection", {
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });
+
+export const summary = createTable("summary", {
+  messageId: text("message_id").primaryKey(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  connectionId: text("connection_id").notNull(),
+  saved: boolean("saved").notNull().default(false),
+  tags: text("tags"),
+  suggestedReply: text("suggested_reply")
+});
