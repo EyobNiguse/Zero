@@ -15,6 +15,9 @@ import { NavUser } from "./nav-user";
 import { Button } from "./button";
 import Image from "next/image";
 import useSWR from "swr";
+import { Brain } from "lucide-react";
+import { EnableBrain } from "@/actions/brain";
+import { toast } from "sonner";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useSWR<number[]>("mail-count", mailCount);
@@ -28,18 +31,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     );
 
     const currentSection = section?.[0] || "mail";
-    const items = [...navigationConfig[currentSection].sections];
+    if (navigationConfig[currentSection]) {
+      const items = [...navigationConfig[currentSection].sections];
 
-    if (currentSection === "mail" && stats) {
-      if (items[0]?.items[0]) {
-        items[0].items[0].badge = stats[0] ?? 0;
+      if (currentSection === "mail" && stats) {
+        if (items[0]?.items[0]) {
+          items[0].items[0].badge = stats[0] ?? 0;
+        }
+        if (items[0]?.items[3]) {
+          items[0].items[3].badge = stats[1] ?? 0;
+        }
       }
-      if (items[0]?.items[3]) {
-        items[0].items[3].badge = stats[1] ?? 0;
+
+      return { currentSection, navItems: items };
+    } else {
+      return {
+        currentSection: '',
+        navItems: []
       }
     }
 
-    return { currentSection, navItems: items };
   }, [pathname, stats]);
 
   const showComposeButton = currentSection === "mail";
@@ -61,6 +72,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </motion.div>
             )}
           </AnimatePresence>
+          <Button onClick={async () => {
+            toast.promise(
+              EnableBrain(),
+              {
+                loading: "Enabling brain... takes around 8 seconds...",
+                success: "Enabled successfully!",
+                error: "Enable brain failed",
+              },
+            );
+          }} className="relative isolate h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap bg-secondary bg-subtleWhite text-primary shadow-inner hover:bg-subtleWhite dark:bg-subtleBlack dark:hover:bg-subtleBlack"><Brain /></Button> 
         </SidebarHeader>
         <SidebarContent className="py-0 pt-0">
           <AnimatePresence mode="wait">
@@ -77,7 +98,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </AnimatePresence>
         </SidebarContent>
       </div>
-
       <div className="mb-4 ml-1 mt-auto pl-1.5">
         <Image
           src="/black-icon.svg"

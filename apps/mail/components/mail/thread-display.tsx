@@ -41,7 +41,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    if (emailData) {
+    if (emailData?.[0]) {
       setIsMuted(emailData[0].unread ?? false);
     }
   }, [emailData]);
