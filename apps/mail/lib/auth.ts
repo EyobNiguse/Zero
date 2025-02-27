@@ -5,13 +5,12 @@ import { betterAuth, BetterAuthOptions } from "better-auth";
 import { customSession } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
-import { env } from "./env";
 import { db } from "@zero/db";
 
 // If there is no resend key, it might be a local dev environment
 // In that case, we don't want to send emails and just log them
-const resend = env.RESEND_API_KEY
-  ? new Resend(env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
   : { emails: { send: async (...args: any[]) => console.log(args) } };
 
 const options = {
@@ -33,12 +32,12 @@ const options = {
       prompt: "consent",
       accessType: "offline",
       scope: ["https://www.googleapis.com/auth/gmail.modify"],
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
     github: {
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     },
   },
   emailAndPassword: {
@@ -62,7 +61,7 @@ const options = {
     sendOnSignUp: false,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
-      const verificationUrl = `${env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/connect-emails`;
+      const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
 
       await resend.emails.send({
         from: "Mail0 <onboarding@zero.io>",
@@ -85,7 +84,7 @@ const options = {
         .from(_user)
         .where(eq(_user.id, user.id))
         .limit(1);
-      if (!foundUser.activeConnectionId) {
+      if (!foundUser?.activeConnectionId) {
         const [defaultConnection] = await db
           .select()
           .from(connection)
@@ -128,8 +127,9 @@ const options = {
           session,
         };
       }
+
       return {
-        connectionId: foundUser.activeConnectionId,
+        connectionId: foundUser?.activeConnectionId,
         user,
         session,
       };
@@ -139,5 +139,5 @@ const options = {
 
 export const auth = betterAuth({
   ...options,
-  trustedOrigins: env.BETTER_AUTH_TRUSTED_ORIGINS ?? [],
+  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",") ?? [],
 });
