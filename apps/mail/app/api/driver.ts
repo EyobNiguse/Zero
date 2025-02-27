@@ -110,12 +110,12 @@ const googleDriver = async (config: IConfig): Promise<MailManager> => {
       references,
       inReplyTo,
       sender: {
-        name: name.replace(/"/g, "").trim(),
+        name: name ? name.replace(/"/g, "").trim() : 'Unknown',
         email: `<${email}`,
       },
       unread: labelIds ? labelIds.includes("UNREAD") : false,
       receivedOn,
-      subject,
+      subject: subject ? subject.replace(/"/g, "").trim() : 'No subject',
       messageId,
     };
   };

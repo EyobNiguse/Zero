@@ -49,11 +49,11 @@ export const useThreads = (
   pageToken?: string,
 ) => {
   const { data: session } = useSession();
-  const { data, isLoading, error, isValidating } = useSWR<RawResponse>(
+  const { data, isLoading, error, isValidating } = useSWR<{ threads: InitialThread[], nextPageToken: number }>(
     session?.user.id
       ? [session?.user.id, folder, query, max, labelIds, pageToken, session.connectionId]
       : null,
-    fetchEmails,
+    fetchEmails as any,
   );
 
   return {
@@ -69,7 +69,7 @@ export const useThread = (id: string) => {
 
   const { data, isLoading, error } = useSWR<ParsedMessage[]>(
     session?.user.id ? [session.user.id, id, session.connectionId] : null,
-    fetchThread,
+    fetchThread as any,
   );
 
   return { data, isLoading, error };

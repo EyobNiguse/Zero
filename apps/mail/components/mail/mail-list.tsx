@@ -190,7 +190,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const { data: nextPage, error } = useThreads(folder, undefined, searchValue.value, 20, pageToken);
+  const { data, error } = useThreads(folder, undefined, searchValue.value, 20, pageToken);
 
   useEffect(() => {
     if (error) {
@@ -207,19 +207,19 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   }, [initialItems]);
 
   useEffect(() => {
-    if (nextPage?.threads) {
+    if (data?.threads) {
       setItems((prev) => {
         const existingIds = new Set(prev.map((item) => item.id));
-        const uniqueNewItems = nextPage.threads.filter((item) => !existingIds.has(item.id));
+        const uniqueNewItems = data.threads.filter((item) => !existingIds.has(item.id));
         console.log(`Adding ${uniqueNewItems.length} new unique items`);
         return [...prev, ...uniqueNewItems];
       });
       setIsLoading(false);
-      if (!nextPage.nextPageToken) {
+      if (!data.nextPageToken) {
         setHasMore(false);
       }
     }
-  }, [nextPage]);
+  }, [data]);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -243,10 +243,10 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
       if (scrolledToBottom) {
         console.log("Loading more items...");
         setIsLoading(true);
-        setPageToken(nextPage?.nextPageToken);
+        if (data?.nextPageToken) setPageToken(data.nextPageToken.toString());
       }
     },
-    [hasMore, isLoading, nextPage?.nextPageToken, itemHeight],
+    [hasMore, isLoading, data?.nextPageToken, itemHeight],
   );
 
   const massSelectMode = useKeyPressed(["Control", "Meta"]);
