@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDriver } from "@/app/api/driver";
 import { connection } from "@zero/db/schema";
-import { env } from "@/lib/env";
 import { db } from "@zero/db";
 
 export async function GET(
@@ -13,7 +12,9 @@ export async function GET(
   const state = searchParams.get("state");
 
   if (!code || !state) {
-    return NextResponse.redirect(`${env.NEXT_PUBLIC_APP_URL}/settings/email?error=missing_params`);
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_APP_URL}/settings/email?error=missing_params`,
+    );
   }
 
   const { providerId } = await params;

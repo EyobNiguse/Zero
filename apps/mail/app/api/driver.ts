@@ -2,7 +2,6 @@
 
 import { ParsedMessage, InitialThread } from "@/types";
 import { type gmail_v1, google } from "googleapis";
-import { env } from "@/lib/env";
 import * as he from "he";
 
 interface MailManager {
@@ -61,9 +60,9 @@ const findHtmlBody = (parts: any[]): string => {
 
 const googleDriver = async (config: IConfig): Promise<MailManager> => {
   const auth = new google.auth.OAuth2(
-    env.GOOGLE_CLIENT_ID as string,
-    env.GOOGLE_CLIENT_SECRET as string,
-    env.GOOGLE_REDIRECT_URI as string,
+    process.env.GOOGLE_CLIENT_ID as string,
+    process.env.GOOGLE_CLIENT_SECRET as string,
+    process.env.GOOGLE_REDIRECT_URI as string,
   );
 
   const getScope = () =>
