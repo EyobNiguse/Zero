@@ -180,7 +180,7 @@ const googleDriver = async (config: IConfig): Promise<MailManager> => {
         }),
       );
     },
-    list: async (folder, q, maxResults = 10, _labelIds: string[] = [], pageToken?: string) => {
+    list: async (folder, q, maxResults = 20, _labelIds: string[] = [], pageToken?: string) => {
       const { folder: normalizedFolder, q: normalizedQ } = normalizeSearch(folder, q ?? "");
       const labelIds = [..._labelIds];
       if (normalizedFolder) labelIds.push(normalizedFolder.toUpperCase());
