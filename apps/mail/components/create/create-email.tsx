@@ -1,18 +1,25 @@
 "use client";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, compressText, decompressText, truncateFileName } from "@/lib/utils";
-import { Send, Paperclip, X, ArrowUpIcon } from "lucide-react";
+import { Send, Paperclip, X, ArrowUpIcon, Plus } from "lucide-react";
 import { SparklesIcon } from "../icons/animated/sparkles";
+import { TooltipPortal } from "@radix-ui/react-tooltip";
+import { Separator } from "@/components/ui/separator";
 import { SidebarToggle } from "../ui/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { sendEmail } from "@/actions/send";
+import { FileIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { Badge } from "../ui/badge";
 import { AIChat } from "./ai-chat";
+import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
 import Editor from "./editor";
 import "./prosemirror.css";
+
+const MAX_VISIBLE_ATTACHMENTS = 12;
 
 export const defaultValue = {
   type: "doc",
@@ -36,6 +43,8 @@ export function CreateEmail() {
     parse: (value) => decompressText(value),
     serialize: (value) => compressText(value),
   });
+
+  const hasHiddenAttachments = attachments.length > MAX_VISIBLE_ATTACHMENTS;
 
   const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -77,7 +86,7 @@ export function CreateEmail() {
       setSubjectInput("");
       setMessageContent("");
       setAttachments([]);
-      setResetEditorKey((prev) => prev + 1); // Force editor to re-render
+      setResetEditorKey((prev) => prev + 1);
 
       toast.success("Email sent successfully!");
     } catch (error) {
@@ -105,7 +114,7 @@ export function CreateEmail() {
             </Button>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[500px] h-full flex-1 pt-4 mt-44 px-4 md:px-0">
+          <div className="relative mx-auto mt-60 h-full w-full max-w-[500px] flex-1 px-4 pt-4 md:px-2">
             <div className="space-y-6 md:px-1">
               <div className="flex items-center">
                 <div className="text-muted-foreground w-24 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50">
@@ -145,47 +154,113 @@ export function CreateEmail() {
                   />
                 </div>
               </div>
-
-              {attachments.length > 0 && (
-                <div className="flex">
-                  <div className="w-24 flex-shrink-0"></div>
-                  <div className="flex flex-wrap gap-2">
-                    {attachments.map((file, index) => (
-                      <Badge key={index} variant="secondary">
-                        {truncateFileName(file.name)}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="-mr-1 ml-2 h-5 w-5 rounded-full p-0"
-                          onClick={() => removeAttachment(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
-            <div className="bg-offsetLight dark:bg-offsetDark left-4 right-4 border-t pt-4">
+            <div className="bg-offsetLight dark:bg-offsetDark relative bottom-20 left-4 right-4 mx-4 mt-3 flex items-center border-t pt-4 md:mt-0 justify-between">
+              <div>
+                {attachments.length > 0 && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                        <span>{attachments.length} attachment{attachments.length !== 1 ? 's' : ''}</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 touch-auto" align="start">
+                      <div className="space-y-2">
+                        <div className="px-1">
+                          <h4 className="font-medium leading-none">Attachments</h4>
+                          <p className="text-muted-foreground text-sm">
+                            {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached
+                          </p>
+                        </div>
+                        <Separator />
+                        <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
+                          <div className="grid grid-cols-2 gap-2">
+                            {attachments.map((file, index) => (
+                              <div
+                                key={index}
+                                className="group relative overflow-hidden rounded-md border"
+                              >
+                                <div className="relative h-24 w-full">
+                                  {file.type.startsWith("image/") ? (
+                                    <>
+                                      <Image
+                                        src={URL.createObjectURL(file)}
+                                        alt={file.name}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-1 top-1 h-6 w-6 bg-black/20 hover:bg-black/30 backdrop-blur-sm opacity-0 transition-opacity group-hover:opacity-100"
+                                        onClick={() => removeAttachment(index)}
+                                      >
+                                        <X className="h-3 w-3 text-white" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center bg-muted/20">
+                                      <FileIcon className="text-primary h-8 w-8" />
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-1 top-1 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                                        onClick={() => removeAttachment(index)}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="bg-muted/10 p-2">
+                                  <p className="text-xs font-medium">
+                                    {truncateFileName(file.name, 20)}
+                                  </p>
+                                  <p className="text-muted-foreground text-xs">
+                                    {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
               <div className="flex justify-end gap-4">
-                <label className="group relative">
-                  <Button
-                    variant="outline"
-                    className="relative w-9 overflow-hidden transition-all duration-200 group-hover:w-32"
-                  >
-                    <Paperclip className="absolute left-2.5 h-4 w-4" />
-                    <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      Attachments
-                    </span>
-                  </Button>
-                  <input type="file" className="hidden" multiple onChange={handleAttachment} />
-                </label>
+                <Button
+                  variant="outline"
+                  className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-32"
+                  onClick={() => document?.getElementById("file-upload")?.click()}
+                >
+                  <Plus className="absolute left-[9px] h-6 w-6" />
+                  <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    Attachments
+                  </span>
+                </Button>
+                <input
+                  id="file-upload"
+                  type="file"
+                  className="hidden"
+                  multiple
+                  onChange={handleAttachment}
+                />
                 <Button
                   variant="default"
                   className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-24"
                   onClick={handleSendEmail}
+                  disabled={
+                    !toInput.trim() ||
+                    !messageContent.trim() ||
+                    messageContent === JSON.stringify(defaultValue)
+                  }
                 >
                   <ArrowUpIcon className="absolute left-2.5 h-4 w-4" />
                   <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -207,8 +282,8 @@ export function CreateEmail() {
             className="shadow-sm md:rounded-2xl md:border md:shadow-sm"
           >
             <div className="bg-offsetLight dark:bg-offsetDark flex h-full flex-col overflow-y-auto shadow-inner md:shadow-sm">
-              <div className="flex h-full flex-col justify-between">
-                <div className="p-2 px-3">
+              <div className="flex h-full flex-col">
+                <div className="flex h-full flex-col p-2 px-3">
                   <div className="mb-4 flex items-center justify-end">
                     <Button
                       variant="ghost"
@@ -219,9 +294,23 @@ export function CreateEmail() {
                       <X size={20} />
                     </Button>
                   </div>
-                </div>
-                <div>
-                  <AIChat />
+                  <div className="flex flex-1 flex-col items-center justify-center gap-4">
+                    <div className="relative h-20 w-20">
+                      <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
+                      <Image
+                        src="/white-icon.svg"
+                        alt="Zero Logo"
+                        fill
+                        className="hidden dark:block"
+                      />
+                    </div>
+                    <p className="animate-shine mt-2 hidden bg-gradient-to-r from-neutral-500 via-neutral-300 to-neutral-500 bg-[length:200%_100%] bg-clip-text text-lg text-transparent opacity-50 md:block">
+                      Ask Zero a question...
+                    </p>
+                  </div>
+                  <div className="mt-auto">
+                    <AIChat />
+                  </div>
                 </div>
               </div>
             </div>

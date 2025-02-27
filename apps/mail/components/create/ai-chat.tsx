@@ -14,6 +14,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { AITextarea } from "./ai-textarea";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface UseAutoResizeTextareaProps {
   minHeight: number;
@@ -85,7 +86,7 @@ export function AIChat() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col items-center space-y-8 p-4">
       <div className="w-full">
-        <div className="relative rounded-xl border border-neutral-800 bg-neutral-900">
+        <div className="relative rounded-xl border dark:border-neutral-800 dark:bg-neutral-900">
           <div className="overflow-y-auto">
             <AITextarea
               ref={textareaRef}
@@ -96,17 +97,7 @@ export function AIChat() {
               }}
               onKeyDown={handleKeyDown}
               placeholder="Ask Zero a question..."
-              className={cn(
-                "w-full px-4 py-3",
-                "resize-none",
-                "bg-transparent",
-                "border-none",
-                "text-sm text-white",
-                "focus:outline-none",
-                "focus-visible:ring-0 focus-visible:ring-offset-0",
-                "placeholder:text-sm placeholder:text-neutral-500",
-                "min-h-[60px]",
-              )}
+              className="w-full px-4 py-3 resize-none bg-transparent border-none text-sm text-foreground dark:text-white focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-sm placeholder:text-muted-foreground dark:placeholder:text-muted-foreground min-h-[60px]"
               style={{
                 overflow: "hidden",
               }}
@@ -115,29 +106,19 @@ export function AIChat() {
 
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="group flex items-center gap-1 rounded-lg p-2 transition-colors hover:bg-neutral-800"
-              >
-                <Paperclip className="h-4 w-4 text-white" />
-                <span className="hidden text-xs text-zinc-400 transition-opacity group-hover:inline">
-                  Attach
-                </span>
-              </button>
+              <Button variant="outline" size="icon" className="h-9 w-9">
+                <Paperclip className="h-4 w-4" />
+              </Button>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className={cn(
-                  "flex items-center justify-between gap-1 rounded-lg border border-zinc-700 px-1.5 py-1.5 text-sm transition-colors hover:border-zinc-600 hover:bg-zinc-800",
-                  value.trim() ? "bg-white text-black" : "text-zinc-400",
-                )}
+              <Button
+                variant="default"
+                size="icon"
+                className="h-9 w-9"
+                disabled={!value.trim()}
               >
-                <ArrowUpIcon
-                  className={cn("h-4 w-4", value.trim() ? "text-black" : "text-zinc-400")}
-                />
-                <span className="sr-only">Send</span>
-              </button>
+                <ArrowUpIcon className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

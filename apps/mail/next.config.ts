@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '200mb'
+    }
+  },
   async redirects() {
     return [
       {

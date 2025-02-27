@@ -54,16 +54,12 @@ export async function sendEmail({
   const randomPart = Math.random().toString(36).substring(2);
   const timestamp = Date.now();
   const messageId = `<${timestamp}.${randomPart}.mail0@${domain}>`;
-  console.log("Generated Message-ID:", messageId);
 
   const date = new Date().toUTCString();
-
-  // Generate a unique boundary that won't appear in the content
   const boundary = `----=_NextPart_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
 
   // Start building email content
   const emailParts = [
-    // Basic email headers
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     "MIME-Version: 1.0",
     `Date: ${date}`,
@@ -106,10 +102,12 @@ export async function sendEmail({
     message.trim(),
   ];
 
-  // Add attachments if any
+  // Process attachments if any
   if (attachments?.length > 0) {
     for (const file of attachments) {
-      const buffer = Buffer.from(await file.arrayBuffer());
+      // Convert File to ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
       const base64Content = buffer.toString("base64");
 
       emailParts.push(

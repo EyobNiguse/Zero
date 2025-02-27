@@ -17,7 +17,6 @@ import { ImageResizer, handleCommandNavigation } from 'novel'
 import { handleImageDrop, handleImagePaste } from 'novel'
 
 import {
-  slashCommand,
   suggestionItems
 } from '@/components/create/slash-command'
 import EditorMenu from '@/components/create/editor-menu'
