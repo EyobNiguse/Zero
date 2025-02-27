@@ -21,12 +21,12 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendEmail } from "@/actions/send";
-import { MailEditor } from "../create/editor";
 import { useQueryState } from "nuqs";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
+
 
 interface MailComposeProps {
   onClose: () => void;

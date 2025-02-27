@@ -1,139 +1,125 @@
-"use client";
+'use client'
+
+import { useState } from 'react'
+
 import {
+  EditorCommand,
+  EditorCommandEmpty,
+  EditorCommandItem,
+  EditorCommandList,
   EditorContent,
-  TiptapImage,
-  TiptapLink,
-  UpdatedImage,
-  TaskList,
-  TaskItem,
-  HorizontalRule,
-  StarterKit,
-  Placeholder,
-  EditorBubble,
-} from "novel";
+  type EditorInstance,
+  EditorRoot,
+  type JSONContent
+} from 'novel'
 
-import { NodeSelector } from "./editor.node-selector";
-import { LinkSelector } from "./editor.link-selector";
-import { TextButtons } from "./editor.text-buttons";
-import { cx } from "class-variance-authority";
-// import { ColorSelector } from "./editor.colors";
-import { useState } from "react";
+import { ImageResizer, handleCommandNavigation } from 'novel'
+import { handleImageDrop, handleImagePaste } from 'novel'
 
-// Add CSS for the placeholder
-import "./editor.css";
+import {
+  slashCommand,
+  suggestionItems
+} from '@/components/create/slash-command'
+import EditorMenu from '@/components/create/editor-menu'
+import { uploadFn } from '@/components/create/image-upload'
+import { defaultExtensions } from '@/components/create/extensions'
+import { TextButtons } from '@/components/create/selectors/text-buttons'
+import { LinkSelector } from '@/components/create/selectors/link-selector'
+import { NodeSelector } from '@/components/create/selectors/node-selector'
 
-const placeholder = Placeholder.configure({
-  placeholder: "Start writing...",
-  emptyEditorClass: "is-editor-empty",
-});
-const tiptapLink = TiptapLink.configure({
-  HTMLAttributes: {
-    class: cx(
-      "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
-    ),
-  },
-});
 
-const taskList = TaskList.configure({
-  HTMLAttributes: {
-    class: cx("not-prose pl-2"),
-  },
-});
-const taskItem = TaskItem.configure({
-  HTMLAttributes: {
-    class: cx("flex items-start my-4"),
-  },
-  nested: true,
-});
+import { Separator } from '@/components/ui/separator'
 
-const horizontalRule = HorizontalRule.configure({
-  HTMLAttributes: {
-    class: cx("mt-4 mb-6 border-t border-muted-foreground"),
-  },
-});
+const hljs = require('highlight.js')
 
-const starterKit = StarterKit.configure({
-  bulletList: {
-    HTMLAttributes: {
-      class: cx("list-disc list-outside leading-3 -mt-2"),
-    },
-  },
-  orderedList: {
-    HTMLAttributes: {
-      class: cx("list-decimal list-outside leading-3 -mt-2"),
-    },
-  },
-  listItem: {
-    HTMLAttributes: {
-      class: cx("leading-normal -mb-2"),
-    },
-  },
-  blockquote: {
-    HTMLAttributes: {
-      class: cx("border-l-4 border-primary"),
-    },
-  },
-  codeBlock: {
-    HTMLAttributes: {
-      class: cx("rounded-sm bg-muted border p-5 font-mono font-medium"),
-    },
-  },
-  code: {
-    HTMLAttributes: {
-      class: cx("rounded-md bg-muted  px-1.5 py-1 font-mono font-medium"),
-      spellcheck: "false",
-    },
-  },
-  horizontalRule: false,
-  dropcursor: {
-    color: "#DBEAFE",
-    width: 4,
-  },
-  gapcursor: false,
-});
+const extensions = [...defaultExtensions]
 
-const defaultExtensions = [
-  starterKit,
-  placeholder,
-  tiptapLink,
-  TiptapImage,
-  UpdatedImage,
-  taskList,
-  taskItem,
-  horizontalRule,
-];
+export const defaultEditorContent = {
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+      content: []
+    }
+  ]
+}
 
-export const MailEditor = ({ 
-  content, 
-  onUpdate,
-  resetKey
-}: { 
-  content?: string; 
-  onUpdate?: (html: string) => void;
-  resetKey?: string | number;
-}) => {
-  const [openNode, setOpenNode] = useState(false);
-  const [openLink, setOpenLink] = useState(false);
-  // const [openColor, setOpenColor] = useState(false);
+interface EditorProps {
+  initialValue?: JSONContent
+  onChange: (content: string) => void
+}
+
+export default function Editor({ initialValue, onChange }: EditorProps) {
+  const [openNode, setOpenNode] = useState(false)
+  const [openColor, setOpenColor] = useState(false)
+  const [openLink, setOpenLink] = useState(false)
+  const [openAI, setOpenAI] = useState(false)
 
   return (
-    <EditorContent
-      key={resetKey}
-      extensions={defaultExtensions}
-      className="placeholder:text-muted-foreground min-h-[200px] w-[400px] max-w-full resize-none overflow-y-auto bg-transparent p-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 mt-[8.5px] overflow-wrap-normal leading-tight"
-      initialContent={content ? { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: content }] }] } : undefined}
-      onUpdate={({ editor }) => {
-        if (onUpdate) {
-          onUpdate(editor.getHTML());
-        }
-      }}
-    >
-      <EditorBubble className="flex w-fit max-w-[300px] overflow-hidden rounded border shadow-xl">
-        <NodeSelector open={openNode} onOpenChange={setOpenNode} />
-        <LinkSelector open={openLink} onOpenChange={setOpenLink} />
-        <TextButtons />
-        {/* <ColorSelector open={openColor} onOpenChange={setOpenColor} /> */}
-      </EditorBubble>
-    </EditorContent>
-  );
-};
+    <div className='relative w-full max-w-[220px] sm:max-w-[400px]'>
+      <EditorRoot>
+        <EditorContent
+          immediatelyRender={false}
+          initialContent={initialValue}
+          extensions={extensions}
+          className='min-h-96 max-w-[220px] sm:max-w-[400px]'
+          editorProps={{
+            handleDOMEvents: {
+              keydown: (_view, event) => handleCommandNavigation(event)
+            },
+            handlePaste: (view, event) =>
+              handleImagePaste(view, event, uploadFn),
+            handleDrop: (view, event, _slice, moved) =>
+              handleImageDrop(view, event, moved, uploadFn),
+            attributes: {
+              class:
+                'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full'
+            }
+          }}
+          onUpdate={({ editor }) => {
+            onChange(editor.getHTML())
+          }}
+          slotAfter={<ImageResizer />}
+        >
+          <EditorCommand className='z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-muted bg-background px-1 py-2 shadow-md transition-all'>
+            <EditorCommandEmpty className='px-2 text-muted-foreground'>
+              No results
+            </EditorCommandEmpty>
+            <EditorCommandList>
+              {suggestionItems.map(item => (
+                <EditorCommandItem
+                  value={item.title}
+                  onCommand={val => item.command?.(val)}
+                  className='flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-[10px] hover:bg-accent aria-selected:bg-accent'
+                  key={item.title}
+                >
+                  <div className='flex h-8 w-8 items-center justify-center rounded-md border border-muted bg-background'>
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className='font-medium text-xs'>{item.title}</p>
+                    <p className='text-[8px] text-muted-foreground'>
+                      {item.description}
+                    </p>
+                  </div>
+                </EditorCommandItem>
+              ))}
+            </EditorCommandList>
+          </EditorCommand>
+
+          <EditorMenu open={openAI} onOpenChange={setOpenAI}>
+            <Separator orientation='vertical' />
+            <NodeSelector open={openNode} onOpenChange={setOpenNode} />
+
+            <Separator orientation='vertical' />
+            <LinkSelector open={openLink} onOpenChange={setOpenLink} />
+
+            <Separator orientation='vertical' />
+            <TextButtons />
+
+          </EditorMenu>
+        </EditorContent>
+      </EditorRoot>
+    </div>
+  )
+}
