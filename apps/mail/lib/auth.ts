@@ -5,8 +5,8 @@ import { betterAuth, BetterAuthOptions } from "better-auth";
 import { customSession } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
-import { env } from "./env";
 import { db } from "@zero/db";
+import { env } from "./env";
 
 // If there is no resend key, it might be a local dev environment
 // In that case, we don't want to send emails and just log them
@@ -62,7 +62,7 @@ const options = {
     sendOnSignUp: false,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
-      const verificationUrl = `${env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/connect-emails`;
+      const verificationUrl = `${env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
 
       await resend.emails.send({
         from: "Mail0 <onboarding@zero.io>",
@@ -85,7 +85,7 @@ const options = {
         .from(_user)
         .where(eq(_user.id, user.id))
         .limit(1);
-      if (!foundUser.activeConnectionId) {
+      if (!foundUser?.activeConnectionId) {
         const [defaultConnection] = await db
           .select()
           .from(connection)
@@ -128,8 +128,9 @@ const options = {
           session,
         };
       }
+
       return {
-        connectionId: foundUser.activeConnectionId,
+        connectionId: foundUser?.activeConnectionId,
         user,
         session,
       };

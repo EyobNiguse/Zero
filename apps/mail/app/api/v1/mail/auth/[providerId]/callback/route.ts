@@ -58,7 +58,7 @@ export async function GET(
       updatedAt: new Date(),
     });
 
-    return NextResponse.redirect(new URL("/connect-emails?success=true", request.url));
+    return NextResponse.redirect(new URL("/settings/connections?success=true", request.url));
   } catch (error) {
     return new NextResponse(JSON.stringify({ error }));
   }
