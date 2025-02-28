@@ -11,6 +11,8 @@ import { useSession } from "@/lib/auth-client";
 import React, { useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { EnableBrain } from "@/actions/brain";
+import { useRouter } from "next/navigation";
+import { useAISidebar } from "./ai-sidebar";
 import { mailCount } from "@/actions/mail";
 import { Brain } from "lucide-react";
 import { NavMain } from "./nav-main";
@@ -59,6 +61,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const showComposeButton = currentSection === "mail";
 
+  const { toggleOpen: toggleAISidebar } = useAISidebar();
+
   return (
     <Sidebar collapsible="icon" {...props} className="flex flex-col items-center pl-1">
       <div className="flex w-full flex-col">
@@ -104,7 +108,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </AnimatePresence>
         </SidebarContent>
       </div>
-      <div className="mb-4 ml-1 mt-auto pl-1.5">
+
+      <div
+        className="mb-4 ml-1.5 mt-auto cursor-pointer pl-1.5"
+        onClick={toggleAISidebar}
+        title="Open AI Assistant (Cmd+S)"
+      >
         <Image
           src="/black-icon.svg"
           alt="Mail0 Logo"
@@ -129,10 +138,11 @@ function ComposeButton() {
   const { open } = useOpenComposeModal();
   const { state } = useSidebar();
   const isMobile = useIsMobile();
+  const router = useRouter();
 
   return (
     <Button
-      onClick={open}
+      onClick={() => router.push("/mail/create")}
       className="bg-secondary bg-subtleWhite text-primary hover:bg-subtleWhite dark:bg-subtleBlack dark:hover:bg-subtleBlack relative isolate mt-1 h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap shadow-inner"
       onMouseEnter={() => () => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => () => iconRef.current?.stopAnimation?.()}
