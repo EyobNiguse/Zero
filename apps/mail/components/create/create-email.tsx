@@ -1,19 +1,14 @@
 "use client";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn, compressText, decompressText, truncateFileName } from "@/lib/utils";
-import { Send, Paperclip, X, ArrowUpIcon, Plus } from "lucide-react";
-import { SparklesIcon } from "../icons/animated/sparkles";
-import { TooltipPortal } from "@radix-ui/react-tooltip";
+import { compressText, decompressText, truncateFileName } from "@/lib/utils";
+import { ArrowUpIcon, Paperclip, Plus } from "lucide-react";
+import { UploadedFileIcon } from "./uploaded-file-icon";
 import { Separator } from "@/components/ui/separator";
 import { SidebarToggle } from "../ui/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { sendEmail } from "@/actions/send";
-import { FileIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { AIChat } from "./ai-chat";
-import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
 import Editor from "./editor";
@@ -31,12 +26,69 @@ export const defaultValue = {
   ],
 };
 
+// Define the state interface
+interface EmailState {
+  toInput: string;
+  subjectInput: string;
+  attachments: File[];
+  resetEditorKey: number;
+  isAISidebarOpen: boolean;
+}
+
+// Define the action types
+type EmailAction =
+  | { type: "SET_TO_INPUT"; payload: string }
+  | { type: "SET_SUBJECT_INPUT"; payload: string }
+  | { type: "SET_ATTACHMENTS"; payload: File[] }
+  | { type: "ADD_ATTACHMENTS"; payload: File[] }
+  | { type: "REMOVE_ATTACHMENT"; payload: number }
+  | { type: "RESET_EDITOR" }
+  | { type: "TOGGLE_AI_SIDEBAR"; payload: boolean }
+  | { type: "RESET_FORM" };
+
+// Create the reducer function
+function emailReducer(state: EmailState, action: EmailAction): EmailState {
+  switch (action.type) {
+    case "SET_TO_INPUT":
+      return { ...state, toInput: action.payload };
+    case "SET_SUBJECT_INPUT":
+      return { ...state, subjectInput: action.payload };
+    case "SET_ATTACHMENTS":
+      return { ...state, attachments: action.payload };
+    case "ADD_ATTACHMENTS":
+      return { ...state, attachments: [...state.attachments, ...action.payload] };
+    case "REMOVE_ATTACHMENT":
+      return {
+        ...state,
+        attachments: state.attachments.filter((_, i) => i !== action.payload),
+      };
+    case "RESET_EDITOR":
+      return { ...state, resetEditorKey: state.resetEditorKey + 1 };
+    case "TOGGLE_AI_SIDEBAR":
+      return { ...state, isAISidebarOpen: action.payload };
+    case "RESET_FORM":
+      return {
+        ...state,
+        toInput: "",
+        subjectInput: "",
+        attachments: [],
+        resetEditorKey: state.resetEditorKey + 1,
+      };
+    default:
+      return state;
+  }
+}
+
 export function CreateEmail() {
-  const [toInput, setToInput] = React.useState("");
-  const [subjectInput, setSubjectInput] = React.useState("");
-  const [attachments, setAttachments] = React.useState<File[]>([]);
-  const [resetEditorKey, setResetEditorKey] = React.useState(0);
-  const [isAISidebarOpen, setIsAISidebarOpen] = React.useState(false);
+  const [state, dispatch] = React.useReducer(emailReducer, {
+    toInput: "",
+    subjectInput: "",
+    attachments: [],
+    resetEditorKey: 0,
+    isAISidebarOpen: false,
+  });
+
+  const { toInput, subjectInput, attachments, resetEditorKey, isAISidebarOpen } = state;
 
   const [messageContent, setMessageContent] = useQueryState("body", {
     defaultValue: "",
@@ -48,12 +100,12 @@ export function CreateEmail() {
 
   const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setAttachments([...attachments, ...Array.from(e.target.files)]);
+      dispatch({ type: "ADD_ATTACHMENTS", payload: Array.from(e.target.files) });
     }
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments(attachments.filter((_, i) => i !== index));
+    dispatch({ type: "REMOVE_ATTACHMENT", payload: index });
   };
 
   const handleSendEmail = async () => {
@@ -82,11 +134,8 @@ export function CreateEmail() {
       });
 
       // Reset form after sending
-      setToInput("");
-      setSubjectInput("");
+      dispatch({ type: "RESET_FORM" });
       setMessageContent("");
-      setAttachments([]);
-      setResetEditorKey((prev) => prev + 1);
 
       toast.success("Email sent successfully!");
     } catch (error) {
@@ -114,7 +163,7 @@ export function CreateEmail() {
                   className="placeholder:text-muted-foreground text-md relative left-[6px] w-full bg-transparent font-medium placeholder:opacity-50 focus:outline-none"
                   placeholder="luke@example.com"
                   value={toInput}
-                  onChange={(e) => setToInput(e.target.value)}
+                  onChange={(e) => dispatch({ type: "SET_TO_INPUT", payload: e.target.value })}
                 />
               </div>
 
@@ -127,7 +176,7 @@ export function CreateEmail() {
                   className="placeholder:text-muted-foreground text-md relative left-[6px] w-full bg-transparent font-medium placeholder:opacity-50 focus:outline-none"
                   placeholder="Subject"
                   value={subjectInput}
-                  onChange={(e) => setSubjectInput(e.target.value)}
+                  onChange={(e) => dispatch({ type: "SET_SUBJECT_INPUT", payload: e.target.value })}
                 />
               </div>
 
@@ -175,38 +224,11 @@ export function CreateEmail() {
                             key={index}
                             className="group relative overflow-hidden rounded-md border"
                           >
-                            <div className="relative h-24 w-full">
-                              {file.type.startsWith("image/") ? (
-                                <>
-                                  <Image
-                                    src={URL.createObjectURL(file)}
-                                    alt={file.name}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-1 top-1 h-6 w-6 bg-black/20 opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/30 group-hover:opacity-100"
-                                    onClick={() => removeAttachment(index)}
-                                  >
-                                    <X className="h-3 w-3 text-white" />
-                                  </Button>
-                                </>
-                              ) : (
-                                <div className="bg-muted/20 flex h-full w-full items-center justify-center">
-                                  <FileIcon className="text-primary h-8 w-8" />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-1 top-1 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                                    onClick={() => removeAttachment(index)}
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
+                            <UploadedFileIcon
+                              removeAttachment={removeAttachment}
+                              index={index}
+                              file={file}
+                            />
                             <div className="bg-muted/10 p-2">
                               <p className="text-xs font-medium">
                                 {truncateFileName(file.name, 20)}

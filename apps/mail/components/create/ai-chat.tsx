@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { AITextarea } from "./ai-textarea";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface UseAutoResizeTextareaProps {
   minHeight: number;
@@ -85,16 +86,16 @@ export function AIChat() {
 
   const updateAudioData = useCallback(() => {
     if (!analyserRef.current) return;
-    
+
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(dataArray);
-    
+
     // Convert the audio data to wave heights (values between 0 and 1)
     // Using frequency data for better visualization
     const normalizedData = Array.from(dataArray)
       .slice(0, 30)
-      .map(value => value / 255);
-    
+      .map((value) => value / 255);
+
     setAudioData(normalizedData);
     animationFrameRef.current = requestAnimationFrame(updateAudioData);
   }, []);
@@ -117,7 +118,7 @@ export function AIChat() {
     const files = e.target.files;
     if (files && files.length > 0) {
       // Handle file upload here
-      console.log('Selected files:', files);
+      console.log("Selected files:", files);
       // You can implement file upload logic here
     }
   };
@@ -128,80 +129,82 @@ export function AIChat() {
         // Start recording
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaStreamRef.current = stream;
-        
+
         // Set up audio context for visualization
         audioContextRef.current = new AudioContext();
         analyserRef.current = audioContextRef.current.createAnalyser();
         const source = audioContextRef.current.createMediaStreamSource(stream);
         source.connect(analyserRef.current);
         analyserRef.current.fftSize = 256;
-        
+
         // Start visualization
         updateAudioData();
         setIsRecording(true);
         setIsListening(true);
-        
+
         // Set up speech recognition
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           recognitionRef.current = new SpeechRecognition();
           recognitionRef.current.continuous = true;
           recognitionRef.current.interimResults = true;
-          
+
           recognitionRef.current.onresult = (event) => {
             const transcript = Array.from(event.results)
-              .map(result => result[0]?.transcript || '')
-              .join('');
-              
-            setValue(prev => {
+              .map((result) => result[0]?.transcript || "")
+              .join("");
+
+            setValue((prev) => {
               // Only update if we have new content
               if (transcript && transcript !== prev) {
                 return transcript;
               }
               return prev;
             });
-            
+
             // Adjust textarea height when text changes
             adjustHeight();
           };
-          
+
           recognitionRef.current.onend = () => {
             // Restart if we're still recording
             if (isRecording && recognitionRef.current) {
               recognitionRef.current.start();
             }
           };
-          
+
           recognitionRef.current.start();
+        } else {
+          toast.error("Your browser does not support speech recognition.");
         }
       } else {
         // Stop recording
         if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach(track => track.stop());
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
           mediaStreamRef.current = null;
         }
-        
+
         if (audioContextRef.current) {
           audioContextRef.current.close();
           audioContextRef.current = null;
         }
-        
+
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = undefined;
         }
-        
+
         if (recognitionRef.current) {
           recognitionRef.current.stop();
           recognitionRef.current = null;
         }
-        
+
         setIsRecording(false);
         setIsListening(false);
         setAudioData(Array(30).fill(0));
       }
     } catch (error) {
-      console.error('Error accessing microphone:', error);
+      console.error("Error accessing microphone:", error);
     }
   };
 
@@ -211,15 +214,15 @@ export function AIChat() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      
+
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
-      
+
       if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       }
-      
+
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -232,20 +235,19 @@ export function AIChat() {
         <div className="relative rounded-xl border dark:border-neutral-800 dark:bg-neutral-900">
           <div className="overflow-y-auto px-2">
             {isRecording ? (
-              <div className="min-h-[60px] h-[64px] w-full px-4 flex flex-col items-center justify-center">
-                <div className="flex items-center justify-center gap-1 mt-4">
+              <div className="flex h-[64px] min-h-[60px] w-full flex-col items-center justify-center px-4">
+                <div className="mt-4 flex items-center justify-center gap-1">
                   {audioData.map((height, index) => (
                     <div
                       key={index}
-                      className="w-1.5 bg-muted-foreground rounded-full transition-all duration-75"
+                      className="bg-muted-foreground w-1.5 rounded-full transition-all duration-75"
                       style={{
                         height: `${Math.max(4, height * 40)}px`,
-                        transform: `scaleY(${Math.max(0.1, height)})`
+                        transform: `scaleY(${Math.max(0.1, height)})`,
                       }}
                     />
                   ))}
                 </div>
-                
               </div>
             ) : (
               <AITextarea
@@ -280,8 +282,8 @@ export function AIChat() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className={cn("w-9", isRecording && "bg-red-500 text-white hover:bg-red-600")}
                   onClick={handleMicClick}
                 >

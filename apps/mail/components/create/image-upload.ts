@@ -26,7 +26,9 @@ const onUpload = (file: File) => {
           // No blob store configured
         } else if (res.status === 401) {
           resolve(file);
-          throw new Error("`BLOB_READ_WRITE_TOKEN` environment variable not found, reading image locally instead.");
+          throw new Error(
+            "`BLOB_READ_WRITE_TOKEN` environment variable not found, reading image locally instead.",
+          );
           // Unknown error
         } else {
           throw new Error("Error uploading image. Please try again.");
@@ -47,14 +49,37 @@ const onUpload = (file: File) => {
 export const uploadFn = createImageUpload({
   onUpload,
   validateFn: (file) => {
-    if (!file.type.includes("image/")) {
-      toast.error("File type not supported.");
-      return false;
-    }
     if (file.size / 1024 / 1024 > 20) {
       toast.error("File size too big (max 20MB).");
       return false;
     }
+
+    const allowedTypes = [
+      "image/*",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-powerpoint",
+      "text/plain",
+      "text/html",
+      "text/csv",
+      "application/zip",
+      "application/x-zip-compressed",
+      "application/rtf",
+      "audio/mpeg",
+      "audio/wav",
+      "video/mp4",
+      "video/mpeg",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("File type not supported in emails.");
+      return false;
+    }
+
     return true;
   },
 });
