@@ -31,7 +31,6 @@ export const getMails = async ({
     throw new Error("Unauthorized, reconnect");
   }
 
-  // Updated to use googleConnection table
   const [_connection] = await db
     .select()
     .from(connection)
@@ -124,15 +123,19 @@ export const mailCount = async () => {
     throw new Error("Unauthorized, reconnect");
   }
 
-  const [foundAccount] = await db.select().from(account).where(eq(account.userId, session.user.id));
-  if (!foundAccount?.accessToken || !foundAccount.refreshToken) {
+  const [_connection] = await db
+    .select()
+    .from(connection)
+    .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
+
+  if (!_connection?.accessToken || !_connection.refreshToken) {
     throw new Error("Unauthorized, reconnect");
   }
 
-  const driver = await createDriver(foundAccount.providerId, {
+  const driver = await createDriver(_connection.providerId, {
     auth: {
-      access_token: foundAccount.accessToken,
-      refresh_token: foundAccount.refreshToken,
+      access_token: _connection.accessToken,
+      refresh_token: _connection.refreshToken,
     },
   });
 

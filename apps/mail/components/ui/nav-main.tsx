@@ -13,8 +13,12 @@ import {
   SidebarMenuButton,
 } from "./sidebar";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useSession } from "@/lib/auth-client";
+import { Badge } from "@/components/ui/badge";
 import { BASE_URL } from "@/lib/constants";
+import { mailCount } from "@/actions/mail";
 import { cn } from "@/lib/utils";
+import useSWR from "swr";
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -176,6 +180,11 @@ export function NavMain({ items }: NavMainProps) {
 
 function NavItem(item: NavItemProps & { href: string }) {
   const iconRef = useRef<IconRefType>(null);
+  const { data: session } = useSession();
+  const { data: stats } = useSWR<{ folder: string; count: number }[]>(
+    session?.connectionId ? `/mail-count/${session?.connectionId}` : null,
+    mailCount,
+  );
 
   if (item.disabled) {
     return (
@@ -203,7 +212,7 @@ function NavItem(item: NavItemProps & { href: string }) {
     <SidebarMenuButton
       tooltip={item.title}
       className={cn(
-        "flex items-center hover:bg-subtleWhite dark:hover:bg-subtleBlack",
+        "hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center",
         item.isActive && "bg-subtleWhite text-accent-foreground dark:bg-subtleBlack",
       )}
     >
@@ -214,6 +223,11 @@ function NavItem(item: NavItemProps & { href: string }) {
         />
       )}
       <p className="mt-0.5 text-[13px]">{item.title}</p>
+      {stats && stats.find((stat) => stat.folder === item.title.toLowerCase()) && (
+        <Badge className="ml-auto" variant="outline">
+          {stats.find((stat) => stat.folder === item.title.toLowerCase())?.count}
+        </Badge>
+      )}
     </SidebarMenuButton>
   );
 
