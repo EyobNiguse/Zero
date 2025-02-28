@@ -16,6 +16,7 @@ import { Button } from "./button";
 import Image from "next/image";
 import useSWR from "swr";
 import { useRouter } from "next/navigation";
+import { useAISidebar } from "./ai-sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useSWR<number[]>("mail-count", mailCount);
@@ -44,6 +45,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [pathname, stats]);
 
   const showComposeButton = currentSection === "mail";
+
+  const { toggleOpen: toggleAISidebar } = useAISidebar();
 
   return (
     <Sidebar collapsible="icon" {...props} className="flex flex-col items-center pl-1">
@@ -79,7 +82,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarContent>
       </div>
 
-      <div className="mb-4 ml-1 mt-auto pl-1.5">
+      <div 
+        className="mb-4 ml-1.5 mt-auto pl-1.5 cursor-pointer" 
+        onClick={toggleAISidebar}
+        title="Open AI Assistant (Cmd+S)"
+      >
         <Image
           src="/black-icon.svg"
           alt="Mail0 Logo"
@@ -108,7 +115,7 @@ function ComposeButton() {
 
   return (
     <Button
-      onClick={() => router.push("/create")}
+      onClick={() => router.push("/mail/create")}
       className="relative isolate mt-1 h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap bg-secondary bg-subtleWhite text-primary shadow-inner hover:bg-subtleWhite dark:bg-subtleBlack dark:hover:bg-subtleBlack"
       onMouseEnter={() => () => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => () => iconRef.current?.stopAnimation?.()}
