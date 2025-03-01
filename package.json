@@ -14,7 +14,11 @@
     "lint-staged": "prettier --write --ignore-unknown",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:clean": "docker-compose down -v"
+    "docker:clean": "docker-compose down -v",
+    "db:generate": "cd packages/db && drizzle-kit generate",
+    "db:migrate": "cd packages/db && drizzle-kit migrate",
+    "db:push": "cd packages/db && drizzle-kit push",
+    "db:studio": "cd packages/db && drizzle-kit studio"
   },
   "devDependencies": {
     "@zero/tsconfig": "workspace:*",
