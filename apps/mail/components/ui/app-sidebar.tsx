@@ -20,7 +20,6 @@ import { Button } from "./button";
 import Image from "next/image";
 import { toast } from "sonner";
 import useSWR from "swr";
-import { useRouter } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
