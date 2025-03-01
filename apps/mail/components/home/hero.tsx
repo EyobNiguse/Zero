@@ -88,7 +88,7 @@ export default function Hero() {
 
       <Card className="mt-4 w-full border-none bg-transparent shadow-none">
         <CardContent className="flex flex-col items-center justify-center px-0">
-          {process.env.NODE_ENV !== "development" ? (
+          {process.env.NODE_ENV === "development" ? (
             <div className="flex items-center justify-center gap-4">
               <Button
                 variant="outline"
