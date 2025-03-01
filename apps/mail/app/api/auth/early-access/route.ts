@@ -60,6 +60,9 @@ export async function POST(req: NextRequest) {
       });
 
       console.log("Insert successful:", result);
+      
+      // Return 201 for new signups
+      return NextResponse.json({ message: "Successfully joined early access" }, { status: 201 });
     } catch (err) {
       const pgError = err as PostgresError;
       console.error("Database error:", {
@@ -70,6 +73,7 @@ export async function POST(req: NextRequest) {
 
       // Handle duplicate emails more explicitly
       if (pgError.code === "23505") {
+        // Return 200 for existing emails
         return NextResponse.json(
           { message: "Email already registered for early access" },
           { status: 200 },
@@ -79,7 +83,7 @@ export async function POST(req: NextRequest) {
       throw err;
     }
 
-    return NextResponse.json({ message: "Successfully joined early access" }, { status: 201 });
+    // This line is now unreachable due to the returns in the try/catch above
   } catch (error) {
     console.error("Early access registration error:", {
       error,
