@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { earlyAccess } from "@zero/db/schema";
-import { env } from "@/lib/env";
 import { db } from "@zero/db";
 
 type PostgresError = {
@@ -61,6 +60,9 @@ export async function POST(req: NextRequest) {
       });
 
       console.log("Insert successful:", result);
+      
+      // Return 201 for new signups
+      return NextResponse.json({ message: "Successfully joined early access" }, { status: 201 });
     } catch (err) {
       const pgError = err as PostgresError;
       console.error("Database error:", {
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
 
       // Handle duplicate emails more explicitly
       if (pgError.code === "23505") {
+        // Return 200 for existing emails
         return NextResponse.json(
           { message: "Email already registered for early access" },
           { status: 200 },
@@ -80,7 +83,7 @@ export async function POST(req: NextRequest) {
       throw err;
     }
 
-    return NextResponse.json({ message: "Successfully joined early access" }, { status: 201 });
+    // This line is now unreachable due to the returns in the try/catch above
   } catch (error) {
     console.error("Early access registration error:", {
       error,
@@ -88,7 +91,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Return more detailed error in development
-    if (env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development") {
       return NextResponse.json(
         {
           error: "Internal server error",

@@ -109,11 +109,16 @@ export default {
             opacity: "1",
           },
         },
+        shine: {
+          from: { backgroundPosition: "200% 0" },
+          to: { backgroundPosition: "-200% 0" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "move-up": "moveUp 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "fade-in": "fadeIn 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "shine": "shine 4s linear infinite",
       },
     },
   },
