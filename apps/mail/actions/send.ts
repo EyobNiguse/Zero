@@ -65,7 +65,10 @@ export async function sendEmail({
     `Date: ${date}`,
     `Message-ID: ${messageId}`,
     `From: ${fromHeader}`,
-    `To: <${to}>`,
+    `To: ${to
+      .split(",")
+      .map((ref) => (ref.startsWith("<") ? ref : `<${ref}>`))
+      .join(", ")}`,
     `Subject: ${subject}`,
 
     // Add threading headers if present
