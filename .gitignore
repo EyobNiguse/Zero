@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/apps/*/node_modules
 /packages/*/node_modules
 /.pnp
 .pnp.*
@@ -45,5 +46,3 @@ next-env.d.ts
 .idea
 .vscode
 .turbo
-packages/tailwind-config/node_modules/@zero/tsconfig
-packages/db/node_modules/@zero/tsconfig

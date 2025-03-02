@@ -1,14 +1,16 @@
 "use client";
 
 import { Form, FormControl, FormField, FormItem } from "../ui/form";
+import { AnimatedNumber } from "../ui/animated-number";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "../ui/card";
-import { ArrowRightIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 import Balancer from "react-wrap-balancer";
 import { useForm } from "react-hook-form";
+import confetti from "canvas-confetti";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -21,7 +23,9 @@ const betaSignupSchema = z.object({
 
 export default function Hero() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [signupCount, setSignupCount] = useState<number | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [signupCount, setSignupCount] = useState<number>(0);
+  const [token, setToken] = useState<string>();
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -50,14 +54,21 @@ export default function Hero() {
 
       const response = await axios.post("/api/auth/early-access", {
         email: values.email,
+        token,
       });
 
       console.log("Response data:", response.data);
 
       form.reset();
       console.log("Form submission successful");
-      toast.success("Thanks for signing up for early access!");
-      
+      confetti({
+        particleCount: 180,
+        spread: 120,
+        origin: { y: -0.2, x: 0.5 },
+        angle: 270,
+      });
+      setShowSuccess(true);
+
       // Increment the signup count if it was a new signup
       if (response.status === 201 && signupCount !== null) {
         setSignupCount(signupCount + 1);
@@ -75,12 +86,12 @@ export default function Hero() {
   };
 
   return (
-    <div className="mx-auto w-full animate-fade-in pt-20 md:px-0 md:pt-20">
-      <p className="text-center text-4xl font-semibold leading-tight tracking-[-0.03em] sm:text-6xl md:px-0 text-white">
+    <div className="animate-fade-in mx-auto w-full pt-20 md:px-0 md:pt-20">
+      <p className="text-center text-4xl font-semibold leading-tight tracking-[-0.03em] text-white sm:text-6xl md:px-0">
         The future of email <span className="text-shinyGray">is here</span>
       </p>
       <div className="mx-auto w-full max-w-4xl">
-        <Balancer className="mx-auto mt-3 text-center text-[15px] leading-tight text-shinyGray sm:text-[22px]">
+        <Balancer className="text-shinyGray mx-auto mt-3 text-center text-[15px] leading-tight sm:text-[22px]">
           Experience email the way you want with <span className="font-mono">0</span> – the first
           open source email app that puts your privacy and safety first.
         </Balancer>
@@ -88,11 +99,18 @@ export default function Hero() {
 
       <Card className="mt-4 w-full border-none bg-transparent shadow-none">
         <CardContent className="flex flex-col items-center justify-center px-0">
-          {process.env.NODE_ENV === "development" ? (
+          {showSuccess ? (
+            <div className="flex flex-col items-center justify-center gap-4 text-center">
+              <p className="text-2xl font-semibold text-white">You're on the list! 🎉</p>
+              <p className="text-shinyGray text-lg">
+                We'll let you know when we're ready to revolutionize your email experience.
+              </p>
+            </div>
+          ) : process.env.NODE_ENV !== "development" ? (
             <div className="flex items-center justify-center gap-4">
               <Button
                 variant="outline"
-                className="flex h-[40px] w-[170px] items-center justify-center rounded-md bg-black text-white hover:bg-accent hover:text-white"
+                className="hover:bg-accent flex h-[40px] w-[170px] items-center justify-center rounded-md bg-black text-white hover:text-white"
                 asChild
               >
                 <Link href="/login">
@@ -141,10 +159,23 @@ export default function Hero() {
               </form>
             </Form>
           )}
-          
+
+          {!showSuccess && (
+            <Turnstile siteKey={process.env.TURNSTILE_SITE_KEY!} onSuccess={setToken} />
+          )}
+
           {signupCount !== null && (
-            <div className="mt-4 text-center text-sm text-shinyGray">
-              <span className="font-semibold text-white">{signupCount.toLocaleString()}</span> people have already joined the waitlist
+            <div className="text-shinyGray mt-4 text-center text-sm">
+              <span className="font-semibold text-white">
+                <AnimatedNumber
+                  springOptions={{
+                    bounce: 0,
+                    duration: 2000,
+                  }}
+                  value={signupCount}
+                />
+              </span>{" "}
+              people have already joined the waitlist
             </div>
           )}
         </CardContent>

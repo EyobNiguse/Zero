@@ -39,7 +39,7 @@ Zero is an open-source email solution that gives users the power to **self-host*
 
 Most email services today are either **closed-source**, **data-hungry**, or **too complex to self-host**. Mail0.io is different:
 
-✅ **Fully Open-Source** – No hidden agendas, no walled gardens. 100% transparency.
+✅ **Open-Source** – No hidden agendas, fully transparent.
 🔒 **Data Privacy First** – Your emails, your data. No tracking, no selling, no middlemen.
 ⚙️ **Self-Hosting Freedom** – Run your own email app with ease.
 📬 **Unified Inbox** – Connect multiple email providers like Gmail, Outlook, and more.
