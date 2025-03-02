@@ -229,8 +229,9 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
     count: items.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => itemHeight,
-    overscan: 5,
   });
+
+  const virtualItems = virtualizer.getVirtualItems();
 
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
@@ -308,7 +309,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   }
 
   return (
-    <ScrollArea ref={scrollRef} className="h-full" type="scroll" onScrollCapture={handleScroll}>
+    <ScrollArea ref={scrollRef} className="h-full pb-2" type="scroll" onScrollCapture={handleScroll}>
       <div
         ref={parentRef}
         className={cn(
@@ -319,39 +320,35 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
           height: `${virtualizer.getTotalSize()}px`,
         }}
       >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const item = items[virtualRow.index];
-          return item ? (
-            <div
-              key={virtualRow.key}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              style={{
-                transform: `translateY(${virtualRow.start}px)`,
-                height: `${virtualRow.size}px`,
-              }}
-              className="absolute left-0 top-0 w-full p-[8px]"
-            >
-              <Thread
-                message={item}
-                selectMode={selectMode}
-                onSelect={handleMailClick}
-                isCompact={isCompact}
-              />
-            </div>
-          ) : null;
-        })}
-        {hasMore && (
-          <div className="absolute bottom-0 left-0 w-full py-4 text-center">
-            {isLoading ? (
-              <div className="text-center">
-                <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+        <div
+          style={{ transform: `translateY(${virtualItems[0]?.start ?? 0}px)` }}
+          className="absolute left-0 top-0 w-full p-[8px]"
+        >
+          {virtualItems.map(({ index, key }) => {
+            const item = items[index];
+            return item ? (
+              <div className="mb-2" data-index={index} key={key} ref={virtualizer.measureElement} >
+                <Thread
+                  message={item}
+                  selectMode={selectMode}
+                  onSelect={handleMailClick}
+                  isCompact={isCompact}
+                />
               </div>
-            ) : (
-              <div className="h-4" />
-            )}
-          </div>
-        )}
+            ) : null;
+          })}
+          {hasMore && (
+            <div className="w-full pt-2 text-center">
+              {isLoading ? (
+                <div className="text-center">
+                  <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                </div>
+              ) : (
+                <div className="h-4" />
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </ScrollArea>
   );
