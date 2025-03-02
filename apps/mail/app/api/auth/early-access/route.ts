@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
 import { earlyAccess } from "@zero/db/schema";
+import { redis } from "@/lib/redis";
 import { db } from "@zero/db";
 
 type PostgresError = {
@@ -7,34 +9,32 @@ type PostgresError = {
   message: string;
 };
 
-// Rate limiting map: IP -> timestamps of requests
-const rateLimitMap = new Map<string, number[]>();
-const RATE_LIMIT = 3; // requests per hour
-const HOUR_IN_MS = 60 * 60 * 1000;
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(2, "30m"),
+  analytics: true,
+  prefix: "ratelimit:early-access",
+});
 
 export async function POST(req: NextRequest) {
   try {
-    // Get IP address from request
     const ip = req.headers.get("x-forwarded-for") || "unknown";
     console.log("Request from IP:", ip);
+    const { success, limit, reset, remaining } = await ratelimit.limit(ip);
 
-    // Check rate limit
-    const now = Date.now();
-    const ipRequests = rateLimitMap.get(ip) || [];
+    const headers = {
+      "X-RateLimit-Limit": limit.toString(),
+      "X-RateLimit-Remaining": remaining.toString(),
+      "X-RateLimit-Reset": reset.toString(),
+    };
 
-    // Clean up old requests (older than 1 hour)
-    const recentRequests = ipRequests.filter((timestamp) => now - timestamp < HOUR_IN_MS);
-
-    if (recentRequests.length >= RATE_LIMIT) {
-      console.log(`Rate limit exceeded for IP ${ip}. Recent requests: ${recentRequests.length}`);
+    if (!success) {
+      console.log(`Rate limit exceeded for IP ${ip}. Remaining: ${remaining}`);
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
-        { status: 429 },
+        { status: 429, headers },
       );
     }
-
-    recentRequests.push(now);
-    rateLimitMap.set(ip, recentRequests);
 
     const body = await req.json();
     console.log("Request body:", body);
@@ -49,7 +49,6 @@ export async function POST(req: NextRequest) {
     const nowDate = new Date();
 
     try {
-      // Log the attempted insert
       console.log("Attempting to insert email:", email);
 
       const result = await db.insert(earlyAccess).values({
@@ -60,9 +59,18 @@ export async function POST(req: NextRequest) {
       });
 
       console.log("Insert successful:", result);
-      
-      // Return 201 for new signups
-      return NextResponse.json({ message: "Successfully joined early access" }, { status: 201 });
+
+      return NextResponse.json(
+        { message: "Successfully joined early access" },
+        {
+          status: 201,
+          headers: {
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": remaining.toString(),
+            "X-RateLimit-Reset": reset.toString(),
+          },
+        },
+      );
     } catch (err) {
       const pgError = err as PostgresError;
       console.error("Database error:", {
@@ -71,26 +79,28 @@ export async function POST(req: NextRequest) {
         fullError: err,
       });
 
-      // Handle duplicate emails more explicitly
       if (pgError.code === "23505") {
-        // Return 200 for existing emails
         return NextResponse.json(
           { message: "Email already registered for early access" },
-          { status: 200 },
+          {
+            status: 200,
+            headers: {
+              "X-RateLimit-Limit": limit.toString(),
+              "X-RateLimit-Remaining": remaining.toString(),
+              "X-RateLimit-Reset": reset.toString(),
+            },
+          },
         );
       }
 
       throw err;
     }
-
-    // This line is now unreachable due to the returns in the try/catch above
   } catch (error) {
     console.error("Early access registration error:", {
       error,
       stack: error instanceof Error ? error.stack : undefined,
     });
 
-    // Return more detailed error in development
     if (process.env.NODE_ENV === "development") {
       return NextResponse.json(
         {
