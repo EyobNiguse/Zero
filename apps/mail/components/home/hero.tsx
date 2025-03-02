@@ -3,7 +3,7 @@
 import { Form, FormControl, FormField, FormItem } from "../ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "../ui/card";
-import { ArrowRightIcon } from "lucide-react";
+import { Turnstile } from '@marsidev/react-turnstile'
 import Balancer from "react-wrap-balancer";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/button";
@@ -22,6 +22,7 @@ const betaSignupSchema = z.object({
 export default function Hero() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupCount, setSignupCount] = useState<number | null>(null);
+  const [token, setToken] = useState<string>()
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -50,6 +51,7 @@ export default function Hero() {
 
       const response = await axios.post("/api/auth/early-access", {
         email: values.email,
+        token
       });
 
       console.log("Response data:", response.data);
@@ -141,6 +143,8 @@ export default function Hero() {
               </form>
             </Form>
           )}
+
+          <Turnstile siteKey={process.env.TURNSTILE_SITE_KEY!} onSuccess={setToken} />
           
           {signupCount !== null && (
             <div className="mt-4 text-center text-sm text-shinyGray">

@@ -11,6 +11,8 @@ type PostgresError = {
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT = 3; // requests per hour
 const HOUR_IN_MS = 60 * 60 * 1000;
+const verifyEndpoint = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+const secret = process.env.TURNSTILE_SECRET_KEY!
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,11 +41,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log("Request body:", body);
 
-    const { email } = body;
+    const { email, token } = body;
 
     if (!email) {
       console.log("Email missing from request");
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    }
+
+    const verifyRequest = await fetch(verifyEndpoint, {
+      method: 'POST',
+      body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      }
+    })
+
+    const verifyResponse = await verifyRequest.json()
+
+    if (!verifyResponse.success) {
+      console.log("Turnstile verification failed:", verifyResponse.error)
+      return NextResponse.json({ error: "Invalid turnstile verification" }, { status: 400 });
     }
 
     const nowDate = new Date();
