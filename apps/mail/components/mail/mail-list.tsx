@@ -309,7 +309,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   }
 
   return (
-    <ScrollArea ref={scrollRef} className="h-full" type="scroll" onScrollCapture={handleScroll}>
+    <ScrollArea ref={scrollRef} className="h-full pb-2" type="scroll" onScrollCapture={handleScroll}>
       <div
         ref={parentRef}
         className={cn(
@@ -338,7 +338,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
             ) : null;
           })}
           {hasMore && (
-            <div className="w-full py-2 text-center">
+            <div className="w-full pt-2 text-center">
               {isLoading ? (
                 <div className="text-center">
                   <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
