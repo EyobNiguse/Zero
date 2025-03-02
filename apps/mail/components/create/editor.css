@@ -1,6 +1,6 @@
 /* Only show placeholder when editor is completely empty */
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: #c2c8d0;
+  color: #616161;
   content: "Start writing...";
   float: left;
   height: 0;
@@ -11,7 +11,7 @@
 
 /* Style for all empty paragraphs */
 .ProseMirror p.is-empty::before {
-  color: #c2c8d0;
+  color: #616161;
   content: "Continue writing...";
   float: left;
   height: 0;
