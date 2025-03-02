@@ -99,7 +99,7 @@ export default function Hero() {
       <Card className="mt-4 w-full border-none bg-transparent shadow-none">
         <CardContent className="flex flex-col items-center justify-center px-0">
           {showSuccess ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border p-8 text-center">
+            <div className="flex flex-col items-center justify-center gap-4 text-center">
               <p className="text-2xl font-semibold text-white">You're on the list! 🎉</p>
               <p className="text-shinyGray text-lg">
                 We'll let you know when we're ready to revolutionize your email experience.
