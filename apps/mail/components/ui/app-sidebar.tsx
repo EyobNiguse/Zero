@@ -63,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { toggleOpen: toggleAISidebar } = useAISidebar();
 
   return (
-    <Sidebar collapsible="icon" {...props} className="flex flex-col items-center pl-1">
+    <Sidebar collapsible="icon" {...props} className="flex flex-col items-center">
       <div className="flex w-full flex-col">
         <SidebarHeader className="flex flex-col gap-2 p-2">
           <NavUser />
@@ -107,14 +107,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             alt="Mail0 Logo"
             width={28}
             height={28}
-            className="hidden dark:block transition-transform duration-300 hover:rotate-90"
+            className="hidden transition-transform duration-300 hover:rotate-90 dark:block"
           />
           <Image
             src="/black-icon.svg"
             alt="Mail0 Logo"
             width={28}
             height={28}
-            className="dark:hidden transition-transform duration-300 hover:rotate-90"
+            className="transition-transform duration-300 hover:rotate-90 dark:hidden"
           />
         </div>
       </div>
