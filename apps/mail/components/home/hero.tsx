@@ -12,6 +12,7 @@ import confetti from "canvas-confetti";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import Image from "next/image";
+import { toast } from "sonner";
 import Link from "next/link";
 import axios from "axios";
 import { z } from "zod";
@@ -77,7 +78,7 @@ export default function Hero() {
         error,
         message: error instanceof Error ? error.message : "Unknown error",
       });
-      console.error("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
       console.log("Form submission completed");
