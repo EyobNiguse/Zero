@@ -2,7 +2,6 @@
 
 import { Form, FormControl, FormField, FormItem } from "../ui/form";
 import { AnimatedNumber } from "../ui/animated-number";
-import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "../ui/card";
 import { useState, useEffect } from "react";
@@ -25,7 +24,6 @@ export default function Hero() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [signupCount, setSignupCount] = useState<number>(0);
-  const [token, setToken] = useState<string>();
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -48,16 +46,12 @@ export default function Hero() {
   }, []);
 
   const onSubmit = async (values: z.infer<typeof betaSignupSchema>) => {
-    if (!token) {
-      return toast.error("Please complete the captcha before submitting");
-    }
     setIsSubmitting(true);
     try {
       console.log("Starting form submission with email:", values.email);
 
       const response = await axios.post("/api/auth/early-access", {
         email: values.email,
-        token,
       });
 
       console.log("Response data:", response.data);
@@ -109,7 +103,7 @@ export default function Hero() {
                 We'll let you know when we're ready to revolutionize your email experience.
               </p>
             </div>
-          ) : process.env.NODE_ENV === "development" ? (
+          ) : process.env.NODE_ENV !== "development" ? (
             <div className="flex items-center justify-center gap-4">
               <Button
                 variant="outline"
@@ -162,14 +156,7 @@ export default function Hero() {
               </form>
             </Form>
           )}
-          {process.env.NODE_ENV !== "development" && !showSuccess ? (
-            <span className="pt-4">
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-                onSuccess={setToken}
-              />
-            </span>
-          ) : null}
+
           {signupCount !== null && (
             <div className="text-shinyGray mt-4 text-center text-sm">
               <span className="font-semibold text-white">
