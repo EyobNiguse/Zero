@@ -1,8 +1,9 @@
 "use client";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
-import { preloadThread, useThreads } from "@/hooks/use-threads";
+import { preloadThread, useThread, useThreads } from "@/hooks/use-threads";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { markAsRead, markAsUnread } from "@/actions/mail";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,6 +14,8 @@ import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatDate } from "@/lib/utils";
 import { InitialThread } from "@/types";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 import { toast } from "sonner";
 
 interface MailListProps {
@@ -21,7 +24,7 @@ interface MailListProps {
   folder: string;
 }
 
-const HOVER_DELAY = 300; // ms before prefetching
+const HOVER_DELAY = 1000; // ms before prefetching
 
 type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
 
@@ -40,6 +43,7 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
   const isHovering = useRef<boolean>(false);
   const hasPrefetched = useRef<boolean>(false);
   const [searchValue] = useSearchValue();
+  const { hasUnread, mutate } = useThread(message.id ?? null);
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
@@ -66,10 +70,10 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
 
   const handleMailClick = async () => {
     onSelect(message);
-    if (!selectMode && !isMailSelected && message.unread) {
+    if ((!selectMode || selectMode === 'single') && !isMailSelected && hasUnread) {
       try {
         setMessage((prev) => ({ ...prev, unread: false }));
-        await markAsRead({ ids: [message.id] });
+        await markAsRead({ ids: [message.id] }).then(() => mutate()).catch(console.error);
       } catch (error) {
         console.error("Error marking message as read:", error);
       }
@@ -121,106 +125,133 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
   }, []);
 
   return (
-    <div
-      onClick={handleMailClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      key={message.id}
-      className={cn(
-        "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
-        !message.unread && "opacity-50",
-        (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
-        isCompact && "py-2",
-      )}
-    >
-      <div
-        className={cn(
-          "bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out",
-          isMailBulkSelected && "translate-x-0",
-        )}
-      />
-      <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-2">
-          <p
+    <Tooltip delayDuration={1500}>
+      <TooltipTrigger asChild>
+        <div
+          onClick={handleMailClick}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          key={message.id}
+          className={cn(
+            "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
+            !hasUnread && "opacity-50",
+            (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
+            isCompact && "py-2",
+          )}
+        >
+          <div
             className={cn(
-              message.unread ? "font-bold" : "font-medium",
-              "text-md flex items-baseline gap-1 group-hover:opacity-100",
+              "bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out",
+              isMailBulkSelected && "translate-x-0",
             )}
-          >
-            <span className={cn(mail.selected && "max-w-[120px] truncate")}>
-              {highlightText(message.sender.name, searchValue.highlight)}
-            </span>{" "}
-            {message.totalReplies !== 1 ? (
-              <span className="ml-0.5 text-xs opacity-70">{message.totalReplies}</span>
+          />
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-2">
+              <p
+                className={cn(
+                  hasUnread ? "font-bold" : "font-medium",
+                  "text-md flex items-baseline gap-1 group-hover:opacity-100",
+                )}
+              >
+                <span className={cn(mail.selected && "max-w-[120px] truncate")}>
+                  {highlightText(message.sender.name, searchValue.highlight)}
+                </span>{" "}
+                {message.totalReplies !== 1 ? (
+                  <span className="ml-0.5 text-xs opacity-70">{message.totalReplies}</span>
+                ) : null}
+                {hasUnread ? (
+                  <span className="ml-0.5 size-2 rounded-full bg-[#006FFE]" />
+                ) : null}
+              </p>
+            </div>
+            {message.receivedOn ? (
+              <p
+                className={cn(
+                  "text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100",
+                  isMailSelected && "opacity-100",
+                )}
+              >
+                {formatDate(message.receivedOn.split(".")[0] || "")}
+              </p>
             ) : null}
-            {message.unread ? <span className="bg-skyBlue ml-0.5 size-2 rounded-full" /> : null}
-          </p>
-        </div>
-        {message.receivedOn ? (
+          </div>
           <p
             className={cn(
-              "text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100",
+              "mt-1 text-xs opacity-70 transition-opacity",
+              mail.selected ? "line-clamp-1" : "line-clamp-2",
+              isCompact && "line-clamp-1",
               isMailSelected && "opacity-100",
             )}
           >
-            {formatDate(message.receivedOn.split(".")[0] ?? "")}
+            {highlightText(message.title, searchValue.highlight)}
           </p>
-        ) : null}
+          {!isCompact && <MailLabels labels={message.tags} />}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        align="start"
+        sideOffset={5}
+        className="compose-gradient max-h-[140px] w-[var(--radix-tooltip-trigger-width)] max-w-none overflow-hidden p-[1px]"
+      >
+        <div className="compose-gradient-inner hide-scrollbar w-full overflow-y-auto whitespace-normal break-words">
+          <StreamingText text="Anthropic is currently offering 25% off their pro tier, which expires tonight at 12:00 AM PST." />
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+const StreamingText = ({ text }: { text: string }) => {
+  const [displayText, setDisplayText] = useState("");
+  const [isComplete, setIsComplete] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    let currentIndex = 0;
+    setIsComplete(false);
+    setDisplayText("");
+
+    const interval = setInterval(() => {
+      if (currentIndex < text.length) {
+        const nextChar = text[currentIndex];
+        setDisplayText((prev) => prev + nextChar);
+        currentIndex++;
+      } else {
+        setIsComplete(true);
+        clearInterval(interval);
+      }
+    }, 40); // Slower typing speed for better readability
+
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-shrink-0">
+        <Image src="/ai.svg" alt="logo" className="h-4 w-4" width={100} height={100} />
       </div>
-      <p
+      <div
         className={cn(
-          "mt-1 text-xs opacity-70 transition-opacity",
-          mail.selected ? "line-clamp-1" : "line-clamp-2",
-          isCompact && "line-clamp-1",
-          isMailSelected && "opacity-100",
+          "bg-gradient-to-r from-neutral-500 via-neutral-300 to-neutral-500 bg-[length:200%_100%] bg-clip-text text-sm leading-relaxed text-transparent",
+          isComplete ? "animate-shine-slow" : "",
         )}
       >
-        {highlightText(message.title, searchValue.highlight)}
-      </p>
-      {!isCompact && <MailLabels labels={message.tags} />}
+        {displayText}
+        {isComplete ? null : (
+          <span className="animate-blink bg-primary ml-0.5 inline-block h-4 w-0.5"></span>
+        )}
+      </div>
     </div>
   );
 };
 
-export function MailList({ items: initialItems, isCompact, folder }: MailListProps) {
+export function MailList({ isCompact, folder }: MailListProps) {
   const [mail, setMail] = useMail();
   const { data: session } = useSession();
   const [searchValue] = useSearchValue();
-  const [items, setItems] = useState(initialItems);
-  const [pageToken, setPageToken] = useState<string | undefined>();
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
 
-  const { data, error } = useThreads(folder, undefined, searchValue.value, 20, pageToken);
-
-  useEffect(() => {
-    if (error) {
-      console.error("Error loading more emails:", error);
-      setIsLoading(false);
-      setHasMore(false);
-    }
-  }, [error]);
-
-  useEffect(() => {
-    setItems(initialItems);
-    setPageToken(undefined);
-    setHasMore(true);
-  }, [initialItems]);
-
-  useEffect(() => {
-    if (data?.threads) {
-      setItems((prev) => {
-        const existingIds = new Set(prev.map((item) => item.id));
-        const uniqueNewItems = data.threads.filter((item) => !existingIds.has(item.id));
-        console.log(`Adding ${uniqueNewItems.length} new unique items`);
-        return [...prev, ...uniqueNewItems];
-      });
-      setIsLoading(false);
-      if (!data.nextPageToken) {
-        setHasMore(false);
-      }
-    }
-  }, [data]);
+  const { data: { threads: items, nextPageToken }, isValidating, isLoading, loadMore } = useThreads(folder, undefined, searchValue.value, 20);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -235,8 +266,8 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   const virtualItems = virtualizer.getVirtualItems();
 
   const handleScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      if (!hasMore || isLoading) return;
+    async (e: React.UIEvent<HTMLDivElement>) => {
+      if (isLoading || isValidating) return;
 
       const target = e.target as HTMLDivElement;
       const { scrollTop, scrollHeight, clientHeight } = target;
@@ -244,11 +275,10 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
 
       if (scrolledToBottom) {
         console.log("Loading more items...");
-        setIsLoading(true);
-        if (data?.nextPageToken) setPageToken(data.nextPageToken.toString());
+        await loadMore()
       }
     },
-    [hasMore, isLoading, data?.nextPageToken, itemHeight],
+    [isLoading, isValidating, nextPageToken, itemHeight],
   );
 
   const [massSelectMode, setMassSelectMode] = useState(false);
@@ -498,7 +528,12 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   }
 
   return (
-    <ScrollArea ref={scrollRef} className="h-full pb-2" type="scroll" onScrollCapture={handleScroll}>
+    <ScrollArea
+      ref={scrollRef}
+      className="h-full pb-2"
+      type="scroll"
+      onScrollCapture={handleScroll}
+    >
       <div
         ref={parentRef}
         className={cn(
@@ -516,7 +551,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
           {virtualItems.map(({ index, key }) => {
             const item = items[index];
             return item ? (
-              <div className="mb-2" data-index={index} key={key} ref={virtualizer.measureElement} >
+              <div className="mb-2" data-index={index} key={key} ref={virtualizer.measureElement}>
                 <Thread
                   message={item}
                   selectMode={selectMode}
@@ -526,17 +561,15 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
               </div>
             ) : null;
           })}
-          {hasMore && (
-            <div className="w-full pt-2 text-center">
-              {isLoading ? (
-                <div className="text-center">
-                  <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                </div>
-              ) : (
-                <div className="h-4" />
-              )}
-            </div>
-          )}
+          <div className="w-full pt-2 text-center">
+            {isLoading || isValidating ? (
+              <div className="text-center">
+                <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+              </div>
+            ) : (
+              <div className="h-4" />
+            )}
+          </div>
         </div>
       </div>
     </ScrollArea>

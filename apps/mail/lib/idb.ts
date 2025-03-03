@@ -45,8 +45,6 @@ export function dexieStorageProvider(_: Readonly<Cache>): Cache {
       // Don't cache promises or undefined data
       if (value.data instanceof Promise || value.data === undefined) return;
 
-      console.log(key, value);
-
       memoryCache.set(key, value);
 
       // Sync to IndexedDB in the background

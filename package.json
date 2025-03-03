@@ -22,14 +22,14 @@
     "db:studio": "cd packages/db && pnpm run db:studio"
   },
   "devDependencies": {
-    "@types/node": "^22.13.5",
+    "@types/node": "22.13.8",
     "@zero/tsconfig": "workspace:*",
-    "husky": "^9.1.7",
-    "prettier": "^3.5.0",
-    "prettier-plugin-sort-imports": "^1.8.6",
-    "prettier-plugin-tailwindcss": "^0.6.11",
-    "turbo": "^2.4.2",
-    "typescript": "^5.7.3"
+    "husky": "9.1.7",
+    "prettier": "3.5.3",
+    "prettier-plugin-sort-imports": "1.8.6",
+    "prettier-plugin-tailwindcss": "0.6.11",
+    "turbo": "2.4.4",
+    "typescript": "5.8.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -38,6 +38,6 @@
   },
   "packageManager": "pnpm@10.2.0",
   "dependencies": {
-    "@vercel/analytics": "^1.5.0"
+    "@vercel/analytics": "1.5.0"
   }
 }

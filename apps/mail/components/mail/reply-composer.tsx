@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Editor from "@/components/create/editor";
 import { Button } from "@/components/ui/button";
 import { sendEmail } from "@/actions/send";
-import { useRef, useState } from "react";
+import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { ParsedMessage } from "@/types";
 import { Badge } from "../ui/badge";
 import { JSONContent } from "novel";
@@ -14,8 +14,19 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { UploadedFileIcon } from "@/components/create/uploaded-file-icon";
 
-export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[] }) {
+interface ReplyComposeProps {
+  emailData: ParsedMessage[];
+  isOpen?: boolean;
+  setIsOpen?: Dispatch<SetStateAction<boolean>>;
+}
+
+export default function ReplyCompose({ 
+  emailData, 
+  isOpen, 
+  setIsOpen 
+}: ReplyComposeProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -23,6 +34,16 @@ export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[]
   const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Use external state if provided, otherwise use internal state
+  const composerIsOpen = isOpen !== undefined ? isOpen : isComposerOpen;
+  const setComposerIsOpen = (value: boolean) => {
+    if (setIsOpen) {
+      setIsOpen(value);
+    } else {
+      setIsComposerOpen(value);
+    }
+  };
 
   const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -39,9 +60,6 @@ export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[]
   const removeAttachment = (index: number) => {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
-
-  const handleFocus = () => setIsTextAreaFocused(true);
-  const handleBlur = () => setIsTextAreaFocused(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
@@ -65,8 +83,12 @@ export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[]
       e.stopPropagation();
       setIsDragging(false);
       
-      if (e.dataTransfer.files) {
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         setAttachments([...attachments, ...Array.from(e.dataTransfer.files)]);
+        // Open the composer if it's not already open
+        if (!composerIsOpen) {
+          setComposerIsOpen(true);
+        }
       }
     }
   };
@@ -140,7 +162,7 @@ export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[]
       });
 
       setMessageContent("");
-      setIsComposerOpen(false);
+      setComposerIsOpen(false);
       toast.success("Email sent successfully!");
     } catch (error) {
       console.error("Error sending email:", error);
@@ -149,8 +171,8 @@ export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[]
   };
 
   const toggleComposer = () => {
-    setIsComposerOpen(!isComposerOpen);
-    if (!isComposerOpen) {
+    setComposerIsOpen(!composerIsOpen);
+    if (!composerIsOpen) {
       setTimeout(() => {
         editorRef.current?.focus();
       }, 0);
@@ -171,7 +193,7 @@ export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[]
   // Check if form is valid for submission
   const isFormValid = !isMessageEmpty || attachments.length > 0;
 
-  if (!isComposerOpen) {
+  if (!composerIsOpen) {
     return (
       <div className="bg-offsetLight dark:bg-offsetDark w-full p-2">
         <Button
@@ -298,31 +320,11 @@ export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[]
                             key={index}
                             className="group relative overflow-hidden rounded-md border"
                           >
-                            <div className="relative h-24 w-full overflow-hidden bg-muted">
-                              {file.type.startsWith("image/") ? (
-                                <Image
-                                  src={URL.createObjectURL(file) || "/placeholder.svg"}
-                                  alt={file.name}
-                                  fill
-                                  className="object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                  <FileIcon className="text-primary h-10 w-10" />
-                                </div>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-1 top-1 h-6 w-6 rounded-full bg-background/80 opacity-0 transition-opacity group-hover:opacity-100"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  removeAttachment(index);
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
+                            <UploadedFileIcon
+                              removeAttachment={removeAttachment}
+                              index={index}
+                              file={file}
+                            />
                             <div className="bg-muted/10 p-2">
                               <p className="text-xs font-medium">
                                 {truncateFileName(file.name, 20)}

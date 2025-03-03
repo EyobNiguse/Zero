@@ -36,8 +36,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const [, setMail] = useMail();
   const { data: emailData, isLoading } = useThread(mail ?? "");
   const [isMuted, setIsMuted] = useState(false);
-
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -61,26 +60,14 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [handleClose]);
 
-  const handleCopy = async () => {
-    if (emailData) {
-      try {
-        await navigator.clipboard.writeText(JSON.stringify(emailData, null, 2));
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
-      } catch (err) {
-        console.error("Failed to copy:", err);
-      }
-    }
-  };
-
   if (!emailData)
     return (
       <div className="flex h-screen flex-col">
         <div
           className={cn(
-            "relative flex h-full flex-col bg-background transition-all duration-300",
+            "bg-background relative flex h-full flex-col transition-all duration-300",
             isMobile ? "" : "rounded-r-lg",
-            isFullscreen ? "fixed inset-0 z-50 bg-background" : "",
+            isFullscreen ? "bg-background fixed inset-0 z-50" : "",
           )}
         >
           <MailHeaderSkeleton isFullscreen={isFullscreen} />
@@ -100,7 +87,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
     >
       <div
         className={cn(
-          "relative flex flex-col overflow-hidden bg-offsetLight transition-all duration-300 dark:bg-offsetDark",
+          "bg-offsetLight dark:bg-offsetDark relative flex flex-col overflow-hidden transition-all duration-300",
           isMobile ? "h-full" : "h-full",
           !isMobile && !isFullscreen && "rounded-r-lg",
           isFullscreen ? "fixed inset-0 z-50" : "",
@@ -148,29 +135,6 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="md:h-fit md:px-2"
-                  disabled={!emailData}
-                  onClick={handleCopy}
-                >
-                  {copySuccess ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      <span className="sr-only">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      <span className="sr-only">Copy email data</span>
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{copySuccess ? "Copied!" : "Copy email data"}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
                 <Button variant="ghost" className="md:h-fit md:px-2" disabled={!emailData}>
                   <Archive className="h-4 w-4" />
                   <span className="sr-only">Archive</span>
@@ -180,7 +144,12 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" className="md:h-fit md:px-2" disabled={!emailData}>
+                <Button
+                  variant="ghost"
+                  className="md:h-fit md:px-2"
+                  disabled={!emailData}
+                  onClick={() => setIsReplyOpen(true)}
+                >
                   <Reply className="h-4 w-4" />
                   <span className="sr-only">Reply</span>
                 </Button>
@@ -219,7 +188,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
                   key={message.id}
                   className={cn(
                     "transition-all duration-200",
-                    index > 0 && "border-t border-border",
+                    index > 0 && "border-border border-t",
                   )}
                 >
                   <MailDisplay
@@ -233,8 +202,8 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
               ))}
             </div>
           </ScrollArea>
-          <div className="flex-shrink-0">
-            <ReplyCompose emailData={emailData} />
+          <div className="flex-shrink-0 relative top-1">
+            <ReplyCompose emailData={emailData} isOpen={isReplyOpen} setIsOpen={setIsReplyOpen} />
           </div>
         </div>
       </div>
