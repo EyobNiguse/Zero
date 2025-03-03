@@ -27,11 +27,7 @@ export default async function MailPage({ params }: MailPageProps) {
 
   return (
     <Mail
-      accounts={accounts}
-      folder={folder}
-      defaultLayout={defaultLayout}
-      defaultCollapsed={defaultCollapsed}
-      navCollapsedSize={4}
+
     />
   );
 }
