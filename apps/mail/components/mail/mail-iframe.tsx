@@ -56,7 +56,7 @@ export function MailIframe({ html }: { html: string }) {
           loaded ? "opacity-100" : "opacity-0",
         )}
         title="Email Content"
-        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-scripts"
+        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         style={{
           width: "100%",
           overflow: "hidden",

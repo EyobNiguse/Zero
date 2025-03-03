@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "postgres": "^3.4.5",
-    "drizzle-orm": "^0.39.2"
+    "drizzle-orm": "0.39.3",
+    "postgres": "3.4.5"
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",
@@ -13,11 +13,11 @@
     "db:studio": "drizzle-kit studio"
   },
   "devDependencies": {
+    "@types/node": "22.13.8",
     "@zero/tsconfig": "workspace:*",
-    "@types/node": "^22.10.7",
-    "dotenv": "^16.4.7",
-    "drizzle-kit": "^0.30.4",
-    "typescript": "^5.7.3"
+    "dotenv": "16.4.7",
+    "drizzle-kit": "0.30.5",
+    "typescript": "5.8.2"
   },
   "exports": {
     ".": "./src/index.ts",

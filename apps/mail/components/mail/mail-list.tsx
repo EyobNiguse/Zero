@@ -3,7 +3,7 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
-import { preloadThread, useThreads } from "@/hooks/use-threads";
+import { preloadThread, useThread, useThreads } from "@/hooks/use-threads";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { markAsRead, markAsUnread } from "@/actions/mail";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -43,6 +43,7 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
   const isHovering = useRef<boolean>(false);
   const hasPrefetched = useRef<boolean>(false);
   const [searchValue] = useSearchValue();
+  const { hasUnread, mutate } = useThread(message.id ?? null);
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
@@ -69,10 +70,10 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
 
   const handleMailClick = async () => {
     onSelect(message);
-    if (!selectMode && !isMailSelected && message.unread) {
+    if ((!selectMode || selectMode === 'single') && !isMailSelected && hasUnread) {
       try {
         setMessage((prev) => ({ ...prev, unread: false }));
-        await markAsRead({ ids: [message.id] });
+        await markAsRead({ ids: [message.id] }).then(() => mutate()).catch(console.error);
       } catch (error) {
         console.error("Error marking message as read:", error);
       }
@@ -133,7 +134,7 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
           key={message.id}
           className={cn(
             "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
-            !message.unread && "opacity-50",
+            !hasUnread && "opacity-50",
             (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
             isCompact && "py-2",
           )}
@@ -148,7 +149,7 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
             <div className="flex items-center gap-2">
               <p
                 className={cn(
-                  message.unread ? "font-bold" : "font-medium",
+                  hasUnread ? "font-bold" : "font-medium",
                   "text-md flex items-baseline gap-1 group-hover:opacity-100",
                 )}
               >
@@ -158,7 +159,7 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
                 {message.totalReplies !== 1 ? (
                   <span className="ml-0.5 text-xs opacity-70">{message.totalReplies}</span>
                 ) : null}
-                {message.unread ? (
+                {hasUnread ? (
                   <span className="ml-0.5 size-2 rounded-full bg-[#006FFE]" />
                 ) : null}
               </p>
@@ -245,45 +246,12 @@ const StreamingText = ({ text }: { text: string }) => {
   );
 };
 
-export function MailList({ items: initialItems, isCompact, folder }: MailListProps) {
+export function MailList({ isCompact, folder }: MailListProps) {
   const [mail, setMail] = useMail();
   const { data: session } = useSession();
   const [searchValue] = useSearchValue();
-  const [items, setItems] = useState(initialItems);
-  const [pageToken, setPageToken] = useState<string | undefined>();
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
 
-  const { data, error } = useThreads(folder, undefined, searchValue.value, 20, pageToken);
-
-  useEffect(() => {
-    if (error) {
-      console.error("Error loading more emails:", error);
-      setIsLoading(false);
-      setHasMore(false);
-    }
-  }, [error]);
-
-  useEffect(() => {
-    setItems(initialItems);
-    setPageToken(undefined);
-    setHasMore(true);
-  }, [initialItems]);
-
-  useEffect(() => {
-    if (data?.threads) {
-      setItems((prev) => {
-        const existingIds = new Set(prev.map((item) => item.id));
-        const uniqueNewItems = data.threads.filter((item) => !existingIds.has(item.id));
-        console.log(`Adding ${uniqueNewItems.length} new unique items`);
-        return [...prev, ...uniqueNewItems];
-      });
-      setIsLoading(false);
-      if (!data.nextPageToken) {
-        setHasMore(false);
-      }
-    }
-  }, [data]);
+  const { data: { threads: items, nextPageToken }, isValidating, isLoading, loadMore } = useThreads(folder, undefined, searchValue.value, 20);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -298,8 +266,8 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   const virtualItems = virtualizer.getVirtualItems();
 
   const handleScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      if (!hasMore || isLoading) return;
+    async (e: React.UIEvent<HTMLDivElement>) => {
+      if (isLoading || isValidating) return;
 
       const target = e.target as HTMLDivElement;
       const { scrollTop, scrollHeight, clientHeight } = target;
@@ -307,11 +275,10 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
 
       if (scrolledToBottom) {
         console.log("Loading more items...");
-        setIsLoading(true);
-        if (data?.nextPageToken) setPageToken(data.nextPageToken.toString());
+        await loadMore()
       }
     },
-    [hasMore, isLoading, data?.nextPageToken, itemHeight],
+    [isLoading, isValidating, nextPageToken, itemHeight],
   );
 
   const [massSelectMode, setMassSelectMode] = useState(false);
@@ -594,17 +561,15 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
               </div>
             ) : null;
           })}
-          {hasMore && (
-            <div className="w-full pt-2 text-center">
-              {isLoading ? (
-                <div className="text-center">
-                  <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                </div>
-              ) : (
-                <div className="h-4" />
-              )}
-            </div>
-          )}
+          <div className="w-full pt-2 text-center">
+            {isLoading || isValidating ? (
+              <div className="text-center">
+                <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+              </div>
+            ) : (
+              <div className="h-4" />
+            )}
+          </div>
         </div>
       </div>
     </ScrollArea>
