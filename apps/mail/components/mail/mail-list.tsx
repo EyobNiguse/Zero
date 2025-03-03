@@ -1,5 +1,6 @@
 "use client";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
 import { preloadThread, useThreads } from "@/hooks/use-threads";
@@ -13,6 +14,8 @@ import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatDate } from "@/lib/utils";
 import { InitialThread } from "@/types";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 import { toast } from "sonner";
 
 interface MailListProps {
@@ -21,7 +24,7 @@ interface MailListProps {
   folder: string;
 }
 
-const HOVER_DELAY = 300; // ms before prefetching
+const HOVER_DELAY = 1000; // ms before prefetching
 
 type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
 
@@ -121,63 +124,123 @@ const Thread = ({ message: initialMessage, selectMode, onSelect, isCompact }: Th
   }, []);
 
   return (
-    <div
-      onClick={handleMailClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      key={message.id}
-      className={cn(
-        "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
-        !message.unread && "opacity-50",
-        (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
-        isCompact && "py-2",
-      )}
-    >
-      <div
-        className={cn(
-          "bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out",
-          isMailBulkSelected && "translate-x-0",
-        )}
-      />
-      <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-2">
-          <p
+    <Tooltip delayDuration={1500}>
+      <TooltipTrigger asChild>
+        <div
+          onClick={handleMailClick}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          key={message.id}
+          className={cn(
+            "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
+            !message.unread && "opacity-50",
+            (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
+            isCompact && "py-2",
+          )}
+        >
+          <div
             className={cn(
-              message.unread ? "font-bold" : "font-medium",
-              "text-md flex items-baseline gap-1 group-hover:opacity-100",
+              "bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out",
+              isMailBulkSelected && "translate-x-0",
             )}
-          >
-            <span className={cn(mail.selected && "max-w-[120px] truncate")}>
-              {highlightText(message.sender.name, searchValue.highlight)}
-            </span>{" "}
-            {message.totalReplies !== 1 ? (
-              <span className="ml-0.5 text-xs opacity-70">{message.totalReplies}</span>
+          />
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-2">
+              <p
+                className={cn(
+                  message.unread ? "font-bold" : "font-medium",
+                  "text-md flex items-baseline gap-1 group-hover:opacity-100",
+                )}
+              >
+                <span className={cn(mail.selected && "max-w-[120px] truncate")}>
+                  {highlightText(message.sender.name, searchValue.highlight)}
+                </span>{" "}
+                {message.totalReplies !== 1 ? (
+                  <span className="ml-0.5 text-xs opacity-70">{message.totalReplies}</span>
+                ) : null}
+                {message.unread ? (
+                  <span className="ml-0.5 size-2 rounded-full bg-[#006FFE]" />
+                ) : null}
+              </p>
+            </div>
+            {message.receivedOn ? (
+              <p
+                className={cn(
+                  "text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100",
+                  isMailSelected && "opacity-100",
+                )}
+              >
+                {formatDate(message.receivedOn.split(".")[0] || "")}
+              </p>
             ) : null}
-            {message.unread ? <span className="bg-skyBlue ml-0.5 size-2 rounded-full" /> : null}
-          </p>
-        </div>
-        {message.receivedOn ? (
+          </div>
           <p
             className={cn(
-              "text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100",
+              "mt-1 text-xs opacity-70 transition-opacity",
+              mail.selected ? "line-clamp-1" : "line-clamp-2",
+              isCompact && "line-clamp-1",
               isMailSelected && "opacity-100",
             )}
           >
-            {formatDate(message.receivedOn.split(".")[0] ?? "")}
+            {highlightText(message.title, searchValue.highlight)}
           </p>
-        ) : null}
+          {!isCompact && <MailLabels labels={message.tags} />}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        align="start"
+        sideOffset={5}
+        className="compose-gradient max-h-[140px] w-[var(--radix-tooltip-trigger-width)] max-w-none overflow-hidden p-[1px]"
+      >
+        <div className="compose-gradient-inner hide-scrollbar w-full overflow-y-auto whitespace-normal break-words">
+          <StreamingText text="Anthropic is currently offering 25% off their pro tier, which expires tonight at 12:00 AM PST." />
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+const StreamingText = ({ text }: { text: string }) => {
+  const [displayText, setDisplayText] = useState("");
+  const [isComplete, setIsComplete] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    let currentIndex = 0;
+    setIsComplete(false);
+    setDisplayText("");
+
+    const interval = setInterval(() => {
+      if (currentIndex < text.length) {
+        const nextChar = text[currentIndex];
+        setDisplayText((prev) => prev + nextChar);
+        currentIndex++;
+      } else {
+        setIsComplete(true);
+        clearInterval(interval);
+      }
+    }, 40); // Slower typing speed for better readability
+
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-shrink-0">
+        <Image src="/ai.svg" alt="logo" className="h-4 w-4" width={100} height={100} />
       </div>
-      <p
+      <div
         className={cn(
-          "mt-1 text-xs opacity-70 transition-opacity",
-          mail.selected ? "line-clamp-1" : "line-clamp-2",
-          isCompact && "line-clamp-1",
-          isMailSelected && "opacity-100",
+          "bg-gradient-to-r from-neutral-500 via-neutral-300 to-neutral-500 bg-[length:200%_100%] bg-clip-text text-sm leading-relaxed text-transparent",
+          isComplete ? "animate-shine-slow" : "",
         )}
       >
-        {highlightText(message.title, searchValue.highlight)}
-      </p>
-      {!isCompact && <MailLabels labels={message.tags} />}
+        {displayText}
+        {isComplete ? null : (
+          <span className="animate-blink bg-primary ml-0.5 inline-block h-4 w-0.5"></span>
+        )}
+      </div>
     </div>
   );
 };
@@ -498,7 +561,12 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
   }
 
   return (
-    <ScrollArea ref={scrollRef} className="h-full pb-2" type="scroll" onScrollCapture={handleScroll}>
+    <ScrollArea
+      ref={scrollRef}
+      className="h-full pb-2"
+      type="scroll"
+      onScrollCapture={handleScroll}
+    >
       <div
         ref={parentRef}
         className={cn(
@@ -516,7 +584,7 @@ export function MailList({ items: initialItems, isCompact, folder }: MailListPro
           {virtualItems.map(({ index, key }) => {
             const item = items[index];
             return item ? (
-              <div className="mb-2" data-index={index} key={key} ref={virtualizer.measureElement} >
+              <div className="mb-2" data-index={index} key={key} ref={virtualizer.measureElement}>
                 <Thread
                   message={item}
                   selectMode={selectMode}

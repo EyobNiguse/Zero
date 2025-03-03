@@ -187,3 +187,66 @@
     }
   }
 }
+
+/* Compose gradient styles */
+.compose-gradient {
+  background: linear-gradient(90deg, rgba(255, 213, 208, 1) 0%, rgba(219, 255, 228, 1) 50%, rgba(226, 214, 255, 1) 100%);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.compose-gradient-inner {
+  background-color: hsl(var(--background));
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Animation keyframes */
+@keyframes shine {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes shine-slow {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-shine {
+  animation: shine 3s linear infinite;
+}
+
+.animate-shine-slow {
+  animation: shine-slow 8s linear infinite;
+}
+
+.animate-blink {
+  animation: blink 0.8s ease-in-out infinite;
+}

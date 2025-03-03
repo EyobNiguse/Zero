@@ -103,14 +103,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       >
         <div className="">
           <Image
-            src="/white-icon.svg"
+            src="/ai.svg"
             alt="Mail0 Logo"
             width={28}
             height={28}
             className="hidden transition-transform duration-300 hover:rotate-90 dark:block"
           />
           <Image
-            src="/black-icon.svg"
+            src="/ai.svg"
             alt="Mail0 Logo"
             width={28}
             height={28}
