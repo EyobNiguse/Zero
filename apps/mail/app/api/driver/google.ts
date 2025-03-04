@@ -141,24 +141,24 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             });
         },
         count: async () => {
-            const folders = ["inbox", "spam"];
-            // this sometimes fails due to wrong credentials
+            const userLabels = await gmail.users.labels.list({
+                userId: 'me',
+            });
+
+            if (!userLabels.data.labels) {
+                return { count: 0 };
+            }
             return await Promise.all(
-                folders.map(async (folder) => {
-                    const { folder: normalizedFolder, q: normalizedQ } = normalizeSearch(folder, "");
-                    const labelIds = ["UNREAD"];
-                    if (normalizedFolder) labelIds.push(normalizedFolder.toUpperCase());
-                    const res = await gmail.users.threads.list({
-                        userId: "me",
-                        q: normalizedQ ? normalizedQ : undefined,
-                        labelIds,
-                    });
-                    return {
-                        folder: normalizedFolder,
-                        count: res.data.resultSizeEstimate,
-                    };
-                }),
-            );
+                userLabels.data.labels.map(async (label) => {
+                    return gmail.users.labels.get({
+                        userId: 'me',
+                        id: label.id ?? undefined,
+                    }).then((res) => ({
+                        label: res.data.name,
+                        count: res.data.threadsUnread
+                    }))
+                })
+            )
         },
         list: async (folder, q, maxResults = 20, _labelIds: string[] = [], pageToken?: string) => {
             const { folder: normalizedFolder, q: normalizedQ } = normalizeSearch(folder, q ?? "");

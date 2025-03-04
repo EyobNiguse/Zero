@@ -78,7 +78,7 @@ export const modifyLabels = async ({
   addLabels = [],
   removeLabels = []
 }: {
-  threadId: string;
+    threadId: string[];
   addLabels?: string[];
   removeLabels?: string[];
 }) => {
@@ -88,7 +88,7 @@ export const modifyLabels = async ({
 
   try {
     const driver = await getActiveDriver();
-    const { threadIds } = driver.normalizeIds([threadId]);
+    const { threadIds } = driver.normalizeIds(threadId);
 
     if (threadIds.length) {
       await driver.modifyLabels(threadIds, {

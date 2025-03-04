@@ -269,7 +269,7 @@ function BulkSelectActions() {
             <ArchiveX />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Move to Junk</TooltipContent>
+        <TooltipContent>Move to Spam</TooltipContent>
       </Tooltip>
     </div>
   );

@@ -30,6 +30,8 @@ import { useThreads } from "@/hooks/use-threads";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { modifyLabels } from "@/actions/mail";
 import { LABELS } from "@/lib/utils";
+import { useMail } from "../mail/use-mail";
+import { useStats } from "@/hooks/use-stats";
 
 interface EmailAction {
     id: string;
@@ -62,13 +64,11 @@ export function ThreadContextMenu({
 }: EmailContextMenuProps) {
     const { folder } = useParams<{ folder: string }>()
     const [searchValue] = useSearchValue();
+    const [mail, setMail] = useMail();
     const { mutate } = useThreads(folder, undefined, searchValue.value, 20);
     const currentFolder = folder ?? '';
     const isArchiveFolder = currentFolder === 'archive';
-    const archiveMail: any = () => { }
-    const moveToSpam: any = () => { }
-    const moveToInbox: any = () => { }
-    // const { archiveMail, moveToSpam, moveToInbox } = useMailMutation(currentFolder);
+    const { mutate: mutateStats } = useStats();
 
     const noopAction = () => async () => {
         console.log('Action will be implemented later');
@@ -94,15 +94,23 @@ export function ThreadContextMenu({
 
     const handleMove = (from: string, to: string) => async () => {
         try {
-            const targetId = threadId ? `thread:${threadId}` : emailId;
+            let targets = []
+            if (mail.bulkSelected.length) {
+                targets = mail.bulkSelected.map(id => `thread:${id}`)
+            } else {
+                targets = [threadId ? `thread:${threadId}` : emailId]
+            }
             return toast.promise(modifyLabels({
-                threadId: targetId,
+                threadId: targets,
                 addLabels: to ? [to] : [],
                 removeLabels: from ? [from] : []
-            }).then(() => mutate()), {
-                loading: "Moving thread...",
-                success: () => "Moved thread!",
-                error: "Error moving thread",
+            }).then(async () => {
+                await mutate().then(() => mutateStats());
+                return setMail({ ...mail, bulkSelected: [] });
+            }), {
+                loading: "Moving...",
+                success: () => "Moved",
+                error: "Error moving",
             })
         } catch (error) {
             console.error(`Error moving ${threadId ? 'email' : 'thread'}`, error);
