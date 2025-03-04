@@ -14,6 +14,7 @@ import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatDate, LABELS } from "@/lib/utils";
 import { InitialThread } from "@/types";
+import { useTheme } from "next-themes";
 import Image from "next/image";
 import { toast } from "sonner";
 import { ThreadContextMenu } from "../context/thread-context";
@@ -175,7 +176,7 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
               </p>
             ) : null}
           </div>
-          {data ? <StreamingText text={data.content} /> : <p
+          <p
             className={cn(
               "mt-1 text-xs opacity-70 transition-opacity",
               mail.selected ? "line-clamp-1" : "line-clamp-2",
@@ -184,7 +185,7 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
             )}
           >
             {highlightText(message.subject, searchValue.highlight)}
-          </p>}
+          </p>
           {!isCompact && <MailLabels labels={message.tags} />}
         </div>
       </TooltipTrigger>
