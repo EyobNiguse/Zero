@@ -156,7 +156,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
                         userId: 'me',
                         id: label.id ?? undefined,
                     }).then((res) => ({
-                        label: res.data.name ?? res.data.id,
+                        label: res.data.name ?? res.data.id ?? '',
                         count: res.data.threadsUnread
                     }))
                 })
