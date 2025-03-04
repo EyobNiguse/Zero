@@ -1,12 +1,13 @@
 "use client";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { compressText, decompressText, truncateFileName } from "@/lib/utils";
-import { ArrowUpIcon, Paperclip, Plus, X } from "lucide-react";
+import { cn, compressText, decompressText, truncateFileName } from "@/lib/utils";
+import { ArrowUpIcon, BookText, Paperclip, Plus, X } from "lucide-react";
 import { UploadedFileIcon } from "./uploaded-file-icon";
 import { Separator } from "@/components/ui/separator";
 import { SidebarToggle } from "../ui/sidebar-toggle";
 import { Button } from "@/components/ui/button";
+import { createDraft } from "@/actions/mail";
 import { sendEmail } from "@/actions/send";
 import { useQueryState } from "nuqs";
 import { toast } from "sonner";
@@ -34,6 +35,9 @@ interface EmailState {
   resetEditorKey: number;
   isAISidebarOpen: boolean;
   isDragging: boolean;
+  hasUnsavedChanges: boolean;
+  lastSavedAt: number;
+  draftId?: string;
 }
 
 type EmailAction =
@@ -47,33 +51,53 @@ type EmailAction =
   | { type: "RESET_EDITOR" }
   | { type: "TOGGLE_AI_SIDEBAR"; payload: boolean }
   | { type: "SET_DRAGGING"; payload: boolean }
-  | { type: "RESET_FORM" };
+  | { type: "RESET_FORM" }
+  | { type: "SET_UNSAVED_CHANGES"; payload: boolean }
+  | { type: "SET_LAST_SAVED"; payload: number }
+  | { type: "SET_DRAFT_ID"; payload: string };
 
 function emailReducer(state: EmailState, action: EmailAction): EmailState {
+  let newState = { ...state };
+
   switch (action.type) {
+    case "SET_DRAFT_ID":
+      return { ...state, draftId: action.payload };
+
+    case "SET_UNSAVED_CHANGES":
+      return { ...state, hasUnsavedChanges: action.payload };
+    case "SET_LAST_SAVED":
+      return { ...state, lastSavedAt: action.payload, hasUnsavedChanges: false };
+
     case "SET_TO_INPUT":
-      return { ...state, toInput: action.payload };
+      return { ...state, toInput: action.payload, hasUnsavedChanges: true };
     case "ADD_EMAIL":
       return {
         ...state,
         toEmails: [...state.toEmails, action.payload],
         toInput: "",
+        hasUnsavedChanges: true,
       };
     case "REMOVE_EMAIL":
       return {
         ...state,
         toEmails: state.toEmails.filter((_, i) => i !== action.payload),
+        hasUnsavedChanges: true,
       };
     case "SET_SUBJECT_INPUT":
-      return { ...state, subjectInput: action.payload };
+      return { ...state, subjectInput: action.payload, hasUnsavedChanges: true };
     case "SET_ATTACHMENTS":
-      return { ...state, attachments: action.payload };
+      return { ...state, attachments: action.payload, hasUnsavedChanges: true };
     case "ADD_ATTACHMENTS":
-      return { ...state, attachments: [...state.attachments, ...action.payload] };
+      return {
+        ...state,
+        attachments: [...state.attachments, ...action.payload],
+        hasUnsavedChanges: true,
+      };
     case "REMOVE_ATTACHMENT":
       return {
         ...state,
         attachments: state.attachments.filter((_, i) => i !== action.payload),
+        hasUnsavedChanges: true,
       };
     case "RESET_EDITOR":
       return { ...state, resetEditorKey: state.resetEditorKey + 1 };
@@ -89,6 +113,7 @@ function emailReducer(state: EmailState, action: EmailAction): EmailState {
         subjectInput: "",
         attachments: [],
         resetEditorKey: state.resetEditorKey + 1,
+        draftId: undefined,
       };
     default:
       return state;
@@ -104,7 +129,11 @@ export function CreateEmail() {
     resetEditorKey: 0,
     isAISidebarOpen: false,
     isDragging: false,
+    hasUnsavedChanges: false,
+    lastSavedAt: Date.now(),
   });
+
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const { toInput, subjectInput, attachments, resetEditorKey, isAISidebarOpen, isDragging } = state;
 
@@ -144,6 +173,51 @@ export function CreateEmail() {
       dispatch({ type: "ADD_ATTACHMENTS", payload: Array.from(e.target.files) });
     }
   };
+
+  const saveDraft = React.useCallback(async () => {
+    if (!state.toEmails.length && !state.subjectInput && !messageContent) {
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const draftData = {
+        to: state.toEmails.join(", "),
+        subject: state.subjectInput || "(no subject)",
+        message: messageContent || "",
+        attachments: state.attachments,
+        id: state.draftId ? state.draftId : undefined,
+      };
+
+      const response = await createDraft(draftData);
+
+      if (response?.id && response.id !== state.draftId) {
+        dispatch({ type: "SET_DRAFT_ID", payload: response.id });
+      }
+
+      dispatch({ type: "SET_LAST_SAVED", payload: Date.now() });
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast.error("Failed to save draft");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [state.toEmails, state.subjectInput, messageContent, state.attachments]);
+
+  // Autosave every 3 seconds if there are unsaved changes
+  React.useEffect(() => {
+    if (!state.hasUnsavedChanges) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      saveDraft();
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [state.hasUnsavedChanges, saveDraft]);
+
+  React.useEffect(() => {
+    dispatch({ type: "SET_UNSAVED_CHANGES", payload: true });
+  }, [messageContent]);
 
   const handleSendEmail = async () => {
     if (!state.toEmails.length) {
@@ -193,7 +267,7 @@ export function CreateEmail() {
     e.preventDefault();
     e.stopPropagation();
     dispatch({ type: "SET_DRAGGING", payload: false });
-    
+
     if (e.dataTransfer.files) {
       dispatch({ type: "ADD_ATTACHMENTS", payload: Array.from(e.dataTransfer.files) });
     }
@@ -202,31 +276,30 @@ export function CreateEmail() {
   // Add ref for to input
   const toInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Add keyboard shortcut handler
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Only trigger if "/" is pressed and no input/textarea is focused
-      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+      if (e.key === "/" && !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)) {
         e.preventDefault();
         toInputRef.current?.focus();
       }
     };
 
-    document.addEventListener('keydown', handleKeyPress);
-    return () => document.removeEventListener('keydown', handleKeyPress);
+    document.addEventListener("keydown", handleKeyPress);
+    return () => document.removeEventListener("keydown", handleKeyPress);
   }, []);
 
   return (
-    <div 
-      className="bg-offsetLight dark:bg-offsetDark flex h-full flex-col overflow-hidden shadow-inner md:rounded-2xl md:border md:shadow-sm relative"
+    <div
+      className="bg-offsetLight dark:bg-offsetDark relative flex h-full flex-col overflow-hidden shadow-inner md:rounded-2xl md:border md:shadow-sm"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {isDragging && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center border-2 border-dashed border-primary/30 rounded-2xl m-4">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <Paperclip className="h-12 w-12 text-muted-foreground" />
+        <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
+          <div className="text-muted-foreground flex flex-col items-center gap-2">
+            <Paperclip className="text-muted-foreground h-12 w-12" />
             <p className="text-lg font-medium">Drop files to attach</p>
           </div>
         </div>
@@ -247,7 +320,7 @@ export function CreateEmail() {
                   {state.toEmails.map((email, index) => (
                     <div
                       key={index}
-                      className="border flex items-center gap-1 rounded-md px-2 py-1  font-medium text-sm"
+                      className="flex items-center gap-1 rounded-md border px-2 py-1 text-sm font-medium"
                     >
                       <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
                         {email}
@@ -264,7 +337,7 @@ export function CreateEmail() {
                   <input
                     ref={toInputRef}
                     type="email"
-                    className="text-md min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] opacity-50 focus:outline-none relative left-[3px]"
+                    className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent opacity-50 placeholder:text-[#616161] focus:outline-none"
                     placeholder={state.toEmails.length ? "" : "luke@example.com"}
                     value={toInput}
                     onChange={(e) => dispatch({ type: "SET_TO_INPUT", payload: e.target.value })}
@@ -291,7 +364,7 @@ export function CreateEmail() {
                 </div>
                 <input
                   type="text"
-                  className="placeholder:text-[#616161] text-md relative left-[7.5px] w-full bg-transparent placeholder:opacity-50 focus:outline-none"
+                  className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
                   placeholder="Subject"
                   value={subjectInput}
                   onChange={(e) => dispatch({ type: "SET_SUBJECT_INPUT", payload: e.target.value })}
@@ -385,6 +458,33 @@ export function CreateEmail() {
               multiple
               onChange={handleAttachment}
             />
+            <Button
+              variant="outline"
+              className={cn(
+                "group relative w-9 overflow-hidden transition-all duration-200 hover:w-32",
+                {
+                  "w-32": isSaving,
+                },
+                state.hasUnsavedChanges
+                  ? "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                  : "bg-green-500/10 text-green-500 hover:bg-green-500/20",
+              )}
+              onClick={saveDraft}
+              // disabled={isSaving || !state.hasUnsavedChanges}
+            >
+              <BookText className="absolute left-[9px] h-6 w-6" />
+              <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                {isSaving ? (
+                  <>
+                    <span className="animate-pulse">Saving...</span>
+                  </>
+                ) : state.hasUnsavedChanges ? (
+                  <>Save draft</>
+                ) : (
+                  <>Draft saved</>
+                )}
+              </span>
+            </Button>
             <Button
               variant="default"
               className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-24"
