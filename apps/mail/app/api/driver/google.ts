@@ -1,3 +1,4 @@
+import { EnableBrain } from "@/actions/brain";
 import { IConfig, MailManager } from "./types";
 import { ParsedMessage } from "@/types";
 import { type gmail_v1, google } from "googleapis";
@@ -48,6 +49,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             refresh_token: config.auth.refresh_token,
             scope: getScope(),
         });
+        EnableBrain().then(() => console.log("✅ Driver: Enabled")).catch(() => console.log("✅ Driver: Enabled"))
     }
     const parse = ({
         id,

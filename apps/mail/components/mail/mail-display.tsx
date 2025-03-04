@@ -165,12 +165,12 @@ const MailDisplay = ({ emailData, isFullscreen, isMuted, index }: Props) => {
                     </PopoverContent>
                   </Popover>
                   <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
-                {isCollapsed ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronUp className="h-4 w-4" />
-                )}
-              </Button>
+                    {isCollapsed ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
