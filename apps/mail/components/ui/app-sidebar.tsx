@@ -33,7 +33,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (navigationConfig[currentSection]) {
       const items = [...navigationConfig[currentSection].sections];
 
-      if (currentSection === "mail" && stats) {
+      if (currentSection === "mail" && stats && stats.length) {
         if (items[0]?.items[0]) {
           items[0].items[0].badge = stats.find((stat) => stat.label.toLowerCase() === FOLDERS.INBOX)?.count ?? 0;
         }
