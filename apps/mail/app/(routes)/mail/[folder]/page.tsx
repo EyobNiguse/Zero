@@ -1,4 +1,4 @@
-import { Mail } from "@/components/mail/mail";
+import { MailLayout } from "@/components/mail/mail";
 
 interface MailPageProps {
   params: Promise<{
@@ -16,6 +16,6 @@ export default async function MailPage({ params }: MailPageProps) {
   }
 
   return (
-    <Mail />
+    <MailLayout />
   );
 }

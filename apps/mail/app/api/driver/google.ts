@@ -71,11 +71,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             payload?.headers?.find((h) => h.name?.toLowerCase() === "in-reply-to")?.value || "";
         const messageId =
             payload?.headers?.find((h) => h.name?.toLowerCase() === "message-id")?.value || "";
-        const [namePart, emailPart] = sender.includes("<")
-          ? sender.split("<")
-          : [sender, ""];
-        const name = namePart.replace(/"/g, "").trim() || "Unknown";
-        const email = emailPart ? `<${emailPart.replace(">", "").trim()}>` : "<unknown>";
+        const [name, email] = sender.split("<");
         return {
             id: id || "ERROR",
             threadId: threadId || "",
@@ -84,15 +80,14 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             references,
             inReplyTo,
             sender: {
-                name,
-                email,
-            },
-        }
+                name: name ? name.replace(/"/g, "").trim() : "Unknown",
+                email: `<${email}`,
+            }, 
             unread: labelIds ? labelIds.includes("UNREAD") : false,
             receivedOn,
             subject: subject ? subject.replace(/"/g, "").trim() : "No subject",
             messageId,
-        };
+        }
     };
     const normalizeSearch = (folder: string, q: string) => {
         if (folder === "trash") {
