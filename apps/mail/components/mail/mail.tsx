@@ -5,10 +5,10 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { AlignVerticalSpaceAround, ArchiveX, BellOff, SearchIcon, X } from "lucide-react";
 import { useState, useCallback, useMemo, useEffect, ReactNode } from "react";
-import { ThreadDisplay } from "@/components/mail/thread-display";
+import { ThreadDisplay, ThreadDemo } from "@/components/mail/thread-display";
 import { useMediaQuery } from "../../hooks/use-media-query";
 import { useSearchValue } from "@/hooks/use-search-value";
-import { MailList } from "@/components/mail/mail-list";
+import { MailList, MailListDemo } from "@/components/mail/mail-list";
 import { useMail } from "@/components/mail/use-mail";
 import { SidebarToggle } from "../ui/sidebar-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +21,114 @@ import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { SearchBar } from "./search-bar";
 import { cn } from "@/lib/utils";
+import items from './demo.json'
+
+export function DemoMailLayout() {
+  const mail = {
+    selected: 'demo'
+  }
+  const isMobile = false
+  const isValidating = false
+  const isLoading = false
+  const isDesktop = true
+  const [isCompact, setIsCompact] = useState(false)
+  const [open, setOpen] = useState(false)
+  const handleClose = () => setOpen(false)
+
+  return <TooltipProvider delayDuration={0}>
+    <div className="rounded-inherit flex">
+      <ResizablePanelGroup
+        direction="horizontal"
+        autoSaveId="mail-panel-layout"
+        className="rounded-inherit gap-1.5 overflow-hidden"
+      >
+        <ResizablePanel
+          className={cn(
+            "border-none !bg-transparent",
+            mail?.selected ? "md:hidden lg:block" : "", // Hide on md, but show again on lg and up
+          )}
+          defaultSize={isMobile ? 100 : 25}
+          minSize={isMobile ? 100 : 25}
+        >
+          <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
+            <div className={cn("compose-gradient h-0.5 w-full transition-opacity", isValidating ? "opacity-50" : "opacity-0")} />
+            <div
+              className={cn(
+                "sticky top-0 z-10 flex items-center justify-between gap-1.5 p-2 transition-colors",
+              )}
+            >
+              <SidebarToggle className="h-fit px-2" />
+              <Button
+                variant="ghost"
+                className="md:h-fit md:px-2"
+                onClick={() => setIsCompact(!isCompact)}
+              >
+                <AlignVerticalSpaceAround />
+              </Button>
+            </div>
+            <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
+              {isLoading ? (
+                <div className="flex flex-col">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="flex flex-col px-4 py-3">
+                      <div className="flex w-full items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                      <Skeleton className="mt-2 h-3 w-32" />
+                      <Skeleton className="mt-2 h-3 w-full" />
+                      <div className="mt-2 flex gap-2">
+                        <Skeleton className="h-4 w-16 rounded-full" />
+                        <Skeleton className="h-4 w-16 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <MailListDemo
+                  isCompact={isCompact}
+                />
+              )}
+            </div>
+          </div>
+        </ResizablePanel>
+
+        {isDesktop && mail.selected && (
+          <>
+            <ResizableHandle className="opacity-0" />
+            <ResizablePanel
+              className="shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm bg-offsetLight dark:bg-offsetDark"
+              defaultSize={75}
+              minSize={25}
+            >
+              <div className="hidden h-[calc(100vh-(12px+14px))] flex-1 md:block relative">
+                <ThreadDemo mail={[items[0]]} onClose={handleClose} />
+              </div>
+            </ResizablePanel>
+          </>
+        )}
+      </ResizablePanelGroup>
+
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-3rem)] overflow-hidden p-0">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>Email Details</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex h-full flex-col overflow-hidden">
+              <div className="flex-1 overflow-hidden">
+                <ThreadDisplay mail={mail.selected} onClose={handleClose} isMobile={true} />
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
+    </div>
+  </TooltipProvider>
+}
 
 export function MailLayout() {
   const { folder } = useParams<{ folder: string }>()

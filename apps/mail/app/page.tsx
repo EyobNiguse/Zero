@@ -3,6 +3,7 @@
 import HeroImage from "@/components/home/hero-image";
 import Navbar from "@/components/home/navbar";
 import Hero from "@/components/home/hero";
+import { DemoMailLayout } from "@/components/mail/mail";
 
 export default function Home() {
   return (
@@ -13,7 +14,9 @@ export default function Home() {
       <div className="relative mx-auto mb-4 flex flex-col">
         <Navbar />
         <Hero />
-        <HeroImage />
+        <div className="container mx-auto">
+          <DemoMailLayout />
+        </div>
       </div>
     </div>
   );
