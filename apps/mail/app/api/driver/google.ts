@@ -71,7 +71,11 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             payload?.headers?.find((h) => h.name?.toLowerCase() === "in-reply-to")?.value || "";
         const messageId =
             payload?.headers?.find((h) => h.name?.toLowerCase() === "message-id")?.value || "";
-        const [name, email] = sender.split("<");
+        const [namePart, emailPart] = sender.includes("<")
+          ? sender.split("<")
+          : [sender, ""];
+        const name = namePart.replace(/"/g, "").trim() || "Unknown";
+        const email = emailPart ? `<${emailPart.replace(">", "").trim()}>` : "<unknown>";
         return {
             id: id || "ERROR",
             threadId: threadId || "",
@@ -80,9 +84,10 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             references,
             inReplyTo,
             sender: {
-                name: name ? name.replace(/"/g, "").trim() : "Unknown",
-                email: `<${email}`,
+                name,
+                email,
             },
+        }
             unread: labelIds ? labelIds.includes("UNREAD") : false,
             receivedOn,
             subject: subject ? subject.replace(/"/g, "").trim() : "No subject",
