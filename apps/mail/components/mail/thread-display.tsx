@@ -144,6 +144,7 @@ export function ThreadDemo({ mail: emailData, onClose, isMobile }: ThreadDisplay
                 )}
               >
                 <MailDisplay
+                  demo
                   emailData={message}
                   isFullscreen={isFullscreen}
                   isMuted={false}

@@ -58,12 +58,13 @@ type Props = {
   isMuted: boolean;
   isLoading: boolean;
   index: number;
+  demo?: boolean;
 };
 
-const MailDisplay = ({ emailData, isFullscreen, isMuted, index }: Props) => {
+const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const [openDetailsPopover, setOpenDetailsPopover] = useState<boolean>(false);
-  const { data } = useSummary(emailData.id)
+  const { data } = demo ? { data: { content: 'This is a summary' } } : useSummary(emailData.id)
 
   useEffect(() => {
     if (index === 0) {
