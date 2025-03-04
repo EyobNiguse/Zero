@@ -22,7 +22,9 @@ import { useRouter } from "next/navigation";
 import { SearchBar } from "./search-bar";
 import { cn } from "@/lib/utils";
 
-export function Mail() {
+export function MailLayout() {
+    ...
+}
   const { folder } = useParams<{ folder: string }>()
   const [searchMode, setSearchMode] = useState(false);
   const [searchValue] = useSearchValue();
