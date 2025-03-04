@@ -14,11 +14,11 @@ import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatDate, LABELS } from "@/lib/utils";
 import { InitialThread } from "@/types";
-import { useTheme } from "next-themes";
 import Image from "next/image";
 import { toast } from "sonner";
 import { ThreadContextMenu } from "../context/thread-context";
 import { useParams } from "next/navigation";
+import { useSummary } from "@/hooks/use-summary";
 
 interface MailListProps {
   isCompact?: boolean;
@@ -64,6 +64,7 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
   const hasPrefetched = useRef<boolean>(false);
   const [searchValue] = useSearchValue();
   const { mutate } = useThreads(folder, undefined, searchValue.value, 20);
+  const { data } = useSummary(message.id)
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
@@ -174,7 +175,7 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
               </p>
             ) : null}
           </div>
-          <p
+          {data ? <StreamingText text={data.content} /> : <p
             className={cn(
               "mt-1 text-xs opacity-70 transition-opacity",
               mail.selected ? "line-clamp-1" : "line-clamp-2",
@@ -182,21 +183,11 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
               isMailSelected && "opacity-100",
             )}
           >
-            {highlightText(message.title, searchValue.highlight)}
-          </p>
+            {highlightText(message.subject, searchValue.highlight)}
+          </p>}
           {!isCompact && <MailLabels labels={message.tags} />}
         </div>
       </TooltipTrigger>
-      <TooltipContent
-        side="bottom"
-        align="start"
-        sideOffset={5}
-        className="compose-gradient max-h-[140px] w-[var(--radix-tooltip-trigger-width)] max-w-none overflow-hidden p-[1px]"
-      >
-        <div className="compose-gradient-inner hide-scrollbar w-full overflow-y-auto whitespace-normal break-words">
-          <StreamingText text="Anthropic is currently offering 25% off their pro tier, which expires tonight at 12:00 AM PST." />
-        </div>
-      </TooltipContent>
     </Tooltip>
   );
 };
@@ -204,7 +195,6 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     let currentIndex = 0;

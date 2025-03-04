@@ -1,3 +1,4 @@
+'use server'
 import { auth } from "@/lib/auth";
 import { db } from "@zero/db";
 import { connection, summary } from "@zero/db/schema";
