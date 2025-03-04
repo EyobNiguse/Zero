@@ -1,0 +1,111 @@
+[
+    {
+        "id": "love-001",
+        "threadId": "love-001",
+        "tags": [
+            "inbox",
+            "personal"
+        ],
+        "title": "🚨 EMERGENCY: I Might Be in Love with You 🚨",
+        "body": "Hey... so, I think I caught feelings. Is there a cure, or am I doomed? 😳",
+        "receivedOn": "2024-02-14",
+        "sender": {
+            "name": "Secret Admirer",
+            "email": "mystery@unknown.com"
+        },
+        "unread": true,
+        "subject": "HELP: Symptoms Include Butterflies and Overthinking",
+        "totalReplies": 3,
+        "decodedBody": "<p>Hey... so, I think I caught feelings. Is there a cure, or am I doomed? 😳</p>"
+    },
+    {
+        "id": "job-003",
+        "threadId": "job-003",
+        "tags": [
+            "inbox",
+            "work"
+        ],
+        "title": "⚡ URGENT: Someone Wants to Pay You to Exist",
+        "body": "Okay, not quite, but we do have a job for you. Are you in?",
+        "receivedOn": "2024-03-05",
+        "sender": {
+            "name": "Tech Recruiter",
+            "email": "hr@desperateforhelp.com"
+        },
+        "unread": false,
+        "subject": "Please Work for Us, We Are Begging",
+        "totalReplies": 4
+    },
+    {
+        "id": "job-001",
+        "threadId": "job-001",
+        "tags": [
+            "inbox",
+            "work"
+        ],
+        "title": "🎉 You Got a Job! (Just Kidding, But Let’s Talk)",
+        "body": "Hey, you look like someone who needs a paycheck. Want a job?",
+        "receivedOn": "2024-03-01",
+        "sender": {
+            "name": "HR Recruiter",
+            "email": "hireme@company.com"
+        },
+        "unread": false,
+        "subject": "Work 9-5, Make Money, Repeat",
+        "totalReplies": 5
+    },
+    {
+        "id": "love-002",
+        "threadId": "love-002",
+        "tags": [
+            "inbox",
+            "personal"
+        ],
+        "title": "💔 I Wrote You a Poem (And It’s Terrible)",
+        "body": "Roses are red, violets are blue, coffee this weekend, or should I be sad forever? ☕",
+        "receivedOn": "2024-02-10",
+        "sender": {
+            "name": "Emma",
+            "email": "emma@romantic.com"
+        },
+        "unread": true,
+        "subject": "Worst Poem Ever, But With Love",
+        "totalReplies": 2
+    },
+    {
+        "id": "job-002",
+        "threadId": "job-002",
+        "tags": [
+            "inbox",
+            "work"
+        ],
+        "title": "💰 Work From Home & Become a Millionaire*",
+        "body": "*Okay, maybe not a millionaire, but you’ll at least afford coffee. Interested?",
+        "receivedOn": "2024-03-04",
+        "sender": {
+            "name": "John Doe",
+            "email": "john.doe@scamfreejobs.com"
+        },
+        "unread": false,
+        "subject": "No Boss, No Office, Just You & A Laptop",
+        "totalReplies": 1
+    },
+    {
+        "id": "love-003",
+        "threadId": "love-003",
+        "tags": [
+            "inbox",
+            "personal"
+        ],
+        "title": "📅 Our First Date Was a Simulation (Or Was It?)",
+        "body": "I had an amazing time! Unless it was all a dream. Let’s do it again to confirm.",
+        "receivedOn": "2024-02-20",
+        "sender": {
+            "name": "Lily",
+            "email": "lily@maybearealperson.com"
+        },
+        "unread": true,
+        "subject": "Glitch in the Matrix? Or Just a Great Night?",
+        "totalReplies": 1
+    }
+]

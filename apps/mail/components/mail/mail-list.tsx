@@ -3,7 +3,7 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
-import { preloadThread, useThread, useThreads } from "@/hooks/use-threads";
+import { preloadThread, useThreads } from "@/hooks/use-threads";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { markAsRead, markAsUnread } from "@/actions/mail";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { ThreadContextMenu } from "../context/thread-context";
 import { useParams } from "next/navigation";
 import { useSummary } from "@/hooks/use-summary";
+import items from './demo.json'
 
 interface MailListProps {
   isCompact?: boolean;
@@ -34,6 +35,7 @@ type ThreadProps = {
   selectMode: MailSelectMode;
   onSelect: (message: InitialThread) => void;
   isCompact?: boolean;
+  demo?: boolean;
 };
 
 const highlightText = (text: string, highlight: string) => {
@@ -56,7 +58,7 @@ const highlightText = (text: string, highlight: string) => {
   });
 };
 
-const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
+const Thread = ({ message, selectMode, onSelect, isCompact, demo }: ThreadProps) => {
   const { folder } = useParams<{ folder: string }>()
   const [mail] = useMail();
   const { data: session } = useSession();
@@ -64,17 +66,17 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
   const isHovering = useRef<boolean>(false);
   const hasPrefetched = useRef<boolean>(false);
   const [searchValue] = useSearchValue();
-  const { mutate } = useThreads(folder, undefined, searchValue.value, 20);
-  const { data } = useSummary(message.id)
+  const { mutate } = demo ? { mutate: async () => { } } : useThreads(folder, undefined, searchValue.value, 20);
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 
   const handleMailClick = async () => {
+    if (demo) return;
     onSelect(message);
     if ((!selectMode || selectMode === 'single') && !isMailSelected && message.unread) {
       try {
-        await markAsRead({ ids: [message.id] }).then(() => mutate()).catch(console.error);
+        await markAsRead({ ids: [message.id] }).then(() => mutate() as any).catch(console.error);
       } catch (error) {
         console.error("Error marking message as read:", error);
       }
@@ -82,6 +84,7 @@ const Thread = ({ message, selectMode, onSelect, isCompact }: ThreadProps) => {
   };
 
   const handleMouseEnter = () => {
+    if (demo) return;
     isHovering.current = true;
 
     // Prefetch only in single select mode
@@ -235,6 +238,37 @@ const StreamingText = ({ text }: { text: string }) => {
     </div>
   );
 };
+
+export function MailListDemo({ isCompact }: MailListProps) {
+  return <ScrollArea
+    className="h-full pb-2"
+    type="scroll"
+  >
+    <div
+      className={cn(
+        "relative min-h-[calc(100vh-4rem)] w-full",
+
+      )}
+    >
+      <div
+        className="absolute left-0 top-0 w-full p-[8px]"
+      >
+        {items.map((item) => {
+          return item ? (
+            <Thread
+              demo
+              key={item.id}
+              message={item}
+              selectMode={'single'}
+              onSelect={() => console.log('Selected')}
+              isCompact={isCompact}
+            />
+          ) : null;
+        })}
+      </div>
+    </div>
+  </ScrollArea>
+}
 
 export function MailList({ isCompact }: MailListProps) {
   const { folder } = useParams<{ folder: string }>()
