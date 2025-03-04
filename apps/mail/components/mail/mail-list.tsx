@@ -12,11 +12,12 @@ import { useMail } from "@/components/mail/use-mail";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDate, LABELS } from "@/lib/utils";
 import { InitialThread } from "@/types";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import { toast } from "sonner";
+import { ThreadContextMenu } from "../context/thread-context";
 import { useParams } from "next/navigation";
 
 interface MailListProps {
@@ -550,14 +551,16 @@ export function MailList({ isCompact }: MailListProps) {
           {virtualItems.map(({ index, key }) => {
             const item = items[index];
             return item ? (
-              <div className="mb-2" data-index={index} key={key} ref={virtualizer.measureElement}>
-                <Thread
-                  message={item}
-                  selectMode={selectMode}
-                  onSelect={handleMailClick}
-                  isCompact={isCompact}
-                />
-              </div>
+              <ThreadContextMenu isSpam={item.tags.includes(LABELS.SPAM)} isInbox={item.tags.includes(LABELS.INBOX)} isSent={item.tags.includes(LABELS.SENT)} key={key} emailId={item.id} threadId={item.threadId}>
+                <div className="mb-2" data-index={index} ref={virtualizer.measureElement}>
+                  <Thread
+                    message={item}
+                    selectMode={selectMode}
+                    onSelect={handleMailClick}
+                    isCompact={isCompact}
+                  />
+                </div>
+              </ThreadContextMenu>
             ) : null;
           })}
           <div className="w-full pt-2 text-center">
