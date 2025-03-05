@@ -1,9 +1,9 @@
 "use client";
 
+import { DemoMailLayout } from "@/components/mail/mail";
 import HeroImage from "@/components/home/hero-image";
 import Navbar from "@/components/home/navbar";
 import Hero from "@/components/home/hero";
-import { DemoMailLayout } from "@/components/mail/mail";
 
 export default function Home() {
   return (
@@ -14,11 +14,16 @@ export default function Home() {
       <div className="relative mx-auto mb-4 flex flex-col">
         <Navbar />
         <Hero />
-        <div className="container mx-auto md:block hidden">
+        <div className="container mx-auto hidden md:block">
           <DemoMailLayout />
         </div>
+        <div className="container mx-auto block md:hidden">
+          <HeroImage />
+        </div>
         <div className="container mx-auto">
-          <p className="text-xs text-shinyGray mt-8">Zero Email Inc, 131 Continental Dr, Newark, Delaware, 19713-4305, United States</p>
+          <p className="text-shinyGray mt-8 text-xs">
+            Zero Email Inc, 131 Continental Dr, Newark, Delaware, 19713-4305, United States
+          </p>
         </div>
       </div>
     </div>
