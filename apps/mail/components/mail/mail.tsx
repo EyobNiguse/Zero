@@ -365,53 +365,49 @@ function BulkSelectActions() {
   );
 }
 
+const categories = [
+  {
+    name: "Primary",
+    searchValue: "",
+    icon: <Inbox className="h-4 w-4" />,
+    colors: "border-0 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70"
+  },
+  {
+    name: "Important",
+    searchValue: "is:important",
+    icon: <AlertTriangle className="h-4 w-4" />,
+    colors: "border-0 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30"
+  },
+  {
+    name: "Personal",
+    searchValue: "is:personal",
+    icon: <User className="h-4 w-4" />,
+    colors: "border-0 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30"
+  },
+  {
+    name: "Updates",
+    searchValue: "is:updates",
+    icon: <Bell className="h-4 w-4" />,
+    colors: "border-0 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30"
+  },
+  {
+    name: "Promotions",
+    searchValue: "is:promotions",
+    icon: <Tag className="h-4 w-4 rotate-90" />,
+    colors: "border-0 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30"
+  },
+];
+
 function MailCategoryTabs({ iconsOnly = false }: { iconsOnly?: boolean }) {
   const [, setSearchValue] = useSearchValue();
   const [activeCategory, setActiveCategory] = useState("Primary");
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
 
-  const categories = [
-    { 
-      name: "Primary", 
-      searchValue: "",
-      icon: <Inbox className="h-4 w-4" />,
-      colors: "border-0 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70"
-    },
-    { 
-      name: "Important", 
-      searchValue: "is:important",
-      icon: <AlertTriangle className="h-4 w-4" />,
-      colors: "border-0 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30"
-    },
-    { 
-      name: "Personal", 
-      searchValue: "is:personal",
-      icon: <User className="h-4 w-4" />,
-      colors: "border-0 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30"
-    },
-    { 
-      name: "Updates", 
-      searchValue: "is:updates",
-      icon: <Bell className="h-4 w-4" />,
-      colors: "border-0 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30"
-    },
-    { 
-      name: "Promotions", 
-      searchValue: "is:promotions",
-      icon: <Tag className="h-4 w-4 rotate-90" />,
-      colors: "border-0 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30"
-    },
-  ];
-
-  const activeTab = categories.find(cat => cat.name === activeCategory);
+  const activeTab = useMemo(() => categories.find(cat => cat.name === activeCategory), [activeCategory]);
 
   useEffect(() => {
     if (activeTab) {
-      const value = activeTab.name === "Primary" 
-        ? ""
-        : `has:${activeTab.searchValue.toLowerCase()}`
-      
       setSearchValue({
         value: activeTab.searchValue,
         highlight: "",
