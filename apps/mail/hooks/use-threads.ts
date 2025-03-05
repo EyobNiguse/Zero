@@ -81,7 +81,7 @@ export const useThreads = (
         )
         : null,
     fetchEmails as any,
-    { revalidateAll: true, revalidateOnMount: true, parallel: true }
+    { revalidateOnMount: true, revalidateIfStale: true, revalidateAll: false, revalidateFirstPage: true }
   );
 
   const threads = data ? data.flatMap(page => page.threads) : [];

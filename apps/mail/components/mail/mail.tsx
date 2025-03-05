@@ -20,7 +20,7 @@ import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { SearchBar } from "./search-bar";
-import { cn } from "@/lib/utils";
+import { cn, defaultPageSize } from "@/lib/utils";
 import items from "./demo.json";
 
 export function DemoMailLayout() {
@@ -90,7 +90,7 @@ export function DemoMailLayout() {
                     ))}
                   </div>
                 ) : (
-                  <MailListDemo isCompact={isCompact} />
+                    <MailListDemo />
                 )}
               </div>
             </div>
@@ -149,26 +149,7 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const labels = useMemo(() => {
-    if (filterValue === "all") {
-      if (searchParams.has("category")) {
-        return [`CATEGORY_${searchParams.get("category")!.toUpperCase()}`];
-      }
-      return undefined;
-    }
-    if (filterValue) {
-      if (searchParams.has("category")) {
-        return [
-          filterValue.toUpperCase(),
-          `CATEGORY_${searchParams.get("category")!.toUpperCase()}`,
-        ];
-      }
-      return [filterValue.toUpperCase()];
-    }
-    return undefined;
-  }, [filterValue, searchParams]);
-
-  const { isLoading, isValidating } = useThreads(folder, undefined, searchValue.value, 20);
+  const { isLoading, isValidating } = useThreads(folder, undefined, searchValue.value, defaultPageSize);
 
   const [open, setOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");

@@ -78,3 +78,4 @@ export const truncateFileName = (name: string, maxLength = 15) => {
 };
 
 export const fetcher = (url: string) => axios.get(url).then((res) => res.data);
+export const defaultPageSize = 20
