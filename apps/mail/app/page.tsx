@@ -21,7 +21,7 @@ export default function Home() {
           <HeroImage />
         </div>
         <div className="container mx-auto">
-          <p className="text-shinyGray mt-8 text-xs">
+          <p className="text-shinyGray mt-8 text-center text-xs md:text-left">
             Zero Email Inc, 131 Continental Dr, Newark, Delaware, 19713-4305, United States
           </p>
         </div>
