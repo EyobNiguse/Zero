@@ -137,9 +137,7 @@ export function MailLayout() {
   const [searchMode, setSearchMode] = useState(false);
   const [searchValue] = useSearchValue();
   const [mail, setMail] = useMail();
-  const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(false);
-  const [filterValue, setFilterValue] = useState<"all" | "unread">("all");
   const router = useRouter();
   const { data: session, isPending } = useSession();
 
@@ -261,7 +259,7 @@ export function MailLayout() {
                     ) : (
                       <>
                         <div className="flex-1 text-center text-sm font-medium capitalize">
-                          <MailCategoryTabs />
+                            <MailCategoryTabs iconsOnly={!!mail.selected} />
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Button
