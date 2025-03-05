@@ -1,27 +1,28 @@
 "use client";
 
+import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, Tag, User, Bell, Briefcase, Users } from "lucide-react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
+import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 import { preloadThread, useThreads } from "@/hooks/use-threads";
+import { ThreadContextMenu } from "../context/thread-context";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { markAsRead, markAsUnread } from "@/actions/mail";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMail } from "@/components/mail/use-mail";
+import { cn, formatDate, LABELS } from "@/lib/utils";
+import { useSummary } from "@/hooks/use-summary";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
-import { cn, formatDate, LABELS } from "@/lib/utils";
+import { useParams } from "next/navigation";
 import { InitialThread } from "@/types";
 import { useTheme } from "next-themes";
+import { Button } from "../ui/button";
+import items from "./demo.json";
 import Image from "next/image";
 import { toast } from "sonner";
-import { ThreadContextMenu } from "../context/thread-context";
-import { useParams } from "next/navigation";
-import { useSummary } from "@/hooks/use-summary";
-import { AlertTriangle, Tag, User, Bell, Briefcase, Users } from "lucide-react";
-import items from './demo.json'
 
 interface MailListProps {
   isCompact?: boolean;
@@ -59,15 +60,17 @@ const highlightText = (text: string, highlight: string) => {
   });
 };
 
-const Thread = ({ message, selectMode, onSelect, isCompact, demo }: ThreadProps) => {
-  const { folder } = useParams<{ folder: string }>()
+const Thread = memo(({ message, selectMode, onSelect, isCompact, demo }: ThreadProps) => {
+  const { folder } = useParams<{ folder: string }>();
   const [mail] = useMail();
   const { data: session } = useSession();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isHovering = useRef<boolean>(false);
   const hasPrefetched = useRef<boolean>(false);
   const [searchValue] = useSearchValue();
-  const { mutate } = demo ? { mutate: async () => { } } : useThreads(folder, undefined, searchValue.value, 20);
+  const { mutate } = demo
+    ? { mutate: async () => {} }
+    : useThreads(folder, undefined, searchValue.value, 20);
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
@@ -75,9 +78,11 @@ const Thread = ({ message, selectMode, onSelect, isCompact, demo }: ThreadProps)
   const handleMailClick = async () => {
     if (demo) return;
     onSelect(message);
-    if ((!selectMode || selectMode === 'single') && !isMailSelected && message.unread) {
+    if ((!selectMode || selectMode === "single") && !isMailSelected && message.unread) {
       try {
-        await markAsRead({ ids: [message.id] }).then(() => mutate() as any).catch(console.error);
+        await markAsRead({ ids: [message.id] })
+          .then(() => mutate() as any)
+          .catch(console.error);
       } catch (error) {
         console.error("Error marking message as read:", error);
       }
@@ -167,7 +172,6 @@ const Thread = ({ message, selectMode, onSelect, isCompact, demo }: ThreadProps)
                 {message.unread ? (
                   <span className="ml-0.5 size-2 rounded-full bg-[#006FFE]" />
                 ) : null}
-                
               </p>
               <MailLabels labels={message.tags} />
             </div>
@@ -197,7 +201,7 @@ const Thread = ({ message, selectMode, onSelect, isCompact, demo }: ThreadProps)
       </TooltipTrigger>
     </Tooltip>
   );
-};
+});
 
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState("");
@@ -243,58 +247,54 @@ const StreamingText = ({ text }: { text: string }) => {
 };
 
 export function MailListDemo({ isCompact }: MailListProps) {
-  return <ScrollArea
-    className="h-full pb-2"
-    type="scroll"
-  >
-    <div
-      className={cn(
-        "relative min-h-[calc(100vh-4rem)] w-full",
-
-      )}
-    >
-      <div
-        className="absolute left-0 top-0 w-full p-[8px]"
-      >
-        {items.map((item) => {
-          return item ? (
-            <Thread
-              demo
-              key={item.id}
-              message={item}
-              selectMode={'single'}
-              onSelect={() => console.log('Selected')}
-              isCompact={isCompact}
-            />
-          ) : null;
-        })}
+  return (
+    <ScrollArea className="h-full pb-2" type="scroll">
+      <div className={cn("relative min-h-[calc(100vh-4rem)] w-full")}>
+        <div className="absolute left-0 top-0 w-full p-[8px]">
+          {items.map((item) => {
+            return item ? (
+              <Thread
+                demo
+                key={item.id}
+                message={item}
+                selectMode={"single"}
+                onSelect={() => console.log("Selected")}
+                isCompact={isCompact}
+              />
+            ) : null;
+          })}
+        </div>
       </div>
-    </div>
-  </ScrollArea>
+    </ScrollArea>
+  );
 }
 
 export function MailList({ isCompact }: MailListProps) {
-  const { folder } = useParams<{ folder: string }>()
+  const { folder } = useParams<{ folder: string }>();
   const [mail, setMail] = useMail();
   const { data: session } = useSession();
   const [searchValue] = useSearchValue();
 
-  const { data: { threads: items, nextPageToken }, isValidating, isLoading, loadMore } = useThreads(folder, undefined, searchValue.value, 20);
+  const {
+    data: { threads: items, nextPageToken },
+    isValidating,
+    isLoading,
+    loadMore,
+  } = useThreads(folder, undefined, searchValue.value, 20);
 
-  const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemHeight = isCompact ? 64 : 96;
 
-  const virtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => itemHeight,
-  });
+  // const virtualizer = useVirtualizer({
+  //   count: items.length,
+  //   getScrollElement: () => scrollRef.current,
+  //   estimateSize: () => itemHeight,
+  // });
 
-  const virtualItems = virtualizer.getVirtualItems();
+  // const virtualItems = virtualizer.getVirtualItems();
 
   const handleScroll = useCallback(
-    async (e: React.UIEvent<HTMLDivElement>) => {
+    (e: React.UIEvent<HTMLDivElement>) => {
       if (isLoading || isValidating) return;
 
       const target = e.target as HTMLDivElement;
@@ -303,10 +303,10 @@ export function MailList({ isCompact }: MailListProps) {
 
       if (scrolledToBottom) {
         console.log("Loading more items...");
-        await loadMore()
+        loadMore();
       }
     },
-    [isLoading, isValidating, nextPageToken, itemHeight],
+    [isLoading, isValidating, itemHeight],
   );
 
   const [massSelectMode, setMassSelectMode] = useState(false);
@@ -563,24 +563,29 @@ export function MailList({ isCompact }: MailListProps) {
       onScrollCapture={handleScroll}
     >
       <div
-        ref={parentRef}
         className={cn(
           "relative min-h-[calc(100vh-4rem)] w-full",
           selectMode === "range" && "select-none",
+          // `h-[${virtualizer.getTotalSize()}px]`,
         )}
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-        }}
       >
         <div
-          style={{ transform: `translateY(${virtualItems[0]?.start ?? 0}px)` }}
-          className="absolute left-0 top-0 w-full p-[8px]"
+          className={cn(
+            "absolute left-0 top-0 w-full p-[8px]",
+            // `translate-y-[${virtualizer.getVirtualItems()[0]?.start ?? 0}px]`,
+          )}
         >
-          {virtualItems.map(({ index, key }) => {
-            const item = items[index];
+          {items.map((item, index) => {
             return item ? (
-              <ThreadContextMenu isSpam={item.tags.includes(LABELS.SPAM)} isInbox={item.tags.includes(LABELS.INBOX)} isSent={item.tags.includes(LABELS.SENT)} key={key} emailId={item.id} threadId={item.threadId}>
-                <div className="mb-2" data-index={index} ref={virtualizer.measureElement}>
+              <ThreadContextMenu
+                isSpam={item.tags.includes(LABELS.SPAM)}
+                isInbox={item.tags.includes(LABELS.INBOX)}
+                isSent={item.tags.includes(LABELS.SENT)}
+                key={item.id}
+                emailId={item.id}
+                threadId={item.threadId}
+              >
+                <div className="mb-2" data-index={index}>
                   <Thread
                     message={item}
                     selectMode={selectMode}
@@ -591,6 +596,30 @@ export function MailList({ isCompact }: MailListProps) {
               </ThreadContextMenu>
             ) : null;
           })}
+
+          {/* {virtualizer.getVirtualItems().map((value, index) => {
+            const item = items[value.index];
+            return item ? (
+              <ThreadContextMenu
+                isSpam={item.tags.includes(LABELS.SPAM)}
+                isInbox={item.tags.includes(LABELS.INBOX)}
+                isSent={item.tags.includes(LABELS.SENT)}
+                key={item.id}
+                emailId={item.id}
+                threadId={item.threadId}
+              >
+                <div className="mb-2" data-index={index}>
+                  <Thread
+                    message={item}
+                    selectMode={selectMode}
+                    onSelect={handleMailClick}
+                    isCompact={isCompact}
+                  />
+                </div>
+              </ThreadContextMenu>
+            ) : null;
+          })} */}
+
           <div className="w-full pt-2 text-center">
             {isLoading || isValidating ? (
               <div className="text-center">
@@ -621,7 +650,7 @@ function MailLabels({ labels }: { labels: string[] }) {
         const style = getDefaultBadgeStyle(label);
         // Skip rendering if style is "secondary" (default case)
         if (style === "secondary") return null;
-        
+
         return (
           <Badge key={label} className="rounded-full p-1" variant={style}>
             {getLabelIcon(label)}
