@@ -68,7 +68,8 @@ export const useThreads = (folder: string, labelIds?: string[], query?: string, 
     fetchEmails,
     {
       persistSize: false,
-      parallel: true,
+      // TODO: check why parallel is fetching the same page (making duplicate requests, so same thread output)
+      // parallel: true,
       revalidateAll: true,
       revalidateOnMount: true,
     },
