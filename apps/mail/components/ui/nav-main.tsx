@@ -9,16 +9,13 @@ import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarGroupLabel,
   SidebarMenuButton,
 } from "./sidebar";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { BASE_URL } from "@/lib/constants";
-import { mailCount } from "@/actions/mail";
 import { cn } from "@/lib/utils";
-import useSWR from "swr";
+import { useStats } from "@/hooks/use-stats";
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -152,7 +149,7 @@ export function NavMain({ items }: NavMainProps) {
 
   return (
     <SidebarGroup className="space-y-2.5 py-0">
-      <SidebarMenu className="space-y-">
+      <SidebarMenu>
         {items.map((section) => (
           <Collapsible
             key={section.title}
@@ -180,11 +177,7 @@ export function NavMain({ items }: NavMainProps) {
 
 function NavItem(item: NavItemProps & { href: string }) {
   const iconRef = useRef<IconRefType>(null);
-  const { data: session } = useSession();
-  const { data: stats } = useSWR<{ folder: string; count: number }[]>(
-    session?.connectionId ? `/mail-count/${session?.connectionId}` : null,
-    mailCount,
-  );
+  const { data: stats } = useStats();
 
   if (item.disabled) {
     return (
@@ -192,7 +185,7 @@ function NavItem(item: NavItemProps & { href: string }) {
         tooltip={item.title}
         className="flex cursor-not-allowed items-center opacity-50"
       >
-        {item.icon && <item.icon ref={iconRef} className="relative mr-3 h-3 w-3.5" />}
+        {item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
         <p className="mt-0.5 text-[13px]">{item.title}</p>
       </SidebarMenuButton>
     );
@@ -216,11 +209,11 @@ function NavItem(item: NavItemProps & { href: string }) {
         item.isActive && "bg-subtleWhite text-accent-foreground dark:bg-subtleBlack",
       )}
     >
-      {item.icon && <item.icon ref={!item.isBackButton ? iconRef : undefined} className="" />}
+      {item.icon && <item.icon ref={!item.isBackButton ? iconRef : undefined} className="mr-2" />}
       <p className="mt-0.5 text-[13px]">{item.title}</p>
-      {stats && stats.find((stat) => stat.folder === item.title.toLowerCase()) && (
-        <Badge className="ml-auto" variant="outline">
-          {stats.find((stat) => stat.folder === item.title.toLowerCase())?.count}
+      {stats && stats.find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase()) && (
+        <Badge className="ml-auto rounded-md" variant="outline">
+          {stats.find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase())?.count?.toLocaleString()}
         </Badge>
       )}
     </SidebarMenuButton>
