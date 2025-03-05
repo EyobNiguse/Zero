@@ -18,7 +18,7 @@ export default function Home() {
           <DemoMailLayout />
         </div>
         <div className="container mx-auto">
-          <p className="text-xs text-shinyGray mt-8">Zero Email Inc, 4409 Verbena Street, Midlothian, Texas, 76065, United States</p>
+          <p className="text-xs text-shinyGray mt-8">Zero Email Inc, 131 Continental Dr, Newark, Delaware, 19713-4305, United States</p>
         </div>
       </div>
     </div>
