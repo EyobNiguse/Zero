@@ -116,3 +116,19 @@ export const createDraft = async (data: any) => {
     return { success: false, error: String(error) };
   }
 };
+
+export const getDraft = async (id: string) => {
+  if (!id) {
+    throw new Error("Missing draft ID");
+  }
+
+  console.log("getting email:", id);
+
+  try {
+    const driver = await getActiveDriver();
+    return await driver.getDraft(id);
+  } catch (error) {
+    console.error("Error getting draft:", error);
+    throw error;
+  }
+};

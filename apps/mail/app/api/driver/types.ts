@@ -4,6 +4,7 @@ export interface MailManager {
   get(id: string): Promise<ParsedMessage[] | undefined>;
   create(data: any): Promise<any>;
   createDraft(data: any): Promise<any>;
+  getDraft: (id: string) => Promise<any>;
   delete(id: string): Promise<any>;
   list<T>(
     folder: string,

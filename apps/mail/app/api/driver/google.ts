@@ -313,6 +313,10 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
       return res.data;
     },
+    getDraft: async (id: string) => {
+      const res = await gmail.users.drafts.get({ userId: "me", id });
+      return res.data;
+    },
     async modifyLabels(id, options) {
       await gmail.users.messages.batchModify({
         userId: "me",
