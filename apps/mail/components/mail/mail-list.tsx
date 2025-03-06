@@ -180,7 +180,7 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
 });
 
 
-export function MailListDemo() {
+export function MailListDemo({ items: filteredItems = items }) {
   return <ScrollArea
     className="h-full pb-2"
     type="scroll"
@@ -188,13 +188,12 @@ export function MailListDemo() {
     <div
       className={cn(
         "relative min-h-[calc(100vh-4rem)] w-full",
-
       )}
     >
       <div
         className="absolute left-0 top-0 w-full p-[8px]"
       >
-        {items.map((item) => {
+        {filteredItems.map((item) => {
           return item ? (
             <Thread
               demo

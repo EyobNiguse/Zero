@@ -26,16 +26,37 @@ import { XIcon } from "../icons/animated/x";
 import { SearchIcon } from "../icons/animated/search";
 
 export function DemoMailLayout() {
-  const mail = {
+  const [mail, setMail] = useState({
     selected: "demo",
-  };
+    bulkSelected: [],
+  });
   const isMobile = false;
   const isValidating = false;
   const isLoading = false;
   const isDesktop = true;
-  const [isCompact, setIsCompact] = useState(true);
   const [open, setOpen] = useState(false);
   const handleClose = () => setOpen(false);
+  const [activeCategory, setActiveCategory] = useState("Primary");
+  const [filteredItems, setFilteredItems] = useState(items);
+
+  useEffect(() => {
+    if (activeCategory === "Primary") {
+      setFilteredItems(items);
+    } else {
+      const categoryMap = {
+        "Important": "important",
+        "Personal": "personal",
+        "Updates": "updates",
+        "Promotions": "promotions"
+      };
+      
+      const filterTag = categoryMap[activeCategory as keyof typeof categoryMap];
+      const filtered = items.filter(item => 
+        item.tags && item.tags.includes(filterTag)
+      );
+      setFilteredItems(filtered);
+    }
+  }, [activeCategory]);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -67,7 +88,11 @@ export function DemoMailLayout() {
               >
                 <SidebarToggle className="h-fit px-2" />
                 <div>
-                  <MailCategoryTabs iconsOnly={true} />
+                  <MailCategoryTabs 
+                    iconsOnly={true} 
+                    onCategoryChange={setActiveCategory}
+                    initialCategory={activeCategory}
+                  />
                 </div>
               </div>
 
@@ -92,7 +117,7 @@ export function DemoMailLayout() {
                     ))}
                   </div>
                 ) : (
-                    <MailListDemo />
+                    <MailListDemo items={filteredItems} />
                 )}
               </div>
             </div>
@@ -107,7 +132,7 @@ export function DemoMailLayout() {
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDemo mail={[items[0]]} onClose={handleClose} />
+                  <ThreadDemo mail={[filteredItems[0]]} onClose={handleClose} />
                 </div>
               </ResizablePanel>
             </>
@@ -400,16 +425,26 @@ const categories = [
   },
 ];
 
-function MailCategoryTabs({ iconsOnly = false, isLoading = false }: { iconsOnly?: boolean, isLoading?: boolean }) {
+function MailCategoryTabs({ 
+  iconsOnly = false, 
+  isLoading = false,
+  onCategoryChange,
+  initialCategory
+}: { 
+  iconsOnly?: boolean, 
+  isLoading?: boolean,
+  onCategoryChange?: (category: string) => void,
+  initialCategory?: string
+}) {
   const [, setSearchValue] = useSearchValue();
   
-  // Initialize from localStorage with fallback to "Primary"
+  // Initialize from localStorage with fallback to "Primary" or initialCategory
   const [activeCategory, setActiveCategory] = useState(() => {
     // Only run in browser environment
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('mailActiveCategory') || "Primary";
+      return initialCategory || localStorage.getItem('mailActiveCategory') || "Primary";
     }
-    return "Primary";
+    return initialCategory || "Primary";
   });
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -420,7 +455,10 @@ function MailCategoryTabs({ iconsOnly = false, isLoading = false }: { iconsOnly?
   // Save to localStorage when activeCategory changes
   useEffect(() => {
     localStorage.setItem('mailActiveCategory', activeCategory);
-  }, [activeCategory]);
+    if (onCategoryChange) {
+      onCategoryChange(activeCategory);
+    }
+  }, [activeCategory, onCategoryChange]);
 
   useEffect(() => {
     if (activeTab && !isLoading) {
@@ -479,24 +517,32 @@ function MailCategoryTabs({ iconsOnly = false, isLoading = false }: { iconsOnly?
       <ul className="flex justify-center gap-1.5">
         {categories.map((category) => (
           <li key={category.name}>
-            <button
-              ref={activeCategory === category.name ? activeTabElementRef : null}
-              data-tab={category.name}
-              onClick={() => {
-                setActiveCategory(category.name);
-              }}
-              className={cn(
-                "flex h-7 items-center gap-1.5 px-2 text-xs font-medium rounded-full transition-all duration-200",
-                activeCategory === category.name 
-                  ? category.colors
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )}
-            >
-              {category.icon}
-              <span className={cn("hidden", (!iconsOnly && "md:inline"))}>
-                {category.name}
-              </span>
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  ref={activeCategory === category.name ? activeTabElementRef : null}
+                  data-tab={category.name}
+                  onClick={() => {
+                    setActiveCategory(category.name);
+                  }}
+                  className={cn(
+                    "flex h-7 items-center gap-1.5 px-2 text-xs font-medium rounded-full transition-all duration-200",
+                    activeCategory === category.name 
+                      ? category.colors
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                    {category.icon}
+                    <span className={cn("hidden", (!iconsOnly && "md:inline"))}>
+                      {category.name}
+                    </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>{category.name}</span>
+              </TooltipContent>
+            </Tooltip>
+            
           </li>
         ))}
       </ul>
