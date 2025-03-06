@@ -24,7 +24,7 @@ export default function Navbar() {
     <div className="mx-auto flex w-full items-center justify-between p-4 px-7 lg:px-20">
       <Image 
         src="/white-icon.svg" 
-        alt="Mail0" 
+        alt="zerodotemail" 
         className="h-9 w-9 invert dark:invert-0" 
         width={180} 
         height={180} 
@@ -49,7 +49,7 @@ export default function Navbar() {
               <div className="flex items-center justify-between px-3">
                 <Image
                   src="/white-icon.svg"
-                  alt="Mail0"
+                  alt="zerodotemail"
                   className="h-9 w-9 invert dark:invert-0"
                   width={180}
                   height={180}
