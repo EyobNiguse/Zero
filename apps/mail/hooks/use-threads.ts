@@ -60,7 +60,7 @@ const getKey = (
 export const useThreads = (folder: string, labelIds?: string[], query?: string, max?: number) => {
   const { data: session } = useSession();
 
-  const { data, size, setSize, isLoading, isValidating, error, mutate } = useSWRInfinite(
+  const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(
     (pageIndex, previousPageData) => {
       if (!session?.user.id) return null;
       return getKey(pageIndex, previousPageData, [folder, query, max, labelIds]);
@@ -68,10 +68,10 @@ export const useThreads = (folder: string, labelIds?: string[], query?: string, 
     fetchEmails,
     {
       persistSize: false,
-      // TODO: check why parallel is fetching the same page (making duplicate requests, so same thread output)
-      // parallel: true,
-      revalidateAll: true,
+      revalidateIfStale: true,
+      revalidateAll: false,
       revalidateOnMount: true,
+      revalidateFirstPage: true,
     },
   );
 
