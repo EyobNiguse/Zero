@@ -63,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar
       collapsible="icon"
       {...props}
-      className="bg-offsetWhite dark:bg-offsetDark flex flex-col items-center pl-1.5"
+      className="bg-offsetWhite dark:bg-offsetDark flex flex-col items-center"
     >
       <div className="flex w-full flex-col">
         <SidebarHeader className="flex flex-col gap-2 p-2">
@@ -98,9 +98,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </div>
 
       <div
-        className="mb-4 ml-2 mt-auto cursor-pointer pl-1.5"
+        className="mb-4 mt-auto cursor-pointer pl-2.5"
         onClick={toggleAISidebar}
-        title="Open AI Assistant (Cmd+S)"
+        title="Open AI Assistant (Cmd+0)"
       >
         <div>
           <Image

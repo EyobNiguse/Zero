@@ -75,9 +75,9 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
   return (
     <div className={cn("relative flex-1 overflow-hidden")}>
       <div className="relative h-full overflow-y-auto">
-        <div className="flex flex-col gap-4 p-4 py-5 transition-all duration-200">
+        <div className="flex flex-col gap-4 p-4 pb-2 transition-all duration-200">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
+            <div className="flex justify-center items-start gap-4">
               <Avatar className="rounded-md">
                 <AvatarImage alt={emailData?.sender?.name} className="rounded-md" />
                 <AvatarFallback className={cn("rounded-md", demo && "compose-gradient-animated text-black font-bold")}>
@@ -87,7 +87,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                     .join("")}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
+              <div className="flex-1 relative bottom-1">
                 <div className="flex items-center justify-start gap-2">
                   <span className="font-semibold">{emailData?.sender?.name}</span>
                   <span className="flex grow-0 items-center gap-2 text-sm text-muted-foreground">
@@ -189,14 +189,6 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
               </Popover>
             </div> : null}
           </div>
-        </div>
-        <div
-          className={cn(
-            "h-0 overflow-hidden transition-all duration-200",
-            !isCollapsed && "h-[1px]",
-          )}
-        >
-          <Separator />
         </div>
 
         <div
