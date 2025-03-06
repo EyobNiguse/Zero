@@ -6,7 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, SlidersHorizontal, CalendarIcon, Trash2, Tag, Bell, AlertTriangle, User, Mail, MailQuestion, UserRound, Users, Star, MailCheck, Paperclip } from "lucide-react";
+import { Search, SlidersHorizontal, CalendarIcon, Trash2, Tag, Bell, AlertTriangle, User, Mail, MailQuestion, UserRound, Users, Star, MailCheck, Paperclip, X } from "lucide-react";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
@@ -40,7 +40,7 @@ const getFilterSuggestionGridColumns = (
 };
 
 const matchFilterPrefix = (text: string): [string, string, string] | null => {
-  const match = /(is|has|from|to):(\w*)$/.exec(text);
+  const match = /(is|has|from|to|after|before):([^\s]*)$/.exec(text);
   if (!match || !match[1]) return null;
   
   return [match[0], match[1], match[2] || ''];
@@ -52,6 +52,34 @@ const filterSuggestionsFunction = (
   query: string
 ): FilterSuggestion[] => {
   if (!suggestions?.length) return [];
+  
+  if (prefix === 'from' || prefix === 'to') {
+    if (!query) {
+      return suggestions.filter(
+        suggestion => suggestion.prefix === prefix
+      );
+    }
+    
+    if (query && query !== 'me') {
+      return [{
+        prefix,
+        filter: `${prefix}:${query.toLowerCase()}`,
+        description: prefix === 'from' 
+          ? `Emails from senders containing "${query}"`
+          : `Emails to recipients containing "${query}"`,
+        icon: prefix === 'from' ? <UserRound className="h-5 w-5" /> : <Mail className="h-5 w-5" />
+      }];
+    }
+    
+    return suggestions.filter(suggestion => 
+      suggestion.prefix === prefix && 
+      suggestion.filter.toLowerCase().includes(`${prefix}:${query.toLowerCase()}`)
+    );
+  }
+  
+  if (prefix === 'after' || prefix === 'before') {
+    return suggestions.filter(suggestion => suggestion.prefix === prefix);
+  }
   
   if (!query) {
     return suggestions.filter(suggestion => suggestion.prefix === prefix);
@@ -86,11 +114,15 @@ const filterSuggestions: FilterSuggestion[] = [
   // "has:" filters
   { prefix: "has", filter: "has:attachment", description: "Emails with attachments", icon: <Paperclip className="h-5 w-5" /> },
 
-  // "from:" filters
-  { prefix: "from", filter: "from:me", description: "Emails sent by you", icon: <UserRound className="h-5 w-5" /> },
+  // "from:" filters, maybe enhance this later? only searches for emails
+  { prefix: "from", filter: "from:me", description: "Emails you've sent", icon: <UserRound className="h-5 w-5" /> },
 
-  // "to:" filters
-  { prefix: "to", filter: "to:me", description: "Emails sent to you directly", icon: <Mail className="h-5 w-5" /> },
+  // "to:" filters, maybe enhance this later? only searches for emails
+  { prefix: "to", filter: "to:me", description: "Emails where you're the direct recipient", icon: <Mail className="h-5 w-5" /> },
+  
+  // "date:" filters
+  { prefix: "after", filter: "after:date", description: "Emails after a specific date", icon: <CalendarIcon className="h-5 w-5" /> },
+  { prefix: "before", filter: "before:date", description: "Emails before a specific date", icon: <CalendarIcon className="h-5 w-5" /> },
 ];
 
 function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRange) => void }) {
@@ -128,7 +160,7 @@ function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRa
             defaultMonth={date?.from}
             selected={date}
             onSelect={(range) => range && setDate(range)}
-            numberOfMonths={2}
+            numberOfMonths={useIsMobile() ? 1 : 2}
             disabled={(date) => date > new Date()}
           />
         </PopoverContent>
@@ -168,6 +200,10 @@ export function SearchBar() {
   const [activePrefix, setActivePrefix] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateFilterType, setDateFilterType] = useState<'after' | 'before' | null>(null);
+  const [datePickerPosition, setDatePickerPosition] = useState({ left: 0, top: 0 });
+  const datePickerRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<SearchForm>({
     defaultValues: value,
@@ -193,6 +229,7 @@ export function SearchBar() {
     
     if (!inputValue.trim()) {
       setShowSuggestions(false);
+      setShowDatePicker(false);
       form.setValue('q', '');
       return;
     }
@@ -203,16 +240,44 @@ export function SearchBar() {
     
     if (match) {
       const [, prefix, query] = match;
-      
       const suggestions = filterSuggestionsFunction(filterSuggestions, prefix, query);
       
       setActivePrefix(prefix);
       setFilteredSuggestions(suggestions);
       setShowSuggestions(true);
       setActiveSuggestionIndex(0);
+      
+      if (prefix === 'after' || prefix === 'before') {
+        setDateFilterType(prefix as 'after' | 'before');
+        
+        const inputEl = inputRef.current;
+        if (inputEl) {
+          const span = document.createElement('span');
+          span.style.visibility = 'hidden';
+          span.style.position = 'absolute';
+          span.style.whiteSpace = 'pre';
+          span.style.font = window.getComputedStyle(inputEl).font;
+          span.textContent = textBeforeCursor;
+          document.body.appendChild(span);
+          
+          const rect = inputEl.getBoundingClientRect();
+          const spanWidth = span.getBoundingClientRect().width;
+          
+          document.body.removeChild(span);
+          
+          setDatePickerPosition({
+            left: Math.min(spanWidth, rect.width - 320), 
+            top: rect.height
+          });
+        }
+      } else {
+        setDateFilterType(null);
+      }
     } else {
+      setShowDatePicker(false);
       setShowSuggestions(false);
       setActivePrefix(null);
+      setDateFilterType(null);
     }
     
     form.setValue('q', inputValue);
@@ -298,8 +363,146 @@ export function SearchBar() {
     return getFilterSuggestionGridColumns(filteredSuggestions.length, isMobile);
   }, [filteredSuggestions.length, isMobile]);
   
+  useDebounce(
+    () => {
+      submitSearch(value);
+    },
+    250,
+    [value],
+  );
+
+  const submitSearch = useCallback((data: SearchForm) => {
+    let searchTerms = [];
+    
+    if (data.q) {
+      const processedQuery = data.q
+        .replace(/from:([^\s]+)/g, (_, address) => 
+          address.toLowerCase() === 'me' ? 'from:me' : `from:${address.toLowerCase()}`
+        )
+        .replace(/to:([^\s]+)/g, (_, address) => 
+          address.toLowerCase() === 'me' ? 'to:me' : `to:${address.toLowerCase()}`
+        );
+      
+      searchTerms.push(processedQuery);
+    }
+    
+    if (data.from) searchTerms.push(`from:${data.from.toLowerCase()}`);
+    if (data.to) searchTerms.push(`to:${data.to.toLowerCase()}`);
+    if (data.subject) searchTerms.push(`subject:(${data.subject})`);
+    if (data.dateRange.from) searchTerms.push(`after:${format(data.dateRange.from, "yyyy/MM/dd")}`);
+    if (data.dateRange.to) searchTerms.push(`before:${format(data.dateRange.to, "yyyy/MM/dd")}`);
+    
+    const searchQuery = searchTerms.join(' ');
+    const folder = data.folder ? data.folder.toUpperCase() : "";
+
+    setSearchValue({
+      value: searchQuery,
+      highlight: data.q,
+      folder: folder,
+    });
+  }, [setSearchValue]);
+
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    const inputValue = form.getValues().q || '';
+    const cursorPosition = inputRef.current?.selectionStart || 0;
+    
+    const textBeforeCursor = inputValue.substring(0, cursorPosition);
+    const textAfterCursor = inputValue.substring(cursorPosition);
+    
+    const match = matchFilterPrefix(textBeforeCursor);
+    
+    if (match) {
+      const [fullMatch] = match;
+      const startPos = textBeforeCursor.lastIndexOf(fullMatch);
+      
+      if ((match[1] === 'after' || match[1] === 'before') && suggestion.endsWith('date')) {
+        setShowDatePicker(true);
+        setShowSuggestions(false);
+        return;
+      }
+      
+      const newValue = inputValue.substring(0, startPos) + suggestion + " " + textAfterCursor;
+      
+      form.setValue('q', newValue);
+      
+      submitSearch({
+        ...form.getValues(),
+        q: newValue
+      });
+    }
+    
+    setShowSuggestions(false);
+    inputRef.current?.focus();
+  }, [form, submitSearch]);
+
+  const handleDateSelect = useCallback((dateRange: DateRange | undefined) => {
+    if (!dateRange || !dateFilterType) return;
+    
+    let filterText = '';
+    
+    if (dateFilterType === 'after' && dateRange.from) {
+      const formattedDate = format(dateRange.from, "yyyy/MM/dd");
+      filterText = `after:${formattedDate}`;
+      
+      if (dateRange.to) {
+        const formattedEndDate = format(dateRange.to, "yyyy/MM/dd");
+        filterText += ` before:${formattedEndDate}`;
+      }
+    } else if (dateFilterType === 'before' && dateRange.to) {
+      const formattedDate = format(dateRange.to, "yyyy/MM/dd");
+      filterText = `before:${formattedDate}`;
+      
+      if (dateRange.from) {
+        const formattedStartDate = format(dateRange.from, "yyyy/MM/dd");
+        filterText = `after:${formattedStartDate} before:${formattedDate}`;
+      }
+    }
+    
+    if (!filterText) return;
+    
+    const inputValue = form.getValues().q || '';
+    const cursorPosition = inputRef.current?.selectionStart || 0;
+    
+    const textBeforeCursor = inputValue.substring(0, cursorPosition);
+    const textAfterCursor = inputValue.substring(cursorPosition);
+    
+    const match = matchFilterPrefix(textBeforeCursor);
+    
+    if (match) {
+      const [fullMatch] = match;
+      const startPos = textBeforeCursor.lastIndexOf(fullMatch);
+      const newValue = inputValue.substring(0, startPos) + filterText + " " + textAfterCursor;
+      
+      form.setValue('q', newValue);
+      
+      submitSearch({
+        ...form.getValues(),
+        q: newValue
+      });
+    }
+    
+    setShowDatePicker(false);
+    inputRef.current?.focus();
+  }, [dateFilterType, form, submitSearch]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node) && 
+          inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const renderSuggestions = useCallback(() => {
     if (!showSuggestions || filteredSuggestions.length === 0) return null;
+    
+    const gridColumns = getFilterSuggestionGridColumns(filteredSuggestions.length, isMobile);
     
     return (
       <div 
@@ -321,6 +524,7 @@ export function SearchBar() {
           <div className={cn("grid gap-3", gridColumns)}>
             {filteredSuggestions.map((suggestion, index) => {
               const value = extractFilterValue(suggestion.filter);
+              const isEmailFilter = suggestion.prefix === 'from' || suggestion.prefix === 'to';
               
               return (
                 <button
@@ -340,8 +544,11 @@ export function SearchBar() {
                     {suggestion.icon}
                   </div>
                   
-                  <div className="text-xs truncate max-w-full capitalize">
-                    {value}
+                  <div className={cn(
+                    "text-xs truncate max-w-full",
+                    isEmailFilter ? "" : "capitalize"
+                  )}>
+                    {isEmailFilter ? value.toLowerCase() : value}
                   </div>
                 </button>
               );
@@ -357,33 +564,35 @@ export function SearchBar() {
         </div>
       </div>
     );
-  }, [showSuggestions, filteredSuggestions, activePrefix, gridColumns, activeSuggestionIndex, isMobile]);
+  }, [showSuggestions, filteredSuggestions, activePrefix, gridColumns, activeSuggestionIndex, isMobile, handleSuggestionClick]);
 
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    const inputValue = form.getValues().q || '';
-    const cursorPosition = inputRef.current?.selectionStart || 0;
+  const renderDatePicker = useCallback(() => {
+    if (!showDatePicker) return null;
     
-    const textBeforeCursor = inputValue.substring(0, cursorPosition);
-    const textAfterCursor = inputValue.substring(cursorPosition);
-    
-    const match = matchFilterPrefix(textBeforeCursor);
-    
-    if (match) {
-      const [fullMatch] = match;
-      const startPos = textBeforeCursor.lastIndexOf(fullMatch);
-      const newValue = inputValue.substring(0, startPos) + suggestion + " " + textAfterCursor;
-      
-      form.setValue('q', newValue);
-      
-      submitSearch({
-        ...form.getValues(),
-        q: newValue
-      });
-    }
-    
-    setShowSuggestions(false);
-    inputRef.current?.focus();
-  }, [form]);
+    return (
+      <div 
+        ref={datePickerRef}
+        className="absolute z-50 mt-1 overflow-hidden rounded-lg border border-border bg-background shadow-md animate-in fade-in-50 slide-in-from-top-2 duration-150"
+        style={{ 
+          left: Math.max(0, datePickerPosition.left - (isMobile ? 160 : 320)), // Adjust based on device
+          top: `${datePickerPosition.top}px`,
+        }}
+      >
+        <div className="p-1">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={new Date()}
+            selected={undefined}
+            onSelect={handleDateSelect}
+            numberOfMonths={isMobile ? 1 : 2}
+            disabled={(date) => date > new Date()}
+            className="rounded-md border-none" 
+          />
+        </div>
+      </div>
+    );
+  }, [showDatePicker, datePickerPosition, handleDateSelect, isMobile]);
 
   useEffect(() => {
     const subscription = form.watch((data) => {
@@ -392,33 +601,6 @@ export function SearchBar() {
     return () => subscription.unsubscribe();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [form.watch]);
-
-  useDebounce(
-    () => {
-      submitSearch(value);
-    },
-    250,
-    [value],
-  );
-
-  const submitSearch = useCallback((data: SearchForm) => {
-    const from = data.from ? `from:(${data.from})` : "";
-    const to = data.to ? `to:(${data.to})` : "";
-    const subject = data.subject ? `subject:(${data.subject})` : "";
-    const dateAfter = data.dateRange.from
-      ? `after:${format(data.dateRange.from, "MM/dd/yyyy")}`
-      : "";
-    const dateBefore = data.dateRange.to ? `before:${format(data.dateRange.to, "MM/dd/yyyy")}` : "";
-    const category = data.category ? `category:(${data.category})` : "";
-    const searchQuery = `${data.q} ${from} ${to} ${subject} ${dateAfter} ${dateBefore} ${category}`.trim();
-    const folder = data.folder ? data.folder.toUpperCase() : "";
-
-    setSearchValue({
-      value: searchQuery,
-      highlight: data.q,
-      folder: folder,
-    });
-  }, [setSearchValue]);
 
   const resetSearch = useCallback(() => {
     form.reset();
@@ -443,28 +625,31 @@ export function SearchBar() {
           value={formValues.q}
         />
         {renderSuggestions()}
-        <div className="absolute right-2 flex items-center gap-1.5">
+        {renderDatePicker()}
+        <div className="absolute right-1 z-20 flex items-center gap-1">
           {filtering && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 rounded-md p-0 text-muted-foreground/70 transition-colors hover:bg-muted/50 hover:text-foreground"
+            <button
+              type="button"
               onClick={resetSearch}
+              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
-              <Trash2 className="h-4 w-4 text-inherit" aria-hidden="true" />
-            </Button>
+              <X className="h-4 w-4" />
+              <span className="sr-only">Clear search</span>
+            </button>
           )}
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-5 w-5 rounded-md p-0 text-muted-foreground/70 transition-colors hover:bg-muted/50 hover:text-foreground"
+                size="sm"
+                className={cn(
+                  "h-7 w-7 rounded-md p-0 text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                  popoverOpen && "bg-muted/70 text-foreground"
+                )}
+                type="button"
               >
-                <SlidersHorizontal
-                  className="h-4 w-4 text-inherit transition-colors"
-                  aria-hidden="true"
-                />
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="sr-only">Advanced search</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent
