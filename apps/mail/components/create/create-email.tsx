@@ -6,9 +6,14 @@ import { createDraft, getDraft } from "@/actions/drafts";
 import { UploadedFileIcon } from "./uploaded-file-icon";
 import { Separator } from "@/components/ui/separator";
 import { SidebarToggle } from "../ui/sidebar-toggle";
+import Paragraph from "@tiptap/extension-paragraph";
 import { cn, truncateFileName } from "@/lib/utils";
+import Document from "@tiptap/extension-document";
 import { Button } from "@/components/ui/button";
+import { generateJSON } from "@tiptap/html";
 import { sendEmail } from "@/actions/send";
+import Bold from "@tiptap/extension-bold";
+import Text from "@tiptap/extension-text";
 import { useQueryState } from "nuqs";
 import { JSONContent } from "novel";
 import { toast } from "sonner";
@@ -29,19 +34,22 @@ export function CreateEmail() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [messageContent, setMessageContent] = React.useState("");
   const [draftId, setDraftId] = useQueryState("draftId");
-  const [defaultValue, setDefaultValue] = React.useState<JSONContent>({
-    type: "doc",
-    content: [
-      {
-        type: "paragraph",
-        content: [],
-      },
-    ],
-  });
+  const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(null);
 
   React.useEffect(() => {
     const loadDraft = async () => {
-      if (!draftId) return;
+      if (!draftId) {
+        setDefaultValue({
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [],
+            },
+          ],
+        });
+        return;
+      }
 
       try {
         const draft = await getDraft(draftId);
@@ -60,22 +68,13 @@ export function CreateEmail() {
           setSubjectInput(draft.subject);
         }
 
+        console.log("Draft content:", draft.content);
+
         // Set message content
         if (draft.content) {
-          setDefaultValue({
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: [
-                  {
-                    type: "text",
-                    text: draft.content,
-                  },
-                ],
-              },
-            ],
-          });
+          const json = generateJSON(draft.content, [Document, Paragraph, Text, Bold]);
+          console.log("JSON:", json);
+          setDefaultValue(json);
           setMessageContent(draft.content);
         }
 
@@ -346,12 +345,14 @@ export function CreateEmail() {
                   Body
                 </div>
                 <div className="w-full">
-                  <Editor
-                    initialValue={defaultValue}
-                    onChange={(newContent) => setMessageContent(newContent)}
-                    key={resetEditorKey}
-                    placeholder="Write your message here..."
-                  />
+                  {defaultValue && (
+                    <Editor
+                      initialValue={defaultValue}
+                      onChange={(newContent) => setMessageContent(newContent)}
+                      key={resetEditorKey}
+                      placeholder="Write your message here..."
+                    />
+                  )}
                 </div>
               </div>
             </div>
