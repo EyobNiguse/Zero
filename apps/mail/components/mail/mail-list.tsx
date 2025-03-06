@@ -478,7 +478,9 @@ export function MailList({ isCompact }: MailListProps) {
         bulkSelected: [],
       });
     }
-    return markAsRead({ ids: [message.id] }).then(() => mutate() as any).catch(console.error);
+    if (message.unread) {
+      return markAsRead({ ids: [message.id] }).then(() => mutate() as any).catch(console.error);
+    }
   };
 
   const isEmpty = items.length === 0;
