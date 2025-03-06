@@ -1,7 +1,7 @@
 "use client";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ComponentProps, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
 import { preloadThread, useThreads } from "@/hooks/use-threads";
 import { useSearchValue } from "@/hooks/use-search-value";
@@ -59,7 +59,7 @@ const highlightText = (text: string, highlight: string) => {
   });
 };
 
-const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
+const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
   const [mail] = useMail();
   const { data: session } = useSession();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -177,9 +177,10 @@ const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
       </p>
     </div>
   );
-};
+});
 
-export function MailListDemo() {
+
+export function MailListDemo({ items: filteredItems = items }) {
   return <ScrollArea
     className="h-full pb-2"
     type="scroll"
@@ -187,13 +188,12 @@ export function MailListDemo() {
     <div
       className={cn(
         "relative min-h-[calc(100vh-4rem)] w-full",
-
       )}
     >
       <div
         className="absolute left-0 top-0 w-full p-[8px]"
       >
-        {items.map((item) => {
+        {filteredItems.map((item) => {
           return item ? (
             <Thread
               demo
@@ -425,7 +425,7 @@ export function MailList({ isCompact }: MailListProps) {
         ? "selectAllBelow"
         : "single";
 
-  const handleMailClick = (message: InitialThread) => () => {
+  const handleMailClick = useCallback((message: InitialThread) => () => {
     if (selectMode === "mass") {
       const updatedBulkSelected = mail.bulkSelected.includes(message.id)
         ? mail.bulkSelected.filter((id) => id !== message.id)
@@ -481,7 +481,7 @@ export function MailList({ isCompact }: MailListProps) {
     if (message.unread) {
       return markAsRead({ ids: [message.id] }).then(() => mutate() as any).catch(console.error);
     }
-  };
+  }, [mail, setMail, selectMode]);
 
   const isEmpty = items.length === 0;
   const isFiltering = searchValue.value.trim().length > 0;
@@ -542,7 +542,7 @@ export function MailList({ isCompact }: MailListProps) {
   );
 }
 
-function MailLabels({ labels }: { labels: string[] }) {
+const MailLabels = memo(({ labels }: { labels: string[] }) => {
   if (!labels.length) return null;
 
   const visibleLabels = labels.filter(
@@ -566,7 +566,9 @@ function MailLabels({ labels }: { labels: string[] }) {
       })}
     </div>
   );
-}
+}, (prev, next) => {
+  return prev.labels === next.labels;
+});
 
 function getLabelIcon(label: string) {
   const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
