@@ -6,7 +6,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, SlidersHorizontal, CalendarIcon, Trash2, Tag, Bell, AlertTriangle, User, Mail, MailQuestion, UserRound, Users, Star, MailCheck, Paperclip, X } from "lucide-react";
+import { Search, SlidersHorizontal, CalendarIcon, X } from "lucide-react";
+import { Tag, Bell, AlertTriangle, User, Mail, MailQuestion, UserRound, Users, Star, MailCheck, Paperclip } from "lucide-react";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
@@ -54,27 +55,7 @@ const filterSuggestionsFunction = (
   if (!suggestions?.length) return [];
   
   if (prefix === 'from' || prefix === 'to') {
-    if (!query) {
-      return suggestions.filter(
-        suggestion => suggestion.prefix === prefix
-      );
-    }
-    
-    if (query && query !== 'me') {
-      return [{
-        prefix,
-        filter: `${prefix}:${query.toLowerCase()}`,
-        description: prefix === 'from' 
-          ? `Emails from senders containing "${query}"`
-          : `Emails to recipients containing "${query}"`,
-        icon: prefix === 'from' ? <UserRound className="h-5 w-5" /> : <Mail className="h-5 w-5" />
-      }];
-    }
-    
-    return suggestions.filter(suggestion => 
-      suggestion.prefix === prefix && 
-      suggestion.filter.toLowerCase().includes(`${prefix}:${query.toLowerCase()}`)
-    );
+    return handleEmailFilters(suggestions, prefix, query);
   }
   
   if (prefix === 'after' || prefix === 'before') {
@@ -85,6 +66,42 @@ const filterSuggestionsFunction = (
     return suggestions.filter(suggestion => suggestion.prefix === prefix);
   }
   
+  return filterByPrefixAndQuery(suggestions, prefix, query);
+};
+
+const handleEmailFilters = (
+  suggestions: FilterSuggestion[],
+  prefix: string, 
+  query: string
+): FilterSuggestion[] => {
+  if (!query) {
+    return suggestions.filter(
+      suggestion => suggestion.prefix === prefix
+    );
+  }
+  
+  if (query && query !== 'me') {
+    return [{
+      prefix,
+      filter: `${prefix}:${query.toLowerCase()}`,
+      description: prefix === 'from' 
+        ? `Emails from senders containing "${query}"`
+        : `Emails to recipients containing "${query}"`,
+      icon: prefix === 'from' ? <UserRound className="h-5 w-5" /> : <Mail className="h-5 w-5" />
+    }];
+  }
+  
+  return suggestions.filter(suggestion => 
+    suggestion.prefix === prefix && 
+    suggestion.filter.toLowerCase().includes(`${prefix}:${query.toLowerCase()}`)
+  );
+};
+
+const filterByPrefixAndQuery = (
+  suggestions: FilterSuggestion[],
+  prefix: string,
+  query: string
+): FilterSuggestion[] => {
   const lowerQuery = query.toLowerCase();
   
   return suggestions.filter(suggestion => {
@@ -194,16 +211,23 @@ export function SearchBar() {
     },
     category: "",
   });
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<FilterSuggestion[]>([]);
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
-  const [activePrefix, setActivePrefix] = useState<string | null>(null);
+  
+  const [suggestionsState, setSuggestionsState] = useState({
+    show: false,
+    filtered: [] as FilterSuggestion[],
+    activeIndex: 0,
+    activePrefix: null as string | null
+  });
+  
+  const [datePickerState, setDatePickerState] = useState({
+    show: false,
+    filterType: null as 'after' | 'before' | null,
+    position: { left: 0, top: 0 }
+  });
+  
   const inputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useIsMobile();
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateFilterType, setDateFilterType] = useState<'after' | 'before' | null>(null);
-  const [datePickerPosition, setDatePickerPosition] = useState({ left: 0, top: 0 });
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const form = useForm<SearchForm>({
     defaultValues: value,
@@ -228,8 +252,8 @@ export function SearchBar() {
     const cursorPosition = e.target.selectionStart || 0;
     
     if (!inputValue.trim()) {
-      setShowSuggestions(false);
-      setShowDatePicker(false);
+      setSuggestionsState(prev => ({ ...prev, show: false }));
+      setDatePickerState(prev => ({ ...prev, show: false }));
       form.setValue('q', '');
       return;
     }
@@ -242,13 +266,11 @@ export function SearchBar() {
       const [, prefix, query] = match;
       const suggestions = filterSuggestionsFunction(filterSuggestions, prefix, query);
       
-      setActivePrefix(prefix);
-      setFilteredSuggestions(suggestions);
-      setShowSuggestions(true);
-      setActiveSuggestionIndex(0);
-      
       if (prefix === 'after' || prefix === 'before') {
-        setDateFilterType(prefix as 'after' | 'before');
+        setDatePickerState(prev => ({
+          ...prev,
+          filterType: prefix as 'after' | 'before'
+        }));
         
         const inputEl = inputRef.current;
         if (inputEl) {
@@ -265,66 +287,74 @@ export function SearchBar() {
           
           document.body.removeChild(span);
           
-          setDatePickerPosition({
-            left: Math.min(spanWidth, rect.width - 320), 
-            top: rect.height
-          });
+          setDatePickerState(prev => ({
+            ...prev,
+            position: {
+              left: Math.min(spanWidth, rect.width - 320),
+              top: rect.height
+            }
+          }));
         }
-      } else {
-        setDateFilterType(null);
       }
+      
+      setSuggestionsState({
+        show: true,
+        filtered: suggestions,
+        activeIndex: 0,
+        activePrefix: prefix
+      });
     } else {
-      setShowDatePicker(false);
-      setShowSuggestions(false);
-      setActivePrefix(null);
-      setDateFilterType(null);
+      setSuggestionsState(prev => ({ ...prev, show: false, activePrefix: null }));
+      setDatePickerState(prev => ({ ...prev, show: false, filterType: null }));
     }
     
     form.setValue('q', inputValue);
   }, [form]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions) return;
+    if (!suggestionsState.show) return;
     
     if (e.key === 'Tab') {
       e.preventDefault();
       if (e.shiftKey) {
-        setActiveSuggestionIndex(prev => 
-          prev > 0 ? prev - 1 : filteredSuggestions.length - 1
-        );
+        setSuggestionsState(prev => ({
+          ...prev,
+          activeIndex: prev.activeIndex > 0 ? prev.activeIndex - 1 : prev.filtered.length - 1
+        }));
       } else {
-        setActiveSuggestionIndex(prev => 
-          prev < filteredSuggestions.length - 1 ? prev + 1 : 0
-        );
+        setSuggestionsState(prev => ({
+          ...prev,
+          activeIndex: prev.activeIndex < prev.filtered.length - 1 ? prev.activeIndex + 1 : 0
+        }));
       }
       return;
     }
     
     const handleArrowNavigation = (direction: 'right' | 'left' | 'down' | 'up') => {
       e.preventDefault();
-      const columns = isMobile ? 3 : Math.min(filteredSuggestions.length, 6);
+      const columns = isMobile ? 3 : Math.min(suggestionsState.filtered.length, 6);
       
-      setActiveSuggestionIndex(prev => {
-        let next = prev;
+      setSuggestionsState(prev => {
+        let nextIndex = prev.activeIndex;
         
         switch (direction) {
           case 'right':
-            next = prev < filteredSuggestions.length - 1 ? prev + 1 : prev;
+            nextIndex = prev.activeIndex < prev.filtered.length - 1 ? prev.activeIndex + 1 : prev.activeIndex;
             break;
           case 'left':
-            next = prev > 0 ? prev - 1 : 0;
+            nextIndex = prev.activeIndex > 0 ? prev.activeIndex - 1 : 0;
             break;
           case 'down':
-            next = prev + columns;
-            next = next < filteredSuggestions.length ? next : prev;
+            nextIndex = prev.activeIndex + columns;
+            nextIndex = nextIndex < prev.filtered.length ? nextIndex : prev.activeIndex;
             break;
           case 'up':
-            next = prev - columns;
-            next = next >= 0 ? next : prev;
+            nextIndex = prev.activeIndex - columns;
+            nextIndex = nextIndex >= 0 ? nextIndex : prev.activeIndex;
             break;
         }
         
-        return next;
+        return { ...prev, activeIndex: nextIndex };
       });
     };
     
@@ -333,23 +363,24 @@ export function SearchBar() {
     else if (e.key === 'ArrowDown') handleArrowNavigation('down');
     else if (e.key === 'ArrowUp') handleArrowNavigation('up');
     
-    if (e.key === 'Enter' && showSuggestions) {
+    if (e.key === 'Enter' && suggestionsState.show) {
       e.preventDefault();
-      if (filteredSuggestions[activeSuggestionIndex]) {
-        handleSuggestionClick(filteredSuggestions[activeSuggestionIndex].filter);
+      const suggestion = suggestionsState.filtered?.[suggestionsState.activeIndex];
+      if (suggestion) {
+        handleSuggestionClick(suggestion.filter);
       }
       return;
     }
     
     if (e.key === 'Escape') {
-      setShowSuggestions(false);
+      setSuggestionsState(prev => ({ ...prev, show: false }));
     }
-  }, [showSuggestions, filteredSuggestions, activeSuggestionIndex, isMobile]);
+  }, [suggestionsState, isMobile]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
+        setSuggestionsState(prev => ({ ...prev, show: false }));
       }
     };
 
@@ -360,8 +391,8 @@ export function SearchBar() {
   }, []);
 
   const gridColumns = useMemo(() => {
-    return getFilterSuggestionGridColumns(filteredSuggestions.length, isMobile);
-  }, [filteredSuggestions.length, isMobile]);
+    return getFilterSuggestionGridColumns(suggestionsState.filtered.length, isMobile);
+  }, [suggestionsState.filtered.length, isMobile]);
   
   useDebounce(
     () => {
@@ -416,8 +447,8 @@ export function SearchBar() {
       const startPos = textBeforeCursor.lastIndexOf(fullMatch);
       
       if ((match[1] === 'after' || match[1] === 'before') && suggestion.endsWith('date')) {
-        setShowDatePicker(true);
-        setShowSuggestions(false);
+        setDatePickerState(prev => ({ ...prev, show: true }));
+        setSuggestionsState(prev => ({ ...prev, show: false }));
         return;
       }
       
@@ -431,16 +462,16 @@ export function SearchBar() {
       });
     }
     
-    setShowSuggestions(false);
+    setSuggestionsState(prev => ({ ...prev, show: false }));
     inputRef.current?.focus();
   }, [form, submitSearch]);
 
   const handleDateSelect = useCallback((dateRange: DateRange | undefined) => {
-    if (!dateRange || !dateFilterType) return;
+    if (!dateRange || !datePickerState.filterType) return;
     
     let filterText = '';
     
-    if (dateFilterType === 'after' && dateRange.from) {
+    if (datePickerState.filterType === 'after' && dateRange.from) {
       const formattedDate = format(dateRange.from, "yyyy/MM/dd");
       filterText = `after:${formattedDate}`;
       
@@ -448,7 +479,7 @@ export function SearchBar() {
         const formattedEndDate = format(dateRange.to, "yyyy/MM/dd");
         filterText += ` before:${formattedEndDate}`;
       }
-    } else if (dateFilterType === 'before' && dateRange.to) {
+    } else if (datePickerState.filterType === 'before' && dateRange.to) {
       const formattedDate = format(dateRange.to, "yyyy/MM/dd");
       filterText = `before:${formattedDate}`;
       
@@ -481,15 +512,15 @@ export function SearchBar() {
       });
     }
     
-    setShowDatePicker(false);
+    setDatePickerState(prev => ({ ...prev, show: false }));
     inputRef.current?.focus();
-  }, [dateFilterType, form, submitSearch]);
+  }, [datePickerState.filterType, form, submitSearch]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node) && 
           inputRef.current && !inputRef.current.contains(e.target as Node)) {
-        setShowDatePicker(false);
+        setDatePickerState(prev => ({ ...prev, show: false }));
       }
     };
 
@@ -500,29 +531,30 @@ export function SearchBar() {
   }, []);
 
   const renderSuggestions = useCallback(() => {
-    if (!showSuggestions || filteredSuggestions.length === 0) return null;
-    
-    const gridColumns = getFilterSuggestionGridColumns(filteredSuggestions.length, isMobile);
+    const { show, filtered = [] } = suggestionsState;
+    if (!show || filtered.length === 0) return null;
     
     return (
       <div 
         className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-background shadow-md animate-in fade-in-50 slide-in-from-top-2 duration-150"
+        role="listbox"
+        aria-label="Search filter suggestions"
         style={{ 
           maxWidth: isMobile ? 'calc(100vw - 24px)' : '600px',
           maxHeight: isMobile ? '50vh' : '400px'
         }}
       >
         <div className="p-3">
-          {activePrefix && (
+          {suggestionsState.activePrefix && (
             <div className="mb-2 px-1">
               <div className="text-xs text-muted-foreground">
-                <span className="font-medium">{activePrefix}:</span> filters
+                <span className="font-medium">{suggestionsState.activePrefix}:</span> filters
               </div>
             </div>
           )}
           
           <div className={cn("grid gap-3", gridColumns)}>
-            {filteredSuggestions.map((suggestion, index) => {
+            {filtered.map((suggestion, index) => {
               const value = extractFilterValue(suggestion.filter);
               const isEmailFilter = suggestion.prefix === 'from' || suggestion.prefix === 'to';
               
@@ -530,14 +562,16 @@ export function SearchBar() {
                 <button
                   key={index}
                   onClick={() => handleSuggestionClick(suggestion.filter)}
+                  role="option"
+                  aria-selected={index === suggestionsState.activeIndex}
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-md text-center transition-all gap-1.5",
                     "border hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    index === activeSuggestionIndex ? 
+                    index === suggestionsState.activeIndex ? 
                       "bg-accent/15 border-accent/30 text-accent-foreground" : 
                       "border-transparent hover:bg-muted/50"
                   )}
-                  onMouseEnter={() => !isMobile && setActiveSuggestionIndex(index)}
+                  onMouseEnter={() => !isMobile && setSuggestionsState(prev => ({ ...prev, activeIndex: index }))}
                   title={suggestion.description}
                 >
                   <div className="w-6 h-6 flex items-center justify-center text-foreground">
@@ -555,7 +589,7 @@ export function SearchBar() {
             })}
           </div>
           
-          {!isMobile && filteredSuggestions.length > 1 && (
+          {!isMobile && filtered.length > 1 && (
             <div className="mt-2 text-center text-[9px] text-muted-foreground border-t border-border/15 pt-2">
               <kbd className="px-1 rounded text-[9px] border border-border/30">↹</kbd> to navigate • 
               <kbd className="px-1 rounded text-[9px] border border-border/30 ml-1">↵</kbd> to select
@@ -564,18 +598,18 @@ export function SearchBar() {
         </div>
       </div>
     );
-  }, [showSuggestions, filteredSuggestions, activePrefix, gridColumns, activeSuggestionIndex, isMobile, handleSuggestionClick]);
+  }, [suggestionsState, isMobile, handleSuggestionClick, gridColumns]);
 
   const renderDatePicker = useCallback(() => {
-    if (!showDatePicker) return null;
+    if (!datePickerState.show) return null;
     
     return (
       <div 
         ref={datePickerRef}
         className="absolute z-50 mt-1 overflow-hidden rounded-lg border border-border bg-background shadow-md animate-in fade-in-50 slide-in-from-top-2 duration-150"
         style={{ 
-          left: Math.max(0, datePickerPosition.left - (isMobile ? 160 : 320)), // Adjust based on device
-          top: `${datePickerPosition.top}px`,
+          left: Math.max(0, datePickerState.position.left - (isMobile ? 160 : 320)), // Adjust based on device
+          top: `${datePickerState.position.top}px`,
         }}
       >
         <div className="p-1">
@@ -592,7 +626,7 @@ export function SearchBar() {
         </div>
       </div>
     );
-  }, [showDatePicker, datePickerPosition, handleDateSelect, isMobile]);
+  }, [datePickerState, isMobile, handleDateSelect]);
 
   useEffect(() => {
     const subscription = form.watch((data) => {
