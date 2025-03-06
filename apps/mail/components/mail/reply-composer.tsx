@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Editor from "@/components/create/editor";
 import { Button } from "@/components/ui/button";
 import { sendEmail } from "@/actions/send";
-import { Dispatch, SetStateAction, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useRef, useState, useEffect } from "react";
 import { ParsedMessage } from "@/types";
 import { Badge } from "../ui/badge";
 import { JSONContent } from "novel";
@@ -173,11 +173,25 @@ export default function ReplyCompose({
   const toggleComposer = () => {
     setComposerIsOpen(!composerIsOpen);
     if (!composerIsOpen) {
-      setTimeout(() => {
-        editorRef.current?.focus();
-      }, 0);
+      // Focus will be handled by the useEffect below
     }
   };
+
+  // Add a useEffect to focus the editor when the composer opens
+  useEffect(() => {
+    if (composerIsOpen) {
+      // Give the editor time to render before focusing
+      const timer = setTimeout(() => {
+        // Focus the editor - Novel editor typically has a ProseMirror element
+        const editorElement = document.querySelector('.ProseMirror');
+        if (editorElement instanceof HTMLElement) {
+          editorElement.focus();
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [composerIsOpen]);
 
   // Check if the message is empty
   const isMessageEmpty = !messageContent || messageContent === JSON.stringify({

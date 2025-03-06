@@ -135,7 +135,7 @@ const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
         )}
       />
       <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <p
             className={cn(
               message.unread ? "font-bold" : "font-medium",
@@ -145,15 +145,15 @@ const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
             <span className={cn(mail.selected && "max-w-[120px] truncate")}>
               {highlightText(message.sender.name, searchValue.highlight)}
             </span>{" "}
-            {message.totalReplies !== 1 ? (
-              <span className="ml-0.5 text-xs opacity-70">{message.totalReplies}</span>
-            ) : null}
             {message.unread ? (
-              <span className="ml-0.5 size-2 rounded-full bg-[#006FFE]" />
+              <span className=" size-2 rounded-full bg-[#006FFE]" />
             ) : null}
 
           </p>
           <MailLabels labels={message.tags} />
+          {message.totalReplies !== 1 ? (
+              <span className="text-xs opacity-70 border border-dotted rounded-full px-[5px] py-[1px]">{message.totalReplies}</span>
+            ) : null}
         </div>
         {message.receivedOn ? (
           <p

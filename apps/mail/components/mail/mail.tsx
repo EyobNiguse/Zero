@@ -201,7 +201,6 @@ export function MailLayout() {
             className={cn(
               "border-none !bg-transparent",
               mail?.selected ? "md:hidden lg:block" : "",
-              mail?.selected ? "md:hidden lg:block" : "",
             )}
             defaultSize={isMobile ? 100 : 25}
             minSize={isMobile ? 100 : 25}
@@ -215,7 +214,7 @@ export function MailLayout() {
               />
               <div
                 className={cn(
-                  "sticky top-0 z-10 flex items-center justify-between gap-1.5 p-2 transition-colors",
+                  "sticky top-0 z-10 flex items-center justify-between gap-1.5 p-2 transition-colors border-b",
                 )}
               >
                 <SidebarToggle className="h-fit px-2" />
@@ -306,7 +305,6 @@ export function MailLayout() {
 
           {isDesktop && mail.selected && (
             <>
-              <ResizableHandle className="opacity-0" />
               <ResizablePanel
                 className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
                 defaultSize={75}
@@ -323,7 +321,7 @@ export function MailLayout() {
         {/* Mobile Drawer */}
         {isMobile && (
           <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-3rem)] overflow-hidden p-0">
+            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-4rem)] overflow-hidden p-0">
               <DrawerHeader className="sr-only">
                 <DrawerTitle>Email Details</DrawerTitle>
               </DrawerHeader>
@@ -396,42 +394,81 @@ const categories = [
   },
 ];
 
-function MailCategoryTabs({ iconsOnly = false }: { iconsOnly?: boolean }) {
+function MailCategoryTabs({ iconsOnly = false, isLoading = false }: { iconsOnly?: boolean, isLoading?: boolean }) {
   const [, setSearchValue] = useSearchValue();
-  const [activeCategory, setActiveCategory] = useState("Primary");
+  
+  // Fix hydration issue by using lazy initializer
+  const [activeCategory, setActiveCategory] = useState<string>("Primary");
+  
+  // Use useEffect for localStorage operations
+  useEffect(() => {
+    const savedCategory = localStorage.getItem('mailActiveCategory');
+    if (savedCategory) {
+      setActiveCategory(savedCategory);
+    }
+  }, []);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
 
   const activeTab = useMemo(() => categories.find(cat => cat.name === activeCategory), [activeCategory]);
 
+  // Save to localStorage when activeCategory changes
   useEffect(() => {
-    if (activeTab) {
+    localStorage.setItem('mailActiveCategory', activeCategory);
+  }, [activeCategory]);
+
+  useEffect(() => {
+    if (activeTab && !isLoading) {
       setSearchValue({
         value: activeTab.searchValue,
         highlight: "",
         folder: "",
       });
     }
-  }, [activeCategory, setSearchValue]);
+  }, [activeCategory, setSearchValue, isLoading]);
 
-  useEffect(() => {
+  // Function to update clip path
+  const updateClipPath = useCallback(() => {
     const container = containerRef.current;
+    const activeTabElement = activeTabElementRef.current;
 
-    if (activeCategory && container) {
-      const activeTabElement = activeTabElementRef.current;
-
-      if (activeTabElement) {
-        const { offsetLeft, offsetWidth } = activeTabElement;
-
-        const clipLeft = offsetLeft;
-        const clipRight = offsetLeft + offsetWidth;
-        const containerWidth = container?.offsetWidth;
-        if (containerWidth) {
-          container.style.clipPath = `inset(0 ${Number(100 - (clipRight / containerWidth) * 100).toFixed()}% 0 ${Number((clipLeft / containerWidth) * 100).toFixed()}% round 17px)`;
-        }
+    if (activeCategory && container && activeTabElement) {
+      const { offsetLeft, offsetWidth } = activeTabElement;
+      const clipLeft = Math.max(0, offsetLeft - 2);
+      const clipRight = Math.min(container.offsetWidth, offsetLeft + offsetWidth + 2);
+      const containerWidth = container.offsetWidth;
+      
+      if (containerWidth) {
+        container.style.clipPath = `inset(0 ${Number(100 - (clipRight / containerWidth) * 100).toFixed(2)}% 0 ${Number((clipLeft / containerWidth) * 100).toFixed(2)}%)`;
       }
     }
-  }, [activeCategory, activeTabElementRef, containerRef]);
+  }, [activeCategory]);
+
+  // Update clip path when active category changes
+  useEffect(() => {
+    updateClipPath();
+  }, [activeCategory, updateClipPath]);
+
+  // Update clip path when iconsOnly changes
+  useEffect(() => {
+    // Small delay to ensure DOM has updated with new sizes
+    const timer = setTimeout(() => {
+      updateClipPath();
+    }, 10);
+    
+    return () => clearTimeout(timer);
+  }, [iconsOnly, updateClipPath]);
+
+  // Update clip path on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      updateClipPath();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateClipPath]);
 
   return (
     <div className="relative w-fit mx-auto">
@@ -445,7 +482,7 @@ function MailCategoryTabs({ iconsOnly = false }: { iconsOnly?: boolean }) {
                 setActiveCategory(category.name);
               }}
               className={cn(
-                "flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-full transition-all duration-200",
+                "flex h-7 items-center gap-1.5 px-2 text-xs font-medium rounded-full transition-all duration-200",
                 activeCategory === category.name 
                   ? category.colors
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -474,7 +511,7 @@ function MailCategoryTabs({ iconsOnly = false }: { iconsOnly?: boolean }) {
                   setActiveCategory(category.name);
                 }}
                 className={cn(
-                  "flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-full",
+                  "flex h-7 items-center gap-1.5 px-2 text-xs font-medium rounded-full",
                   category.colors
                 )}
                 tabIndex={-1}
