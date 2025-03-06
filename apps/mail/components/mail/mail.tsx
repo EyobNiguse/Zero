@@ -20,7 +20,7 @@ import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { SearchBar } from "./search-bar";
-import { cn } from "@/lib/utils";
+import { cn, defaultPageSize } from "@/lib/utils";
 import items from "./demo.json";
 
 export function DemoMailLayout() {
@@ -90,7 +90,7 @@ export function DemoMailLayout() {
                     ))}
                   </div>
                 ) : (
-                  <MailListDemo isCompact={isCompact} />
+                    <MailListDemo />
                 )}
               </div>
             </div>
@@ -137,9 +137,7 @@ export function MailLayout() {
   const [searchMode, setSearchMode] = useState(false);
   const [searchValue] = useSearchValue();
   const [mail, setMail] = useMail();
-  const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(false);
-  const [filterValue, setFilterValue] = useState<"all" | "unread">("all");
   const router = useRouter();
   const { data: session, isPending } = useSession();
 
@@ -149,26 +147,7 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const labels = useMemo(() => {
-    if (filterValue === "all") {
-      if (searchParams.has("category")) {
-        return [`CATEGORY_${searchParams.get("category")!.toUpperCase()}`];
-      }
-      return undefined;
-    }
-    if (filterValue) {
-      if (searchParams.has("category")) {
-        return [
-          filterValue.toUpperCase(),
-          `CATEGORY_${searchParams.get("category")!.toUpperCase()}`,
-        ];
-      }
-      return [filterValue.toUpperCase()];
-    }
-    return undefined;
-  }, [filterValue, searchParams]);
-
-  const { isLoading, isValidating } = useThreads(folder, undefined, searchValue.value, 20);
+  const { isLoading, isValidating } = useThreads(folder, undefined, searchValue.value, defaultPageSize);
 
   const [open, setOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -280,7 +259,7 @@ export function MailLayout() {
                     ) : (
                       <>
                         <div className="flex-1 text-center text-sm font-medium capitalize">
-                          <MailCategoryTabs />
+                            <MailCategoryTabs iconsOnly={!!mail.selected} />
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Button
@@ -384,53 +363,49 @@ function BulkSelectActions() {
   );
 }
 
+const categories = [
+  {
+    name: "Primary",
+    searchValue: "",
+    icon: <Inbox className="h-4 w-4" />,
+    colors: "border-0 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70"
+  },
+  {
+    name: "Important",
+    searchValue: "is:important",
+    icon: <AlertTriangle className="h-4 w-4" />,
+    colors: "border-0 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30"
+  },
+  {
+    name: "Personal",
+    searchValue: "is:personal",
+    icon: <User className="h-4 w-4" />,
+    colors: "border-0 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30"
+  },
+  {
+    name: "Updates",
+    searchValue: "is:updates",
+    icon: <Bell className="h-4 w-4" />,
+    colors: "border-0 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30"
+  },
+  {
+    name: "Promotions",
+    searchValue: "is:promotions",
+    icon: <Tag className="h-4 w-4 rotate-90" />,
+    colors: "border-0 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30"
+  },
+];
+
 function MailCategoryTabs({ iconsOnly = false }: { iconsOnly?: boolean }) {
   const [, setSearchValue] = useSearchValue();
   const [activeCategory, setActiveCategory] = useState("Primary");
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
 
-  const categories = [
-    { 
-      name: "Primary", 
-      searchValue: "",
-      icon: <Inbox className="h-4 w-4" />,
-      colors: "border-0 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70"
-    },
-    { 
-      name: "Important", 
-      searchValue: "is:important",
-      icon: <AlertTriangle className="h-4 w-4" />,
-      colors: "border-0 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30"
-    },
-    { 
-      name: "Personal", 
-      searchValue: "is:personal",
-      icon: <User className="h-4 w-4" />,
-      colors: "border-0 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30"
-    },
-    { 
-      name: "Updates", 
-      searchValue: "is:updates",
-      icon: <Bell className="h-4 w-4" />,
-      colors: "border-0 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30"
-    },
-    { 
-      name: "Promotions", 
-      searchValue: "is:promotions",
-      icon: <Tag className="h-4 w-4 rotate-90" />,
-      colors: "border-0 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30"
-    },
-  ];
-
-  const activeTab = categories.find(cat => cat.name === activeCategory);
+  const activeTab = useMemo(() => categories.find(cat => cat.name === activeCategory), [activeCategory]);
 
   useEffect(() => {
     if (activeTab) {
-      const value = activeTab.name === "Primary" 
-        ? ""
-        : `has:${activeTab.searchValue.toLowerCase()}`
-      
       setSearchValue({
         value: activeTab.searchValue,
         highlight: "",
