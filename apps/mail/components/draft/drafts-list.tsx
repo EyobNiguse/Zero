@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMail } from "@/components/mail/use-mail";
 import { useHotKey } from "@/hooks/use-hot-key";
+import { useDrafts } from "@/hooks/use-drafts";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
@@ -85,15 +86,8 @@ const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
           >
             <span className={cn(mail.selected && "max-w-[120px] truncate")}>
               {highlightText(message.sender.name, searchValue.highlight)}
-            </span>{" "}
-            {message.unread ? <span className="size-2 rounded-full bg-[#006FFE]" /> : null}
-          </p>
-          <MailLabels labels={message.tags} />
-          {message.totalReplies !== 1 ? (
-            <span className="rounded-full border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-              {message.totalReplies}
             </span>
-          ) : null}
+          </p>
         </div>
         {message.receivedOn ? (
           <p
@@ -126,11 +120,11 @@ export function DraftsList({ isCompact }: DraftsListProps) {
   const router = useRouter();
 
   const {
-    data: { threads: items, nextPageToken },
+    data: { drafts: items, nextPageToken },
     isValidating,
     isLoading,
     loadMore,
-  } = useThreads("draft", undefined, searchValue.value, defaultPageSize);
+  } = useDrafts(searchValue.value, defaultPageSize);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

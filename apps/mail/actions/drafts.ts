@@ -25,9 +25,7 @@ export const createDraft = async (data: any) => {
 
     const res = await driver.createDraft(data);
 
-    console.log(res.id);
-
-    return { success: true, id: res.message.id };
+    return { success: true, id: res.id };
   } catch (error) {
     console.error("Error creating draft:", error);
     return { success: false, error: String(error) };

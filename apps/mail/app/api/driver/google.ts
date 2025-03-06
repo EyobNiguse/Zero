@@ -30,6 +30,49 @@ const findHtmlBody = (parts: any[]): string => {
   return "";
 };
 
+interface ParsedDraft {
+  id: string;
+  to?: string[];
+  subject?: string;
+  content?: string;
+  rawMessage?: gmail_v1.Schema$Message;
+}
+
+const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
+  if (!draft.message) return null;
+
+  const headers = draft.message.payload?.headers || [];
+  const to =
+    headers
+      .find((h) => h.name === "To")
+      ?.value?.split(",")
+      .map((e) => e.trim())
+      .filter(Boolean) || [];
+  const subject = headers.find((h) => h.name === "Subject")?.value;
+
+  let content = "";
+  const payload = draft.message.payload;
+
+  if (payload) {
+    if (payload.parts) {
+      const textPart = payload.parts.find((part) => part.mimeType === "text/plain");
+      if (textPart?.body?.data) {
+        content = fromBinary(textPart.body.data);
+      }
+    } else if (payload.body?.data) {
+      content = fromBinary(payload.body.data);
+    }
+  }
+
+  return {
+    id: draft.id || "",
+    to,
+    subject: subject ? he.decode(subject).trim() : "",
+    content,
+    rawMessage: draft.message,
+  };
+};
+
 export const driver = async (config: IConfig): Promise<MailManager> => {
   const auth = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID as string,
@@ -118,6 +161,29 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           addLabelIds: ["UNREAD"],
         },
       });
+    },
+    getDraft: async (draftId: string) => {
+      try {
+        const res = await gmail.users.drafts.get({
+          userId: "me",
+          id: draftId,
+          format: "full",
+        });
+
+        if (!res.data) {
+          throw new Error("Draft not found");
+        }
+
+        const parsedDraft = parseDraft(res.data);
+        if (!parsedDraft) {
+          throw new Error("Failed to parse draft");
+        }
+
+        return parsedDraft;
+      } catch (error) {
+        console.error("Error loading draft:", error);
+        throw error;
+      }
     },
     getScope,
     getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
@@ -281,7 +347,26 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         pageToken: pageToken ? pageToken : undefined,
       });
 
-      return { ...res.data, drafts: res.data.drafts } as any;
+      const drafts = await Promise.all(
+        (res.data.drafts || [])
+          .map(async (draft) => {
+            if (!draft.id) return null;
+            const msg = await gmail.users.drafts.get({
+              userId: "me",
+              id: draft.id,
+            });
+            const message = msg.data.message;
+            const parsed = parse(message as any);
+            return {
+              ...parsed,
+              id: draft.id,
+              threadId: draft.message?.id,
+            };
+          })
+          .filter((msg): msg is NonNullable<typeof msg> => msg !== null),
+      );
+
+      return { ...res.data, drafts } as any;
     },
     createDraft: async (data: any) => {
       const mimeMessage = [
@@ -320,10 +405,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         });
       }
 
-      return res.data;
-    },
-    getDraft: async (id: string) => {
-      const res = await gmail.users.drafts.get({ userId: "me", id });
       return res.data;
     },
     async modifyLabels(id, options) {

@@ -2,38 +2,34 @@
 
 "use client";
 
+import { getDrafts, getDraft } from "@/actions/drafts";
 import { InitialThread, ParsedMessage } from "@/types";
 import { useSession } from "@/lib/auth-client";
-import { getDrafts } from "@/actions/drafts";
 import useSWRInfinite from "swr/infinite";
-import { getMail } from "@/actions/mail";
 import useSWR, { preload } from "swr";
 import { useMemo } from "react";
 
-export const preloadThread = (userId: string, threadId: string, connectionId: string) => {
-  console.log(`🔄 Prefetching email ${threadId}...`);
-  preload([userId, threadId, connectionId], fetchThread);
+export const preloadDraft = (userId: string, draftId: string, connectionId: string) => {
+  console.log(`🔄 Prefetching draft ${draftId}...`);
+  preload([userId, draftId, connectionId], fetchDraft);
 };
 
-// TODO: improve the filters
-const fetchEmails = async (args: any[]) => {
-  const [_1, _2, query, max, _3, pageToken] = args;
+const fetchDrafts = async (args: any[]) => {
+  const [_, query, max, pageToken] = args;
 
   const data = await getDrafts({ q: query, max, pageToken });
-
   return data;
 };
 
-const fetchThread = async (args: any[]) => {
+const fetchDraft = async (args: any[]) => {
   const [_, id] = args;
-  const data = await getMail({ id });
+  const data = await getDraft(id);
   return data;
 };
 
-// Based on gmail
 interface RawResponse {
   nextPageToken: string | undefined;
-  threads: InitialThread[];
+  drafts: InitialThread[];
   resultSizeEstimate: number;
 }
 
@@ -70,7 +66,7 @@ export const useDrafts = (query?: string, max?: number) => {
               session.connectionId ?? undefined,
             )
           : null,
-      fetchEmails as any,
+      fetchDrafts,
       {
         revalidateOnMount: true,
         revalidateIfStale: true,
@@ -79,14 +75,33 @@ export const useDrafts = (query?: string, max?: number) => {
       },
     );
 
-  const threads = data ? data.flatMap((page) => page.threads) : [];
-  const isEmpty = data?.[0]?.threads.length === 0;
+  console.log("DATA:", data);
+
+  const drafts = data
+    ? data.flatMap((page) =>
+        page.drafts.map((draft) => {
+          console.log("DRAFT:", draft);
+          return {
+            ...draft,
+            id: draft.id,
+            threadId: draft.threadId,
+            title: draft.title,
+            subject: draft.subject,
+            receivedOn: new Date().toISOString(),
+            unread: false,
+            totalReplies: 0,
+          } as InitialThread;
+        }),
+      )
+    : [];
+
+  const isEmpty = data?.[0]?.drafts.length === 0;
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
   const loadMore = () => setSize(size + 1);
 
   return {
     data: {
-      threads,
+      drafts,
       nextPageToken: data?.[data.length - 1]?.nextPageToken,
     },
     isLoading,
@@ -103,10 +118,10 @@ export const useDraft = (id: string) => {
 
   const { data, isLoading, error, mutate } = useSWR<ParsedMessage[]>(
     session?.user.id ? [session.user.id, id, session.connectionId] : null,
-    fetchThread as any,
+    fetchDraft,
   );
 
-  const hasUnread = useMemo(() => data?.some((e) => e.unread), [data]);
+  const hasUnread = useMemo(() => false, [data]);
 
   return { data, isLoading, error, hasUnread, mutate };
 };

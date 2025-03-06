@@ -26,10 +26,9 @@ export function CreateEmail() {
   const [resetEditorKey, setResetEditorKey] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
-  const [draftId, setDraftId] = React.useState<string>();
   const [isSaving, setIsSaving] = React.useState(false);
   const [messageContent, setMessageContent] = React.useState("");
-  const [emailId, setEmailId] = useQueryState("draftId");
+  const [draftId, setDraftId] = useQueryState("draftId");
   const [defaultValue, setDefaultValue] = React.useState<JSONContent>({
     type: "doc",
     content: [
@@ -42,10 +41,10 @@ export function CreateEmail() {
 
   React.useEffect(() => {
     const loadDraft = async () => {
-      if (!emailId) return;
+      if (!draftId) return;
 
       try {
-        const draft = await getDraft(emailId);
+        const draft = await getDraft(draftId);
 
         if (!draft) {
           toast.error("Draft not found");
@@ -55,64 +54,31 @@ export function CreateEmail() {
         // Set draft ID
         setDraftId(draft.id);
 
-        // Handle raw message data if available
-        if (draft.message) {
-          // Extract headers
-          const headers = draft.message.payload?.headers || [];
-          const to = headers.find((h: any) => h.name === "To")?.value || "";
-          const subject = headers.find((h: any) => h.name === "Subject")?.value || "";
+        // Set recipients and subject
+        if (draft.to?.length) {
+          setToEmails(draft.to);
+        }
+        if (draft.subject) {
+          setSubjectInput(draft.subject);
+        }
 
-          // Set recipients and subject
-          if (to) {
-            const emails = to
-              .split(",")
-              .map((e: any) => e.trim())
-              .filter(Boolean);
-            setToEmails(emails);
-          }
-          if (subject) {
-            setSubjectInput(subject);
-          }
-
-          // Handle message content
-          const payload = draft.message.payload;
-          if (payload) {
-            let messageData = "";
-
-            if (payload.parts) {
-              // Find text part
-              const textPart = payload.parts.find((part: any) => part.mimeType === "text/plain");
-              if (textPart?.body?.data) {
-                messageData = textPart.body.data;
-              }
-            } else if (payload.body?.data) {
-              messageData = payload.body.data;
-            }
-
-            if (messageData) {
-              try {
-                const decoded = atob(messageData.replace(/-/g, "+").replace(/_/g, "/"));
-                setDefaultValue({
-                  type: "doc",
-                  content: [
-                    {
-                      type: "paragraph",
-                      content: [
-                        {
-                          type: "text",
-                          text: decoded,
-                        },
-                      ],
-                    },
-                  ],
-                });
-                setMessageContent(decoded);
-              } catch (error) {
-                console.error("Error decoding message:", error);
-                toast.error("Failed to decode message content");
-              }
-            }
-          }
+        // Set message content
+        if (draft.content) {
+          setDefaultValue({
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: draft.content,
+                  },
+                ],
+              },
+            ],
+          });
+          setMessageContent(draft.content);
         }
 
         setHasUnsavedChanges(false);
@@ -123,7 +89,7 @@ export function CreateEmail() {
     };
 
     loadDraft();
-  }, [emailId]);
+  }, [draftId]);
 
   const hasHiddenAttachments = attachments.length > MAX_VISIBLE_ATTACHMENTS;
 
@@ -177,7 +143,6 @@ export function CreateEmail() {
 
       if (response?.id && response.id !== draftId) {
         setDraftId(response.id);
-        setEmailId(response.id);
       }
 
       setHasUnsavedChanges(false);
@@ -244,7 +209,6 @@ export function CreateEmail() {
       setSubjectInput("");
       setAttachments([]);
       setResetEditorKey((prev) => prev + 1);
-      setDraftId(undefined);
       setMessageContent("");
     } catch (error) {
       console.error("Error sending email:", error);
