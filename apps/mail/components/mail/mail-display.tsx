@@ -15,24 +15,47 @@ import { useSummary } from "@/hooks/use-summary";
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
+  const [isThinking, setIsThinking] = useState(true);
+  const [thinkingDots, setThinkingDots] = useState("");
 
   useEffect(() => {
     let currentIndex = 0;
     setIsComplete(false);
-    setDisplayText("");
+    setIsThinking(true);
+    
+    // Dots animation
+    const dotsInterval = setInterval(() => {
+      setThinkingDots(prev => {
+        if (prev === "...") return ".";
+        if (prev === "..") return "...";
+        if (prev === ".") return "..";
+        return ".";
+      });
+    }, 450);
+    
+    const thinkingTimeout = setTimeout(() => {
+      clearInterval(dotsInterval);
+      setIsThinking(false);
+      setDisplayText("");
 
-    const interval = setInterval(() => {
-      if (currentIndex < text.length) {
-        const nextChar = text[currentIndex];
-        setDisplayText((prev) => prev + nextChar);
-        currentIndex++;
-      } else {
-        setIsComplete(true);
-        clearInterval(interval);
-      }
-    }, 40); // Slower typing speed for better readability
+      const interval = setInterval(() => {
+        if (currentIndex < text.length) {
+          const nextChar = text[currentIndex];
+          setDisplayText((prev) => prev + nextChar);
+          currentIndex++;
+        } else {
+          setIsComplete(true);
+          clearInterval(interval);
+        }
+      }, 40);
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    }, 2000);
+
+    return () => {
+      clearTimeout(thinkingTimeout);
+      clearInterval(dotsInterval);
+    };
   }, [text]);
 
   return (
@@ -43,8 +66,12 @@ const StreamingText = ({ text }: { text: string }) => {
           isComplete ? "animate-shine-slow" : "",
         )}
       >
-        {displayText}
-        {isComplete ? null : (
+        {isThinking ? (
+          <span className="animate-pulse">Thinking{thinkingDots}</span>
+        ) : (
+          <span>{displayText}</span>
+        )}
+        {!isComplete && !isThinking && (
           <span className="animate-blink bg-primary ml-0.5 inline-block h-4 w-0.5"></span>
         )}
       </div>
