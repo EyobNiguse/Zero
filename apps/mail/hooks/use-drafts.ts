@@ -41,22 +41,17 @@ const getKey = (
   pageIndex: number,
   previousPageData: RawResponse | null,
   userId: string,
-  folder: string,
   query?: string,
   max?: number,
-  labelIds?: string[],
   connectionId?: string,
 ) => {
-  // reached the end
   if (previousPageData && !previousPageData.nextPageToken) return null;
 
-  // first page, we don't have previousPageData
   if (pageIndex === 0) {
-    return [userId, folder, query, max, labelIds, undefined, connectionId];
+    return [userId, query, max, undefined, connectionId];
   }
 
-  // add the pageToken to the API endpoint
-  return [userId, folder, query, max, labelIds, previousPageData?.nextPageToken, connectionId];
+  return [userId, query, max, previousPageData?.nextPageToken, connectionId];
 };
 
 export const useDrafts = (query?: string, max?: number) => {
@@ -70,10 +65,8 @@ export const useDrafts = (query?: string, max?: number) => {
               pageIndex,
               previousPageData,
               session.user.id,
-              "draft",
               query,
               max,
-              undefined,
               session.connectionId ?? undefined,
             )
           : null,
