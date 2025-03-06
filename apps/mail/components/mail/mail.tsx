@@ -4,7 +4,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { AlignVerticalSpaceAround, ArchiveX, BellOff, SearchIcon, X, Inbox, Tag, Users, AlertTriangle, MessageSquare, User, Bell } from "lucide-react";
+import { ArchiveX, BellOff, X, Inbox, Tag, AlertTriangle, User, Bell } from "lucide-react";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { ThreadDisplay, ThreadDemo } from "@/components/mail/thread-display";
 import { MailList, MailListDemo } from "@/components/mail/mail-list";
@@ -22,6 +22,8 @@ import { useRouter } from "next/navigation";
 import { SearchBar } from "./search-bar";
 import { cn, defaultPageSize } from "@/lib/utils";
 import items from "./demo.json";
+import { XIcon } from "../icons/animated/x";
+import { SearchIcon } from "../icons/animated/search";
 
 export function DemoMailLayout() {
   const mail = {
@@ -189,6 +191,8 @@ export function MailLayout() {
     }
   });
 
+  const searchIconRef = useRef<any>(null);
+
   return (
     <TooltipProvider delayDuration={0}>
       <div className="rounded-inherit flex">
@@ -219,14 +223,14 @@ export function MailLayout() {
               >
                 <SidebarToggle className="h-fit px-2" />
                 {searchMode && (
-                  <div className="flex flex-1 items-center justify-center gap-1.5">
+                  <div className="flex flex-1 items-center justify-center gap-3">
                     <SearchBar />
                     <Button
                       variant="ghost"
                       className="md:h-fit md:px-2"
                       onClick={() => setSearchMode(false)}
                     >
-                      <X />
+                      <XIcon className="h-4 w-4" />
                     </Button>
                   </div>
                 )}
@@ -265,8 +269,10 @@ export function MailLayout() {
                             variant="ghost"
                             className="md:h-fit md:px-2"
                             onClick={() => setSearchMode(true)}
+                            onMouseEnter={() => searchIconRef.current?.startAnimation?.()}
+                            onMouseLeave={() => searchIconRef.current?.stopAnimation?.()}
                           >
-                            <SearchIcon />
+                            <SearchIcon ref={searchIconRef} className="h-4 w-4" />
                           </Button>
                         </div>
                       </>
@@ -366,47 +372,45 @@ const categories = [
     name: "Primary",
     searchValue: "",
     icon: <Inbox className="h-4 w-4" />,
-    colors: "border-0 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70"
+    colors: "border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70"
   },
   {
     name: "Important",
     searchValue: "is:important",
     icon: <AlertTriangle className="h-4 w-4" />,
-    colors: "border-0 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30"
+    colors: "border-0 text-amber-800 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30"
   },
   {
     name: "Personal",
     searchValue: "is:personal",
     icon: <User className="h-4 w-4" />,
-    colors: "border-0 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30"
+    colors: "border-0 text-green-800 bg-green-100 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30"
   },
   {
     name: "Updates",
     searchValue: "is:updates",
     icon: <Bell className="h-4 w-4" />,
-    colors: "border-0 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30"
+    colors: "border-0 text-purple-800 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30"
   },
   {
     name: "Promotions",
     searchValue: "is:promotions",
     icon: <Tag className="h-4 w-4 rotate-90" />,
-    colors: "border-0 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30"
+    colors: "border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30"
   },
 ];
 
 function MailCategoryTabs({ iconsOnly = false, isLoading = false }: { iconsOnly?: boolean, isLoading?: boolean }) {
   const [, setSearchValue] = useSearchValue();
   
-  // Fix hydration issue by using lazy initializer
-  const [activeCategory, setActiveCategory] = useState<string>("Primary");
-  
-  // Use useEffect for localStorage operations
-  useEffect(() => {
-    const savedCategory = localStorage.getItem('mailActiveCategory');
-    if (savedCategory) {
-      setActiveCategory(savedCategory);
+  // Initialize from localStorage with fallback to "Primary"
+  const [activeCategory, setActiveCategory] = useState(() => {
+    // Only run in browser environment
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('mailActiveCategory') || "Primary";
     }
-  }, []);
+    return "Primary";
+  });
   
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);

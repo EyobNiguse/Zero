@@ -1,16 +1,11 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowUp, FileIcon, Paperclip, Reply, Send, X, Plus } from "lucide-react";
+import { ArrowUp, Paperclip, Reply, X, Plus } from "lucide-react";
 import { cleanEmailAddress, truncateFileName } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
 import Editor from "@/components/create/editor";
 import { Button } from "@/components/ui/button";
 import { sendEmail } from "@/actions/send";
 import { Dispatch, SetStateAction, useRef, useState, useEffect } from "react";
 import { ParsedMessage } from "@/types";
-import { Badge } from "../ui/badge";
-import { JSONContent } from "novel";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
@@ -42,6 +37,17 @@ export default function ReplyCompose({
       setIsOpen(value);
     } else {
       setIsComposerOpen(value);
+    }
+  };
+
+  // Handle keyboard shortcuts for sending email
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Check for Cmd/Ctrl + Enter
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (isFormValid) {
+        handleSendEmail(e as unknown as React.MouseEvent<HTMLButtonElement>);
+      }
     }
   };
 
@@ -236,6 +242,7 @@ export default function ReplyCompose({
           // Prevent default form submission
           e.preventDefault();
         }}
+        onKeyDown={handleKeyDown}
       >
         {isDragging && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center border-2 border-dashed border-primary/30 rounded-2xl m-4">
@@ -378,10 +385,10 @@ export default function ReplyCompose({
               disabled={!isFormValid}
               type="button"
             >
-              <ArrowUp className="absolute left-2.5 h-4 w-4" />
-              <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <span className="whitespace-nowrap pr-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 Send
               </span>
+              <ArrowUp className="absolute right-2.5 h-4 w-4" />
             </Button>
           </div>
         </div>
