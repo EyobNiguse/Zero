@@ -21,7 +21,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <div className="mx-auto flex w-full items-center justify-between p-4 px-7 lg:px-10">
+    <div className="mx-auto flex w-full items-center justify-between p-4 px-7 lg:px-20">
       <Image 
         src="/white-icon.svg" 
         alt="Mail0" 

@@ -4,29 +4,21 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Github, Mail, ArrowLeft, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React from "react";
 import Footer from "@/components/home/footer";
 import { toast } from "sonner";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { createSectionId } from "@/utils/text";
 
 const LAST_UPDATED = "February 13, 2025";
 
 export default function PrivacyPolicy() {
   const router = useRouter();
-  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const { copiedValue: copiedSection, copyToClipboard } = useCopyToClipboard();
 
   const handleCopyLink = (sectionId: string) => {
     const url = `${window.location.origin}${window.location.pathname}#${sectionId}`;
-    navigator.clipboard.writeText(url);
-    setCopiedSection(sectionId);
-    toast.success("Link copied to clipboard!");
-    
-    setTimeout(() => {
-      setCopiedSection(null);
-    }, 2000);
-  };
-
-  const createSectionId = (title: string) => {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    copyToClipboard(url, sectionId);
   };
 
   return (
