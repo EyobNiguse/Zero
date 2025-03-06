@@ -1,6 +1,6 @@
 "use client";
 
-import { Book, ChevronDown, HelpCircle, LogIn, LogOut, MoonIcon, UserPlus } from "lucide-react";
+import { Book, ChevronDown, HelpCircle, LogIn, LogOut, MoonIcon, Settings2Icon, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
@@ -21,6 +21,10 @@ import { useTheme } from "next-themes";
 import { IConnection } from "@/types";
 import { toast } from "sonner";
 import axios from "axios";
+import { AddConnectionDialog } from "../connection/add";
+import { Button } from "./button";
+import { SettingsGearIcon } from "../icons/animated/settings-gear";
+import Link from "next/link";
 
 export function NavUser() {
   const { data: session, refetch } = useSession();
@@ -154,7 +158,10 @@ export function NavUser() {
         <div className="space-y-1">
           {session ? (
             <>
-              <div className="text-muted-foreground px-1 py-1.5 text-[11px]">Accounts</div>
+              <Link passHref href={`/settings/connections?from=${pathname}`} className="text-muted-foreground px-1 py-1.5 text-[11px] flex justify-between">
+                <p>Accounts</p>
+                <SettingsGearIcon className="scale-80" />
+              </Link>
               {connections?.map((connection) => (
                 <DropdownMenuItem
                   key={connection.id}
@@ -190,15 +197,7 @@ export function NavUser() {
                   </div>
                 </DropdownMenuItem>
               ))}
-              <DropdownMenuItem
-                className="mt-1 cursor-pointer"
-                onClick={() => router.push(`/settings/connections?from=${pathname}`)}
-              >
-                <div className="flex items-center gap-2">
-                  <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
-                  <p className="text-[13px] opacity-60">Add email</p>
-                </div>
-              </DropdownMenuItem>
+              <AddConnectionDialog />
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
                 <LogOut size={16} strokeWidth={2} className="mr-1" aria-hidden="true" />

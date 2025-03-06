@@ -95,3 +95,6 @@ export const extractFilterValue = (filter: string): string => {
   
   return value || '';
 };
+
+export const defaultPageSize = 20
+
