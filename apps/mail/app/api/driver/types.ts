@@ -5,6 +5,7 @@ export interface MailManager {
   create(data: any): Promise<any>;
   createDraft(data: any): Promise<any>;
   getDraft: (id: string) => Promise<any>;
+  listDrafts: (q?: string, maxResults?: number, pageToken?: string) => Promise<any>;
   delete(id: string): Promise<any>;
   list<T>(
     folder: string,

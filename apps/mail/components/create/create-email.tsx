@@ -2,8 +2,8 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowUpIcon, BookText, Paperclip, Plus, X } from "lucide-react";
+import { createDraft, getDraft } from "@/actions/drafts";
 import { UploadedFileIcon } from "./uploaded-file-icon";
-import { createDraft, getDraft } from "@/actions/mail";
 import { Separator } from "@/components/ui/separator";
 import { SidebarToggle } from "../ui/sidebar-toggle";
 import { cn, truncateFileName } from "@/lib/utils";
@@ -29,7 +29,7 @@ export function CreateEmail() {
   const [draftId, setDraftId] = React.useState<string>();
   const [isSaving, setIsSaving] = React.useState(false);
   const [messageContent, setMessageContent] = React.useState("");
-  const [emailId, setEmailId] = useQueryState("eid");
+  const [emailId, setEmailId] = useQueryState("draftId");
   const [defaultValue, setDefaultValue] = React.useState<JSONContent>({
     type: "doc",
     content: [
@@ -66,7 +66,7 @@ export function CreateEmail() {
           if (to) {
             const emails = to
               .split(",")
-              .map((e) => e.trim())
+              .map((e: any) => e.trim())
               .filter(Boolean);
             setToEmails(emails);
           }

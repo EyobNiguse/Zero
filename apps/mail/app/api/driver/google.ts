@@ -272,6 +272,17 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
       return { normalizedIds, threadIds };
     },
+    listDrafts: async (q, maxResults = 20, pageToken?: string) => {
+      const { q: normalizedQ } = normalizeSearch("", q ?? "");
+      const res = await gmail.users.drafts.list({
+        userId: "me",
+        q: normalizedQ ? normalizedQ : undefined,
+        maxResults,
+        pageToken: pageToken ? pageToken : undefined,
+      });
+
+      return { ...res.data, drafts: res.data.drafts } as any;
+    },
     createDraft: async (data: any) => {
       const mimeMessage = [
         `From: me`,
@@ -297,14 +308,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       let res;
 
       if (data.id) {
-        // Update existing draft
         res = await gmail.users.drafts.update({
           userId: "me",
           id: data.id,
           requestBody,
         });
       } else {
-        // Create new draft
         res = await gmail.users.drafts.create({
           userId: "me",
           requestBody,
