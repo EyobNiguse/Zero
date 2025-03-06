@@ -51,10 +51,8 @@ export function CreateEmail() {
           return;
         }
 
-        // Set draft ID
         setDraftId(draft.id);
 
-        // Set recipients and subject
         if (draft.to?.length) {
           setToEmails(draft.to);
         }
@@ -154,7 +152,6 @@ export function CreateEmail() {
     }
   }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
 
-  // Autosave every 3 seconds if there are unsaved changes
   React.useEffect(() => {
     if (!hasUnsavedChanges) return;
 
