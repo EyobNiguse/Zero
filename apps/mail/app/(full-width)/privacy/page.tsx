@@ -8,7 +8,7 @@ import React from "react";
 import Footer from "@/components/home/footer";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { createSectionId } from "@/utils/text";
+import { createSectionId } from "@/lib/utils";
 
 const LAST_UPDATED = "February 13, 2025";
 
