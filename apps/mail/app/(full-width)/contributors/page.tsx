@@ -55,7 +55,7 @@ interface ActivityData {
 }
 
 const excludedUsernames = ["bot1", "dependabot", "github-actions"];
-const coreTeamMembers = ["nizzyabi", "ahmetskilinc", "ripgrim", "user12224", "praashh", "mrgsub"];
+const coreTeamMembers = ["nizzyabi", "ahmetskilinc", "ripgrim", "needlexo", "praashh", "mrgsub"];
 const REPOSITORY = "Mail-0/Mail-0";
 
 const specialRoles: Record<string, { role: string; twitter?: string; website?: string }> = {
@@ -73,9 +73,9 @@ const specialRoles: Record<string, { role: string; twitter?: string; website?: s
     twitter: "fuckgrimlabs",
     website: "https://ripgrim.com",
   },
-  user12224: {
+  needlexo: {
     role: "Maintainer",
-    twitter: "user12224",
+    twitter: "needleXO",
     website: "https://needle.rip",
   },
   praashh: {
@@ -84,6 +84,7 @@ const specialRoles: Record<string, { role: string; twitter?: string; website?: s
   },
   mrgsub: {
     role: "Maintainer",
+    twitter: "cmdhaus",
   },
 };
 
