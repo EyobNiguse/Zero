@@ -22,6 +22,8 @@ export const LABELS = {
   SENT: 'SENT',
 } as const;
 
+export const FOLDER_NAMES = ["inbox", "spam", "trash", "unread", "starred", "important", "sent", "draft"];
+
 export const FOLDER_TAGS: Record<string, string[]> = {
   [FOLDERS.SPAM]: [LABELS.SPAM],
   [FOLDERS.INBOX]: [LABELS.INBOX],

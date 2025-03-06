@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, SlidersHorizontal, CalendarIcon, X } from "lucide-react";
-import { Tag, Bell, AlertTriangle, User, Mail, MailQuestion, UserRound, Users, Star, MailCheck, Paperclip } from "lucide-react";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,128 +18,14 @@ import { useForm } from "react-hook-form";
 import { useDebounce } from "react-use";
 import { Toggle } from "../ui/toggle";
 import { format } from "date-fns";
-import { cn, extractFilterValue, type FilterSuggestion } from "@/lib/utils";
+import { cn, extractFilterValue, type FilterSuggestion, FOLDER_NAMES } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import React from "react";
-
-
-const getFilterSuggestionGridColumns = (
-  count: number,
-  isMobile: boolean
-): string => {
-  if (count <= 0) return "grid-cols-1";
-  
-  if (isMobile) {
-    if (count === 1) return "grid-cols-1";
-    if (count === 2) return "grid-cols-2";
-    return "grid-cols-3";
-  }
-  
-  if (count <= 4) return `grid-cols-${count}`;
-  return count <= 8 ? "grid-cols-4" : "grid-cols-6";
-};
-
-const matchFilterPrefix = (text: string): [string, string, string] | null => {
-  const match = /(is|has|from|to|after|before):([^\s]*)$/.exec(text);
-  if (!match || !match[1]) return null;
-  
-  return [match[0], match[1], match[2] || ''];
-};
-
-const filterSuggestionsFunction = (
-  suggestions: FilterSuggestion[],
-  prefix: string,
-  query: string
-): FilterSuggestion[] => {
-  if (!suggestions?.length) return [];
-  
-  if (prefix === 'from' || prefix === 'to') {
-    return handleEmailFilters(suggestions, prefix, query);
-  }
-  
-  if (prefix === 'after' || prefix === 'before') {
-    return suggestions.filter(suggestion => suggestion.prefix === prefix);
-  }
-  
-  if (!query) {
-    return suggestions.filter(suggestion => suggestion.prefix === prefix);
-  }
-  
-  return filterByPrefixAndQuery(suggestions, prefix, query);
-};
-
-const handleEmailFilters = (
-  suggestions: FilterSuggestion[],
-  prefix: string, 
-  query: string
-): FilterSuggestion[] => {
-  if (!query) {
-    return suggestions.filter(
-      suggestion => suggestion.prefix === prefix
-    );
-  }
-  
-  if (query && query !== 'me') {
-    return [{
-      prefix,
-      filter: `${prefix}:${query.toLowerCase()}`,
-      description: prefix === 'from' 
-        ? `Emails from senders containing "${query}"`
-        : `Emails to recipients containing "${query}"`,
-      icon: prefix === 'from' ? <UserRound className="h-5 w-5" /> : <Mail className="h-5 w-5" />
-    }];
-  }
-  
-  return suggestions.filter(suggestion => 
-    suggestion.prefix === prefix && 
-    suggestion.filter.toLowerCase().includes(`${prefix}:${query.toLowerCase()}`)
-  );
-};
-
-const filterByPrefixAndQuery = (
-  suggestions: FilterSuggestion[],
-  prefix: string,
-  query: string
-): FilterSuggestion[] => {
-  const lowerQuery = query.toLowerCase();
-  
-  return suggestions.filter(suggestion => {
-    if (suggestion.prefix !== prefix) return false;
-    
-    const colonIndex = suggestion.filter.indexOf(':');
-    if (colonIndex === -1) return false;
-    
-    const filterValue = suggestion.filter.substring(colonIndex + 1).toLowerCase();
-    return filterValue.includes(lowerQuery);
-  });
-};
-
-const inboxes = ["inbox", "spam", "trash", "unread", "starred", "important", "sent", "draft"];
-
-const filterSuggestions: FilterSuggestion[] = [
-  // "is:" filters
-  { prefix: "is", filter: "is:important", description: "Show important emails", icon: <AlertTriangle className="h-5 w-5" /> },
-  { prefix: "is", filter: "is:personal", description: "Show personal emails", icon: <User className="h-5 w-5" /> },
-  { prefix: "is", filter: "is:updates", description: "Show update emails", icon: <Bell className="h-5 w-5" /> },
-  { prefix: "is", filter: "is:promotions", description: "Show promotional emails", icon: <Tag className="h-5 w-5 rotate-90" /> },
-  { prefix: "is", filter: "is:unread", description: "Show unread emails", icon: <MailQuestion className="h-5 w-5" /> },
-  { prefix: "is", filter: "is:read", description: "Show read emails", icon: <MailCheck className="h-5 w-5" /> },
-  { prefix: "is", filter: "is:starred", description: "Show starred emails", icon: <Star className="h-5 w-5" /> },
-  { prefix: "is", filter: "is:social", description: "Show social emails", icon: <Users className="h-5 w-5" /> },
-
-  // "has:" filters
-  { prefix: "has", filter: "has:attachment", description: "Emails with attachments", icon: <Paperclip className="h-5 w-5" /> },
-
-  // "from:" filters, maybe enhance this later? only searches for emails
-  { prefix: "from", filter: "from:me", description: "Emails you've sent", icon: <UserRound className="h-5 w-5" /> },
-
-  // "to:" filters, maybe enhance this later? only searches for emails
-  { prefix: "to", filter: "to:me", description: "Emails where you're the direct recipient", icon: <Mail className="h-5 w-5" /> },
-  
-  // "date:" filters
-  { prefix: "after", filter: "after:date", description: "Emails after a specific date", icon: <CalendarIcon className="h-5 w-5" /> },
-  { prefix: "before", filter: "before:date", description: "Emails before a specific date", icon: <CalendarIcon className="h-5 w-5" /> },
-];
+import { 
+  matchFilterPrefix, 
+  filterSuggestionsFunction,
+  filterSuggestions
+} from "@/lib/filter";
 
 function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRange) => void }) {
   return (
@@ -332,7 +217,11 @@ export function SearchBar() {
     
     const handleArrowNavigation = (direction: 'right' | 'left' | 'down' | 'up') => {
       e.preventDefault();
-      const columns = isMobile ? 3 : Math.min(suggestionsState.filtered.length, 6);
+      // Estimate columns based on container width and button width
+      const containerWidth = 600; // Max width of the dropdown
+      const buttonWidth = isMobile ? 80 : 100; // The minmax value from grid
+      const gap = 12; // gap-3 is 12px
+      const columns = Math.floor((containerWidth + gap) / (buttonWidth + gap));
       
       setSuggestionsState(prev => {
         let nextIndex = prev.activeIndex;
@@ -390,10 +279,6 @@ export function SearchBar() {
     };
   }, []);
 
-  const gridColumns = useMemo(() => {
-    return getFilterSuggestionGridColumns(suggestionsState.filtered.length, isMobile);
-  }, [suggestionsState.filtered.length, isMobile]);
-  
   useDebounce(
     () => {
       submitSearch(value);
@@ -553,7 +438,14 @@ export function SearchBar() {
             </div>
           )}
           
-          <div className={cn("grid gap-3", gridColumns)}>
+          <div 
+            className="grid gap-3" 
+            style={{ 
+              gridTemplateColumns: `repeat(auto-fit, minmax(${isMobile ? '80px' : '100px'}, 1fr))`,
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}
+          >
             {filtered.map((suggestion, index) => {
               const value = extractFilterValue(suggestion.filter);
               const isEmailFilter = suggestion.prefix === 'from' || suggestion.prefix === 'to';
@@ -565,8 +457,9 @@ export function SearchBar() {
                   role="option"
                   aria-selected={index === suggestionsState.activeIndex}
                   className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-md text-center transition-all gap-1.5",
+                    "flex flex-col items-center justify-center py-3 px-2 rounded-md transition-all gap-1.5",
                     "border hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "h-[80px]",
                     index === suggestionsState.activeIndex ? 
                       "bg-accent/15 border-accent/30 text-accent-foreground" : 
                       "border-transparent hover:bg-muted/50"
@@ -579,7 +472,7 @@ export function SearchBar() {
                   </div>
                   
                   <div className={cn(
-                    "text-xs truncate max-w-full",
+                    "text-xs text-center truncate w-full",
                     isEmailFilter ? "" : "capitalize"
                   )}>
                     {isEmailFilter ? value.toLowerCase() : value}
@@ -598,7 +491,7 @@ export function SearchBar() {
         </div>
       </div>
     );
-  }, [suggestionsState, isMobile, handleSuggestionClick, gridColumns]);
+  }, [suggestionsState, isMobile, handleSuggestionClick]);
 
   const renderDatePicker = useCallback(() => {
     if (!datePickerState.show) return null;
@@ -737,7 +630,7 @@ export function SearchBar() {
                         <SelectValue placeholder="All Mail" />
                       </SelectTrigger>
                       <SelectContent className="rounded-md">
-                        {inboxes.map((inbox) => (
+                        {FOLDER_NAMES.map((inbox) => (
                           <SelectItem key={inbox} value={inbox} className="capitalize">
                             {inbox}
                           </SelectItem>
