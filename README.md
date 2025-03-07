@@ -41,7 +41,7 @@ Zero is built with modern and reliable technologies:
 
 Before running the application, you'll need to set up several services and environment variables:
 
-For more in-depth information on environment variables, please refer to the [Environment Variables](#environment-variables) section in this README.
+For more in-depth information on environment variables, please refer to the [Environment Variables](#environment-variables) section.
 
 
 1. **Setup Local Services with Dev Container and Docker**
