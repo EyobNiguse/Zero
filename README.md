@@ -151,6 +151,8 @@ DATABASE_URL=          # Required: PostgreSQL connection string for migrations
 ```
 For local development a connection string example is provided in the `.env.example` file located in the same folder as the database.
 
+**Note:** The `DATABASE_URL` connection string in the `apps/mail/.env` has to be the same as the one in `packages/db/.env`
+
 ### Update the PostgreSQL database accordingly
 
 Drizzle will apply the schema migrations set in `.env`
