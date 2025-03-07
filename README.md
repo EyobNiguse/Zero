@@ -37,7 +37,7 @@ Zero is an open-source email solution that gives users the power to **self-host*
 
 ## Why Zero?
 
-Most email services today are either **closed-source**, **data-hungry**, or **too complex to self-host**. Mail0.io is different:
+Most email services today are either **closed-source**, **data-hungry**, or **too complex to self-host**. 0.email is different:
 
 ✅ **Open-Source** – No hidden agendas, fully transparent.
 🔒 **Data Privacy First** – Your emails, your data. No tracking, no selling, no middlemen.
@@ -271,11 +271,11 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### Create a new issue
 
-If you spot a problem with the docs, [search if an issue already exists](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments). If a related issue doesn't exist, you can open a new issue using a relevant [issue form](https://github.com/nizzyabi/Mail0/issues/new?template=Blank+issue).
+If you spot a problem with the docs, [search if an issue already exists](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments). If a related issue doesn't exist, you can open a new issue using a relevant [issue form](https://github.com/Mail-0/Mail-0/issues/new?template=Blank+issue).
 
 ### Solve an issue
 
-Scan through our [existing issues](https://github.com/nizzyabi/Mail0/issues) to find one that interests you. You can narrow down the search using `labels` as filters. For more information, see "[Label reference](https://docs.github.com/en/contributing/collaborating-on-github-docs/label-reference)". As a general rule, we don't assign issues to anyone. If you find an issue to work on, you are welcome to open a PR with a fix.
+Scan through our [existing issues](https://github.com/Mail-0/Mail-0/issues) to find one that interests you. You can narrow down the search using `labels` as filters. For more information, see "[Label reference](https://docs.github.com/en/contributing/collaborating-on-github-docs/label-reference)". As a general rule, we don't assign issues to anyone. If you find an issue to work on, you are welcome to open a PR with a fix.
 
 ## Pull Request
 
@@ -291,12 +291,12 @@ When you're finished with the changes, create a pull request, also known as a PR
 
 ## License
 
-Mail0.io is licensed under the MIT License. This means you can:
+0.email is licensed under the MIT License. This means you can:
 
-✅ Use the software commercially
-✅ Modify the source code
-✅ Distribute your modifications
-✅ Use and modify the software privately
+✅ Use the software commercially, as is.
+✅ Modify the source code, and
+✅ Distribute your modifications, and
+✅ Use and modify the software *privately*
 
 The only requirement is that you include the original copyright and license notice in any copy of the software/source.
 
