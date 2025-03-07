@@ -15,8 +15,6 @@ import { useSummary } from "@/hooks/use-summary";
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
-  const [isThinking, setIsThinking] = useState(true);
-  const [thinkingDots, setThinkingDots] = useState("");
 
   useEffect(() => {
     let currentIndex = 0;
@@ -216,6 +214,15 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
               </Popover>
             </div> : null}
           </div>
+        </div>
+
+        <div
+          className={cn(
+            "h-0 overflow-hidden transition-all duration-200",
+            !isCollapsed && "h-[1px]",
+          )}
+        >
+          <Separator />
         </div>
 
         <div

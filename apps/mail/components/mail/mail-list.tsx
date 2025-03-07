@@ -69,7 +69,6 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
-
   const handleMouseEnter = () => {
     if (demo) return;
     isHovering.current = true;
@@ -207,7 +206,7 @@ export function MailListDemo({ items: filteredItems = items }) {
     </div>
   </ScrollArea>
 }
-
+              
 export function MailList({ isCompact }: MailListProps) {
   const { folder } = useParams<{ folder: string }>()
   const [mail, setMail] = useMail();
@@ -569,6 +568,27 @@ const MailLabels = memo(({ labels }: { labels: string[] }) => {
 }, (prev, next) => {
   return prev.labels === next.labels;
 });
+
+function getLabelIcon(label: string) {
+  const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
+
+  switch (normalizedLabel) {
+    case "important":
+      return <AlertTriangle className="h-3 w-3" />;
+    case "promotions":
+      return <Tag className="h-3 w-3 rotate-90" />;
+    case "personal":
+      return <User className="h-3 w-3" />;
+    case "updates":
+      return <Bell className="h-3 w-3" />;
+    case "work":
+      return <Briefcase className="h-3 w-3" />;
+    case "forums":
+      return <Users className="h-3 w-3" />;
+    default:
+      return null;
+  }
+}
 
 function getLabelIcon(label: string) {
   const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");

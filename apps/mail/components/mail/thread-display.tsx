@@ -36,6 +36,7 @@ interface ThreadDisplayProps {
 
 export function ThreadDemo({ mail: emailData, onClose, isMobile }: ThreadDisplayProps) {
   const isFullscreen = false;
+
   return (
     <div
       className={cn(

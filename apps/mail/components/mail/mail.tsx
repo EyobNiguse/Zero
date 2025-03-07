@@ -34,6 +34,7 @@ export function DemoMailLayout() {
   const isValidating = false;
   const isLoading = false;
   const isDesktop = true;
+
   const [open, setOpen] = useState(false);
   const handleClose = () => setOpen(false);
   const [activeCategory, setActiveCategory] = useState("Primary");
@@ -542,7 +543,6 @@ function MailCategoryTabs({
                 <span>{category.name}</span>
               </TooltipContent>
             </Tooltip>
-            
           </li>
         ))}
       </ul>
