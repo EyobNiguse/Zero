@@ -2,11 +2,12 @@ import { Plus, UserPlus } from "lucide-react"
 import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog"
 import { emailProviders } from "@/constants/emailProviders"
+import { cn } from "@/lib/utils"
 
-export const AddConnectionDialog = ({ children }: { children?: React.ReactNode }) => {
+export const AddConnectionDialog = ({ children, className }: { children?: React.ReactNode, className?: string }) => {
     return <Dialog>
         <DialogTrigger asChild>
-            <Button size={'dropdownItem'} variant={'dropdownItem'} className="flex items-center gap-2 w-full">
+            <Button size={'dropdownItem'} variant={'dropdownItem'} className={cn("gap-2 w-full justify-start", className)}>
                 <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
                 <p className="text-[13px] opacity-60">Add email</p>
             </Button>

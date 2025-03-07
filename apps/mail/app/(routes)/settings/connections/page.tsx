@@ -150,7 +150,7 @@ export default function ConnectionsPage() {
             </div>
           ) : null}
 
-          <AddConnectionDialog>
+          <AddConnectionDialog className="w-fit hover:bg-transparent">
 
           </AddConnectionDialog>
         </div>
