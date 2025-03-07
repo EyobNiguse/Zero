@@ -41,6 +41,9 @@ Zero is built with modern and reliable technologies:
 
 Before running the application, you'll need to set up several services and environment variables:
 
+For more in-depth information on environment variables, please refer to the [Environment Variables](#environment-variables) section in this README.
+
+
 1. **Setup Local Services with Dev Container and Docker**
 
    - Make sure you have [Docker](https://docs.docker.com/get-docker/), [NodeJS](https://nodejs.org/en/download/), and [pnpm](https://pnpm.io/installation) installed.
@@ -129,7 +132,7 @@ Before running the application, you'll need to set up several services and envir
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and configure the following variables:
+Copy `.env.example` located in the `apps/mail` folder to `.env` in the same folder and configure the following variables:
 
 ```env
 # Auth
