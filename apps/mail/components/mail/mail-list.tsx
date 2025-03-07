@@ -590,27 +590,6 @@ function getLabelIcon(label: string) {
   }
 }
 
-function getLabelIcon(label: string) {
-  const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
-
-  switch (normalizedLabel) {
-    case "important":
-      return <AlertTriangle className="h-3 w-3" />;
-    case "promotions":
-      return <Tag className="h-3 w-3 rotate-90" />;
-    case "personal":
-      return <User className="h-3 w-3" />;
-    case "updates":
-      return <Bell className="h-3 w-3" />;
-    case "work":
-      return <Briefcase className="h-3 w-3" />;
-    case "forums":
-      return <Users className="h-3 w-3" />;
-    default:
-      return null;
-  }
-}
-
 function getDefaultBadgeStyle(label: string): ComponentProps<typeof Badge>["variant"] {
   const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
 
