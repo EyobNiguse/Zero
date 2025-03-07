@@ -176,6 +176,10 @@ pnpm dev
 ```
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Contribute
+
+Please refer to the [contributing guide](.github/CONTRIBUTING.md).
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Mail-0/Mail-0&type=Timeline)](https://star-history.com/#Mail-0/Mail-0&Timeline)
