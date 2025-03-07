@@ -15,6 +15,8 @@ import { useSummary } from "@/hooks/use-summary";
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const [thinkingDots, setThinkingDots] = useState("");
 
   useEffect(() => {
     let currentIndex = 0;
