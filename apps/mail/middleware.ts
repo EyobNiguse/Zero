@@ -8,8 +8,6 @@ export function middleware(request: NextRequest) {
   const geo = geolocation(request);
   const country = geo.countryRegion || "";
 
-  console.log(geo);
-
   response.headers.set("x-user-country", country);
 
   const isEuRegion = EU_COUNTRIES.includes(country);
