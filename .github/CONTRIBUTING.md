@@ -22,9 +22,9 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 
 2. **Set Up Development Environment**
    - Install Node.js (v16 or higher)
-   - Install required dependencies: `npm install`
+   - Install required dependencies: `pnpm install`
    - Copy `.env.example` to `.env` and configure your environment variables
-   - Set up your Google OAuth credentials (see README.md)
+   - Set up your Google OAuth credentials (see [README.md](../README.md))
 
 ## Development Workflow
 
