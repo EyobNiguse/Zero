@@ -1,30 +1,31 @@
 export const EU_COUNTRIES = [
-  "AT",
-  "BE",
-  "BG",
-  "HR",
-  "CY",
-  "CZ",
-  "DK",
-  "EE",
-  "FI",
-  "FR",
-  "DE",
-  "GR",
-  "HU",
-  "IE",
-  "IT",
-  "LV",
-  "LT",
-  "LU",
-  "MT",
-  "NL",
-  "PL",
-  "PT",
-  "RO",
-  "SK",
-  "SI",
-  "ES",
-  "SE",
-  "GB", // Include GB (United Kingdom) even though it's not in EU but needs cookie consent
+  "AUT", // Austria
+  "BEL", // Belgium
+  "BGR", // Bulgaria
+  "HRV", // Croatia
+  "CYP", // Cyprus
+  "CZE", // Czech Republic
+  "DNK", // Denmark
+  "EST", // Estonia
+  "FIN", // Finland
+  "FRA", // France
+  "DEU", // Germany
+  "GRC", // Greece
+  "HUN", // Hungary
+  "IRL", // Ireland
+  "ITA", // Italy
+  "LVA", // Latvia
+  "LTU", // Lithuania
+  "LUX", // Luxembourg
+  "MLT", // Malta
+  "NLD", // Netherlands
+  "POL", // Poland
+  "PRT", // Portugal
+  "ROU", // Romania
+  "SVK", // Slovakia
+  "SVN", // Slovenia
+  "ESP", // Spain
+  "SWE", // Sweden
+  "ENG", // United Kingdom (included for cookie consent though not in EU)
+  "GBR", // United Kingdom (included for cookie consent though not in EU)
 ];
