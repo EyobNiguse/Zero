@@ -5,13 +5,13 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
 - [Development Workflow](#development-workflow)
-- [Pull Request Process](#pull-request-process)
 - [Coding Guidelines](#coding-guidelines)
 - [Testing](#testing)
 - [Documentation](#documentation)
+- [Areas of Contribution](#areas-of-contribution)
 - [Community](#community)
+- [Questions or Need Help?](#questions-or-need-help)
 
 ## Getting Started
 
