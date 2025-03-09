@@ -6,9 +6,9 @@ import { ShieldCheckIcon } from "@/components/icons/animated/shield";
 import { KeyboardIcon } from "@/components/icons/animated/keyboard";
 import { SparklesIcon } from "@/components/icons/animated/sparkles";
 import { ArchiveIcon } from "@/components/icons/animated/archive";
+import { DeleteIcon } from "@/components/icons/animated/trash";
 import { UsersIcon } from "@/components/icons/animated/users";
 import { InboxIcon } from "@/components/icons/animated/inbox";
-import { DeleteIcon } from "@/components/icons/animated/trash";
 import { XIcon } from "@/components/icons/animated/x";
 export interface NavItem {
   title: string;
@@ -158,7 +158,7 @@ export const navigationConfig: Record<string, NavConfig> = {
           },
           {
             title: "Cookies",
-            url: "/settings/cookies",
+            url: "/cookies",
             icon: ShieldCheckIcon,
           },
           // {

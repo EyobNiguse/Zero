@@ -1,18 +1,11 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CookieManager from "@/components/cookies/cookie-manager";
 
-export default async function CookieSettingsPage() {
+export default function CookieSettingsPage() {
   return (
-    <Dialog>
-      <DialogTitle>Cookie Settings</DialogTitle>
-      <DialogContent>
+    <Dialog open modal>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogTitle className="sr-only">Cookie Settings</DialogTitle>
         <CookieManager />
       </DialogContent>
     </Dialog>

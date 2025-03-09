@@ -5,10 +5,8 @@ import Toggle from "@/components/cookies/toggle";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
-type Props = {};
-
-const CookieManager = async (props: Props) => {
-  const isEuRegion = (await headers()).get("x-user-eu-region") === "true";
+const CookieManager = async () => {
+  // const isEuRegion = (await headers()).get("x-user-eu-region") === "true";
 
   // if (!isEuRegion) {
   //   redirect("/settings");
