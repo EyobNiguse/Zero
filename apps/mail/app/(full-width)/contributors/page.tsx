@@ -203,7 +203,7 @@ export default function OpenPage() {
       const dateStr = date.toISOString().split("T")[0];
 
       const dayCommits = commitsData.filter((commit: { commit: { author: { date: string } } }) =>
-        commit.commit.author.date.startsWith(dateStr ?? ''),
+        commit.commit.author.date.startsWith(dateStr ?? '')
       ).length;
 
       const dayIndex = i + 1;
@@ -232,7 +232,7 @@ export default function OpenPage() {
       const dateStr = date.toISOString().split("T")[0];
 
       const dayCommits = commitsData.filter((commit: { commit: { author: { date: string } } }) =>
-        commit.commit.author.date.startsWith(dateStr ?? ''),
+        commit.commit.author.date.startsWith(dateStr ?? '')
       ).length;
 
       const commits = dayCommits || Math.floor(Math.random() * 5) + 1;
@@ -316,7 +316,7 @@ export default function OpenPage() {
   }
 
   return (
-    <div className="min-h-screen w-full text-white">
+    <div className="min-h-screen w-full text-white bg-black">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Project Stats */}
         <div className="mb-8 overflow-hidden rounded-xl border bg-gradient-to-b from-white/50 to-white/10 p-6 backdrop-blur-sm dark:border-neutral-700 dark:from-neutral-900/50 dark:to-neutral-900/30">
@@ -330,13 +330,15 @@ export default function OpenPage() {
                   height={32}
                   className="dark:hidden"
                 />
-                <Image
-                  src="/white-icon.svg"
-                  alt="0.email Logo"
-                  width={32}
-                  height={32}
-                  className="hidden dark:block"
-                />
+                <Link href="/">
+                  <Image
+                    src="/white-icon.svg"
+                    alt="0.email Logo"
+                    width={32}
+                    height={32}
+                    className="hidden dark:block"
+                  />
+                </Link>
               </div>
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 An open source email app built with modern technologies
