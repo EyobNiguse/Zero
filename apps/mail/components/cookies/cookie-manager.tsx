@@ -1,17 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { COOKIE_CATEGORIES, type CookieCategory, type CategoryInfo } from "@/lib/cookies";
-import { getCookiePreferences, updateCookiePreferences } from "@/actions/cookies";
+import { COOKIE_CATEGORIES, type CategoryInfo, type CookieCategory } from "@/lib/cookies";
+import { getCookiePreferences } from "@/actions/cookies";
 import Toggle from "@/components/cookies/toggle";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
-export default async function CookieSettingsPage() {
+type Props = {};
+
+const CookieManager = async (props: Props) => {
   const isEuRegion = (await headers()).get("x-user-eu-region") === "true";
-  
-  // Redirect non-EU/UK users away from cookie settings
-  if (!isEuRegion) {
-    redirect("/settings");
-  }
+
+  // if (!isEuRegion) {
+  //   redirect("/settings");
+  // }
 
   const preferences = await getCookiePreferences();
 
@@ -42,4 +43,6 @@ export default async function CookieSettingsPage() {
       </div>
     </div>
   );
-}
+};
+
+export default CookieManager;

@@ -21,8 +21,10 @@ export const metadata = siteConfig;
 
 export default async function RootLayout({
   children,
+  cookies,
 }: Readonly<{
   children: React.ReactNode;
+  cookies: React.ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -36,6 +38,7 @@ export default async function RootLayout({
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>
         <Providers attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
+          {cookies}
           <Toast />
           <Analytics />
         </Providers>
