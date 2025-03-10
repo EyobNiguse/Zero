@@ -42,39 +42,39 @@ export const navigationConfig: Record<string, NavConfig> = {
         title: "",
         items: [
           {
-            title: "Sidebar.Inbox",
+            title: "navigation.sidebar.inbox",
             url: "/mail/inbox",
             icon: InboxIcon,
           },
           {
-            title: "Sidebar.Drafts",
+            title: "navigation.sidebar.drafts",
             url: "/mail/draft",
             icon: BookTextIcon,
           },
           {
-            title: "Sidebar.Sent",
+            title: "navigation.sidebar.sent",
             url: "/mail/sent",
             icon: CheckCheckIcon,
           },
           {
-            title: "Sidebar.Spam",
+            title: "navigation.sidebar.spam",
             url: "/mail/spam",
             icon: XIcon,
           },
           {
-            title: "Sidebar.Archive",
+            title: "navigation.sidebar.archive",
             url: "/mail/archive",
             icon: ArchiveIcon,
             disabled: true,
           },
           {
-            title: "Sidebar.Bin",
+            title: "navigation.sidebar.bin",
             url: "/mail/bin",
             icon: DeleteIcon,
             disabled: true,
           },
           {
-            title: "Sidebar.Settings",
+            title: "navigation.sidebar.settings",
             url: "/settings/general",
             icon: SettingsGearIcon,
             isSettingsButton: true,
@@ -129,34 +129,34 @@ export const navigationConfig: Record<string, NavConfig> = {
         title: "Settings",
         items: [
           {
-            title: "Settings.Back",
+            title: "common.actions.back",
             url: "/mail",
             icon: ArrowLeftIcon,
             isBackButton: true,
           },
 
           {
-            title: "Settings.General",
+            title: "navigation.settings.general",
             url: "/settings/general",
             icon: SettingsGearIcon,
           },
           {
-            title: "Settings.Connections",
+            title: "navigation.settings.connections",
             url: "/settings/connections",
             icon: UsersIcon,
           },
           {
-            title: "Settings.Security",
+            title: "navigation.settings.security",
             url: "/settings/security",
             icon: ShieldCheckIcon,
           },
           {
-            title: "Settings.Appearance",
+            title: "navigation.settings.appearance",
             url: "/settings/appearance",
             icon: SparklesIcon,
           },
           {
-            title: "Settings.Shortcuts",
+            title: "navigation.settings.shortcuts",
             url: "/settings/shortcuts",
             icon: KeyboardIcon,
           },

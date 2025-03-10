@@ -1,21 +1,35 @@
 {
-  "Sidebar": {
-    "create-email": "Email Oluştur",
-    "Inbox": "Gelen Kutusu",
-    "Drafts": "Taslaklar",
-    "Sent": "Gönderilenler",
-    "Spam": "Spam",
-    "Archive": "Arşiv",
-    "Bin": "Çöp",
-    "Settings": "Ayarlar",
-    "Logout": "Çıkış Yap"
+  "common": {
+    "actions": {
+      "logout": "Çıkış Yap",
+      "back": "Geri",
+      "create": "Email Oluştur"
+    }
   },
-  "Settings": {
-    "Back": "Geri",
-    "General": "Genel",
-    "Connections": "Bağlantılar",
-    "Security": "Güvenlik",
-    "Appearance": "Görünüm",
-    "Shortcuts": "Kısayollar"
+  "navigation": {
+    "sidebar": {
+      "inbox": "Posta Kutusu",
+      "drafts": "Taslaklar",
+      "sent": "Gönderilenler",
+      "spam": "Spam",
+      "archive": "Arşiv",
+      "bin": "Çöp",
+      "settings": "Ayarlar"
+    },
+    "settings": {
+      "general": "Genel",
+      "connections": "Bağlantılar",
+      "security": "Güvenlik",
+      "appearance": "Görünüm",
+      "shortcuts": "Kısayollar"
+    }
+  },
+  "pages": {
+    "settings": {
+      "general": {
+        "title": "Genel Ayarlar",
+        "description": "Dil ve email görünümü ayarlarını yönetin."
+      }
+    }
   }
 }

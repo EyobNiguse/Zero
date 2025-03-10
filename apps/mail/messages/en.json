@@ -1,21 +1,35 @@
 {
-  "Sidebar": {
-    "create-email": "Create Email",
-    "Inbox": "Inbox",
-    "Drafts": "Drafts",
-    "Sent": "Sent",
-    "Spam": "Spam",
-    "Archive": "Archive",
-    "Bin": "Bin",
-    "Settings": "Settings",
-    "Logout": "Logout"
+  "common": {
+    "actions": {
+      "logout": "Logout",
+      "back": "Back",
+      "create": "Create Email"
+    }
   },
-  "Settings": {
-    "Back": "Back",
-    "General": "General",
-    "Connections": "Connections",
-    "Security": "Security",
-    "Appearance": "Appearance",
-    "Shortcuts": "Shortcuts"
+  "navigation": {
+    "sidebar": {
+      "inbox": "Inbox",
+      "drafts": "Drafts",
+      "sent": "Sent",
+      "spam": "Spam",
+      "archive": "Archive",
+      "bin": "Bin",
+      "settings": "Settings"
+    },
+    "settings": {
+      "general": "General",
+      "connections": "Connections",
+      "security": "Security",
+      "appearance": "Appearance",
+      "shortcuts": "Shortcuts"
+    }
+  },
+  "pages": {
+    "settings": {
+      "general": {
+        "title": "General",
+        "description": "Manage settings for your language and email display preferences."
+      }
+    }
   }
 }

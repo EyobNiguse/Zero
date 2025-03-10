@@ -1,21 +1,35 @@
 {
-  "Sidebar": {
-    "create-email": "Créer un email",
-    "Inbox": "Boîte de réception",
-    "Drafts": "Brouillons",
-    "Sent": "Envoyés",
-    "Spam": "Spam",
-    "Archive": "Archives",
-    "Bin": "Corbeille",
-    "Settings": "Paramètres",
-    "Logout": "Déconnexion"
+  "common": {
+    "actions": {
+      "logout": "Déconnexion",
+      "back": "Retour",
+      "create": "Créer un email"
+    }
   },
-  "Settings": {
-    "Back": "Retour",
-    "General": "Général",
-    "Connections": "Connexions",
-    "Security": "Sécurité",
-    "Appearance": "Apparence",
-    "Shortcuts": "Raccourcis"
+  "navigation": {
+    "sidebar": {
+      "inbox": "Boîte de réception",
+      "drafts": "Brouillons",
+      "sent": "Envoyés",
+      "spam": "Spam",
+      "archive": "Archive",
+      "bin": "Corbeille",
+      "settings": "Paramètres"
+    },
+    "settings": {
+      "general": "Général",
+      "connections": "Connexions",
+      "security": "Sécurité",
+      "appearance": "Apparence",
+      "shortcuts": "Raccourcis"
+    }
+  },
+  "pages": {
+    "settings": {
+      "general": {
+        "title": "Paramètres généraux",
+        "description": "Gérez les paramètres de votre langue et vos préférences de visualisation des emails."
+      }
+    }
   }
 }
