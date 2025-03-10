@@ -155,7 +155,9 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
                     {message.totalReplies}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>{message.totalReplies} Replies</TooltipContent>
+                <TooltipContent className="px-1 py-0 text-xs">
+                  {message.totalReplies} Replies
+                </TooltipContent>
               </Tooltip>
             ) : null}
           </div>
@@ -573,8 +575,8 @@ const MailLabels = memo(
                   {getLabelIcon(label)}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="px-1 py-0 text-xs">
-                {label.replace(/^category_/i, "").toLowerCase()}
+              <TooltipContent className="px-1 py-0 text-xs" variant={style}>
+                {capitalize(label.replace(/^category_/i, ""))}
               </TooltipContent>
             </Tooltip>
           );
@@ -587,6 +589,10 @@ const MailLabels = memo(
   },
 );
 MailLabels.displayName = "MailLabels";
+
+function capitalize(str: string) {
+  return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+}
 
 function getLabelIcon(label: string) {
   const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
