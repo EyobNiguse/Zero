@@ -35,9 +35,9 @@ Zero is built with modern and reliable technologies:
 
 **Required Versions:**
 
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
-- Docker >= 20.10.0
+- Node.js (v18 or higher)
+- pnpm (v8 or higher)
+- Docker (v20 or higher)
 
 Before running the application, you'll need to set up services and configure environment variables. For more details on environment variables, see the [Environment Variables](#environment-variables) section.
 
