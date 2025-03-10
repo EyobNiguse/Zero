@@ -7,7 +7,7 @@ import { Discord, Twitter } from "@/components/icons/icons";
 const socialLinks = [
   {
     name: "GitHub",
-    href: "https://github.com/Mail-0/Mail-0",
+    href: "https://github.com/Mail-0/Zero",
     icon: Github,
     ariaLabel: "GitHub"
   },

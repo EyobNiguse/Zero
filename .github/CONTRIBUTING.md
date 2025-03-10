@@ -18,7 +18,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 
 1. **Fork the Repository**
    - Click the 'Fork' button at the top right of this repository
-   - Clone your fork locally: `git clone https://github.com/YOUR-USERNAME/Mail-0.git`
+   - Clone your fork locally: `git clone https://github.com/YOUR-USERNAME/Zero.git`
 
 2. **Set Up Development Environment**
    - Install [Node.js](https://nodejs.org/en/download) (v18 or higher)

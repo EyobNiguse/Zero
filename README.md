@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://0.email">
+    <img src="apps/mail/public/white-icon.svg" alt="Zero Logo" width="64" style="background-color: #000; padding: 10px;"/>
+  </a>
+</p>
+
 # Zero
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnizzyabi%2FMail0&env=DATABASE_URL,BETTER_AUTH_SECRET,BETTER_AUTH_URL,BETTER_AUTH_TRUSTED_ORIGINS,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GITHUB_REDIRECT_URI&envDescription=For%20more%20info%20on%20setting%20up%20your%20API%20keys%2C%20checkout%20the%20Readme%20below&envLink=https%3A%2F%2Fgithub.com%2Fnizzyabi%2FMail0%2Fblob%2Fmain%2FREADME.md&project-name=0&repository-name=0&redirect-url=0.email&demo-title=0&demo-description=An%20open%20source%20email%20app&demo-url=0.email)
@@ -35,7 +41,7 @@ Zero is built with modern and reliable technologies:
 
 **Required Versions:**
 
-- [Node.js][https://nodejs.org/en/download) (v18 or higher)
+- [Node.js](https://nodejs.org/en/download) (v18 or higher)
 - [pnpm](https://pnpm.io/installation) (v8 or higher)
 - [Docker](https://docs.docker.com/engine/install/) (v20 or higher)
 
@@ -54,7 +60,7 @@ You can set up Zero in two ways:
 
    ```bash
    # Clone the repository
-   git clone https://github.com/Mail-0/Mail-0.git
+   git clone https://github.com/Mail-0/Zero.git
    cd Mail-0
    
    # Install dependencies
@@ -96,7 +102,7 @@ This option uses VS Code's Dev Containers feature to provide a fully configured 
    - [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
 2. **Open in Dev Container**
-   - Clone the repository: `git clone https://github.com/Mail-0/Mail-0.git`
+   - Clone the repository: `git clone https://github.com/Mail-0/Zero.git`
    - Open the folder in VS Code
    - When prompted, click "Reopen in Container" or run the "Dev Containers: Open Folder in Container" command
    - VS Code will build and start the dev container (this may take a few minutes the first time)
@@ -272,4 +278,4 @@ Please refer to the [contributing guide](.github/CONTRIBUTING.md).
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Mail-0/Mail-0&type=Timeline)](https://star-history.com/#Mail-0/Mail-0&Timeline)
+[![Star History Chart](https://api.star-history.com/svg?repos=Mail-0/Zero&type=Timeline)](https://star-history.com/#Mail-0/Zero&Timeline)
