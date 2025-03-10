@@ -197,6 +197,13 @@
           "helpWithShortcuts": "Kısayollar Hakkında Yardım"
         }
       }
+    },
+    "createEmail": {
+      "body": "İçerik",
+      "example": "zero@0.email",
+      "attachments": "Ekler",
+      "dropFilesToAttach": "Eklemek için dosyaları bırakın",
+      "writeYourMessageHere": "Mesajınızı buraya yazın..."
     }
   }
 }

@@ -197,6 +197,13 @@
           "helpWithShortcuts": "Aide sur les raccourcis"
         }
       }
+    },
+    "createEmail": {
+      "body": "Corps",
+      "example": "zero@0.email",
+      "attachments": "Pièces jointes",
+      "dropFilesToAttach": "Déposez des fichiers pour les joindre",
+      "writeYourMessageHere": "Écrivez votre message ici..."
     }
   }
 }
