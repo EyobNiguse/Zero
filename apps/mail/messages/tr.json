@@ -42,12 +42,73 @@
         "helpWithShortcuts": "Kısayollar Hakkında Yardım"
       }
     },
+    "searchBar": {
+      "pickDateRange": "Tarih seçin veya aralık seçin",
+      "search": "Ara",
+      "clearSearch": "Araçları temizle",
+      "advancedSearch": "Gelişmiş arama",
+      "quickFilters": "Hızlı filtreler",
+      "searchIn": "Ara",
+      "recipient": "Alıcı",
+      "sender": "Gönderen",
+      "subject": "Konu",
+      "dateRange": "Tarih aralığı",
+      "category": "Kategori",
+      "folder": "Klasör",
+      "allMail": "Tüm E-postalar",
+      "unread": "Okunmamış",
+      "hasAttachment": "Ekli",
+      "starred": "Yıldızlı",
+      "applyFilters": "Filtreleri Uygula",
+      "reset": "Sıfırla"
+    },
     "navUser": {
       "customerSupport": "Müşteri Desteği",
       "documentation": "Dokümantasyon",
       "appTheme": "Uygulama Teması",
       "accounts": "Hesaplar",
       "signIn": "Giriş Yap"
+    },
+    "mailCategories": {
+      "primary": "Birincil",
+      "important": "Önemli",
+      "personal": "Kişisel",
+      "updates": "Güncellemeler",
+      "promotions": "Tanıtımlar"
+    },
+    "replyCompose": {
+      "replyTo": "Yanıtla",
+      "thisEmail": "bu e-postaya",
+      "dropFiles": "Eklemek için dosyaları bırakın",
+      "attachments": "Ekler",
+      "attachmentCount": "{count, plural, =0 {ekler} one {ek} other {ekler}}",
+      "fileCount": "{count, plural, =0 {dosyalar} one {dosya} other {dosyalar}}",
+      "saveDraft": "Taslağı kaydet",
+      "send": "Gönder"
+    },
+    "mailDisplay": {
+      "details": "Detaylar",
+      "from": "Kimden",
+      "to": "Kime",
+      "date": "Tarih",
+      "mailedBy": "Gönderen",
+      "signedBy": "İmzalayan",
+      "security": "Güvenlik",
+      "standardEncryption": "Standart şifreleme (TLS)"
+    },
+    "threadDisplay": {
+      "close": "Kapat",
+      "exitFullscreen": "Tam ekrandan çık",
+      "enterFullscreen": "Tam ekrana geç",
+      "archive": "Arşivle",
+      "reply": "Yanıtla",
+      "moreOptions": "Daha fazla seçenek",
+      "moveToSpam": "Spam'a taşı",
+      "replyAll": "Tümünü yanıtla",
+      "forward": "İlet",
+      "markAsUnread": "Okunmamış olarak işaretle",
+      "addLabel": "Etiket ekle",
+      "muteThread": "Konuyu sessize al"
     }
   },
   "navigation": {

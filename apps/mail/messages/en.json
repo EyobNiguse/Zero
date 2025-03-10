@@ -6,7 +6,8 @@
       "create": "Create Email",
       "saveChanges": "Save changes",
       "saving": "Saving...",
-      "resetToDefaults": "Reset to Defaults"
+      "resetToDefaults": "Reset to Defaults",
+      "close": "Close"
     },
     "themes": {
       "dark": "Dark",
@@ -42,12 +43,73 @@
         "helpWithShortcuts": "Help with shortcuts"
       }
     },
+    "searchBar": {
+      "pickDateRange": "Pick a date or a range",
+      "search": "Search",
+      "clearSearch": "Clear search",
+      "advancedSearch": "Advanced search",
+      "quickFilters": "Quick filters",
+      "searchIn": "Search in",
+      "recipient": "Recipient",
+      "sender": "Sender",
+      "subject": "Subject",
+      "dateRange": "Date range",
+      "category": "Category",
+      "folder": "Folder",
+      "allMail": "All Mail",
+      "unread": "Unread",
+      "hasAttachment": "Has Attachment",
+      "starred": "Starred",
+      "applyFilters": "Apply filters",
+      "reset": "Reset"
+    },
     "navUser": {
       "customerSupport": "Customer Support",
       "documentation": "Documentation",
       "appTheme": "App Theme",
       "accounts": "Accounts",
       "signIn": "Sign in"
+    },
+    "mailCategories": {
+      "primary": "Primary",
+      "important": "Important",
+      "personal": "Personal",
+      "updates": "Updates",
+      "promotions": "Promotions",
+      "social": "Social"
+    },
+    "replyCompose": {
+      "replyTo": "Reply to",
+      "thisEmail": "this email",
+      "dropFiles": "Drop files to attach",
+      "attachments": "Attachments",
+      "attachmentCount": "{count, plural, =0 {attachments} one {attachment} other {attachments}}",
+      "fileCount": "{count, plural, =0 {files} one {file} other {files}}",
+      "saveDraft": "Save draft",
+      "send": "Send"
+    },
+    "mailDisplay": {
+      "details": "Details",
+      "from": "From",
+      "to": "To",
+      "date": "Date",
+      "mailedBy": "Mailed-By",
+      "signedBy": "Signed-By",
+      "security": "Security",
+      "standardEncryption": "Standard encryption (TLS)"
+    },
+    "threadDisplay": {
+      "exitFullscreen": "Exit fullscreen",
+      "enterFullscreen": "Enter fullscreen",
+      "archive": "Archive",
+      "reply": "Reply",
+      "moreOptions": "More options",
+      "moveToSpam": "Move to spam",
+      "replyAll": "Reply all",
+      "forward": "Forward",
+      "markAsUnread": "Mark as unread",
+      "addLabel": "Add label",
+      "muteThread": "Mute thread"
     }
   },
   "navigation": {

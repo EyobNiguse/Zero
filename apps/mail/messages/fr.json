@@ -6,7 +6,8 @@
       "create": "Créer un email",
       "saveChanges": "Enregistrer les modifications",
       "saving": "Enregistrement...",
-      "resetToDefaults": "Réinitialiser par défaut"
+      "resetToDefaults": "Réinitialiser par défaut",
+      "close": "Fermer"
     },
     "themes": {
       "dark": "Sombre",
@@ -42,12 +43,72 @@
         "helpWithShortcuts": "Aide sur les raccourcis"
       }
     },
+    "searchBar": {
+      "pickDateRange": "Choisir une date ou une plage",
+      "search": "Rechercher",
+      "clearSearch": "Effacer la recherche",
+      "advancedSearch": "Recherche avancée",
+      "quickFilters": "Filtres rapides",
+      "searchIn": "Rechercher dans",
+      "recipient": "Destinataire",
+      "sender": "Expéditeur",
+      "subject": "Sujet",
+      "dateRange": "Plage de dates",
+      "category": "Catégorie",
+      "folder": "Dossier",
+      "allMail": "Tous les emails",
+      "unread": "Non lu",
+      "hasAttachment": "Avec pièce jointe",
+      "starred": "Étoilé",
+      "applyFilters": "Appliquer les filtres",
+      "reset": "Réinitialiser"
+    },
     "navUser": {
       "customerSupport": "Support client",
       "documentation": "Documentation",
       "appTheme": "Thème de l'application",
       "accounts": "Comptes",
       "signIn": "Se connecter"
+    },
+    "mailCategories": {
+      "primary": "Principale",
+      "important": "Important",
+      "personal": "Personnel",
+      "updates": "Mises à jour",
+      "promotions": "Promotions"
+    },
+    "replyCompose": {
+      "replyTo": "Répondre à",
+      "thisEmail": "cet email",
+      "dropFiles": "Déposer les fichiers à joindre",
+      "attachments": "Pièces jointes",
+      "attachmentCount": "{count, plural, =0 {pièces jointes} one {pièce jointe} other {pièces jointes}}",
+      "fileCount": "{count, plural, =0 {fichiers} one {fichier} other {fichiers}}",
+      "saveDraft": "Enregistrer le brouillon",
+      "send": "Envoyer"
+    },
+    "mailDisplay": {
+      "details": "Détails",
+      "from": "De",
+      "to": "À",
+      "date": "Date",
+      "mailedBy": "Expédié par",
+      "signedBy": "Signé par",
+      "security": "Sécurité",
+      "standardEncryption": "Chiffrement standard (TLS)"
+    },
+    "threadDisplay": {
+      "exitFullscreen": "Quitter le mode plein écran",
+      "enterFullscreen": "Passer en mode plein écran",
+      "archive": "Archiver",
+      "reply": "Répondre",
+      "moreOptions": "Plus d'options",
+      "moveToSpam": "Déplacer vers le spam",
+      "replyAll": "Répondre à tous",
+      "forward": "Transférer",
+      "markAsUnread": "Marquer comme non lu",
+      "addLabel": "Ajouter un label",
+      "muteThread": "Mettre en sourdine"
     }
   },
   "navigation": {
