@@ -29,6 +29,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { fetcher } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import Image from "next/image";
 import Link from "next/link";
 import useSWR from "swr";
@@ -122,6 +123,9 @@ export default function OpenPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [allContributors, setAllContributors] = useState<Contributor[]>([]);
+  const [isRendered, setIsRendered] = useState(false);
+
+  useEffect(() => setIsRendered(true), []);
 
   const { data: initialContributors } = useSWR<Contributor[]>(
     `https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100&page=1`,
@@ -337,26 +341,31 @@ export default function OpenPage() {
   return (
     <div className="min-h-screen w-full bg-white dark:bg-neutral-950 text-black dark:text-white">
       <div className="container mx-auto max-w-6xl px-4 py-8">
+        {/* Header with theme toggle */}
+        <div className="flex justify-end mb-6">
+          <ThemeToggle />
+        </div>
+        
         {/* Project Stats */}
         <div className="mb-8 overflow-hidden rounded-xl border bg-gradient-to-b from-white/50 to-white/10 p-6 backdrop-blur-sm dark:border-neutral-700 dark:from-neutral-900/50 dark:to-neutral-900/30">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Image
-                  src="/black-icon.svg"
-                  alt="0.email Logo"
-                  width={32}
-                  height={32}
-                  className="dark:hidden"
-                />
                 <Link href="/">
-                  <Image
-                    src="/white-icon.svg"
-                    alt="0.email Logo"
-                    width={32}
-                    height={32}
-                    className="hidden dark:block"
-                  />
+                  <div className="relative h-8 w-8">
+                    <Image
+                      src="/black-icon.svg"
+                      alt="0.email Logo"
+                      fill
+                      className="object-contain dark:hidden"
+                    />
+                    <Image
+                      src="/white-icon.svg"
+                      alt="0.email Logo"
+                      fill
+                      className="hidden object-contain dark:block"
+                    />
+                  </div>
                 </Link>
               </div>
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
@@ -711,8 +720,7 @@ export default function OpenPage() {
               Contributors
             </h1>
             <div className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
-              <FileCode className="h-4 w-4" />
-              <span>Top {filteredContributors?.length} contributors</span>
+              <span>Thank you to all the contributors who have helped make 0.email possible</span>
             </div>
           </div>
 
