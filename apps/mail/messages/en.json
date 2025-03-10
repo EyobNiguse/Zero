@@ -7,6 +7,47 @@
       "saveChanges": "Save changes",
       "saving": "Saving...",
       "resetToDefaults": "Reset to Defaults"
+    },
+    "themes": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    },
+    "commandPalette": {
+      "title": "Command Palette",
+      "description": "Quick navigation and actions for Mail-0",
+      "placeholder": "Type a command or search...",
+      "noResults": "No results found",
+      "groups": {
+        "mail": "Mail",
+        "settings": "Settings",
+        "actions": "Actions",
+        "help": "Help",
+        "navigation": "Navigation"
+      },
+      "commands": {
+        "goToInbox": "Go to Inbox",
+        "goToDrafts": "Go to Drafts",
+        "goToSent": "Go to Sent",
+        "goToSpam": "Go to Spam",
+        "goToArchive": "Go to Archive",
+        "goToBin": "Go to Bin",
+        "goToSettings": "Go to Settings",
+        "newEmail": "New Email",
+        "composeMessage": "Compose message",
+        "searchEmails": "Search Emails",
+        "toggleTheme": "Toggle Theme",
+        "backToMail": "Back to Mail",
+        "goToDocs": "Go to docs",
+        "helpWithShortcuts": "Help with shortcuts"
+      }
+    },
+    "navUser": {
+      "customerSupport": "Customer Support",
+      "documentation": "Documentation",
+      "appTheme": "App Theme",
+      "accounts": "Accounts",
+      "signIn": "Sign in"
     }
   },
   "navigation": {

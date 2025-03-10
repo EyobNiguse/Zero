@@ -7,6 +7,47 @@
       "saveChanges": "Değişiklikleri Kaydet",
       "saving": "Kaydediliyor...",
       "resetToDefaults": "Varsayılanlara Sıfırla"
+    },
+    "themes": {
+      "dark": "Koyu",
+      "light": "Açık",
+      "system": "Sistem"
+    },
+    "commandPalette": {
+      "title": "Komut Paleti",
+      "description": "Mail-0 için hızlı gezinme ve işlemler",
+      "placeholder": "Bir komut yazın veya arayın...",
+      "noResults": "Sonuç bulunamadı",
+      "groups": {
+        "mail": "E-posta",
+        "settings": "Ayarlar",
+        "actions": "İşlemler",
+        "help": "Yardım",
+        "navigation": "Gezinme"
+      },
+      "commands": {
+        "goToInbox": "Gelen Kutusuna Git",
+        "goToDrafts": "Taslaklara Git",
+        "goToSent": "Gönderilenlere Git",
+        "goToSpam": "Spam'a Git",
+        "goToArchive": "Arşive Git",
+        "goToBin": "Çöp Kutusuna Git",
+        "goToSettings": "Ayarlara Git",
+        "newEmail": "Yeni E-posta",
+        "composeMessage": "Mesaj oluştur",
+        "searchEmails": "E-postaları Ara",
+        "toggleTheme": "Temayı Değiştir",
+        "backToMail": "E-postaya Geri Dön",
+        "goToDocs": "Dokümanlara Git",
+        "helpWithShortcuts": "Kısayollar Hakkında Yardım"
+      }
+    },
+    "navUser": {
+      "customerSupport": "Müşteri Desteği",
+      "documentation": "Dokümantasyon",
+      "appTheme": "Uygulama Teması",
+      "accounts": "Hesaplar",
+      "signIn": "Giriş Yap"
     }
   },
   "navigation": {

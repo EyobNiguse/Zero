@@ -7,6 +7,47 @@
       "saveChanges": "Enregistrer les modifications",
       "saving": "Enregistrement...",
       "resetToDefaults": "Réinitialiser par défaut"
+    },
+    "themes": {
+      "dark": "Sombre",
+      "light": "Clair",
+      "system": "Système"
+    },
+    "commandPalette": {
+      "title": "Palette de commandes",
+      "description": "Navigation rapide et actions pour Mail-0",
+      "placeholder": "Tapez une commande ou recherchez...",
+      "noResults": "Aucun résultat trouvé",
+      "groups": {
+        "mail": "Email",
+        "settings": "Paramètres",
+        "actions": "Actions",
+        "help": "Aide",
+        "navigation": "Navigation"
+      },
+      "commands": {
+        "goToInbox": "Aller à la boîte de réception",
+        "goToDrafts": "Aller aux brouillons",
+        "goToSent": "Aller aux envoyés",
+        "goToSpam": "Aller au spam",
+        "goToArchive": "Aller à l'archive",
+        "goToBin": "Aller à la corbeille",
+        "goToSettings": "Aller aux paramètres",
+        "newEmail": "Nouvel email",
+        "composeMessage": "Composer un message",
+        "searchEmails": "Rechercher des emails",
+        "toggleTheme": "Changer de thème",
+        "backToMail": "Retour aux emails",
+        "goToDocs": "Voir la documentation",
+        "helpWithShortcuts": "Aide sur les raccourcis"
+      }
+    },
+    "navUser": {
+      "customerSupport": "Support client",
+      "documentation": "Documentation",
+      "appTheme": "Thème de l'application",
+      "accounts": "Comptes",
+      "signIn": "Se connecter"
     }
   },
   "navigation": {
