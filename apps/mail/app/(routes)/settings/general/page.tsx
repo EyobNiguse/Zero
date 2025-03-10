@@ -22,13 +22,15 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { changeLocale } from "@/i18n/utils";
 import { useForm } from "react-hook-form";
+import { locales } from "@/i18n/config";
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
 const formSchema = z.object({
-  language: z.string(),
+  language: z.enum(locales),
   timezone: z.string(),
   dynamicContent: z.boolean(),
   externalImages: z.boolean(),
@@ -52,6 +54,8 @@ export default function GeneralPage() {
     setIsSaving(true);
 
     // TODO: Save settings in user's account
+
+    changeLocale(values.language);
 
     // Simulate API call
     setTimeout(() => {
@@ -112,6 +116,8 @@ export default function GeneralPage() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="tr">Turkish</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -151,7 +157,7 @@ export default function GeneralPage() {
                 control={form.control}
                 name="dynamicContent"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border bg-popover p-4">
+                  <FormItem className="bg-popover flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">Dynamic Content</FormLabel>
                       <FormDescription>Allow emails to display dynamic content.</FormDescription>
@@ -166,7 +172,7 @@ export default function GeneralPage() {
                 control={form.control}
                 name="externalImages"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-popover">
+                  <FormItem className="bg-popover flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">Display External Images</FormLabel>
                       <FormDescription>

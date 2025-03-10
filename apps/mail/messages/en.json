@@ -1,8 +1,21 @@
 {
-  "HomePage": {
-    "title": "Hello world!"
-  },
   "Sidebar": {
-    "create-email": "Create Email"
+    "create-email": "Create Email",
+    "Inbox": "Inbox",
+    "Drafts": "Drafts",
+    "Sent": "Sent",
+    "Spam": "Spam",
+    "Archive": "Archive",
+    "Bin": "Bin",
+    "Settings": "Settings",
+    "Logout": "Logout"
+  },
+  "Settings": {
+    "Back": "Back",
+    "General": "General",
+    "Connections": "Connections",
+    "Security": "Security",
+    "Appearance": "Appearance",
+    "Shortcuts": "Shortcuts"
   }
 }

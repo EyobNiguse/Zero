@@ -1,0 +1,21 @@
+{
+  "Sidebar": {
+    "create-email": "Email Oluştur",
+    "Inbox": "Gelen Kutusu",
+    "Drafts": "Taslaklar",
+    "Sent": "Gönderilenler",
+    "Spam": "Spam",
+    "Archive": "Arşiv",
+    "Bin": "Çöp",
+    "Settings": "Ayarlar",
+    "Logout": "Çıkış Yap"
+  },
+  "Settings": {
+    "Back": "Geri",
+    "General": "Genel",
+    "Connections": "Bağlantılar",
+    "Security": "Güvenlik",
+    "Appearance": "Görünüm",
+    "Shortcuts": "Kısayollar"
+  }
+}

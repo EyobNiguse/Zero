@@ -30,3 +30,8 @@ export async function getLocale() {
   // default fallback locale
   return defaultLocale;
 }
+
+export async function changeLocale(locale: Locale) {
+  const cookieStore = await cookies();
+  cookieStore.set(I18N_LOCALE_COOKIE_NAME, locale);
+}

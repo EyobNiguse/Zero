@@ -1,0 +1,21 @@
+{
+  "Sidebar": {
+    "create-email": "Créer un email",
+    "Inbox": "Boîte de réception",
+    "Drafts": "Brouillons",
+    "Sent": "Envoyés",
+    "Spam": "Spam",
+    "Archive": "Archives",
+    "Bin": "Corbeille",
+    "Settings": "Paramètres",
+    "Logout": "Déconnexion"
+  },
+  "Settings": {
+    "Back": "Retour",
+    "General": "Général",
+    "Connections": "Connexions",
+    "Security": "Sécurité",
+    "Appearance": "Apparence",
+    "Shortcuts": "Raccourcis"
+  }
+}
