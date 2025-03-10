@@ -6,10 +6,12 @@ import { ShieldCheckIcon } from "@/components/icons/animated/shield";
 import { KeyboardIcon } from "@/components/icons/animated/keyboard";
 import { SparklesIcon } from "@/components/icons/animated/sparkles";
 import { ArchiveIcon } from "@/components/icons/animated/archive";
+import { DeleteIcon } from "@/components/icons/animated/trash";
 import { UsersIcon } from "@/components/icons/animated/users";
 import { InboxIcon } from "@/components/icons/animated/inbox";
-import { DeleteIcon } from "@/components/icons/animated/trash";
 import { XIcon } from "@/components/icons/animated/x";
+import { NestedKeyOf } from "next-intl";
+import { MessageKeys } from "next-intl";
 export interface NavItem {
   title: string;
   url: string;
@@ -19,6 +21,7 @@ export interface NavItem {
   isSettingsButton?: boolean;
   disabled?: boolean;
 }
+export type MessageKey = MessageKeys<IntlMessages, NestedKeyOf<IntlMessages>>;
 
 interface NavSection {
   title: string;
@@ -30,6 +33,7 @@ interface NavConfig {
   sections: NavSection[];
 }
 
+// ! items title has to be a message key (check messages/en.json)
 export const navigationConfig: Record<string, NavConfig> = {
   mail: {
     path: "/mail",
@@ -38,39 +42,39 @@ export const navigationConfig: Record<string, NavConfig> = {
         title: "",
         items: [
           {
-            title: "Inbox",
+            title: "Sidebar.Inbox",
             url: "/mail/inbox",
             icon: InboxIcon,
           },
           {
-            title: "Drafts",
+            title: "Sidebar.Drafts",
             url: "/mail/draft",
             icon: BookTextIcon,
           },
           {
-            title: "Sent",
+            title: "Sidebar.Sent",
             url: "/mail/sent",
             icon: CheckCheckIcon,
           },
           {
-            title: "Spam",
+            title: "Sidebar.Spam",
             url: "/mail/spam",
             icon: XIcon,
           },
           {
-            title: "Archive",
+            title: "Sidebar.Archive",
             url: "/mail/archive",
             icon: ArchiveIcon,
             disabled: true,
           },
           {
-            title: "Bin",
+            title: "Sidebar.Bin",
             url: "/mail/bin",
             icon: DeleteIcon,
             disabled: true,
           },
           {
-            title: "Settings",
+            title: "Sidebar.Settings",
             url: "/settings/general",
             icon: SettingsGearIcon,
             isSettingsButton: true,
@@ -125,34 +129,34 @@ export const navigationConfig: Record<string, NavConfig> = {
         title: "Settings",
         items: [
           {
-            title: "Back",
+            title: "Settings.Back",
             url: "/mail",
             icon: ArrowLeftIcon,
             isBackButton: true,
           },
 
           {
-            title: "General",
+            title: "Settings.General",
             url: "/settings/general",
             icon: SettingsGearIcon,
           },
           {
-            title: "Connections",
+            title: "Settings.Connections",
             url: "/settings/connections",
             icon: UsersIcon,
           },
           {
-            title: "Security",
+            title: "Settings.Security",
             url: "/settings/security",
             icon: ShieldCheckIcon,
           },
           {
-            title: "Appearance",
+            title: "Settings.Appearance",
             url: "/settings/appearance",
             icon: SparklesIcon,
           },
           {
-            title: "Shortcuts",
+            title: "Settings.Shortcuts",
             url: "/settings/shortcuts",
             icon: KeyboardIcon,
           },
