@@ -3,7 +3,10 @@
     "actions": {
       "logout": "Logout",
       "back": "Back",
-      "create": "Create Email"
+      "create": "Create Email",
+      "saveChanges": "Save changes",
+      "saving": "Saving...",
+      "resetToDefaults": "Reset to Defaults"
     }
   },
   "navigation": {
@@ -28,7 +31,69 @@
     "settings": {
       "general": {
         "title": "General",
-        "description": "Manage settings for your language and email display preferences."
+        "description": "Manage settings for your language and email display preferences.",
+        "language": "Language",
+        "timezone": "Timezone",
+        "dynamicContent": "Dynamic Content",
+        "dynamicContentDescription": "Allow emails to display dynamic content.",
+        "externalImages": "Display External Images",
+        "externalImagesDescription": "Allow emails to display images from external sources."
+      },
+      "connections": {
+        "title": "Email Connections",
+        "description": "Connect your email accounts to Zero.",
+        "disconnectTitle": "Disconnect Email Account",
+        "disconnectDescription": "Are you sure you want to disconnect this email?",
+        "cancel": "Cancel",
+        "remove": "Remove",
+        "disconnectSuccess": "Account disconnected successfully",
+        "disconnectError": "Failed to disconnect account",
+        "addEmail": "Add Email",
+        "connectEmail": "Connect Email",
+        "connectEmailDescription": "Select an email provider to connect",
+        "moreComingSoon": "More coming soon"
+      },
+      "security": {
+        "title": "Security",
+        "description": "Manage your security preferences and account protection.",
+        "twoFactorAuth": "Two-Factor Authentication",
+        "twoFactorAuthDescription": "Add an extra layer of security to your account",
+        "loginNotifications": "Login Notifications",
+        "loginNotificationsDescription": "Get notified about new login attempts",
+        "deleteAccount": "Delete Account"
+      },
+      "appearance": {
+        "title": "Appearance",
+        "description": "Customize colors, fonts and view options.",
+        "theme": "Theme",
+        "inboxType": "Inbox Type"
+      },
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "description": "View and customize keyboard shortcuts for quick actions.",
+        "actions": {
+          "newEmail": "New Email",
+          "sendEmail": "Send Email",
+          "reply": "Reply",
+          "replyAll": "Reply All",
+          "forward": "Forward",
+          "drafts": "Drafts",
+          "inbox": "Inbox",
+          "sentMail": "Sent Mail",
+          "delete": "Delete",
+          "search": "Search",
+          "markAsUnread": "Mark as Unread",
+          "muteThread": "Mute Thread",
+          "printEmail": "Print Email",
+          "archiveEmail": "Archive Email",
+          "markAsSpam": "Mark as Spam",
+          "moveToFolder": "Move to Folder",
+          "undoLastAction": "Undo Last Action",
+          "viewEmailDetails": "View Email Details",
+          "goToDrafts": "Go to Drafts",
+          "expandEmailView": "Expand Email View",
+          "helpWithShortcuts": "Help with shortcuts"
+        }
       }
     }
   }

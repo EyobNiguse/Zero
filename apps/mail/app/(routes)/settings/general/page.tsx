@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { changeLocale } from "@/i18n/utils";
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { locales } from "@/i18n/config";
 import { useState } from "react";
@@ -81,19 +82,21 @@ export default function GeneralPage() {
     );
   };
 
+  const t = useTranslations();
+
   return (
     <div className="grid gap-6">
       <SettingsCard
-        title="General Settings"
-        description="Manage settings for your language and email display preferences."
+        title={t("pages.settings.general.title")}
+        description={t("pages.settings.general.description")}
         footer={
           <div className="flex gap-4">
             <Button variant="destructive" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
-              Log out
+              {t("common.actions.logout")}
             </Button>
             <Button type="submit" form="general-form" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save changes"}
+              {isSaving ? t("common.actions.saving") : t("common.actions.saveChanges")}
             </Button>
           </div>
         }
@@ -106,7 +109,7 @@ export default function GeneralPage() {
                 name="language"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Language</FormLabel>
+                    <FormLabel>{t("pages.settings.general.language")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="w-36">
@@ -129,7 +132,7 @@ export default function GeneralPage() {
                 render={({ field }) => (
                   // TODO: Add all timezones
                   <FormItem>
-                    <FormLabel>Timezone</FormLabel>
+                    <FormLabel>{t("pages.settings.general.timezone")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="w-36">
@@ -159,8 +162,12 @@ export default function GeneralPage() {
                 render={({ field }) => (
                   <FormItem className="bg-popover flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Dynamic Content</FormLabel>
-                      <FormDescription>Allow emails to display dynamic content.</FormDescription>
+                      <FormLabel className="text-base">
+                        {t("pages.settings.general.dynamicContent")}
+                      </FormLabel>
+                      <FormDescription>
+                        {t("pages.settings.general.dynamicContentDescription")}
+                      </FormDescription>
                     </div>
                     <FormControl className="ml-4">
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -174,9 +181,11 @@ export default function GeneralPage() {
                 render={({ field }) => (
                   <FormItem className="bg-popover flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Display External Images</FormLabel>
+                      <FormLabel className="text-base">
+                        {t("pages.settings.general.externalImages")}
+                      </FormLabel>
                       <FormDescription>
-                        Allow emails to display images from external sources.
+                        {t("pages.settings.general.externalImagesDescription")}
                       </FormDescription>
                     </div>
                     <FormControl className="ml-4">

@@ -3,7 +3,10 @@
     "actions": {
       "logout": "Déconnexion",
       "back": "Retour",
-      "create": "Créer un email"
+      "create": "Créer un email",
+      "saveChanges": "Enregistrer les modifications",
+      "saving": "Enregistrement...",
+      "resetToDefaults": "Réinitialiser par défaut"
     }
   },
   "navigation": {
@@ -28,7 +31,69 @@
     "settings": {
       "general": {
         "title": "Paramètres généraux",
-        "description": "Gérez les paramètres de votre langue et vos préférences de visualisation des emails."
+        "description": "Gérez les paramètres de votre langue et vos préférences de visualisation des emails.",
+        "language": "Langue",
+        "timezone": "Fuseau horaire",
+        "dynamicContent": "Contenu dynamique",
+        "dynamicContentDescription": "Autoriser les emails à afficher du contenu dynamique.",
+        "externalImages": "Afficher les images externes",
+        "externalImagesDescription": "Autoriser les emails à afficher des images provenant de sources externes."
+      },
+      "connections": {
+        "title": "Connexions Email",
+        "description": "Connectez vos comptes email à Zero.",
+        "disconnectTitle": "Déconnecter le compte email",
+        "disconnectDescription": "Êtes-vous sûr de vouloir déconnecter cet email ?",
+        "cancel": "Annuler",
+        "remove": "Supprimer",
+        "disconnectSuccess": "Compte déconnecté avec succès",
+        "disconnectError": "Échec de la déconnexion du compte",
+        "addEmail": "Ajouter un email",
+        "connectEmail": "Connecter un email",
+        "connectEmailDescription": "Sélectionnez un fournisseur de courrier pour vous connecter",
+        "moreComingSoon": "Plus bientôt"
+      },
+      "security": {
+        "title": "Sécurité",
+        "description": "Gérez vos préférences de sécurité et la protection de votre compte.",
+        "twoFactorAuth": "Authentification à deux facteurs",
+        "twoFactorAuthDescription": "Ajoutez une couche de sécurité supplémentaire à votre compte",
+        "loginNotifications": "Notifications de connexion",
+        "loginNotificationsDescription": "Soyez informé des nouvelles tentatives de connexion",
+        "deleteAccount": "Supprimer le compte"
+      },
+      "appearance": {
+        "title": "Apparence",
+        "description": "Personnalisez les couleurs, les polices et les options d'affichage.",
+        "theme": "Thème",
+        "inboxType": "Type de boîte de réception"
+      },
+      "shortcuts": {
+        "title": "Raccourcis clavier",
+        "description": "Consultez et personnalisez les raccourcis clavier pour des actions rapides.",
+        "actions": {
+          "newEmail": "Nouvel email",
+          "sendEmail": "Envoyer l'email",
+          "reply": "Répondre",
+          "replyAll": "Répondre à tous",
+          "forward": "Transférer",
+          "drafts": "Brouillons",
+          "inbox": "Boîte de réception",
+          "sentMail": "Emails envoyés",
+          "delete": "Supprimer",
+          "search": "Rechercher",
+          "markAsUnread": "Marquer comme non lu",
+          "muteThread": "Mettre en sourdine",
+          "printEmail": "Imprimer l'email",
+          "archiveEmail": "Archiver l'email",
+          "markAsSpam": "Marquer comme spam",
+          "moveToFolder": "Déplacer vers un dossier",
+          "undoLastAction": "Annuler la dernière action",
+          "viewEmailDetails": "Voir les détails de l'email",
+          "goToDrafts": "Aller aux brouillons",
+          "expandEmailView": "Agrandir la vue de l'email",
+          "helpWithShortcuts": "Aide sur les raccourcis"
+        }
       }
     }
   }

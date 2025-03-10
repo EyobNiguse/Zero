@@ -127,7 +127,7 @@ function ComposeButton() {
   const { state } = useSidebar();
   const isMobile = useIsMobile();
   const router = useRouter();
-  const t = useTranslations("Sidebar");
+  const t = useTranslations();
   return (
     <Button
       onClick={() => router.push("/mail/create")}
@@ -139,7 +139,7 @@ function ComposeButton() {
         <SquarePenIcon ref={iconRef} className="size-4" />
       ) : (
         <>
-          <span className="text-center text-sm">{t("create-email")}</span>
+          <span className="text-center text-sm">{t("common.actions.create")}</span>
         </>
       )}
     </Button>
