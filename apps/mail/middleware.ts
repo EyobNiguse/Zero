@@ -13,6 +13,10 @@ export function middleware(request: NextRequest) {
   const isEuRegion = EU_COUNTRIES.includes(country);
   response.headers.set("x-user-eu-region", String(isEuRegion));
 
+  if (process.env.NODE_ENV === "development") {
+    response.headers.set("x-user-eu-region", "true");
+  }
+
   return response;
 }
 

@@ -1,3 +1,5 @@
+import { CookieConsent } from "@/components/cookies/cookie-dialog";
+import { CookieProvider } from "@/providers/cookie-provider";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { siteConfig } from "@/lib/site-config";
@@ -26,6 +28,8 @@ export default async function RootLayout({
   children: React.ReactNode;
   cookies: React.ReactNode;
 }>) {
+  const isEuRegion = (await headers()).get("x-user-eu-region") === "true";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -37,10 +41,13 @@ export default async function RootLayout({
       </head>
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>
         <Providers attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          {children}
-          {cookies}
-          <Toast />
-          <Analytics />
+          <CookieProvider>
+            {children}
+            {cookies}
+            <Toast />
+            <Analytics />
+            {isEuRegion && <CookieConsent />}
+          </CookieProvider>
         </Providers>
       </body>
     </html>
