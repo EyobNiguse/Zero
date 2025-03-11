@@ -93,8 +93,8 @@ const sections = [
     title: "Overview",
     content: (
       <p>
-        Mail0.io is an open-source email solution that enables users to self-host their email
-        service or integrate with external email providers. By using Mail0.io, you agree to these
+        0.email is an open-source email solution that enables users to self-host their email
+        service or integrate with external email providers. By using 0.email, you agree to these
         terms.
       </p>
     ),
@@ -106,7 +106,7 @@ const sections = [
         <div>
           <h3 className="mb-3 text-xl font-medium text-card-foreground">Self-Hosted Service</h3>
           <ul className="ml-4 list-disc space-y-2">
-            <li>Mail0.io provides software that users can deploy on their own infrastructure</li>
+            <li>0.email provides software that users can deploy on their own infrastructure</li>
             <li>Users are responsible for their own hosting, maintenance, and compliance</li>
             <li>The software is provided &quot;as is&quot; under the MIT License</li>
           </ul>
@@ -116,7 +116,7 @@ const sections = [
             External Email Integration
           </h3>
           <ul className="ml-4 list-disc space-y-2">
-            <li>Mail0.io can integrate with third-party email providers</li>
+            <li>0.email can integrate with third-party email providers</li>
             <li>Users must comply with third-party providers&apos; terms of service</li>
             <li>We are not responsible for third-party service disruptions</li>
           </ul>
@@ -143,7 +143,7 @@ const sections = [
     title: "Software License",
     content: (
       <div className="mt-4 space-y-3 text-muted-foreground">
-        <p>Mail0.io is licensed under the MIT License:</p>
+        <p>0.email is licensed under the MIT License:</p>
         <ul className="ml-4 list-disc space-y-2">
           <li>Users can freely use, modify, and distribute the software</li>
           <li>The software comes with no warranties</li>
@@ -173,7 +173,7 @@ const sections = [
         <p>For questions about these terms:</p>
         <div className="flex flex-col space-y-2">
           <a
-            href="https://github.com/Mail-0/Mail-0"
+            href="https://github.com/Mail-0/Zero"
             className="inline-flex items-center text-blue-600 hover:text-blue-800"
           >
             <Github className="mr-2 h-4 w-4" />

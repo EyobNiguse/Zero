@@ -1,43 +1,25 @@
 "use client";
 
-import { ComponentProps, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { InitialThread, ThreadProps, MailSelectMode, MailListProps } from "@/types";
+import { ComponentProps, memo, useCallback, useEffect, useRef, useState } from "react";
+import { InitialThread, MailListProps, MailSelectMode, ThreadProps } from "@/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertTriangle, Tag, User, Bell, Briefcase, Users } from "lucide-react";
+import { AlertTriangle, Bell, Briefcase, Tag, User, Users } from "lucide-react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
 import { preloadThread, useThreads } from "@/hooks/use-threads";
-import { ThreadContextMenu } from "../context/thread-context";
 import { cn, defaultPageSize, formatDate } from "@/lib/utils";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { markAsRead, markAsUnread } from "@/actions/mail";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMail } from "@/components/mail/use-mail";
-import { useSummary } from "@/hooks/use-summary";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { useParams } from "next/navigation";
-import { useTheme } from "next-themes";
 import items from "./demo.json";
-import Image from "next/image";
 import { toast } from "sonner";
 
-// interface MailListProps {
-//   isCompact?: boolean;
-// }
-
 const HOVER_DELAY = 1000; // ms before prefetching
-
-// type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
-
-// type ThreadProps = {
-//   message: InitialThread;
-//   selectMode: MailSelectMode;
-//   onClick?: (message: InitialThread) => () => Promise<any> | undefined;
-//   isCompact?: boolean;
-//   demo?: boolean;
-// };
 
 const highlightText = (text: string, highlight: string) => {
   if (!highlight?.trim()) return text;
@@ -69,7 +51,6 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
-
   const handleMouseEnter = () => {
     if (demo) return;
     isHovering.current = true;
@@ -135,7 +116,7 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
         )}
       />
       <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <p
             className={cn(
               message.unread ? "font-bold" : "font-medium",
@@ -153,6 +134,21 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
               {message.totalReplies}
             </span>
           ) : null}
+          <div className="flex items-center gap-1">
+            <MailLabels labels={message.tags} />
+            {message.totalReplies > 1 ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="rounded-full border border-dotted px-[5px] py-[1px] text-xs opacity-70">
+                    {message.totalReplies}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="px-1 py-0 text-xs">
+                  {message.totalReplies} Replies
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
         </div>
         {message.receivedOn ? (
           <p
@@ -177,6 +173,8 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
     </div>
   );
 });
+
+Thread.displayName = "Thread";
 
 export function MailListDemo({ items: filteredItems = items }) {
   return (
@@ -560,9 +558,16 @@ const MailLabels = memo(
           if (style === "secondary") return null;
 
           return (
-            <Badge key={label} className="rounded-full p-1" variant={style}>
-              {getLabelIcon(label)}
-            </Badge>
+            <Tooltip key={label}>
+              <TooltipTrigger asChild>
+                <Badge className="rounded-full p-1" variant={style}>
+                  {getLabelIcon(label)}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent className="px-1 py-0 text-xs" variant={style}>
+                {capitalize(label.replace(/^category_/i, ""))}
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>
@@ -572,6 +577,11 @@ const MailLabels = memo(
     return prev.labels === next.labels;
   },
 );
+MailLabels.displayName = "MailLabels";
+
+function capitalize(str: string) {
+  return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+}
 
 function getLabelIcon(label: string) {
   const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
