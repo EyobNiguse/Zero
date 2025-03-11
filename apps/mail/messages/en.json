@@ -151,7 +151,7 @@
         "remove": "Remove",
         "disconnectSuccess": "Account disconnected successfully",
         "disconnectError": "Failed to disconnect account",
-        "addEmail": "Add Email",
+        "addEmail": "Add Connection",
         "connectEmail": "Connect Email",
         "connectEmailDescription": "Select an email provider to connect",
         "moreComingSoon": "More coming soon"

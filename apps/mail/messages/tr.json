@@ -150,7 +150,7 @@
         "remove": "Kaldır",
         "disconnectSuccess": "Hesap bağlantısı başarıyla kesildi",
         "disconnectError": "Hesap bağlantısı kesilirken hata oluştu",
-        "addEmail": "E-posta Ekle",
+        "addEmail": "E-posta Bağlantısı Ekle",
         "connectEmail": "E-posta Bağlantısı",
         "connectEmailDescription": "E-posta sağlayıcısını seçin",
         "moreComingSoon": "Yakında daha fazla geliyor"

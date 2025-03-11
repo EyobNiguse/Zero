@@ -150,7 +150,7 @@
         "remove": "Supprimer",
         "disconnectSuccess": "Compte déconnecté avec succès",
         "disconnectError": "Échec de la déconnexion du compte",
-        "addEmail": "Ajouter un email",
+        "addEmail": "Ajouter une connexion",
         "connectEmail": "Connecter un email",
         "connectEmailDescription": "Sélectionnez un fournisseur de courrier pour vous connecter",
         "moreComingSoon": "Plus bientôt"
