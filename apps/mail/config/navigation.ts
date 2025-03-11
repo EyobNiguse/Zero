@@ -156,11 +156,6 @@ export const navigationConfig: Record<string, NavConfig> = {
             url: "/settings/shortcuts",
             icon: KeyboardIcon,
           },
-          {
-            title: "Cookies",
-            url: "/cookies",
-            icon: ShieldCheckIcon,
-          },
           // {
           //   title: "Notifications",
           //   url: "/settings/notifications",
