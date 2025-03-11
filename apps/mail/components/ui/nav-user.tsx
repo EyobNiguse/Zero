@@ -148,7 +148,7 @@ export function NavUser() {
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href="https://github.com/Mail-0/Mail-0" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/Mail-0/Zero" target="_blank">
             <div className="flex cursor-pointer items-center gap-2 text-[13px]">
               <Book size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
               <p className="text-[13px] opacity-60">{t("common.navUser.documentation")}</p>

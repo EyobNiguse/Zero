@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
-import { Trash } from "lucide-react";
+import { Trash, Plus } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -159,7 +159,19 @@ export default function ConnectionsPage() {
             </div>
           ) : null}
 
-          <AddConnectionDialog className="w-fit hover:bg-transparent" />
+          <div className="flex items-center justify-center">
+            <AddConnectionDialog>
+              <Button
+                variant="outline"
+                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-40"
+              >
+                <Plus className="absolute left-2 h-4 w-4" />
+                <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  {t("pages.settings.connections.addEmail")}
+                </span>
+              </Button>
+            </AddConnectionDialog>
+          </div>
         </div>
       </SettingsCard>
     </div>
