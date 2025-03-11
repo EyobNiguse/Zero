@@ -185,7 +185,7 @@ function NavItem(item: NavItemProps & { href: string }) {
         className="flex cursor-not-allowed items-center opacity-50"
       >
         {item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
-        <p className="mt-0.5 text-[13px]">{t(item.title as MessageKey)}s</p>
+        <p className="mt-0.5 text-[13px]">{t(item.title as MessageKey)}</p>
       </SidebarMenuButton>
     );
   }
@@ -212,7 +212,7 @@ function NavItem(item: NavItemProps & { href: string }) {
         <Badge className="ml-auto rounded-md" variant="outline">
           {stats
             .find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase())
-            ?.count?.toLocaleString()}
+            ?.count?.toLocaleString() || "0"}
         </Badge>
       )}
     </SidebarMenuButton>
