@@ -1,13 +1,8 @@
-const path = require("path");
-
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
-  extends: [
-    "next/core-web-vitals", 
-    "plugin:@typescript-eslint/recommended",
-  ],
+  extends: ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
   settings: {
     // This ensures import resolution works correctly across the monorepo
     "import/resolver": {
