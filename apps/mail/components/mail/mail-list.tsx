@@ -1,6 +1,14 @@
 "use client";
 
-import { ComponentProps, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertTriangle, Tag, User, Bell, Briefcase, Users } from "lucide-react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
@@ -16,8 +24,8 @@ import { useSummary } from "@/hooks/use-summary";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
+import type { InitialThread } from "@/types";
 import { useParams } from "next/navigation";
-import { InitialThread } from "@/types";
 import { useTheme } from "next-themes";
 import items from "./demo.json";
 import Image from "next/image";
@@ -358,29 +366,25 @@ export function MailList({ isCompact }: MailListProps) {
   // });
 
   useHotKey("Meta+a", async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
+    event?.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
   useHotKey("Control+a", async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
+    event?.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
   useHotKey("Meta+n", async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
+    event?.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
   useHotKey("Control+n", async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
+    event?.preventDefault();
     resetSelectMode();
     selectAll();
   });

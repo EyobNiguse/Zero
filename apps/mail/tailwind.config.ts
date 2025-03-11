@@ -1,9 +1,8 @@
-import * as defaultTheme from "tailwindcss/defaultTheme";
+import { default as flattenColorPalette } from "tailwindcss/lib/util/flattenColorPalette";
 import sharedConfig from "../../packages/tailwind-config/tailwind.config";
+import * as defaultTheme from "tailwindcss/defaultTheme";
 import * as animate from "tailwindcss-animate";
 import type { Config } from "tailwindcss";
-import { default as flattenColorPalette } from "tailwindcss/lib/util/flattenColorPalette"
-
 
 export default {
   content: [
@@ -122,7 +121,7 @@ export default {
         "fade-up": "fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "move-up": "moveUp 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "fade-in": "fadeIn 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-        "shine": "shine 4s linear infinite",
+        shine: "shine 4s linear infinite",
         "shine-slow": "shine-slow 8s linear infinite",
       },
     },

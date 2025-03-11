@@ -1,4 +1,4 @@
-import { draftsAtom, DraftType } from "@/store/draftStates";
+import { draftsAtom, type DraftType } from "@/store/draftStates";
 import { useAtom } from "jotai";
 
 export const useDrafts = () => {

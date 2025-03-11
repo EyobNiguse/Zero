@@ -11,7 +11,7 @@ import {
   ArchiveX,
   FileText,
   Inbox,
-  LucideIcon,
+  type LucideIcon,
   Plus,
   SearchX,
   Send,
