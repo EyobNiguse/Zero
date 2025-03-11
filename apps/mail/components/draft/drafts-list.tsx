@@ -1,9 +1,8 @@
 "use client";
 
-import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Bell, Briefcase, Tag, User, Users } from "lucide-react";
+import { InitialThread, ThreadProps, MailListProps, MailSelectMode } from "@/types";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
-import { preloadThread, useThreads } from "@/hooks/use-threads";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn, defaultPageSize, formatDate } from "@/lib/utils";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { markAsRead, markAsUnread } from "@/actions/mail";
@@ -13,24 +12,8 @@ import { useMail } from "@/components/mail/use-mail";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useDrafts } from "@/hooks/use-drafts";
 import { useSession } from "@/lib/auth-client";
-import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { InitialThread } from "@/types";
 import { toast } from "sonner";
-
-interface DraftsListProps {
-  isCompact?: boolean;
-}
-
-type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
-
-type ThreadProps = {
-  message: InitialThread;
-  selectMode: MailSelectMode;
-  onClick?: (message: InitialThread) => () => Promise<any> | undefined;
-  isCompact?: boolean;
-  demo?: boolean;
-};
 
 const highlightText = (text: string, highlight: string) => {
   if (!highlight?.trim()) return text;
@@ -52,7 +35,7 @@ const highlightText = (text: string, highlight: string) => {
   });
 };
 
-const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
+const Draft = ({ message, onClick }: ThreadProps) => {
   const [mail] = useMail();
   const [searchValue] = useSearchValue();
 
@@ -67,7 +50,6 @@ const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
         "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
         !message.unread && "opacity-50",
         (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
-        // isCompact && "py-2",
       )}
     >
       <div
@@ -113,7 +95,7 @@ const Thread = ({ message, selectMode, demo, onClick }: ThreadProps) => {
   );
 };
 
-export function DraftsList({ isCompact }: DraftsListProps) {
+export function DraftsList({ isCompact }: MailListProps) {
   const [mail, setMail] = useMail();
   const { data: session } = useSession();
   const [searchValue] = useSearchValue();
@@ -418,10 +400,10 @@ export function DraftsList({ isCompact }: DraftsListProps) {
           }}
           className="absolute left-0 top-0 w-full p-[8px]"
         >
-          {virtualItems.map(({ index, key }) => {
+          {virtualItems.map(({ index }) => {
             const item = items[index];
             return item ? (
-              <Thread
+              <Draft
                 key={item.id}
                 onClick={handleMailClick}
                 message={item}
@@ -443,72 +425,4 @@ export function DraftsList({ isCompact }: DraftsListProps) {
       </div>
     </ScrollArea>
   );
-}
-
-function MailLabels({ labels }: { labels: string[] }) {
-  if (!labels.length) return null;
-
-  const visibleLabels = labels.filter(
-    (label) => !["unread", "inbox"].includes(label.toLowerCase()),
-  );
-
-  if (!visibleLabels.length) return null;
-
-  return (
-    <div className={cn("flex select-none items-center gap-1")}>
-      {visibleLabels.map((label) => {
-        const style = getDefaultBadgeStyle(label);
-        // Skip rendering if style is "secondary" (default case)
-        if (style === "secondary") return null;
-
-        return (
-          <Badge key={label} className="rounded-full p-1" variant={style}>
-            {getLabelIcon(label)}
-          </Badge>
-        );
-      })}
-    </div>
-  );
-}
-
-function getLabelIcon(label: string) {
-  const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
-
-  switch (normalizedLabel) {
-    case "important":
-      return <AlertTriangle className="h-3 w-3" />;
-    case "promotions":
-      return <Tag className="h-3 w-3 rotate-90" />;
-    case "personal":
-      return <User className="h-3 w-3" />;
-    case "updates":
-      return <Bell className="h-3 w-3" />;
-    case "work":
-      return <Briefcase className="h-3 w-3" />;
-    case "forums":
-      return <Users className="h-3 w-3" />;
-    default:
-      return null;
-  }
-}
-
-function getDefaultBadgeStyle(label: string): ComponentProps<typeof Badge>["variant"] {
-  const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
-
-  switch (normalizedLabel) {
-    case "important":
-      return "important";
-    case "promotions":
-      return "promotions";
-    case "personal":
-      return "personal";
-    case "updates":
-      return "updates";
-    case "work":
-      return "default";
-    case "forums":
-      return "forums";
-    default:
-      return "secondary";
-  }
 }
