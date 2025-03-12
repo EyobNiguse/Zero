@@ -95,7 +95,7 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
                   You can change your preferences at any time by clicking the cookie settings button
                   in the corner of the screen. For more information about how we use cookies, please
                   see our{" "}
-                  <a href="/privacy-policy" className="text-blue-500 hover:underline">
+                  <a href="/privacy" className="text-blue-500 hover:underline">
                     Privacy Policy
                   </a>
                   .
