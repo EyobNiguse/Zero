@@ -1,15 +1,22 @@
 "use client";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { compressText, decompressText, truncateFileName } from "@/lib/utils";
-import { ArrowUpIcon, Paperclip, Plus, X } from "lucide-react";
+import { ArrowUpIcon, BookText, Paperclip, Plus, X } from "lucide-react";
+import { createDraft, getDraft } from "@/actions/drafts";
 import { UploadedFileIcon } from "./uploaded-file-icon";
 import { Separator } from "@/components/ui/separator";
 import { SidebarToggle } from "../ui/sidebar-toggle";
+import Paragraph from "@tiptap/extension-paragraph";
+import { cn, truncateFileName } from "@/lib/utils";
+import Document from "@tiptap/extension-document";
 import { Button } from "@/components/ui/button";
+import { generateJSON } from "@tiptap/html";
 import { useTranslations } from "next-intl";
 import { sendEmail } from "@/actions/send";
+import Bold from "@tiptap/extension-bold";
+import Text from "@tiptap/extension-text";
 import { useQueryState } from "nuqs";
+import { JSONContent } from "novel";
 import { toast } from "sonner";
 import * as React from "react";
 import Editor from "./editor";
@@ -17,106 +24,74 @@ import "./prosemirror.css";
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
-export const defaultValue = {
-  type: "doc",
-  content: [
-    {
-      type: "paragraph",
-      content: [],
-    },
-  ],
-};
-
-interface EmailState {
-  toInput: string;
-  toEmails: string[];
-  subjectInput: string;
-  attachments: File[];
-  resetEditorKey: number;
-  isAISidebarOpen: boolean;
-  isDragging: boolean;
-}
-
-type EmailAction =
-  | { type: "SET_TO_INPUT"; payload: string }
-  | { type: "ADD_EMAIL"; payload: string }
-  | { type: "REMOVE_EMAIL"; payload: number }
-  | { type: "SET_SUBJECT_INPUT"; payload: string }
-  | { type: "SET_ATTACHMENTS"; payload: File[] }
-  | { type: "ADD_ATTACHMENTS"; payload: File[] }
-  | { type: "REMOVE_ATTACHMENT"; payload: number }
-  | { type: "RESET_EDITOR" }
-  | { type: "TOGGLE_AI_SIDEBAR"; payload: boolean }
-  | { type: "SET_DRAGGING"; payload: boolean }
-  | { type: "RESET_FORM" };
-
-function emailReducer(state: EmailState, action: EmailAction): EmailState {
-  switch (action.type) {
-    case "SET_TO_INPUT":
-      return { ...state, toInput: action.payload };
-    case "ADD_EMAIL":
-      return {
-        ...state,
-        toEmails: [...state.toEmails, action.payload],
-        toInput: "",
-      };
-    case "REMOVE_EMAIL":
-      return {
-        ...state,
-        toEmails: state.toEmails.filter((_, i) => i !== action.payload),
-      };
-    case "SET_SUBJECT_INPUT":
-      return { ...state, subjectInput: action.payload };
-    case "SET_ATTACHMENTS":
-      return { ...state, attachments: action.payload };
-    case "ADD_ATTACHMENTS":
-      return { ...state, attachments: [...state.attachments, ...action.payload] };
-    case "REMOVE_ATTACHMENT":
-      return {
-        ...state,
-        attachments: state.attachments.filter((_, i) => i !== action.payload),
-      };
-    case "RESET_EDITOR":
-      return { ...state, resetEditorKey: state.resetEditorKey + 1 };
-    case "TOGGLE_AI_SIDEBAR":
-      return { ...state, isAISidebarOpen: action.payload };
-    case "SET_DRAGGING":
-      return { ...state, isDragging: action.payload };
-    case "RESET_FORM":
-      return {
-        ...state,
-        toInput: "",
-        toEmails: [],
-        subjectInput: "",
-        attachments: [],
-        resetEditorKey: state.resetEditorKey + 1,
-      };
-    default:
-      return state;
-  }
-}
-
 export function CreateEmail() {
-  const t = useTranslations();
-  const [state, dispatch] = React.useReducer(emailReducer, {
-    toInput: "",
-    toEmails: [],
-    subjectInput: "",
-    attachments: [],
-    resetEditorKey: 0,
-    isAISidebarOpen: false,
-    isDragging: false,
-  });
+  const [toInput, setToInput] = React.useState("");
+  const [toEmails, setToEmails] = React.useState<string[]>([]);
+  const [subjectInput, setSubjectInput] = React.useState("");
+  const [attachments, setAttachments] = React.useState<File[]>([]);
+  const [resetEditorKey, setResetEditorKey] = React.useState(0);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [messageContent, setMessageContent] = React.useState("");
+  const [draftId, setDraftId] = useQueryState("draftId");
+  const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(null);
 
-  const { toInput, subjectInput, attachments, resetEditorKey, isAISidebarOpen, isDragging } = state;
+  React.useEffect(() => {
+    const loadDraft = async () => {
+      if (!draftId) {
+        setDefaultValue({
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [],
+            },
+          ],
+        });
+        return;
+      }
 
-  const [messageContent, setMessageContent] = useQueryState("body", {
-    defaultValue: "",
-    parse: (value) => decompressText(value),
-    serialize: (value) => compressText(value),
-  });
+      try {
+        const draft = await getDraft(draftId);
+
+        if (!draft) {
+          toast.error("Draft not found");
+          return;
+        }
+
+        setDraftId(draft.id);
+
+        if (draft.to?.length) {
+          setToEmails(draft.to);
+        }
+        if (draft.subject) {
+          setSubjectInput(draft.subject);
+        }
+
+        console.log("Draft content:", draft.content);
+
+        // Set message content
+        if (draft.content) {
+          const json = generateJSON(draft.content, [Document, Paragraph, Text, Bold]);
+          console.log("JSON:", json);
+          setDefaultValue(json);
+          setMessageContent(draft.content);
+        }
+
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.error("Error loading draft:", error);
+        toast.error("Failed to load draft");
+      }
+    };
+
+    loadDraft();
+  }, [draftId]);
 
   const hasHiddenAttachments = attachments.length > MAX_VISIBLE_ATTACHMENTS;
+
+  const t = useTranslations();
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -128,8 +103,8 @@ export function CreateEmail() {
 
     if (!trimmedEmail) return;
 
-    if (state.toEmails.includes(trimmedEmail)) {
-      dispatch({ type: "SET_TO_INPUT", payload: "" });
+    if (toEmails.includes(trimmedEmail)) {
+      setToInput("");
       return;
     }
 
@@ -138,17 +113,73 @@ export function CreateEmail() {
       return;
     }
 
-    dispatch({ type: "ADD_EMAIL", payload: trimmedEmail });
+    setToEmails([...toEmails, trimmedEmail]);
+    setToInput("");
+    setHasUnsavedChanges(true);
   };
 
   const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      dispatch({ type: "ADD_ATTACHMENTS", payload: Array.from(e.target.files) });
+      setAttachments([...attachments, ...Array.from(e.target.files)]);
+      setHasUnsavedChanges(true);
     }
   };
 
+  const saveDraft = React.useCallback(async () => {
+    if (!hasUnsavedChanges) return;
+    if (!toEmails.length && !subjectInput && !messageContent) return;
+
+    try {
+      setIsSaving(true);
+      const draftData = {
+        to: toEmails.join(", "),
+        subject: subjectInput || "(no subject)",
+        message: messageContent || "",
+        attachments: attachments,
+        id: draftId,
+      };
+
+      const response = await createDraft(draftData);
+
+      if (response?.id && response.id !== draftId) {
+        setDraftId(response.id);
+      }
+
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast.error("Failed to save draft");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
+
+  React.useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      saveDraft();
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [hasUnsavedChanges, saveDraft]);
+
+  React.useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      saveDraft();
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [hasUnsavedChanges, saveDraft]);
+
+  React.useEffect(() => {
+    setHasUnsavedChanges(true);
+  }, [messageContent]);
+
   const handleSendEmail = async () => {
-    if (!state.toEmails.length) {
+    if (!toEmails.length) {
       toast.error("Please enter at least one recipient email address");
       return;
     }
@@ -165,14 +196,19 @@ export function CreateEmail() {
 
     try {
       await sendEmail({
-        to: state.toEmails.join(","),
+        to: toEmails.join(","),
         subject: subjectInput,
         message: messageContent,
         attachments: attachments,
       });
 
       toast.success("Email sent successfully");
-      dispatch({ type: "RESET_FORM" });
+      setToInput("");
+      setToEmails([]);
+      setSubjectInput("");
+      setAttachments([]);
+      setResetEditorKey((prev) => prev + 1);
+      setMessageContent("");
     } catch (error) {
       console.error("Error sending email:", error);
       toast.error("Failed to send email. Please try again.");
@@ -182,29 +218,29 @@ export function CreateEmail() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch({ type: "SET_DRAGGING", payload: true });
+    setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch({ type: "SET_DRAGGING", payload: false });
+    setIsDragging(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch({ type: "SET_DRAGGING", payload: false });
+    setIsDragging(false);
 
     if (e.dataTransfer.files) {
-      dispatch({ type: "ADD_ATTACHMENTS", payload: Array.from(e.dataTransfer.files) });
+      setAttachments((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
+      setHasUnsavedChanges(true);
     }
   };
 
   // Add ref for to input
   const toInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Add keyboard shortcut handler
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Only trigger if "/" is pressed and no input/textarea is focused
@@ -246,7 +282,7 @@ export function CreateEmail() {
                   {t("common.mailDisplay.to")}
                 </div>
                 <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-                  {state.toEmails.map((email, index) => (
+                  {toEmails.map((email, index) => (
                     <div
                       key={index}
                       className="flex items-center gap-1 rounded-md border px-2 py-1 text-sm font-medium"
@@ -257,7 +293,10 @@ export function CreateEmail() {
                       <button
                         type="button"
                         className="text-muted-foreground hover:text-foreground ml-1 rounded-full p-0.5"
-                        onClick={() => dispatch({ type: "REMOVE_EMAIL", payload: index })}
+                        onClick={() => {
+                          setToEmails((emails) => emails.filter((_, i) => i !== index));
+                          setHasUnsavedChanges(true);
+                        }}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -267,15 +306,16 @@ export function CreateEmail() {
                     ref={toInputRef}
                     type="email"
                     className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent opacity-50 placeholder:text-[#616161] focus:outline-none"
-                    placeholder={state.toEmails.length ? "" : t("pages.createEmail.example")}
+                    placeholder={toEmails.length ? "" : t("pages.createEmail.example")}
                     value={toInput}
-                    onChange={(e) => dispatch({ type: "SET_TO_INPUT", payload: e.target.value })}
+                    onChange={(e) => setToInput(e.target.value)}
                     onKeyDown={(e) => {
                       if ((e.key === "," || e.key === "Enter" || e.key === " ") && toInput.trim()) {
                         e.preventDefault();
                         handleAddEmail(toInput);
-                      } else if (e.key === "Backspace" && !toInput && state.toEmails.length > 0) {
-                        dispatch({ type: "REMOVE_EMAIL", payload: state.toEmails.length - 1 });
+                      } else if (e.key === "Backspace" && !toInput && toEmails.length > 0) {
+                        setToEmails((emails) => emails.slice(0, -1));
+                        setHasUnsavedChanges(true);
                       }
                     }}
                     onBlur={() => {
@@ -296,7 +336,10 @@ export function CreateEmail() {
                   className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
                   placeholder={t("common.searchBar.subject")}
                   value={subjectInput}
-                  onChange={(e) => dispatch({ type: "SET_SUBJECT_INPUT", payload: e.target.value })}
+                  onChange={(e) => {
+                    setSubjectInput(e.target.value);
+                    setHasUnsavedChanges(true);
+                  }}
                 />
               </div>
 
@@ -305,12 +348,14 @@ export function CreateEmail() {
                   {t("pages.createEmail.body")}
                 </div>
                 <div className="w-full">
-                  <Editor
-                    initialValue={defaultValue}
-                    onChange={(newContent) => setMessageContent(newContent)}
-                    key={resetEditorKey}
-                    placeholder={t("pages.createEmail.writeYourMessageHere")}
-                  />
+                  {defaultValue && (
+                    <Editor
+                      initialValue={defaultValue}
+                      onChange={(newContent) => setMessageContent(newContent)}
+                      key={resetEditorKey}
+                      placeholder={t("pages.createEmail.writeYourMessageHere")}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -351,7 +396,9 @@ export function CreateEmail() {
                           >
                             <UploadedFileIcon
                               removeAttachment={(index) =>
-                                dispatch({ type: "REMOVE_ATTACHMENT", payload: index })
+                                setAttachments((attachments) =>
+                                  attachments.filter((_, i) => i !== index),
+                                )
                               }
                               index={index}
                               file={file}
@@ -392,11 +439,38 @@ export function CreateEmail() {
               onChange={handleAttachment}
             />
             <Button
+              variant="outline"
+              className={cn(
+                "group relative w-9 overflow-hidden transition-all duration-200 hover:w-32",
+                {
+                  "w-32": isSaving,
+                },
+                hasUnsavedChanges
+                  ? "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                  : "bg-green-500/10 text-green-500 hover:bg-green-500/20",
+              )}
+              onClick={saveDraft}
+              // disabled={isSaving || !state.hasUnsavedChanges}
+            >
+              <BookText className="absolute left-[9px] h-6 w-6" />
+              <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                {isSaving ? (
+                  <>
+                    <span className="animate-pulse">Saving...</span>
+                  </>
+                ) : hasUnsavedChanges ? (
+                  <>Save draft</>
+                ) : (
+                  <>Draft saved</>
+                )}
+              </span>
+            </Button>
+            <Button
               variant="default"
               className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-24"
               onClick={handleSendEmail}
               disabled={
-                !state.toEmails.length ||
+                !toEmails.length ||
                 !messageContent.trim() ||
                 messageContent === JSON.stringify(defaultValue)
               }

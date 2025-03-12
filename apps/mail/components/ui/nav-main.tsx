@@ -211,7 +211,9 @@ function NavItem(item: NavItemProps & { href: string }) {
       {stats && stats.find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase()) && (
         <Badge className="ml-auto rounded-md" variant="outline">
           {stats
+
             .find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase())
+
             ?.count?.toLocaleString() || "0"}
         </Badge>
       )}

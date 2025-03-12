@@ -296,7 +296,7 @@ export default function Editor({
       <EditorRoot>
         <EditorContent
           immediatelyRender={false}
-          initialContent={initialValue}
+          initialContent={initialValue || defaultEditorContent}
           extensions={extensions}
           className="min-h-96 max-w-[450px] sm:max-w-[600px]"
           editorProps={{

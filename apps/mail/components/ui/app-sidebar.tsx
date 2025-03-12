@@ -18,6 +18,7 @@ import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { Button } from "./button";
 import Image from "next/image";
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
 
@@ -56,6 +57,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const showComposeButton = currentSection === "mail";
 
   const { toggleOpen: toggleAISidebar } = useAISidebar();
+
+  console.log(stats);
 
   return (
     <Sidebar
