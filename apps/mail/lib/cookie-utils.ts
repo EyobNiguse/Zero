@@ -4,13 +4,16 @@ import { CookieCategory } from "./cookies";
 
 interface CookieOptions {
   category: CookieCategory;
-  maxAge?: number;
   path?: string;
+  domain?: string;
+  secure?: boolean;
+  sameSite?: "Strict" | "Lax" | "None";
+  expires?: Date;
 }
 
 const DEFAULT_OPTIONS = {
   path: "/",
-  maxAge: 365 * 24 * 60 * 60, // 1 year
+  maxAge: 365 * 24 * 60 * 60,
 };
 
 class CookieUtils {
@@ -24,36 +27,39 @@ class CookieUtils {
     return this.cookieRegistry.get(name);
   }
 
-  static setCookie(name: string, value: string, options: CookieOptions) {
-    this.registerCookie(name, options.category);
+  static setCookie(name: string, value: string, options: CookieOptions): void {
+    const cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+    const cookieOptions: string[] = [];
 
-    const cookieOptions = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-    };
+    if (options.path) cookieOptions.push(`path=${options.path}`);
+    if (options.domain) cookieOptions.push(`domain=${options.domain}`);
+    if (options.secure) cookieOptions.push("secure");
+    if (options.sameSite) cookieOptions.push(`samesite=${options.sameSite}`);
+    if (options.expires) cookieOptions.push(`expires=${options.expires.toUTCString()}`);
 
-    const cookie = `${name}=${encodeURIComponent(value)}; Path=${
-      cookieOptions.path
-    }; Max-Age=${cookieOptions.maxAge}; SameSite=Lax${
-      process.env.NODE_ENV === "production" ? "; Secure" : ""
-    }`;
-
-    document.cookie = cookie;
+    document.cookie = `${cookieString}${cookieOptions.length ? "; " + cookieOptions.join("; ") : ""}`;
   }
 
-  static getCookie(name: string): string | undefined {
+  static getCookie(name: string): string | null {
     const cookies = document.cookie.split(";");
     for (const cookie of cookies) {
-      const [cookieName, cookieValue] = cookie.split("=").map((c) => c.trim());
-      if (cookieName === name) {
-        return decodeURIComponent(cookieValue || "");
+      const parts = cookie.split("=").map((c) => c.trim());
+      const cookieName = parts[0];
+      const cookieValue = parts[1];
+      if (cookieName === name && cookieValue !== undefined) {
+        return decodeURIComponent(cookieValue);
       }
     }
-    return undefined;
+    return null;
   }
 
-  static removeCookie(name: string) {
-    document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT`;
+  static deleteCookie(name: string, options?: Pick<CookieOptions, "path" | "domain">): void {
+    const opts: CookieOptions = {
+      ...options,
+      category: "necessary",
+      expires: new Date(0),
+    };
+    this.setCookie(name, "", opts);
   }
 
   static getAllCookies(): { [key: string]: string } {
@@ -75,20 +81,58 @@ class CookieUtils {
     Object.keys(allCookies).forEach((cookieName) => {
       const cookieCategory = this.getCookieCategory(cookieName);
       if (cookieCategory === category) {
-        this.removeCookie(cookieName);
+        this.deleteCookie(cookieName, { path: "/" });
       }
     });
   }
 
-  static cleanupRejectedCookies(acceptedCategories: CookieCategory[]) {
-    const allCookies = this.getAllCookies();
+  static cleanupRejectedCookies(acceptedCategories: CookieCategory[]): void {
+    const cookieMapping: Record<string, CookieCategory> = {
+      _ga: "analytics",
+      _gid: "analytics",
+      _fbp: "marketing",
+      // TODO: Add more cookie mappings as needed
+    };
 
-    Object.keys(allCookies).forEach((cookieName) => {
-      const category = this.getCookieCategory(cookieName);
-      if (category && !acceptedCategories.includes(category)) {
-        this.removeCookie(cookieName);
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+      const parts = cookie.split("=").map((c) => c.trim());
+      const cookieName = parts[0];
+      if (
+        cookieName &&
+        cookieMapping[cookieName] &&
+        !acceptedCategories.includes(cookieMapping[cookieName])
+      ) {
+        this.deleteCookie(cookieName, { path: "/" });
       }
+    }
+  }
+
+  static cleanupMarketingCookies(): void {
+    const marketingCookies = [
+      "_fbp",
+      "_gcl_au",
+      "_uetsid",
+      "_uetvid",
+      // TODO: Add more marketing cookie names as needed
+    ];
+
+    marketingCookies.forEach((cookieName) => {
+      this.deleteCookie(cookieName, { path: "/" });
     });
+  }
+
+  static getCookiesByCategory(category: CookieCategory): string[] {
+    const cookieMapping: Record<string, CookieCategory> = {
+      _ga: "analytics",
+      _gid: "analytics",
+      _fbp: "marketing",
+      // TODO:Add more cookie mappings as needed
+    };
+
+    return Object.entries(cookieMapping)
+      .filter(([_, cookieCategory]) => cookieCategory === category)
+      .map(([cookieName]) => cookieName);
   }
 }
 

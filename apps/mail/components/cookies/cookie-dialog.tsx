@@ -78,54 +78,97 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
           <div className="border-b border-zinc-800 px-6 py-6">
             <DialogHeader>
               <DialogTitle>Cookie Settings</DialogTitle>
-              <DialogDescription>
-                Customize your cookie preferences. You can enable or disable different types of
-                cookies below.
+              <DialogDescription className="space-y-4">
+                <span className="block text-sm text-zinc-400">
+                  We use cookies and similar technologies to help personalize content, tailor and
+                  measure ads, and provide a better experience. By clicking "Accept All", you
+                  consent to all cookies. You can customize your choices by clicking "Customize" or
+                  reject all optional cookies by clicking "Reject All".
+                </span>
+                <span className="block text-sm text-zinc-400">
+                  For California residents (CCPA): We do not sell your personal information.
+                  However, some cookies collect data for targeted advertising. To opt out of the
+                  sale of your data for targeted advertising purposes, click "Reject All" or disable
+                  Marketing cookies below.
+                </span>
+                <span className="block text-sm text-zinc-400">
+                  You can change your preferences at any time by clicking the cookie settings button
+                  in the corner of the screen. For more information about how we use cookies, please
+                  see our{" "}
+                  <a href="/privacy-policy" className="text-blue-500 hover:underline">
+                    Privacy Policy
+                  </a>
+                  .
+                </span>
               </DialogDescription>
             </DialogHeader>
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-2">
             <div className="space-y-6 py-6">
-              {(
-                Object.entries(COOKIE_CATEGORIES) as [
-                  CookieCategory,
-                  (typeof COOKIE_CATEGORIES)[CookieCategory],
-                ][]
-              ).map(([category, info]) => (
-                <div key={category} className="flex items-start justify-between space-x-4">
-                  <div>
-                    <Label htmlFor={category} className="font-medium text-zinc-100">
-                      {info.name}
-                    </Label>
-                    <p className="mt-1 text-sm text-zinc-400">{info.description}</p>
-                  </div>
-                  <Switch
-                    id={category}
-                    checked={preferences[category]}
-                    disabled={info.required}
-                    onCheckedChange={(checked) => updatePreference(category, checked)}
-                    className="data-[state=checked]:bg-blue-600"
-                  />
-                </div>
-              ))}
-
-              <Accordion type="single" collapsible className="mt-6">
-                <AccordionItem value="details" className="border-zinc-800">
-                  <AccordionTrigger className="text-zinc-100 hover:text-zinc-100 hover:no-underline">
-                    <span className="text-sm font-medium">Detailed Cookie Information</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-zinc-400">
-                    <div className="space-y-4 text-sm">
-                      {Object.entries(COOKIE_CATEGORIES).map(([key, info]) => (
-                        <div key={key}>
-                          <h4 className="font-medium text-zinc-100">{info.name}</h4>
-                          <p className="mt-1">{info.description}</p>
-                        </div>
-                      ))}
+              <Accordion type="multiple" className="space-y-4">
+                {(
+                  Object.entries(COOKIE_CATEGORIES) as [
+                    CookieCategory,
+                    (typeof COOKIE_CATEGORIES)[CookieCategory],
+                  ][]
+                ).map(([category, info]) => (
+                  <AccordionItem
+                    key={category}
+                    value={category}
+                    className="rounded-lg border border-zinc-800 px-4"
+                  >
+                    <div className="flex items-center justify-between py-4">
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor={category} className="font-medium text-zinc-100">
+                          {info.name}
+                          {info.required && (
+                            <span className="ml-2 text-xs text-zinc-400">(Required)</span>
+                          )}
+                        </Label>
+                      </div>
+                      <Switch
+                        id={category}
+                        checked={preferences[category]}
+                        disabled={info.required}
+                        onCheckedChange={(checked) => updatePreference(category, checked)}
+                        className="data-[state=checked]:bg-blue-600"
+                      />
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
+                    <AccordionTrigger className="mb-2 py-0 text-sm text-zinc-400 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                      More information
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4 pt-2">
+                      <div className="space-y-3">
+                        <p className="text-sm text-zinc-400">{info.description}</p>
+                        <div>
+                          <p className="text-sm font-medium text-zinc-300">Duration:</p>
+                          <p className="text-sm text-zinc-400">
+                            {category === "necessary"
+                              ? "Session - These cookies are deleted when you close your browser"
+                              : category === "functional"
+                                ? "1 year - To remember your preferences"
+                                : category === "analytics"
+                                  ? "2 years - To maintain consistent analytics data"
+                                  : "90 days - Regular refresh of marketing preferences"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-zinc-300">Provider:</p>
+                          <p className="text-sm text-zinc-400">
+                            {category === "necessary"
+                              ? "First party - Set by us"
+                              : category === "functional"
+                                ? "First party and selected third parties"
+                                : category === "analytics"
+                                  ? "Google Analytics and similar services"
+                                  : "Various advertising partners"}
+                          </p>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
               </Accordion>
             </div>
           </div>
@@ -164,7 +207,7 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
           <div className="mb-4 flex items-start justify-between">
             <div className="flex items-center gap-2">
               <Cookie className="h-5 w-5 text-zinc-100" />
-              <h3 className="font-semibold text-zinc-100">Cookie Consent</h3>
+              <h3 className="font-semibold text-zinc-100">Cookie Preferences</h3>
             </div>
             <Button
               variant="ghost"
@@ -177,8 +220,9 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
             </Button>
           </div>
           <p className="mb-4 text-sm text-zinc-400">
-            We use cookies to enhance your browsing experience, serve personalized ads or content,
-            and analyze our traffic.
+            We use cookies to enhance your experience. By continuing to visit this site you agree to
+            our use of cookies. For California residents: We do not sell personal information, but
+            some cookies enable targeted advertising.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button

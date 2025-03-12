@@ -33,14 +33,12 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
   );
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Initialize preferences from stored cookie
   useEffect(() => {
     const loadPreferences = () => {
       const storedPrefs = CookieUtils.getCookie(PREFERENCES_COOKIE);
       if (storedPrefs) {
         try {
           const parsedPrefs = JSON.parse(storedPrefs);
-          // Ensure required cookies are always true
           Object.entries(COOKIE_CATEGORIES).forEach(([key, info]) => {
             if (info.required) {
               parsedPrefs[key] = true;
@@ -57,19 +55,33 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
     loadPreferences();
   }, []);
 
-  // Save preferences and cleanup rejected cookies
   const savePreferences = (newPreferences: CookiePreferences) => {
+    // Store preferences with a 1-year expiry for GDPR compliance
+    const oneYear = 365 * 24 * 60 * 60 * 1000;
     CookieUtils.setCookie(PREFERENCES_COOKIE, JSON.stringify(newPreferences), {
       category: "necessary",
+      expires: new Date(Date.now() + oneYear),
+      sameSite: "Lax",
+      secure: true,
     });
 
-    // Get accepted categories
     const acceptedCategories = Object.entries(newPreferences)
       .filter(([_, accepted]) => accepted)
       .map(([category]) => category as CookieCategory);
 
-    // Clean up rejected cookies
     CookieUtils.cleanupRejectedCookies(acceptedCategories);
+    logConsent(newPreferences);
+  };
+
+  const logConsent = (preferences: CookiePreferences) => {
+    const consentData = {
+      timestamp: new Date().toISOString(),
+      preferences,
+      userAgent: navigator.userAgent,
+      // TODO: Add any other relevant data for compliance
+    };
+
+    console.log("Cookie consent logged:", consentData);
   };
 
   const updatePreference = (category: CookieCategory, value: boolean) => {
@@ -79,6 +91,10 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
     const newPreferences = { ...preferences, [category]: value };
     setPreferences(newPreferences);
     savePreferences(newPreferences);
+
+    if (category === "marketing" && !value) {
+      CookieUtils.cleanupMarketingCookies();
+    }
   };
 
   const acceptAll = () => {
