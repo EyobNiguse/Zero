@@ -129,11 +129,6 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
             {message.unread ? <span className="size-2 rounded-full bg-[#006FFE]" /> : null}
           </p>
           <MailLabels labels={message.tags} />
-          {message.totalReplies !== 1 ? (
-            <span className="rounded-full border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-              {message.totalReplies}
-            </span>
-          ) : null}
           <div className="flex items-center gap-1">
             {message.totalReplies > 1 ? (
               <Tooltip>
