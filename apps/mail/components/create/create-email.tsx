@@ -202,7 +202,7 @@ export function CreateEmail() {
         attachments: attachments,
       });
 
-      toast.success("Email sent successfully");
+      toast.success(t("pages.createEmail.emailSentSuccessfully"));
       setToInput("");
       setToEmails([]);
       setSubjectInput("");
@@ -211,7 +211,7 @@ export function CreateEmail() {
       setMessageContent("");
     } catch (error) {
       console.error("Error sending email:", error);
-      toast.error("Failed to send email. Please try again.");
+      toast.error(t("pages.createEmail.failedToSendEmail"));
     }
   };
 

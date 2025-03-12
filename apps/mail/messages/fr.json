@@ -95,7 +95,8 @@
       "mailedBy": "Expédié par",
       "signedBy": "Signé par",
       "security": "Sécurité",
-      "standardEncryption": "Chiffrement standard (TLS)"
+      "standardEncryption": "Chiffrement standard (TLS)",
+      "loadingMailContent": "Chargement du contenu de l'email..."
     },
     "threadDisplay": {
       "exitFullscreen": "Quitter le mode plein écran",
@@ -130,6 +131,14 @@
     }
   },
   "pages": {
+    "error": {
+      "notFound": {
+        "title": "Page Non Trouvée",
+        "description": "Oups ! La page que vous recherchez n'existe pas ou a été déplacée.",
+        "goBack": "Retour"
+      },
+      "settingsNotFound": "404 - Page des paramètres non trouvée"
+    },
     "settings": {
       "general": {
         "title": "Paramètres généraux",

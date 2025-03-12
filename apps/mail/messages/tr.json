@@ -94,7 +94,8 @@
       "mailedBy": "Gönderen",
       "signedBy": "İmzalayan",
       "security": "Güvenlik",
-      "standardEncryption": "Standart şifreleme (TLS)"
+      "standardEncryption": "Standart şifreleme (TLS)",
+      "loadingMailContent": "E-posta içeriği yükleniyor..."
     },
     "threadDisplay": {
       "close": "Kapat",
@@ -130,6 +131,14 @@
     }
   },
   "pages": {
+    "error": {
+      "notFound": {
+        "title": "Sayfa Bulunamadı",
+        "description": "Üzgünüz! Aradığınız sayfa mevcut değil veya taşınmış.",
+        "goBack": "Geri Dön"
+      },
+      "settingsNotFound": "404 - Ayarlar sayfası bulunamadı"
+    },
     "settings": {
       "general": {
         "title": "Genel Ayarlar",

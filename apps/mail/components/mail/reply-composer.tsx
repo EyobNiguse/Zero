@@ -26,7 +26,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
   const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const t = useTranslations("common.replyCompose");
+  const t = useTranslations();
 
   // Use external state if provided, otherwise use internal state
   const composerIsOpen = isOpen !== undefined ? isOpen : isComposerOpen;
@@ -167,10 +167,10 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
 
       setMessageContent("");
       setComposerIsOpen(false);
-      toast.success("Email sent successfully!");
+      toast.success(t("pages.createEmail.emailSentSuccessfully"));
     } catch (error) {
       console.error("Error sending email:", error);
-      toast.error("Failed to send email. Please try again.");
+      toast.error(t("pages.createEmail.failedToSendEmail"));
     }
   };
 
@@ -224,7 +224,8 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
         >
           <Reply className="h-4 w-4" />
           <span>
-            {t("replyTo")} {emailData[emailData.length - 1]?.sender?.name || t("thisEmail")}
+            {t("common.replyCompose.replyTo")}{" "}
+            {emailData[emailData.length - 1]?.sender?.name || t("common.replyCompose.thisEmail")}
           </span>
         </Button>
       </div>
@@ -251,7 +252,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
           <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
             <div className="text-muted-foreground flex flex-col items-center gap-2">
               <Paperclip className="text-muted-foreground h-12 w-12" />
-              <p className="text-lg font-medium">{t("dropFiles")}</p>
+              <p className="text-lg font-medium">{t("common.replyCompose.dropFiles")}</p>
             </div>
           </div>
         )}
@@ -314,7 +315,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
             >
               <Plus className="absolute left-[9px] h-6 w-6" />
               <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                {t("attachments")}
+                {t("common.replyCompose.attachments")}
               </span>
             </Button>
 
@@ -324,16 +325,20 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
                   <Button variant="outline" className="flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
                     <span>
-                      {attachments.length} {t("attachmentCount", { count: attachments.length })}
+                      {attachments.length}{" "}
+                      {t("common.replyCompose.attachmentCount", { count: attachments.length })}
                     </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 touch-auto" align="start">
                   <div className="space-y-2">
                     <div className="px-1">
-                      <h4 className="font-medium leading-none">{t("attachments")}</h4>
+                      <h4 className="font-medium leading-none">
+                        {t("common.replyCompose.attachments")}
+                      </h4>
                       <p className="text-muted-foreground text-sm">
-                        {attachments.length} {t("fileCount", { count: attachments.length })}
+                        {attachments.length}{" "}
+                        {t("common.replyCompose.fileCount", { count: attachments.length })}
                       </p>
                     </div>
                     <Separator />
@@ -376,7 +381,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
           </div>
           <div className="mr-2 flex items-center gap-2">
             <Button variant="ghost" size="sm" className="h-8">
-              {t("saveDraft")}
+              {t("common.replyCompose.saveDraft")}
             </Button>
             <Button
               size="sm"
@@ -389,7 +394,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
               type="button"
             >
               <span className="whitespace-nowrap pr-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                {t("send")}
+                {t("common.replyCompose.send")}
               </span>
               <ArrowUp className="absolute right-2.5 h-4 w-4" />
             </Button>

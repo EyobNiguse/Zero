@@ -96,7 +96,8 @@
       "mailedBy": "Mailed-By",
       "signedBy": "Signed-By",
       "security": "Security",
-      "standardEncryption": "Standard encryption (TLS)"
+      "standardEncryption": "Standard encryption (TLS)",
+      "loadingMailContent": "Loading mail content..."
     },
     "threadDisplay": {
       "exitFullscreen": "Exit fullscreen",
@@ -131,6 +132,14 @@
     }
   },
   "pages": {
+    "error": {
+      "notFound": {
+        "title": "Page Not Found",
+        "description": "Oops! The page you're looking for doesn't exist or has been moved.",
+        "goBack": "Go Back"
+      },
+      "settingsNotFound": "404 - Settings page not found"
+    },
     "settings": {
       "general": {
         "title": "General",
@@ -204,7 +213,9 @@
       "example": "zero@0.email",
       "attachments": "Attachments",
       "dropFilesToAttach": "Drop files to attach",
-      "writeYourMessageHere": "Write your message here..."
+      "writeYourMessageHere": "Write your message here...",
+      "emailSentSuccessfully": "Email sent successfully",
+      "failedToSendEmail": "Failed to send email. Please try again."
     }
   }
 }
