@@ -135,7 +135,6 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
             </span>
           ) : null}
           <div className="flex items-center gap-1">
-            <MailLabels labels={message.tags} />
             {message.totalReplies > 1 ? (
               <Tooltip>
                 <TooltipTrigger asChild>
