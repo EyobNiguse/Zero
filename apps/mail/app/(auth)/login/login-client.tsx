@@ -300,7 +300,7 @@ export function LoginClient({ providers, isProd }: LoginClientProps) {
                   <Button
                     key={provider.id}
                     onClick={() => handleProviderClick(provider)}
-                    className="border-input bg-background text-primary hover:bg-accent hover:text-accent-foreground h-12 w-full rounded-lg border-2 bg-black"
+                    className="border-input bg-background text-primary hover:bg-accent hover:text-accent-foreground h-12 w-full rounded-lg border-2"
                   >
                     {getProviderIcon(provider.id)}
                     Continue with {provider.name}
