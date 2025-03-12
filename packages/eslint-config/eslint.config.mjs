@@ -1,6 +1,7 @@
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import eslint from "eslint";
 
 /** @type {import("eslint").Linter.Config[]} */
 const config = [
