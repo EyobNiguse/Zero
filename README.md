@@ -61,7 +61,7 @@ You can set up Zero in two ways:
    ```bash
    # Clone the repository
    git clone https://github.com/Mail-0/Zero.git
-   cd Mail-0
+   cd Zero
    
    # Install dependencies
    pnpm install
