@@ -1,4 +1,4 @@
-import { FilterSuggestion } from "./utils";
+import { type FilterSuggestion } from "./utils";
 import { UserRound, Mail, AlertTriangle, User, Bell, Tag, MailQuestion, MailCheck, Star, Users, Paperclip, CalendarIcon } from "lucide-react";
 import React from "react";
 

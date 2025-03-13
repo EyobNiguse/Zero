@@ -1,6 +1,6 @@
 import { EnableBrain } from "@/actions/brain";
-import { IConfig, MailManager } from "./types";
-import { ParsedMessage } from "@/types";
+import { type IConfig, type MailManager } from "./types";
+import { type ParsedMessage } from "@/types";
 import { type gmail_v1, google } from "googleapis";
 import * as he from "he";
 

@@ -29,7 +29,7 @@ import { putConnection } from "@/actions/connections";
 import { useEffect, useMemo, useState } from "react";
 import { SunIcon } from "../icons/animated/sun";
 import { useTheme } from "next-themes";
-import { IConnection } from "@/types";
+import { type IConnection } from "@/types";
 import { Button } from "./button";
 import { toast } from "sonner";
 import Link from "next/link";

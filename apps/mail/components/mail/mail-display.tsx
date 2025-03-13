@@ -5,7 +5,7 @@ import { BellOff, Lock } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { useState, useEffect } from "react";
 import { MailIframe } from "./mail-iframe";
-import { ParsedMessage } from "@/types";
+import { type ParsedMessage } from "@/types";
 import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";

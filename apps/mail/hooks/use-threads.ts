@@ -2,7 +2,7 @@
 
 "use client";
 
-import { InitialThread, ParsedMessage } from "@/types";
+import type { InitialThread, ParsedMessage } from "@/types";
 import { getMail, getMails } from "@/actions/mail";
 import { useSession } from "@/lib/auth-client";
 import useSWRInfinite from "swr/infinite";

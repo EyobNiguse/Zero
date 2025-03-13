@@ -9,7 +9,7 @@ import { SearchIcon } from "../icons/animated/search";
 import { SidebarToggle } from "../ui/sidebar-toggle";
 import { useDrafts } from "./draftHooks/useDrafts";
 import { Button } from "@/components/ui/button";
-import { DraftType } from "@/store/draftStates";
+import { type DraftType } from "@/store/draftStates";
 import { useState } from "react";
 import * as React from "react";
 
