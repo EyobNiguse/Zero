@@ -59,6 +59,11 @@ export default function GeneralPage() {
 
     changeLocale(values.language);
 
+    if (values.language !== locale) {
+      const localeName = new Intl.DisplayNames([values.language], { type: 'language' }).of(values.language);
+      toast.success(t("pages.settings.general.languageChangedTo", { language: localeName }))
+    }
+
     // Simulate API call
     setTimeout(() => {
       console.log(values);
