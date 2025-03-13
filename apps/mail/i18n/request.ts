@@ -5,8 +5,8 @@ import deepmerge from "deepmerge";
 export default getRequestConfig(async () => {
   const locale = await getLocale();
 
-  const userMessages = (await import(`../messages/${locale}.json`)).default;
-  const defaultMessages = (await import(`../messages/en.json`)).default;
+  const userMessages = (await import(`../locales/${locale}.json`)).default;
+  const defaultMessages = (await import(`../locales/en.json`)).default;
   const messages = deepmerge(defaultMessages, userMessages);
 
   return {
