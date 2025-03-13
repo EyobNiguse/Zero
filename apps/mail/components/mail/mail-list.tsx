@@ -9,44 +9,26 @@ import {
   useRef,
   useState,
 } from "react";
+import type { InitialThread, MailListProps, MailSelectMode, ThreadProps } from "@/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertTriangle, Tag, User, Bell, Briefcase, Users } from "lucide-react";
+import { AlertTriangle, Bell, Briefcase, Tag, User, Users } from "lucide-react";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
 import { preloadThread, useThreads } from "@/hooks/use-threads";
-import { ThreadContextMenu } from "../context/thread-context";
 import { cn, defaultPageSize, formatDate } from "@/lib/utils";
 import { useSearchValue } from "@/hooks/use-search-value";
 import { markAsRead, markAsUnread } from "@/actions/mail";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMail } from "@/components/mail/use-mail";
-import { useSummary } from "@/hooks/use-summary";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
-import type { InitialThread } from "@/types";
 import { useParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import items from "./demo.json";
-import Image from "next/image";
 import { toast } from "sonner";
 
-interface MailListProps {
-  isCompact?: boolean;
-}
-
 const HOVER_DELAY = 1000; // ms before prefetching
-
-type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
-
-type ThreadProps = {
-  message: InitialThread;
-  selectMode: MailSelectMode;
-  // TODO: enforce types instead of sprinkling "any"
-  onClick?: (message: InitialThread) => () => Promise<any> | undefined;
-  isCompact?: boolean;
-  demo?: boolean;
-};
 
 const highlightText = (text: string, highlight: string) => {
   if (!highlight?.trim()) return text;
@@ -156,8 +138,8 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
             </span>{" "}
             {message.unread ? <span className="size-2 rounded-full bg-[#006FFE]" /> : null}
           </p>
+          <MailLabels labels={message.tags} />
           <div className="flex items-center gap-1">
-            <MailLabels labels={message.tags} />
             {message.totalReplies > 1 ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -195,6 +177,7 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
     </div>
   );
 });
+
 Thread.displayName = "Thread";
 
 export function MailListDemo({ items: filteredItems = items }) {

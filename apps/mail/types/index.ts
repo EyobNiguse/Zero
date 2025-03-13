@@ -74,3 +74,17 @@ export interface InitialThread {
   references?: string;
   inReplyTo?: string;
 }
+
+export interface MailListProps {
+  isCompact?: boolean;
+}
+
+export type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
+
+export interface ThreadProps {
+  message: InitialThread;
+  selectMode: MailSelectMode;
+  onClick?: (message: InitialThread) => () => Promise<any> | undefined;
+  isCompact?: boolean;
+  demo?: boolean;
+}
