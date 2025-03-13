@@ -4,5 +4,5 @@ base_path: .
 base_url: 'https://api.crowdin.com'
 preserve_hierarchy: 1
 files:
-  - source: /apps/mail/locales/default.json
+  - source: /apps/mail/locales/en.json
     translation: /apps/mail/locales/%two_letters_code%.json
