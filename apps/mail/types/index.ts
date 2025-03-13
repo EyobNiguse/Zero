@@ -84,6 +84,7 @@ export type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
 export interface ThreadProps {
   message: InitialThread;
   selectMode: MailSelectMode;
+  // TODO: enforce types instead of sprinkling "any"
   onClick?: (message: InitialThread) => () => Promise<any> | undefined;
   isCompact?: boolean;
   demo?: boolean;
