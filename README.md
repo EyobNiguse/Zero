@@ -281,4 +281,5 @@ Please refer to the [contributing guide](.github/CONTRIBUTING.md).
 
 ## Star History
 
+
 [![Star History Chart](https://api.star-history.com/svg?repos=Mail-0/Zero&type=Timeline)](https://star-history.com/#Mail-0/Zero&Timeline)
