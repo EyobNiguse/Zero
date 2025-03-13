@@ -31,17 +31,8 @@ const config = [
       "react-hooks": reactHooksPlugin,
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "react-hooks/rules-of-hooks": "error",
+      // Recommended lints
       "react-hooks/exhaustive-deps": "warn",
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        {
-          prefer: "type-imports",
-          fixStyle: "inline-type-imports",
-          disallowTypeAnnotations: true, // This makes non-type imports for types an error
-        },
-      ],
       "@typescript-eslint/no-misused-promises": [
         2,
         {
@@ -50,7 +41,34 @@ const config = [
           },
         },
       ],
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          args: "after-used",
+          caughtErrors: "all",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: false,
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+
+      // Strict lints
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          prefer: "type-imports",
+          fixStyle: "inline-type-imports",
+          disallowTypeAnnotations: true, // This makes non-type imports for types an error
+        },
+      ],
+      "react-hooks/rules-of-hooks": "error",
+      "@typescript-eslint/await-thenable": "error",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-non-null-assertion": "error",
+      "@typescript-eslint/no-unnecessary-type-assertion": "error",
     },
   },
 ];
