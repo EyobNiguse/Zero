@@ -77,7 +77,7 @@ You can set up Zero in two ways:
 
    - Copy `.env.example` to `.env` in both `apps/mail` and `packages/db` folders
      ```bash
-     cp .env.example apps/mail/.env && cp .env.example packages/db/.env
+     cp apps/mail/.env.example apps/mail/.env && cp packages/db/.env.example packages/db/.env
      ```
    - Configure your environment variables (see below)
    - Install database dependencies: `pnpm db:dependencies`   
