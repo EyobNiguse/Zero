@@ -11,6 +11,7 @@ import { cn, truncateFileName } from "@/lib/utils";
 import Document from "@tiptap/extension-document";
 import { Button } from "@/components/ui/button";
 import { generateJSON } from "@tiptap/html";
+import { useTranslations } from "next-intl";
 import { sendEmail } from "@/actions/send";
 import Bold from "@tiptap/extension-bold";
 import Text from "@tiptap/extension-text";
@@ -89,6 +90,8 @@ export function CreateEmail() {
   }, [draftId]);
 
   const hasHiddenAttachments = attachments.length > MAX_VISIBLE_ATTACHMENTS;
+
+  const t = useTranslations();
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -199,7 +202,7 @@ export function CreateEmail() {
         attachments: attachments,
       });
 
-      toast.success("Email sent successfully");
+      toast.success(t("pages.createEmail.emailSentSuccessfully"));
       setToInput("");
       setToEmails([]);
       setSubjectInput("");
@@ -208,7 +211,7 @@ export function CreateEmail() {
       setMessageContent("");
     } catch (error) {
       console.error("Error sending email:", error);
-      toast.error("Failed to send email. Please try again.");
+      toast.error(t("pages.createEmail.failedToSendEmail"));
     }
   };
 
@@ -262,7 +265,7 @@ export function CreateEmail() {
         <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
           <div className="text-muted-foreground flex flex-col items-center gap-2">
             <Paperclip className="text-muted-foreground h-12 w-12" />
-            <p className="text-lg font-medium">Drop files to attach</p>
+            <p className="text-lg font-medium">{t("pages.createEmail.dropFilesToAttach")}</p>
           </div>
         </div>
       )}
@@ -276,7 +279,7 @@ export function CreateEmail() {
             <div className="space-y-3 md:px-1">
               <div className="flex items-center">
                 <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                  To
+                  {t("common.mailDisplay.to")}
                 </div>
                 <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
                   {toEmails.map((email, index) => (
@@ -302,7 +305,7 @@ export function CreateEmail() {
                   <input
                     type="email"
                     className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent opacity-50 placeholder:text-[#616161] focus:outline-none"
-                    placeholder={toEmails.length ? "" : "luke@example.com"}
+                    placeholder={toEmails.length ? "" : t("pages.createEmail.example")}
                     value={toInput}
                     onChange={(e) => setToInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -325,12 +328,12 @@ export function CreateEmail() {
 
               <div className="flex items-center">
                 <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                  Subject
+                  {t("common.searchBar.subject")}
                 </div>
                 <input
                   type="text"
                   className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                  placeholder="Subject"
+                  placeholder={t("common.searchBar.subject")}
                   value={subjectInput}
                   onChange={(e) => {
                     setSubjectInput(e.target.value);
@@ -341,7 +344,7 @@ export function CreateEmail() {
 
               <div className="flex">
                 <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right font-[600] opacity-50 md:w-24">
-                  Body
+                  {t("pages.createEmail.body")}
                 </div>
                 <div className="w-full">
                   {defaultValue && (
@@ -349,7 +352,7 @@ export function CreateEmail() {
                       initialValue={defaultValue}
                       onChange={(newContent) => setMessageContent(newContent)}
                       key={resetEditorKey}
-                      placeholder="Write your message here..."
+                      placeholder={t("pages.createEmail.writeYourMessageHere")}
                     />
                   )}
                 </div>
@@ -366,16 +369,20 @@ export function CreateEmail() {
                   <Button variant="outline" className="flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
                     <span>
-                      {attachments.length} attachment{attachments.length !== 1 ? "s" : ""}
+                      {attachments.length}{" "}
+                      {t("common.replyCompose.fileCount", { count: attachments.length })}
                     </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 touch-auto" align="start">
                   <div className="space-y-2">
                     <div className="px-1">
-                      <h4 className="font-medium leading-none">Attachments</h4>
+                      <h4 className="font-medium leading-none">
+                        {t("pages.createEmail.attachments")}
+                      </h4>
                       <p className="text-muted-foreground text-sm">
-                        {attachments.length} file{attachments.length !== 1 ? "s" : ""} attached
+                        {attachments.length}{" "}
+                        {t("common.replyCompose.fileCount", { count: attachments.length })}
                       </p>
                     </div>
                     <Separator />
@@ -418,7 +425,7 @@ export function CreateEmail() {
               onClick={() => document?.getElementById("file-upload")?.click()}
             >
               <Plus className="mr-1 h-4 w-4" />
-              Attachments
+              {t("pages.createEmail.attachments")}
             </Button>
             <input
               id="file-upload"
@@ -466,7 +473,7 @@ export function CreateEmail() {
             >
               <ArrowUpIcon className="absolute left-2.5 h-4 w-4" />
               <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                Send
+                {t("common.replyCompose.send")}
               </span>
             </Button>
           </div>

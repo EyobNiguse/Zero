@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 import { useStats } from "@/hooks/use-stats";
 import { useRouter } from "next/navigation";
 import { useAISidebar } from "./ai-sidebar";
+import { useTranslations } from "next-intl";
 import { FOLDERS } from "@/lib/utils";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
@@ -129,7 +130,7 @@ function ComposeButton() {
   const { state } = useSidebar();
   const isMobile = useIsMobile();
   const router = useRouter();
-
+  const t = useTranslations();
   return (
     <Button
       onClick={() => router.push("/mail/create")}
@@ -141,7 +142,7 @@ function ComposeButton() {
         <SquarePenIcon ref={iconRef} className="size-4" />
       ) : (
         <>
-          <span className="text-center text-sm">Create Email</span>
+          <span className="text-center text-sm">{t("common.actions.create")}</span>
         </>
       )}
     </Button>

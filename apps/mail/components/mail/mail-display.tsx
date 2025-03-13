@@ -6,6 +6,7 @@ import AttachmentDialog from "./attachment-dialog";
 import { useSummary } from "@/hooks/use-summary";
 import { TextShimmer } from "../ui/text-shimmer";
 import { Separator } from "../ui/separator";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { MailIframe } from "./mail-iframe";
 import { ParsedMessage } from "@/types";
@@ -86,6 +87,8 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
     url: string;
   }>(null);
   const [openDetailsPopover, setOpenDetailsPopover] = useState<boolean>(false);
+  const t = useTranslations();
+
   const { data } = demo
     ? {
         data: {
@@ -143,7 +146,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                         className="h-auto p-0 text-xs underline hover:bg-transparent"
                         onClick={() => setOpenDetailsPopover(true)}
                       >
-                        Details
+                        {t("common.mailDisplay.details")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
@@ -152,7 +155,9 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                     >
                       <div className="space-y-1 text-sm">
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">From:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.from")}:
+                          </span>
                           <div className="ml-3">
                             <span className="text-muted-foreground pr-1 font-bold">
                               {emailData?.sender?.name}
@@ -163,39 +168,52 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                           </div>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">To:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.to")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">Cc:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.cc")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">Date:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.date")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {format(new Date(emailData?.receivedOn), "PPpp")}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">Mailed-By:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.mailedBy")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">Signed-By:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.signedBy")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex items-center">
-                          <span className="w-24 text-end text-gray-500">Security:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.security")}:
+                          </span>
                           <div className="text-muted-foreground ml-3 flex items-center gap-1">
-                            <Lock className="h-4 w-4 text-green-600" /> Standard encryption (TLS)
+                            <Lock className="h-4 w-4 text-green-600" />{" "}
+                            {t("common.mailDisplay.standardEncryption")} (TLS)
                           </div>
                         </div>
                       </div>
