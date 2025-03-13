@@ -106,7 +106,6 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
         "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
         !message.unread && "opacity-50",
         (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
-        // isCompact && "py-2",
       )}
     >
       <div
@@ -116,7 +115,7 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
         )}
       />
       <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <p
             className={cn(
               message.unread ? "font-bold" : "font-medium",
@@ -126,14 +125,14 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
             <span className={cn(mail.selected && "max-w-[120px] truncate")}>
               {highlightText(message.sender.name, searchValue.highlight)}
             </span>{" "}
-            {message.unread ? <span className="size-2 rounded-full bg-[#006FFE]" /> : null}
+            {message.unread ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
           </p>
           <MailLabels labels={message.tags} />
           <div className="flex items-center gap-1">
             {message.totalReplies > 1 ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="rounded-full border border-dotted px-[5px] py-[1px] text-xs opacity-70">
+                  <span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
                     {message.totalReplies}
                   </span>
                 </TooltipTrigger>
@@ -325,20 +324,6 @@ export function MailList({ isCompact }: MailListProps) {
       }));
     } else toast.error("Failed to mark as read");
   });
-
-  // useHotKey("Meta+Shift+j", async () => {
-  //   resetSelectMode();
-  //   const res = await markAsJunk({ ids: mail.bulkSelected });
-  //   if (res.success) toast.success("Marked as junk");
-  //   else toast.error("Failed to mark as junk");
-  // });
-
-  // useHotKey("Control+Shift+j", async () => {
-  //   resetSelectMode();
-  //   const res = await markAsJunk({ ids: mail.bulkSelected });
-  //   if (res.success) toast.success("Marked as junk");
-  //   else toast.error("Failed to mark as junk");
-  // });
 
   useHotKey("Meta+a", async (event) => {
     // @ts-expect-error
@@ -554,7 +539,7 @@ const MailLabels = memo(
           return (
             <Tooltip key={label}>
               <TooltipTrigger asChild>
-                <Badge className="rounded-full p-1" variant={style}>
+                <Badge className="rounded-md p-1" variant={style}>
                   {getLabelIcon(label)}
                 </Badge>
               </TooltipTrigger>
