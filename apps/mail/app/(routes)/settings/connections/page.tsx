@@ -163,7 +163,7 @@ export default function ConnectionsPage() {
             <AddConnectionDialog>
               <Button
                 variant="outline"
-                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-40"
+                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
               >
                 <Plus className="absolute left-2 h-4 w-4" />
                 <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">

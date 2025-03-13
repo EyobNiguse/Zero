@@ -27,18 +27,16 @@ export const AddConnectionDialog = ({
   return (
     <Dialog onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          size={"dropdownItem"}
-          variant={"dropdownItem"}
-          className={cn("w-full justify-start gap-2", className)}
-        >
-          {children || (
-            <>
-              <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
-              <p className="text-[13px] opacity-60">{t("pages.settings.connections.addEmail")}</p>
-            </>
-          )}
-        </Button>
+        {children || (
+          <Button
+            size={"dropdownItem"}
+            variant={"dropdownItem"}
+            className={cn("w-full justify-start gap-2", className)}
+          >
+            <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
+            <p className="text-[13px] opacity-60">{t("pages.settings.connections.addEmail")}</p>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
