@@ -78,8 +78,7 @@
       "important": "Önemli",
       "personal": "Kişisel",
       "updates": "Güncellemeler",
-      "promotions": "Tanıtımlar",
-      "social": "Social"
+      "promotions": "Tanıtımlar"
     },
     "replyCompose": {
       "replyTo": "Yanıtla",
@@ -104,6 +103,7 @@
       "loadingMailContent": "E-posta içeriği yükleniyor..."
     },
     "threadDisplay": {
+      "close": "Kapat",
       "exitFullscreen": "Tam ekrandan çık",
       "enterFullscreen": "Tam ekrana geç",
       "archive": "Arşivle",
@@ -217,9 +217,7 @@
       "example": "zero@0.email",
       "attachments": "Ekler",
       "dropFilesToAttach": "Eklemek için dosyaları bırakın",
-      "writeYourMessageHere": "Mesajınızı buraya yazın...",
-      "emailSentSuccessfully": "Email sent successfully",
-      "failedToSendEmail": "Failed to send email. Please try again."
+      "writeYourMessageHere": "Mesajınızı buraya yazın..."
     }
   }
 }
