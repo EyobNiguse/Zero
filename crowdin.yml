@@ -1,0 +1,13 @@
+"project_id": CROWDIN_ID
+"api_token": CROWDIN_KEY
+"base_path": "."
+"base_url": "https://api.crowdin.com"
+
+"preserve_hierarchy": true
+
+files: [
+  {
+    "source": "apps/mail/src/locales/en.json",
+    "translation": "apps/mail/src/locales/%locale%.json"
+  }
+]
