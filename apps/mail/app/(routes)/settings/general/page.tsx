@@ -18,6 +18,7 @@ import {
 import { SettingsCard } from "@/components/settings/settings-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Globe, Clock, LogOut } from "lucide-react";
+import { availableLocales } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { signOut } from "@/lib/auth-client";
@@ -25,13 +26,12 @@ import { useRouter } from "next/navigation";
 import { changeLocale } from "@/i18n/utils";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
-import { locales } from "@/i18n/config";
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
 const formSchema = z.object({
-  language: z.enum(locales),
+  language: z.string(),
   timezone: z.string(),
   dynamicContent: z.boolean(),
   externalImages: z.boolean(),
@@ -118,9 +118,11 @@ export default function GeneralPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="tr">Turkish</SelectItem>
+                        {availableLocales.map((locale) => (
+                          <SelectItem key={locale.code} value={locale.code}>
+                            {locale.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>

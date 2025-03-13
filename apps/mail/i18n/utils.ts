@@ -18,11 +18,15 @@ export async function getLocale() {
   // extract browser locale from accept-language header
   const acceptLanguage = headersList.get("accept-language");
   if (acceptLanguage) {
-    // it only needs to be the first part of the locale, ex: "en" for "en-US"
-    const reqLocale = acceptLanguage.split(",")[0]?.split("-")[0]?.trim();
+    // try to get the locale with and without region (ex: "en" and "en-US")
+    const reqLocale = acceptLanguage.split(",")[0]?.trim();
+    const reqLocaleWithoutRegion = reqLocale?.split("-")[0]?.trim();
 
     // check if the locale is supported
-    if (locales.includes(reqLocale as Locale)) {
+    if (
+      locales.includes(reqLocale as Locale) ||
+      locales.includes(reqLocaleWithoutRegion as Locale)
+    ) {
       return reqLocale;
     }
   }
