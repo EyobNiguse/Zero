@@ -92,7 +92,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     ].join(" ");
   if (config.auth) {
     auth.setCredentials({
-      access_token: config.auth.access_token,
       refresh_token: config.auth.refresh_token,
       scope: getScope(),
     });
