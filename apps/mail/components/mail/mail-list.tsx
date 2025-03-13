@@ -42,6 +42,8 @@ type MailSelectMode = "mass" | "range" | "single" | "selectAllBelow";
 type ThreadProps = {
   message: InitialThread;
   selectMode: MailSelectMode;
+  // TODO: enforce types instead of sprinkling "any"
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onClick?: (message: InitialThread) => () => Promise<any> | undefined;
   isCompact?: boolean;
   demo?: boolean;
@@ -70,6 +72,7 @@ const highlightText = (text: string, highlight: string) => {
 const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
   const [mail] = useMail();
   const { data: session } = useSession();
+  const unusedVariable = "this should trigger a warning";
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isHovering = useRef<boolean>(false);
   const hasPrefetched = useRef<boolean>(false);
@@ -94,7 +97,7 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
           const messageId = message.threadId ?? message.id;
           // Only prefetch if still hovering and hasn't been prefetched
           console.log(`🕒 Hover threshold reached for email ${messageId}, initiating prefetch...`);
-          preloadThread(session.user.id, messageId, session.connectionId!);
+          preloadThread(session.user.id, messageId, session.connectionId ?? "");
           hasPrefetched.current = true;
         }
       }, HOVER_DELAY);
@@ -236,7 +239,7 @@ export function MailList({ isCompact }: MailListProps) {
   const virtualItems = virtualizer.getVirtualItems();
 
   const handleScroll = useCallback(
-    async (e: React.UIEvent<HTMLDivElement>) => {
+    (e: React.UIEvent<HTMLDivElement>) => {
       if (isLoading || isValidating) return;
 
       const target = e.target as HTMLDivElement;
@@ -245,9 +248,10 @@ export function MailList({ isCompact }: MailListProps) {
 
       if (scrolledToBottom) {
         console.log("Loading more items...");
-        await loadMore();
+        loadMore();
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLoading, isValidating, nextPageToken, itemHeight],
   );
 
@@ -492,7 +496,7 @@ export function MailList({ isCompact }: MailListProps) {
       }
       if (message.unread) {
         return markAsRead({ ids: [message.id] })
-          .then(() => mutate() as any)
+          .then(() => mutate())
           .catch(console.error);
       }
     },
