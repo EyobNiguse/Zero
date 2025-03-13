@@ -16,9 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SettingsCard } from "@/components/settings/settings-card";
+import { availableLocales, defaultLocale } from "@/i18n/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Globe, Clock, LogOut } from "lucide-react";
-import { availableLocales } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { signOut } from "@/lib/auth-client";
@@ -44,7 +44,7 @@ export default function GeneralPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      language: "en",
+      language: defaultLocale,
       timezone: "UTC",
       dynamicContent: false,
       externalImages: true,
@@ -75,9 +75,9 @@ export default function GeneralPage() {
         },
       }),
       {
-        loading: "Signing out...",
-        success: () => "Signed out successfully!",
-        error: "Error signing out",
+        loading: t("common.actions.signingOut"),
+        success: () => t("common.actions.signedOutSuccess"),
+        error: t("common.actions.signOutError"),
       },
     );
   };

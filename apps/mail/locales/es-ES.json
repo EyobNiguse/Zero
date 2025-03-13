@@ -7,7 +7,10 @@
       "saveChanges": "Guardar los cambios",
       "saving": "Guardando...",
       "resetToDefaults": "Reiniciar a valores por defecto",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "signingOut": "Cerrando sesión...",
+      "signedOutSuccess": "Sesión cerrada correctamente",
+      "signOutError": "Error al cerrar sesión"
     },
     "themes": {
       "dark": "Oscuro",
@@ -83,8 +86,8 @@
       "thisEmail": "Este correo electrónico",
       "dropFiles": "Suelte los archivos para adjuntarlos",
       "attachments": "Adjuntos",
-      "attachmentCount": "{count, plural, =0 {attachments} one {attachment} other {attachments}}",
-      "fileCount": "{count, plural, =0 {files} one {file} other {files}}",
+      "attachmentCount": "{count, plural, =0 {sin adjuntos} one {adjunto} other {adjuntos}}",
+      "fileCount": "{count, plural, =0 {archivos} one {archivo} other {archivos}}",
       "saveDraft": "Guardar borrador",
       "send": "Enviar"
     },

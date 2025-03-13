@@ -7,7 +7,10 @@
       "saveChanges": "Enregistrer les modifications",
       "saving": "Enregistrement...",
       "resetToDefaults": "Réinitialiser par défaut",
-      "close": "Fermer"
+      "close": "Fermer",
+      "signingOut": "Déconnexion...",
+      "signedOutSuccess": "Déconnexion réussie!",
+      "signOutError": "Erreur de déconnexion"
     },
     "themes": {
       "dark": "Sombre",

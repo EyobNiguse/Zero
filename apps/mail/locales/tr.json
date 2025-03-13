@@ -6,7 +6,11 @@
       "create": "Email Oluştur",
       "saveChanges": "Değişiklikleri Kaydet",
       "saving": "Kaydediliyor...",
-      "resetToDefaults": "Varsayılanlara Sıfırla"
+      "resetToDefaults": "Varsayılanlara Sıfırla",
+      "close": "Kapat",
+      "signingOut": "Çıkış yapılıyor...",
+      "signedOutSuccess": "Çıkış yapıldı!",
+      "signOutError": "Çıkış yapılırken hata oluştu"
     },
     "themes": {
       "dark": "Koyu",

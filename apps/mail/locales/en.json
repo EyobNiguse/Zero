@@ -7,7 +7,10 @@
       "saveChanges": "Save changes",
       "saving": "Saving...",
       "resetToDefaults": "Reset to Defaults",
-      "close": "Close"
+      "close": "Close",
+      "signingOut": "Signing out...",
+      "signedOutSuccess": "Signed out successfully!",
+      "signOutError": "Error signing out"
     },
     "themes": {
       "dark": "Dark",
