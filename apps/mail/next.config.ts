@@ -2,9 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production" ? {
-      exclude: ["warn", "error"]
-    } : undefined,
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? {
+            exclude: ["warn", "error"],
+          }
+        : undefined,
   },
   images: {
     remotePatterns: [
@@ -15,9 +18,11 @@ const nextConfig: NextConfig = {
     ],
   },
   typescript: {
+    // TODO: enforce types throwing errors on build
     ignoreBuildErrors: true,
   },
   eslint: {
+    // TODO: enforce linting throwing errors on build
     ignoreDuringBuilds: true,
   },
   experimental: {

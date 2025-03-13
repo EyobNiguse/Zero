@@ -43,7 +43,6 @@ type ThreadProps = {
   message: InitialThread;
   selectMode: MailSelectMode;
   // TODO: enforce types instead of sprinkling "any"
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onClick?: (message: InitialThread) => () => Promise<any> | undefined;
   isCompact?: boolean;
   demo?: boolean;
@@ -97,7 +96,7 @@ const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
           const messageId = message.threadId ?? message.id;
           // Only prefetch if still hovering and hasn't been prefetched
           console.log(`🕒 Hover threshold reached for email ${messageId}, initiating prefetch...`);
-          preloadThread(session.user.id, messageId, session.connectionId ?? "");
+          void preloadThread(session.user.id, messageId, session.connectionId ?? "");
           hasPrefetched.current = true;
         }
       }, HOVER_DELAY);
@@ -248,7 +247,7 @@ export function MailList({ isCompact }: MailListProps) {
 
       if (scrolledToBottom) {
         console.log("Loading more items...");
-        loadMore();
+        void loadMore();
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
