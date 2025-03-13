@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  EditorCommand,
+  EditorCommandEmpty,
+  EditorCommandItem,
+  EditorCommandList,
+  EditorContent,
+  EditorRoot,
+  useEditor,
+  type JSONContent,
+} from "novel";
+import {
   Bold,
   Italic,
   Strikethrough,
@@ -14,15 +24,6 @@ import {
   Heading3,
 } from "lucide-react";
 import {
-  EditorCommand,
-  EditorCommandEmpty,
-  EditorCommandItem,
-  EditorCommandList,
-  EditorContent,
-  EditorRoot,
-  type JSONContent,
-} from "novel";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -30,10 +31,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnyExtension, Editor as TiptapEditor, useCurrentEditor } from "@tiptap/react";
 import { TextButtons } from "@/components/create/selectors/text-buttons";
 import { suggestionItems } from "@/components/create/slash-command";
 import { defaultExtensions } from "@/components/create/extensions";
-import { AnyExtension, useCurrentEditor } from "@tiptap/react";
 import { ImageResizer, handleCommandNavigation } from "novel";
 import { uploadFn } from "@/components/create/image-upload";
 import { handleImageDrop, handleImagePaste } from "novel";
@@ -60,6 +61,9 @@ interface EditorProps {
   initialValue?: JSONContent;
   onChange: (content: string) => void;
   placeholder?: string;
+  onFocus?: () => void;
+  onBlur?: () => void;
+  className?: string;
 }
 
 interface EditorState {
@@ -259,7 +263,10 @@ const MenuBar = () => {
 export default function Editor({
   initialValue,
   onChange,
-  placeholder = "Write something...",
+  placeholder = "Start your email here",
+  onFocus,
+  onBlur,
+  className,
 }: EditorProps) {
   const [state, dispatch] = useReducer(editorReducer, {
     openNode: false,
@@ -271,21 +278,23 @@ export default function Editor({
   // Add a ref to store the editor content to prevent losing it on refresh
   const contentRef = useRef<string>("");
   // Add a ref to the editor instance
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<TiptapEditor>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { openNode, openColor, openLink, openAI } = state;
 
   // Function to focus the editor
-  const focusEditor = () => {
-    if (editorRef.current) {
-      editorRef.current.commands.focus();
+  const focusEditor = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === containerRef.current) {
+      editorRef.current?.commands.focus("end");
     }
   };
 
   return (
     <div
-      className="relative w-full max-w-[450px] sm:max-w-[600px]"
-      onClick={focusEditor} // Add click handler to focus the editor
+      className={`relative w-full max-w-[450px] sm:max-w-[600px] ${className || ""}`}
+      onClick={focusEditor}
       onKeyDown={(e) => {
         // Prevent form submission on Enter key
         if (e.key === "Enter" && !e.shiftKey) {
@@ -298,10 +307,19 @@ export default function Editor({
           immediatelyRender={false}
           initialContent={initialValue || defaultEditorContent}
           extensions={extensions}
-          className="min-h-96 max-w-[450px] sm:max-w-[600px]"
+          ref={containerRef}
+          className="min-h-96 cursor-text"
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),
+              focus: () => {
+                onFocus?.();
+                return false;
+              },
+              blur: () => {
+                onBlur?.();
+                return false;
+              },
             },
             handlePaste: (view, event) => handleImagePaste(view, event, uploadFn),
             handleDrop: (view, event, _slice, moved) =>
@@ -312,11 +330,12 @@ export default function Editor({
               "data-placeholder": placeholder,
             },
           }}
+          onCreate={({ editor }) => {
+            editorRef.current = editor;
+          }}
           onUpdate={({ editor }) => {
             // Store the content in the ref to prevent losing it
             contentRef.current = editor.getHTML();
-            // Store the editor instance in the ref
-            editorRef.current = editor;
             onChange(editor.getHTML());
           }}
           slotBefore={<MenuBar />}

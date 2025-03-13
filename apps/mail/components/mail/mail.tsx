@@ -13,6 +13,7 @@ import { useSearchValue } from "@/hooks/use-search-value";
 import { SearchIcon } from "../icons/animated/search";
 import { useMail } from "@/components/mail/use-mail";
 import { SidebarToggle } from "../ui/sidebar-toggle";
+import type { MessageKey } from "@/config/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, defaultPageSize } from "@/lib/utils";
 import { useThreads } from "@/hooks/use-threads";
@@ -21,6 +22,7 @@ import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
 import { XIcon } from "../icons/animated/x";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { SearchBar } from "./search-bar";
 import items from "./demo.json";
 
@@ -108,8 +110,8 @@ export function DemoMailLayout() {
                         <Skeleton className="mt-2 h-3 w-32" />
                         <Skeleton className="mt-2 h-3 w-full" />
                         <div className="mt-2 flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-full" />
-                          <Skeleton className="h-4 w-16 rounded-full" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
                         </div>
                       </div>
                     ))}
@@ -321,8 +323,8 @@ export function MailLayout() {
                         <Skeleton className="mt-2 h-3 w-32" />
                         <Skeleton className="mt-2 h-3 w-full" />
                         <div className="mt-2 flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-full" />
-                          <Skeleton className="h-4 w-16 rounded-full" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
                         </div>
                       </div>
                     ))}
@@ -394,35 +396,35 @@ function BulkSelectActions() {
 
 const categories = [
   {
-    name: "Primary",
+    name: "common.mailCategories.primary",
     searchValue: "",
     icon: <Inbox className="h-4 w-4" />,
     colors:
       "border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70",
   },
   {
-    name: "Important",
+    name: "common.mailCategories.important",
     searchValue: "is:important",
     icon: <AlertTriangle className="h-4 w-4" />,
     colors:
       "border-0 text-amber-800 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30",
   },
   {
-    name: "Personal",
+    name: "common.mailCategories.personal",
     searchValue: "is:personal",
     icon: <User className="h-4 w-4" />,
     colors:
       "border-0 text-green-800 bg-green-100 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30",
   },
   {
-    name: "Updates",
+    name: "common.mailCategories.updates",
     searchValue: "is:updates",
     icon: <Bell className="h-4 w-4" />,
     colors:
       "border-0 text-purple-800 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30",
   },
   {
-    name: "Promotions",
+    name: "common.mailCategories.promotions",
     searchValue: "is:promotions",
     icon: <Tag className="h-4 w-4 rotate-90" />,
     colors:
@@ -442,15 +444,19 @@ function MailCategoryTabs({
   initialCategory?: string;
 }) {
   const [, setSearchValue] = useSearchValue();
+  const t = useTranslations();
 
-  // Initialize from localStorage with fallback to "Primary" or initialCategory
-  const [activeCategory, setActiveCategory] = useState(() => {
-    // Only run in browser environment
-    if (typeof window !== "undefined") {
-      return initialCategory || localStorage.getItem("mailActiveCategory") || "Primary";
+  // Initialize with just the initialCategory or "Primary"
+  const [activeCategory, setActiveCategory] = useState(initialCategory || "Primary");
+
+  // Move localStorage logic to a useEffect
+  useEffect(() => {
+    // Check localStorage only after initial render
+    const savedCategory = localStorage.getItem("mailActiveCategory");
+    if (savedCategory && !initialCategory) {
+      setActiveCategory(savedCategory);
     }
-    return initialCategory || "Primary";
-  });
+  }, [initialCategory]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
@@ -541,12 +547,14 @@ function MailCategoryTabs({
                   )}
                 >
                   {category.icon}
-                  <span className={cn("hidden", !iconsOnly && "md:inline")}>{category.name}</span>
+                  <span className={cn("hidden", !iconsOnly && "md:inline")}>
+                    {t(category.name as MessageKey)}
+                  </span>
                 </button>
               </TooltipTrigger>
               {iconsOnly && (
                 <TooltipContent>
-                  <span>{category.name}</span>
+                  <span>{t(category.name as MessageKey)}</span>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -574,7 +582,9 @@ function MailCategoryTabs({
                 tabIndex={-1}
               >
                 {category.icon}
-                <span className={cn("hidden", !iconsOnly && "md:inline")}>{category.name}</span>
+                <span className={cn("hidden", !iconsOnly && "md:inline")}>
+                  {t(category.name as MessageKey)}
+                </span>
               </button>
             </li>
           ))}
