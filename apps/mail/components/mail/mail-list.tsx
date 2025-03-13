@@ -53,7 +53,6 @@ const highlightText = (text: string, highlight: string) => {
 const Thread = memo(({ message, selectMode, demo, onClick }: ThreadProps) => {
   const [mail] = useMail();
   const { data: session } = useSession();
-  const unusedVariable = "this should trigger a warning";
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isHovering = useRef<boolean>(false);
   const hasPrefetched = useRef<boolean>(false);
