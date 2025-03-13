@@ -110,8 +110,8 @@ export function DemoMailLayout() {
                         <Skeleton className="mt-2 h-3 w-32" />
                         <Skeleton className="mt-2 h-3 w-full" />
                         <div className="mt-2 flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-full" />
-                          <Skeleton className="h-4 w-16 rounded-full" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
                         </div>
                       </div>
                     ))}
@@ -324,8 +324,8 @@ export function MailLayout() {
                         <Skeleton className="mt-2 h-3 w-32" />
                         <Skeleton className="mt-2 h-3 w-full" />
                         <div className="mt-2 flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-full" />
-                          <Skeleton className="h-4 w-16 rounded-full" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
+                          <Skeleton className="h-4 w-16 rounded-md" />
                         </div>
                       </div>
                     ))}
@@ -447,15 +447,17 @@ function MailCategoryTabs({
   const [, setSearchValue] = useSearchValue();
   const t = useTranslations();
 
-  // Initialize from localStorage with fallback to "Primary" or initialCategory
-  const [activeCategory, setActiveCategory] = useState(() => {
-    // Only run in browser environment
-    if (typeof window !== "undefined") {
-      const storedCategory = localStorage.getItem("mailActiveCategory");
-      return initialCategory || storedCategory || "common.mailCategories.primary";
+  // Initialize with just the initialCategory or "Primary"
+  const [activeCategory, setActiveCategory] = useState(initialCategory || "Primary");
+
+  // Move localStorage logic to a useEffect
+  useEffect(() => {
+    // Check localStorage only after initial render
+    const savedCategory = localStorage.getItem("mailActiveCategory");
+    if (savedCategory && !initialCategory) {
+      setActiveCategory(savedCategory);
     }
-    return initialCategory || "common.mailCategories.primary";
-  });
+  }, [initialCategory]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);

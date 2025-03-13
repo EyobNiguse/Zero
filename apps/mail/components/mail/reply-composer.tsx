@@ -23,9 +23,9 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [messageContent, setMessageContent] = useState("");
-  const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isEditorFocused, setIsEditorFocused] = useState(false);
   const t = useTranslations();
 
   // Use external state if provided, otherwise use internal state
@@ -236,8 +236,8 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     <div className="bg-offsetLight dark:bg-offsetDark w-full p-2">
       <form
         className={cn(
-          "border-border relative flex h-[300px] flex-col space-y-2.5 rounded-[10px] border px-2 py-4",
-          isTextAreaFocused ? "ring-2 ring-[#3D3D3D]" : "",
+          "border-border ring-offset-background flex h-[300px] flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-shadow duration-300 ease-in-out",
+          isEditorFocused ? "ring-2 ring-[#3D3D3D] ring-offset-1" : "",
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -280,7 +280,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
 
         <div className="w-full flex-grow overflow-hidden p-1">
           <div
-            className="h-full w-full"
+            className="h-full w-full overflow-y-auto"
             onDragOver={(e) => e.stopPropagation()}
             onDragLeave={(e) => e.stopPropagation()}
             onDrop={(e) => e.stopPropagation()}
@@ -289,6 +289,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
               onChange={(content) => {
                 setMessageContent(content);
               }}
+              className="sm:max-w-[600px] md:max-w-[2050px]"
               initialValue={{
                 type: "doc",
                 content: [
@@ -299,6 +300,13 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
                 ],
               }}
               placeholder="Type your reply here..."
+              onFocus={() => {
+                setIsEditorFocused(true);
+              }}
+              onBlur={() => {
+                console.log("Editor blurred");
+                setIsEditorFocused(false);
+              }}
             />
           </div>
         </div>

@@ -92,6 +92,7 @@
       "details": "Details",
       "from": "From",
       "to": "To",
+      "cc": "Cc",
       "date": "Date",
       "mailedBy": "Mailed-By",
       "signedBy": "Signed-By",

@@ -1,13 +1,14 @@
+import { BellOff, ChevronDown, Download, ExternalLink, Lock } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import AttachmentsAccordion from "./attachments-accordion";
+import AttachmentDialog from "./attachment-dialog";
 import { useSummary } from "@/hooks/use-summary";
 import { TextShimmer } from "../ui/text-shimmer";
-import { BellOff, Lock } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MailIframe } from "./mail-iframe";
-import { ChevronDown } from "lucide-react";
 import { ParsedMessage } from "@/types";
 import { Button } from "../ui/button";
 import { format } from "date-fns";
@@ -79,7 +80,15 @@ type Props = {
 
 const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+  const [selectedAttachment, setSelectedAttachment] = useState<null | {
+    id: string;
+    name: string;
+    type: string;
+    url: string;
+  }>(null);
   const [openDetailsPopover, setOpenDetailsPopover] = useState<boolean>(false);
+  const t = useTranslations();
+
   const { data } = demo
     ? {
         data: {
@@ -88,7 +97,6 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
         },
       }
     : useSummary(emailData.id);
-  const t = useTranslations("common.mailDisplay");
 
   useEffect(() => {
     if (index === 0) {
@@ -111,8 +119,10 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                   )}
                 >
                   {emailData?.sender?.name
-                    .split(" ")
-                    .map((chunk) => chunk[0])
+                    ?.split(" ")
+                    .map((chunk) => chunk[0]?.toUpperCase())
+                    .filter((char) => char?.match(/[A-Z]/))
+                    .slice(0, 2)
                     .join("")}
                 </AvatarFallback>
               </Avatar>
@@ -136,7 +146,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                         className="h-auto p-0 text-xs underline hover:bg-transparent"
                         onClick={() => setOpenDetailsPopover(true)}
                       >
-                        {t("details")}
+                        {t("common.mailDisplay.details")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
@@ -145,7 +155,9 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                     >
                       <div className="space-y-1 text-sm">
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">{t("from")}:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.from")}:
+                          </span>
                           <div className="ml-3">
                             <span className="text-muted-foreground pr-1 font-bold">
                               {emailData?.sender?.name}
@@ -156,39 +168,52 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                           </div>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">{t("to")}:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.to")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">Cc:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.cc")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">{t("date")}:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.date")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {format(new Date(emailData?.receivedOn), "PPpp")}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">{t("mailedBy")}:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.mailedBy")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex">
-                          <span className="w-24 text-end text-gray-500">{t("signedBy")}:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.signedBy")}:
+                          </span>
                           <span className="text-muted-foreground ml-3">
                             {emailData?.sender?.email}
                           </span>
                         </div>
                         <div className="flex items-center">
-                          <span className="w-24 text-end text-gray-500">{t("security")}:</span>
+                          <span className="w-24 text-end text-gray-500">
+                            {t("common.mailDisplay.security")}:
+                          </span>
                           <div className="text-muted-foreground ml-3 flex items-center gap-1">
-                            <Lock className="h-4 w-4 text-green-600" /> {t("standardEncryption")}
+                            <Lock className="h-4 w-4 text-green-600" />{" "}
+                            {t("common.mailDisplay.standardEncryption")} (TLS)
                           </div>
                         </div>
                       </div>
@@ -241,25 +266,23 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
 
         <div
           className={cn(
-            "h-0 overflow-hidden transition-all duration-200",
-            !isCollapsed && "h-[1px]",
-          )}
-        >
-          <Separator />
-        </div>
-
-        <div
-          className={cn(
             "grid overflow-hidden transition-all duration-200",
             isCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]",
           )}
         >
           <div className="min-h-0 overflow-hidden">
+            {emailData?.attachments && emailData?.attachments.length > 0 ? (
+              <>
+                <AttachmentsAccordion
+                  attachments={emailData?.attachments}
+                  setSelectedAttachment={setSelectedAttachment}
+                />
+                <Separator />
+              </>
+            ) : null}
+
             <div className="h-fit w-full p-0">
               {emailData?.decodedBody ? (
-                // <p className="flex h-[500px] w-full items-center justify-center">
-                //   There should be an iframe in here
-                // </p>
                 <MailIframe html={emailData?.decodedBody} />
               ) : (
                 <div
@@ -273,6 +296,11 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
           </div>
         </div>
       </div>
+
+      <AttachmentDialog
+        selectedAttachment={selectedAttachment}
+        setSelectedAttachment={setSelectedAttachment}
+      />
     </div>
   );
 };

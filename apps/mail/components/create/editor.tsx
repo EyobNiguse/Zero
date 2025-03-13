@@ -60,6 +60,9 @@ interface EditorProps {
   initialValue?: JSONContent;
   onChange: (content: string) => void;
   placeholder?: string;
+  onFocus?: () => void;
+  onBlur?: () => void;
+  className?: string;
 }
 
 interface EditorState {
@@ -259,7 +262,10 @@ const MenuBar = () => {
 export default function Editor({
   initialValue,
   onChange,
-  placeholder = "Write something...",
+  placeholder = "Start your email here",
+  onFocus,
+  onBlur,
+  className,
 }: EditorProps) {
   const [state, dispatch] = useReducer(editorReducer, {
     openNode: false,
@@ -284,8 +290,8 @@ export default function Editor({
 
   return (
     <div
-      className="relative w-full max-w-[450px] sm:max-w-[600px]"
-      onClick={focusEditor} // Add click handler to focus the editor
+      className={`relative w-full max-w-[450px] sm:max-w-[600px] ${className || ''}`}
+      onClick={focusEditor}
       onKeyDown={(e) => {
         // Prevent form submission on Enter key
         if (e.key === "Enter" && !e.shiftKey) {
@@ -298,10 +304,18 @@ export default function Editor({
           immediatelyRender={false}
           initialContent={initialValue || defaultEditorContent}
           extensions={extensions}
-          className="min-h-96 max-w-[450px] sm:max-w-[600px]"
+          className="min-h-96"
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),
+              focus: () => {
+                onFocus?.();
+                return false;
+              },
+              blur: () => {
+                onBlur?.();
+                return false;
+              }
             },
             handlePaste: (view, event) => handleImagePaste(view, event, uploadFn),
             handleDrop: (view, event, _slice, moved) =>

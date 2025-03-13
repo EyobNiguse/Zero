@@ -9,7 +9,7 @@ import {
 import { emailProviders } from "@/constants/emailProviders";
 import { Plus, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 
