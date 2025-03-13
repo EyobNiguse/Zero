@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { changeLocale } from "@/i18n/utils";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -40,11 +40,12 @@ const formSchema = z.object({
 export default function GeneralPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const locale = useLocale();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      language: defaultLocale,
+      language: locale,
       timezone: "UTC",
       dynamicContent: false,
       externalImages: true,

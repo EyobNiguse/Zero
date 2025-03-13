@@ -23,11 +23,10 @@ export async function getLocale() {
     const reqLocaleWithoutRegion = reqLocale?.split("-")[0]?.trim();
 
     // check if the locale is supported
-    if (
-      locales.includes(reqLocale as Locale) ||
-      locales.includes(reqLocaleWithoutRegion as Locale)
-    ) {
+    if (locales.includes(reqLocale as Locale)) {
       return reqLocale;
+    } else if (locales.includes(reqLocaleWithoutRegion as Locale)) {
+      return reqLocaleWithoutRegion;
     }
   }
 
