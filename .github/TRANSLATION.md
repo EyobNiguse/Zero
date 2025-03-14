@@ -12,7 +12,7 @@ We use [Crowdin](https://crowdin.com/project/0email) to manage translations for 
 4. Click on "Join" to apply to the translation team
 5. In your application description, **include your Discord tag and the language(s) you want to help with** for communication and to be added to the translators community
 
-If the language you'd like to help with isn't listed you can open an issue and mention @needleXO
+If the language you'd like to help with isn't listed you can open an issue and mention [@needleXO](https://github.com/needleXO)
 
 ## Translation Process
 
