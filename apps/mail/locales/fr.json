@@ -78,7 +78,8 @@
       "important": "Önemli",
       "personal": "Kişisel",
       "updates": "Güncellemeler",
-      "promotions": "Tanıtımlar"
+      "promotions": "Tanıtımlar",
+      "social": "Social"
     },
     "replyCompose": {
       "replyTo": "Yanıtla",
@@ -103,7 +104,6 @@
       "loadingMailContent": "E-posta içeriği yükleniyor..."
     },
     "threadDisplay": {
-      "close": "Kapat",
       "exitFullscreen": "Tam ekrandan çık",
       "enterFullscreen": "Tam ekrana geç",
       "archive": "Arşivle",
@@ -153,7 +153,8 @@
         "dynamicContent": "Dinamik İçerik",
         "dynamicContentDescription": "E-postaların dinamik içerik göstermesine izin verin.",
         "externalImages": "Harici Görselleri Göster",
-        "externalImagesDescription": "E-postaların harici kaynaklardan görselleri göstermesine izin verin."
+        "externalImagesDescription": "E-postaların harici kaynaklardan görselleri göstermesine izin verin.",
+        "languageChangedTo": "Language changed to {language}"
       },
       "connections": {
         "title": "E-posta Bağlantıları",
@@ -217,7 +218,9 @@
       "example": "zero@0.email",
       "attachments": "Ekler",
       "dropFilesToAttach": "Eklemek için dosyaları bırakın",
-      "writeYourMessageHere": "Mesajınızı buraya yazın..."
+      "writeYourMessageHere": "Mesajınızı buraya yazın...",
+      "emailSentSuccessfully": "Email sent successfully",
+      "failedToSendEmail": "Failed to send email. Please try again."
     }
   }
 }
