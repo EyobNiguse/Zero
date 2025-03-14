@@ -78,7 +78,8 @@
       "important": "Important",
       "personal": "Personnel",
       "updates": "Mises à jour",
-      "promotions": "Promotions"
+      "promotions": "Promotions",
+      "social": "Social"
     },
     "replyCompose": {
       "replyTo": "Répondre à",
@@ -152,7 +153,8 @@
         "dynamicContent": "Contenu dynamique",
         "dynamicContentDescription": "Autoriser les emails à afficher du contenu dynamique.",
         "externalImages": "Afficher les images externes",
-        "externalImagesDescription": "Autoriser les emails à afficher des images provenant de sources externes."
+        "externalImagesDescription": "Autoriser les emails à afficher des images provenant de sources externes.",
+        "languageChangedTo": "Langue changée en {language}"
       },
       "connections": {
         "title": "Connexions Email",
@@ -216,7 +218,9 @@
       "example": "zero@0.email",
       "attachments": "Pièces jointes",
       "dropFilesToAttach": "Déposez des fichiers pour les joindre",
-      "writeYourMessageHere": "Écrivez votre message ici..."
+      "writeYourMessageHere": "Écrivez votre message ici...",
+      "emailSentSuccessfully": "Email envoyé avec succès",
+      "failedToSendEmail": "Échec d'envoi de l'email. Veuillez réessayer."
     }
   }
 }

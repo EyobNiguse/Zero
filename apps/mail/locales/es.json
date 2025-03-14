@@ -95,6 +95,7 @@
       "details": "Detalles",
       "from": "De",
       "to": "Hasta",
+      "cc": "Cc",
       "date": "Fecha",
       "mailedBy": "Errores-Por",
       "signedBy": "Firmado por",
@@ -152,7 +153,8 @@
         "dynamicContent": "Contenido dinámico",
         "dynamicContentDescription": "Permitir que los correos electrónicos muestren contenido dinámico.",
         "externalImages": "Mostrar imágenes externas",
-        "externalImagesDescription": "Permitir que los correos electrónicos muestren imágenes de fuentes externas."
+        "externalImagesDescription": "Permitir que los correos electrónicos muestren imágenes de fuentes externas.",
+        "languageChangedTo": "Language changed to {language}"
       },
       "connections": {
         "title": "Conexiones de correo",

@@ -6,6 +6,10 @@ export const availableLocales = [
     name: "English",
   },
   {
+    code: "ar",
+    name: "Arabic",
+  },
+  {
     code: "fr",
     name: "French",
   },
@@ -16,6 +20,14 @@ export const availableLocales = [
   {
     code: "es-ES",
     name: "Spanish",
+  },
+  {
+    code: "de",
+    name: "German",
+  },
+  {
+    code: "pt-PT",
+    name: "Portuguese",
   },
 ];
 
