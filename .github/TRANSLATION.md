@@ -12,18 +12,18 @@ We use [Crowdin](https://crowdin.com/project/0email) to manage translations for 
 4. Click on "Join" to apply to the translation team
 5. In your application description, **include your Discord tag and the language(s) you want to help with** for communication and to be added to the translators community
 
-If the language you'd like to help with isn't listed you can open an issue and mention [@needleXO](https://github.com/needleXO)
+If the language you'd like to help with isn't listed, you can open an issue and mention [@needleXO](https://github.com/needleXO)
 
 ## Translation Process
 
-We will go through the process as soon as possible, once you have been accepted you should get a Direct Message from `@zerodotemail` on Discord
+We will go through the process as soon as possible. Once you have been accepted, you should get a Direct Message from `@zerodotemail` on Discord
 
 1. After your application is approved, you'll be able to see the files that need translation
 2. Select a file to start translating
 3. Translate the strings by filling in the target language field for each source string
 4. Save your translations
 
-## Important Guidelines
+## Translation Guidelines
 
 ### Maintaining Format Tags
 
@@ -56,6 +56,6 @@ You can see your translations in context by:
 
 ## Need Help?
 
-If you have any questions about translation or encounter any issues please [open an issue](https://github.com/Mail-0/Zero/issues) or join our [Discord server](https://discord.gg/NaK85MSzND)
+If you have any questions about translation or encounter any issues, please [open an issue](https://github.com/Mail-0/Zero/issues) or join our [Discord server](https://discord.gg/NaK85MSzND)
 
 Thank you for helping make 0.email accessible to users in your language! 
