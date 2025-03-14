@@ -41,6 +41,7 @@ export default function GeneralPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const locale = useLocale();
+  const t = useTranslations();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,7 +62,7 @@ export default function GeneralPage() {
 
     if (values.language !== locale) {
       const localeName = new Intl.DisplayNames([values.language], { type: 'language' }).of(values.language);
-      toast.success(t("pages.settings.general.languageChangedTo", { language: localeName }))
+      toast.success(t("pages.settings.general.languageChangedTo", { language: localeName }));
     }
 
     // Simulate API call
@@ -87,8 +88,6 @@ export default function GeneralPage() {
       },
     );
   };
-
-  const t = useTranslations();
 
   return (
     <div className="grid gap-6">
