@@ -16,7 +16,7 @@ If the language you'd like to help with isn't listed you can open an issue and m
 
 ## Translation Process
 
-We will go through the process as soon as possible, once you have been accepted you should get a Direct Message from @needleXO (zerodotemail) on Discord
+We will go through the process as soon as possible, once you have been accepted you should get a Direct Message from `@zerodotemail` on Discord
 
 1. After your application is approved, you'll be able to see the files that need translation
 2. Select a file to start translating
