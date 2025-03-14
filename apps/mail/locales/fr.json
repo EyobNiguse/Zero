@@ -74,11 +74,11 @@
       "signIn": "Se connecter"
     },
     "mailCategories": {
-      "primary": "Principale",
-      "important": "Important",
-      "personal": "Personnel",
-      "updates": "Mises à jour",
-      "promotions": "Promotions",
+      "primary": "Birincil",
+      "important": "Önemli",
+      "personal": "Kişisel",
+      "updates": "Güncellemeler",
+      "promotions": "Tanıtımlar",
       "social": "Social"
     },
     "replyCompose": {
@@ -115,6 +115,17 @@
       "markAsUnread": "Marquer comme non lu",
       "addLabel": "Ajouter un label",
       "muteThread": "Mettre en sourdine"
+      "exitFullscreen": "Tam ekrandan çık",
+      "enterFullscreen": "Tam ekrana geç",
+      "archive": "Arşivle",
+      "reply": "Yanıtla",
+      "moreOptions": "Daha fazla seçenek",
+      "moveToSpam": "Spam'a taşı",
+      "replyAll": "Tümünü yanıtla",
+      "forward": "İlet",
+      "markAsUnread": "Okunmamış olarak işaretle",
+      "addLabel": "Etiket ekle",
+      "muteThread": "Konuyu sessize al"
     }
   },
   "navigation": {
@@ -155,6 +166,15 @@
         "externalImages": "Afficher les images externes",
         "externalImagesDescription": "Autoriser les emails à afficher des images provenant de sources externes.",
         "languageChangedTo": "Langue changée en {language}"
+        "title": "Genel Ayarlar",
+        "description": "Dil ve email görünümü ayarlarını yönetin.",
+        "language": "Dil",
+        "timezone": "Saat Dilimi",
+        "dynamicContent": "Dinamik İçerik",
+        "dynamicContentDescription": "E-postaların dinamik içerik göstermesine izin verin.",
+        "externalImages": "Harici Görselleri Göster",
+        "externalImagesDescription": "E-postaların harici kaynaklardan görselleri göstermesine izin verin.",
+        "languageChangedTo": "Language changed to {language}"
       },
       "connections": {
         "title": "Connexions Email",
@@ -216,9 +236,11 @@
     "createEmail": {
       "body": "Corps",
       "example": "zero@0.email",
-      "attachments": "Pièces jointes",
-      "dropFilesToAttach": "Déposez des fichiers pour les joindre",
-      "writeYourMessageHere": "Écrivez votre message ici..."
+      "attachments": "Ekler",
+      "dropFilesToAttach": "Eklemek için dosyaları bırakın",
+      "writeYourMessageHere": "Mesajınızı buraya yazın...",
+      "emailSentSuccessfully": "Email sent successfully",
+      "failedToSendEmail": "Failed to send email. Please try again."
     }
   }
 }
