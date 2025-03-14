@@ -279,6 +279,8 @@ Zero uses PostgreSQL for storing data. Here's how to set it up:
 
 Please refer to the [contributing guide](.github/CONTRIBUTING.md).
 
+If you'd like to help with translating Zero to other languages, check out our [translation guide](.github/TRANSLATION.md).
+
 ## Star History
 
 
