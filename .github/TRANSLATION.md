@@ -52,7 +52,7 @@ You can see your translations in context by:
 
 1. Making sure your translations are saved in Crowdin
 2. Waiting for the project maintainers to approve and merge the translations
-3. Testing the application in your language once translations are deployed
+3. Testing the application in your language (follow the [Quick Start Guide](../README.md#quick-start-guide) to set up the app locally)
 
 ## Need Help?
 
