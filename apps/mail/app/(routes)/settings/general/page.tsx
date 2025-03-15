@@ -18,11 +18,9 @@ import {
 import { SettingsCard } from "@/components/settings/settings-card";
 import { availableLocales, defaultLocale } from "@/i18n/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Globe, Clock, LogOut } from "lucide-react";
+import { Globe, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { signOut } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 import { changeLocale } from "@/i18n/utils";
 import { useTranslations, useLocale } from "next-intl";
 import { useForm } from "react-hook-form";
@@ -38,7 +36,6 @@ const formSchema = z.object({
 });
 
 export default function GeneralPage() {
-  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const locale = useLocale();
   const t = useTranslations();
@@ -72,38 +69,15 @@ export default function GeneralPage() {
     }, 1000);
   }
 
-  const handleSignOut = async () => {
-    toast.promise(
-      signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push("/");
-          },
-        },
-      }),
-      {
-        loading: t("common.actions.signingOut"),
-        success: () => t("common.actions.signedOutSuccess"),
-        error: t("common.actions.signOutError"),
-      },
-    );
-  };
-
   return (
     <div className="grid gap-6">
       <SettingsCard
         title={t("pages.settings.general.title")}
         description={t("pages.settings.general.description")}
         footer={
-          <div className="flex gap-4">
-            <Button variant="destructive" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("common.actions.logout")}
-            </Button>
-            <Button type="submit" form="general-form" disabled={isSaving}>
-              {isSaving ? t("common.actions.saving") : t("common.actions.saveChanges")}
-            </Button>
-          </div>
+          <Button type="submit" form="general-form" disabled={isSaving}>
+            {isSaving ? t("common.actions.saving") : t("common.actions.saveChanges")}
+          </Button>
         }
       >
         <Form {...form}>
