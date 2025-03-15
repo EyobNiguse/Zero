@@ -74,24 +74,24 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
             {children}
           </DialogTrigger>
         )}
-        <DialogContent className="flex max-h-[90vh] flex-col gap-0 border-zinc-800 bg-black p-0 outline-none">
-          <div className="border-b border-zinc-800 px-6 py-6">
+        <DialogContent className="flex max-h-[90vh] flex-col gap-0 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-0 outline-none">
+          <div className=" border-zinc-200 dark:border-zinc-800 px-6 py-6">
             <DialogHeader>
-              <DialogTitle>Cookie Settings</DialogTitle>
+              <DialogTitle className="text-zinc-900 dark:text-zinc-100 my-2 text-xl">Cookie Settings</DialogTitle>
               <DialogDescription className="space-y-4">
-                <span className="block text-sm text-zinc-400">
+                <span className="block text-sm text-zinc-600 dark:text-zinc-400">
                   We use cookies and similar technologies to help personalize content, tailor and
                   measure ads, and provide a better experience. By clicking "Accept All", you
                   consent to all cookies. You can customize your choices by clicking "Customize" or
                   reject all optional cookies by clicking "Reject All".
                 </span>
-                <span className="block text-sm text-zinc-400">
+                <span className="block text-sm text-zinc-600 dark:text-zinc-400">
                   For California residents (CCPA): We do not sell your personal information.
                   However, some cookies collect data for targeted advertising. To opt out of the
                   sale of your data for targeted advertising purposes, click "Reject All" or disable
                   Marketing cookies below.
                 </span>
-                <span className="block text-sm text-zinc-400">
+                <span className="block text-sm text-zinc-600 dark:text-zinc-400">
                   You can change your preferences at any time by clicking the cookie settings button
                   in the corner of the screen. For more information about how we use cookies, please
                   see our{" "}
@@ -104,8 +104,8 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
             </DialogHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-2">
-            <div className="space-y-6 py-6">
+          <div className="flex-1 overflow-y-auto px-6 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-2">
+            <div className="space-y-6 pb-4">
               <Accordion type="multiple" className="space-y-4">
                 {(
                   Object.entries(COOKIE_CATEGORIES) as [
@@ -116,14 +116,14 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
                   <AccordionItem
                     key={category}
                     value={category}
-                    className="rounded-lg border border-zinc-800 px-4"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 px-4"
                   >
                     <div className="flex items-center justify-between py-4">
                       <div className="flex items-center space-x-2">
-                        <Label htmlFor={category} className="font-medium text-zinc-100">
+                        <Label htmlFor={category} className="font-medium text-zinc-900 dark:text-zinc-100">
                           {info.name}
                           {info.required && (
-                            <span className="ml-2 text-xs text-zinc-400">(Required)</span>
+                            <span className="ml-2 text-xs text-zinc-600 dark:text-zinc-400">(Required)</span>
                           )}
                         </Label>
                       </div>
@@ -135,15 +135,15 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
                         className="data-[state=checked]:bg-blue-600"
                       />
                     </div>
-                    <AccordionTrigger className="mb-2 py-0 text-sm text-zinc-400 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                    <AccordionTrigger className="mb-2 py-0 text-sm text-zinc-600 dark:text-zinc-400 hover:no-underline [&[data-state=open]>svg]:rotate-180">
                       More information
                     </AccordionTrigger>
                     <AccordionContent className="pb-4 pt-2">
                       <div className="space-y-3">
-                        <p className="text-sm text-zinc-400">{info.description}</p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{info.description}</p>
                         <div>
-                          <p className="text-sm font-medium text-zinc-300">Duration:</p>
-                          <p className="text-sm text-zinc-400">
+                          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Duration:</p>
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400">
                             {category === "necessary"
                               ? "Session - These cookies are deleted when you close your browser"
                               : category === "functional"
@@ -154,8 +154,8 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-zinc-300">Provider:</p>
-                          <p className="text-sm text-zinc-400">
+                          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Provider:</p>
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400">
                             {category === "necessary"
                               ? "First party - Set by us"
                               : category === "functional"
@@ -173,19 +173,19 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
             </div>
           </div>
 
-          <div className="border-t border-zinc-800 bg-black px-6 py-4">
+          <div className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black px-6 py-4">
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
               <div className="mt-2 flex flex-1 gap-2 sm:mt-0">
                 <Button
                   variant="outline"
-                  className="flex-1 border-zinc-800 bg-transparent text-zinc-100 hover:bg-zinc-900 hover:text-zinc-100"
+                  className="flex-1 border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                   onClick={handleRejectAll}
                 >
                   Reject All
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex-1 border-zinc-800 bg-transparent text-zinc-100 hover:bg-zinc-900 hover:text-zinc-100"
+                  className="flex-1 border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                   onClick={handleAcceptAll}
                 >
                   Accept All
@@ -193,7 +193,7 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
               </div>
               <Button
                 onClick={handleSavePreferences}
-                className="flex-1 bg-blue-600 text-white hover:bg-blue-700 sm:flex-none"
+                className="flex-1 bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-white sm:flex-none"
               >
                 Save Preferences
               </Button>
@@ -203,23 +203,23 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
       </Dialog>
 
       {showBanner && (
-        <Card className="animate-in fade-in slide-in-from-bottom-4 fixed bottom-4 left-4 right-4 z-40 border-zinc-800 bg-black p-4 shadow-lg duration-300 md:left-auto md:right-4 md:max-w-md">
+        <Card className="animate-in fade-in slide-in-from-bottom-4 fixed bottom-4 left-4 right-4 z-40 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 shadow-lg duration-300 md:left-auto md:right-4 md:max-w-md">
           <div className="mb-4 flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <Cookie className="h-5 w-5 text-zinc-100" />
-              <h3 className="font-semibold text-zinc-100">Cookie Preferences</h3>
+              <Cookie className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Cookie Preferences</h3>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowBanner(false)}
-              className="text-zinc-400 hover:text-zinc-100"
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             >
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </Button>
           </div>
-          <p className="mb-4 text-sm text-zinc-400">
+          <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
             We use cookies to enhance your experience. By continuing to visit this site you agree to
             our use of cookies. For California residents: We do not sell personal information, but
             some cookies enable targeted advertising.
@@ -229,7 +229,7 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
               variant="outline"
               size="sm"
               onClick={() => setOpen(true)}
-              className="border-zinc-800 bg-transparent text-zinc-100 hover:bg-zinc-900 hover:text-zinc-100"
+              className="border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900"
             >
               Customize
             </Button>
@@ -244,7 +244,7 @@ export function CookieConsent({ children, showFloatingButton = true }: CookieCon
               variant="ghost"
               size="sm"
               onClick={handleRejectAll}
-              className="text-zinc-400 hover:text-zinc-100"
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             >
               Reject All
             </Button>

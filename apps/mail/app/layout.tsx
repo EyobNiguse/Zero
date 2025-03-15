@@ -46,7 +46,7 @@ export default async function RootLayout({
             {cookies}
             <Toast />
             <Analytics />
-            {isEuRegion && <CookieConsent />}
+            <CookieConsent />
           </CookieProvider>
         </Providers>
       </body>
