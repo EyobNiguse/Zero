@@ -30,14 +30,24 @@ const fetchEmails = async ([
   labelIds,
   pageToken,
 ]: FetchEmailsTuple): Promise<RawResponse> => {
-  const data = await getMails({ folder, q, max, labelIds, pageToken });
-  return data as RawResponse;
+  try {
+    const data = await getMails({ folder, q, max, labelIds, pageToken });
+    return data as RawResponse;
+  } catch (error) {
+    console.error("Error fetching emails:", error);
+    throw error;
+  }
 };
 
 const fetchThread = async (args: any[]) => {
   const [_, id] = args;
-  const data = await getMail({ id });
-  return data;
+  try {
+    const data = await getMail({ id });
+    return data;
+  } catch (error) {
+    console.error("Error fetching email:", error);
+    throw error;
+  }
 };
 
 // Based on gmail

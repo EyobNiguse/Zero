@@ -1,7 +1,9 @@
 import { CookieConsent } from "@/components/cookies/cookie-dialog";
 import { CookieProvider } from "@/providers/cookie-provider";
+import { getLocale, getMessages } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { NextIntlClientProvider } from "next-intl";
 import { siteConfig } from "@/lib/site-config";
 import { Toast } from "@/components/ui/toast";
 import { Providers } from "@/lib/providers";
@@ -29,9 +31,11 @@ export default async function RootLayout({
   cookies: React.ReactNode;
 }>) {
   const isEuRegion = (await headers()).get("x-user-eu-region") === "true";
+  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <meta name="x-user-country" content={(await headers()).get("x-user-country") || ""} />
         <meta
@@ -41,13 +45,15 @@ export default async function RootLayout({
       </head>
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>
         <Providers attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <CookieProvider>
-            {children}
-            {cookies}
-            <Toast />
-            <Analytics />
-            {isEuRegion && <CookieConsent />}
-          </CookieProvider>
+          <NextIntlClientProvider messages={messages}>
+            <CookieProvider>
+              {children}
+              {cookies}
+              <Toast />
+              <Analytics />
+              {isEuRegion && <CookieConsent />}
+            </CookieProvider>
+          </NextIntlClientProvider>
         </Providers>
       </body>
     </html>
