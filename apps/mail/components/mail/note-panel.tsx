@@ -48,6 +48,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DndContext,
   type DragEndEvent,
+  DragOverlay,
   type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
