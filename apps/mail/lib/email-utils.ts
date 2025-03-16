@@ -90,19 +90,23 @@ export const getListUnsubscribeAction = ({
 }): ListUnsubscribeAction | null => {
   const match = listUnsubscribe.match(/<([^>]+)>/);
 
+  const processHttpUrl = (url: URL, listUnsubscribePost?: string) => {
+    const isOneClick = listUnsubscribePost;
+
+    if (isOneClick) {
+      return { type: "post" as const, url: url.toString(), body: listUnsubscribePost };
+    }
+
+    return { type: "get" as const, url: url.toString() };
+  };
+
   if (!match || !match[1]) {
     // NOTE: Some senders do not implement a spec-compliant list-unsubscribe header (e.g. Linear).
     // We can be a bit more lenient and try to parse the header as a URL, Gmail also does this.
     try {
       const url = new URL(listUnsubscribe);
       if (url.protocol.startsWith("http")) {
-        const isOneClick = listUnsubscribePost === "List-Unsubscribe=One-Click";
-
-        if (isOneClick) {
-          return { type: "post", url: url.toString(), body: listUnsubscribePost };
-        }
-
-        return { type: "get", url: url.toString() };
+        return processHttpUrl(url, listUnsubscribePost);
       }
       return null;
     } catch {
@@ -114,13 +118,7 @@ export const getListUnsubscribeAction = ({
   const url = new URL(match[1]);
 
   if (url.protocol.startsWith("http")) {
-    const isOneClick = listUnsubscribePost === "List-Unsubscribe=One-Click";
-
-    if (isOneClick) {
-      return { type: "post", url: url.toString(), body: listUnsubscribePost };
-    }
-
-    return { type: "get", url: url.toString() };
+    return processHttpUrl(url, listUnsubscribePost);
   }
 
   if (url.protocol === "mailto:") {
