@@ -167,6 +167,7 @@ export function MailLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const t = useTranslations();
 
   useEffect(() => {
     if (!session?.user && !isPending) {
@@ -271,7 +272,7 @@ export function MailLayout() {
                       <>
                         <div className="flex flex-1 items-center justify-center">
                           <span className="text-sm font-medium tabular-nums">
-                            {mail.bulkSelected.length} selected
+                            {t("common.mail.selected", { count: mail.bulkSelected.length })}
                           </span>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -284,7 +285,7 @@ export function MailLayout() {
                                 <X />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Clear Selection</TooltipContent>
+                            <TooltipContent>{t("common.mail.clearSelection")}</TooltipContent>
                           </Tooltip>
                         </div>
                         <BulkSelectActions />
@@ -373,6 +374,8 @@ export function MailLayout() {
 }
 
 function BulkSelectActions() {
+  const t = useTranslations();
+  
   return (
     <div className="flex items-center gap-1.5">
       <Tooltip>
@@ -381,7 +384,7 @@ function BulkSelectActions() {
             <BellOff />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Mute</TooltipContent>
+        <TooltipContent>{t("common.mail.mute")}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -389,7 +392,7 @@ function BulkSelectActions() {
             <ArchiveX />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Move to Spam</TooltipContent>
+        <TooltipContent>{t("common.mail.moveToSpam")}</TooltipContent>
       </Tooltip>
     </div>
   );

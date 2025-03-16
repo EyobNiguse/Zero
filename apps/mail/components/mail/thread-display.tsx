@@ -1,12 +1,7 @@
 import {
-  Archive,
   ArchiveX,
   Forward,
-  MoreVertical,
-  Reply,
   ReplyAll,
-  Maximize2,
-  Minimize2,
 } from "lucide-react";
 import { DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -28,6 +23,9 @@ import MailDisplay from "./mail-display";
 import { useMail } from "./use-mail";
 import { cn } from "@/lib/utils";
 import React from "react";
+import { useNotes } from "@/hooks/use-notes";
+import { NotesPanel } from "./note-panel";
+import { sortNotes } from "@/lib/notes-utils";
 
 interface ThreadDisplayProps {
   mail: any;
@@ -196,9 +194,30 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { getNotesForThread, addNote, editNote, deleteNote, togglePinNote, changeNoteColor, reorderNotes } = useNotes();
+  const [threadNotes, setThreadNotes] = useState<any[]>([]);
+  const [, setIsLoadingNotes] = useState(false);
   const t = useTranslations();
 
   const moreVerticalIconRef = useRef<any>(null);
+
+  useEffect(() => {
+    async function fetchNotes() {
+      if (emailData?.[0]) {
+        setIsLoadingNotes(true);
+        try {
+          const notes = await getNotesForThread(emailData[0].threadId ?? mail);
+          setThreadNotes(notes);
+        } catch (error) {
+          console.error('Error fetching notes:', error);
+        } finally {
+          setIsLoadingNotes(false);
+        }
+      }
+    }
+    
+    fetchNotes();
+  }, [emailData, getNotesForThread, mail]);
 
   useEffect(() => {
     if (emailData?.[0]) {
@@ -333,6 +352,66 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
             />
           </div>
           <div className="flex items-center md:gap-6">
+            <NotesPanel 
+              threadId={emailData?.[0]?.threadId ?? mail}
+              notes={threadNotes}
+              onAddNote={async (threadId, content, color) => {
+                const newNote = await addNote(threadId, content, color);
+                if (newNote) {
+                  setThreadNotes(prev => [...prev, newNote]);
+                }
+                return newNote;
+              }}
+              onEditNote={async (noteId, content) => {
+                const updatedNote = await editNote(noteId, content);
+                if (updatedNote) {
+                  setThreadNotes(prev => prev.map(note => note.id === noteId ? updatedNote : note));
+                }
+                return updatedNote;
+              }}
+              onDeleteNote={async (noteId) => {
+                const success = await deleteNote(noteId);
+                if (success) {
+                  setThreadNotes(prev => prev.filter(note => note.id !== noteId));
+                }
+                return success;
+              }}
+              onTogglePin={async (noteId) => {
+                const updatedNote = await togglePinNote(noteId);
+                if (updatedNote) {
+                  setThreadNotes(prev => prev.map(note => note.id === noteId ? updatedNote : note));
+                }
+                return updatedNote;
+              }}
+              onChangeColor={async (noteId, color) => {
+                const updatedNote = await changeNoteColor(noteId, color);
+                if (updatedNote) {
+                  setThreadNotes(prev => prev.map(note => note.id === noteId ? updatedNote : note));
+                }
+                return updatedNote;
+              }}
+              onReorderNotes={async (notes) => {
+                const success = await reorderNotes(notes);
+                if (success) {
+                  setThreadNotes(prev => {
+                    const updatedNotes = [...prev];
+                    notes.forEach(({ id, order, isPinned }) => {
+                      const index = updatedNotes.findIndex(note => note.id === id);
+                      if (index !== -1) {
+                        updatedNotes[index] = {
+                          ...updatedNotes[index],
+                          order,
+                          ...(isPinned !== undefined && { isPinned }),
+                        };
+                      }
+                    });
+                    
+                    return sortNotes(updatedNotes);
+                  });
+                }
+                return success;
+              }}
+            />
             <ThreadActionButton
               icon={isFullscreen ? ExpandIcon : ExpandIcon}
               label={

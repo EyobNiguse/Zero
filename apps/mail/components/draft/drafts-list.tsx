@@ -14,6 +14,7 @@ import { useDrafts } from "@/hooks/use-drafts";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 const highlightText = (text: string, highlight: string) => {
   if (!highlight?.trim()) return text;
@@ -100,6 +101,7 @@ export function DraftsList({ isCompact }: MailListProps) {
   const { data: session } = useSession();
   const [searchValue] = useSearchValue();
   const router = useRouter();
+  const t = useTranslations();
 
   const {
     data: { drafts: items, nextPageToken },
@@ -147,7 +149,7 @@ export function DraftsList({ isCompact }: MailListProps) {
         ...prev,
         bulkSelected: [],
       }));
-      toast.success("Deselected all emails");
+      toast.success(t("common.mail.deselectAll"));
     }
     // Otherwise select all items
     else if (items.length > 0) {
@@ -156,11 +158,11 @@ export function DraftsList({ isCompact }: MailListProps) {
         ...prev,
         bulkSelected: allIds,
       }));
-      toast.success(`Selected ${allIds.length} emails`);
+      toast.success(t("common.mail.selectedEmails", { count: allIds.length }));
     } else {
-      toast.info("No emails to select");
+      toast.info(t("common.mail.noEmailsToSelect"));
     }
-  }, [items, setMail, mail.bulkSelected]);
+  }, [items, setMail, mail.bulkSelected, t]);
 
   const resetSelectMode = () => {
     setMassSelectMode(false);
@@ -192,24 +194,24 @@ export function DraftsList({ isCompact }: MailListProps) {
     resetSelectMode();
     const res = await markAsUnread({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as unread");
+      toast.success(t("common.mail.markedAsUnread"));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as unread");
+    } else toast.error(t("common.mail.failedToMarkAsUnread"));
   });
 
   useHotKey("Control+Shift+u", async () => {
     resetSelectMode();
     const res = await markAsUnread({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as unread");
+      toast.success(t("common.mail.markedAsUnread"));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as unread");
+    } else toast.error(t("common.mail.failedToMarkAsUnread"));
   });
 
   useHotKey("Meta+Shift+i", async () => {

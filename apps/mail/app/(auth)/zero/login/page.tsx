@@ -14,13 +14,28 @@ const formSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
-export default function LoginZero() {
+export default function LoginZero(defaultValues: DefaultValues<TypeOf<ZodObject<{
+  email: ZodString;
+  password: ZodString
+}, "strip", ZodTypeAny, objectOutputType<{
+  email: ZodString;
+  password: ZodString
+}, ZodTypeAny, "strip">, objectInputType<{
+  email: ZodString;
+  password: ZodString
+}, ZodTypeAny, "strip">>>> | ((payload?: unknown) => Promise<TypeOf<ZodObject<{
+  email: ZodString;
+  password: ZodString
+}, "strip", ZodTypeAny, objectOutputType<{
+  email: ZodString;
+  password: ZodString
+}, ZodTypeAny, "strip">, objectInputType<{ email: ZodString; password: ZodString }, ZodTypeAny, "strip">>>>) = {
+  email: "",
+  password: "",
+}) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: defaultValues,
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
