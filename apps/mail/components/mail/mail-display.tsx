@@ -174,7 +174,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                                 : "Are you sure you want to unsubscribe from this mailing list?"}
                             </DialogDescription>
                           </DialogHeader>
-                          <DialogFooter>
+                          <DialogFooter className="gap-2">
                             <DialogClose asChild>
                               <Button variant="outline">Cancel</Button>
                             </DialogClose>
