@@ -205,16 +205,31 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                                       break;
                                     case "post":
                                       setIsUnsubscribing(true);
-                                      await fetch(listUnsubscribeAction.url, {
-                                        mode: "no-cors",
-                                        method: "POST",
-                                        headers: {
-                                          "content-type": "application/x-www-form-urlencoded",
-                                        },
-                                        body: listUnsubscribeAction.body,
-                                      });
-                                      setIsUnsubscribing(false);
-                                      setUnsubscribed(true);
+                                      try {
+                                        const controller = new AbortController();
+                                        const timeoutId = setTimeout(
+                                          () => controller.abort(),
+                                          10000, // 10 seconds
+                                        );
+
+                                        await fetch(listUnsubscribeAction.url, {
+                                          mode: "no-cors",
+                                          method: "POST",
+                                          headers: {
+                                            "content-type": "application/x-www-form-urlencoded",
+                                          },
+                                          body: listUnsubscribeAction.body,
+                                          signal: controller.signal,
+                                        });
+
+                                        clearTimeout(timeoutId);
+
+                                        setIsUnsubscribing(false);
+                                        setUnsubscribed(true);
+                                      } catch {
+                                        setIsUnsubscribing(false);
+                                        toast.error(t("common.mailDisplay.failedToUnsubscribe"));
+                                      }
                                       break;
                                     case "email":
                                       try {
