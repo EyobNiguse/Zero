@@ -207,6 +207,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                                       setIsUnsubscribing(true);
                                       try {
                                         const res = await fetch(listUnsubscribeAction.url, {
+                                          mode: "no-cors",
                                           method: "POST",
                                           headers: {
                                             "content-type": "application/x-www-form-urlencoded",
