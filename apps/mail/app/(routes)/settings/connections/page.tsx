@@ -12,10 +12,10 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SettingsCard } from "@/components/settings/settings-card";
 import { AddConnectionDialog } from "@/components/connection/add";
-import { emailProviders } from "@/constants/emailProviders";
 import { useConnections } from "@/hooks/use-connections";
 import { deleteConnection } from "@/actions/connections";
 import { Skeleton } from "@/components/ui/skeleton";
+import { emailProviders } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
