@@ -1,3 +1,4 @@
+import type { MailManager } from "@/app/api/driver/types";
 import { EMAIL_HTML_TEMPLATE } from "./constants";
 import Color from "color";
 
@@ -71,4 +72,63 @@ const getEffectiveBackgroundColor = (element: HTMLElement) => {
     current = current.parentElement;
   }
   return Color("#ffffff");
+};
+
+type ListUnsubscribeAction =
+  | { type: "get"; url: string }
+  | { type: "post"; url: string; body: string }
+  | { type: "email"; emailAddress: string; subject: string };
+
+// Relevant specs:
+// - https://www.ietf.org/rfc/rfc2369.txt (list-unsubscribe)
+// - https://www.ietf.org/rfc/rfc8058.txt (list-unsubscribe-post)
+export const getListUnsubscribeAction = ({
+  listUnsubscribe,
+  listUnsubscribePost,
+}: {
+  listUnsubscribe: string;
+  listUnsubscribePost?: string;
+}): ListUnsubscribeAction | null => {
+  const match = listUnsubscribe.match(/<([^>]+)>/);
+
+  if (!match || !match[1]) {
+    // Some senders do not implement a spec-compliant list-unsubscribe header (e.g. Linear).
+    // We can be a bit more lenient and try to parse the header as a URL, Gmail also does this.
+    try {
+      const url = new URL(listUnsubscribe);
+      if (url.protocol.startsWith("http")) {
+        const isOneClick = listUnsubscribePost === "List-Unsubscribe=One-Click";
+
+        if (isOneClick) {
+          return { type: "post", url: url.toString(), body: listUnsubscribePost };
+        }
+
+        return { type: "get", url: url.toString() };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  const url = new URL(match[1]);
+
+  if (url.protocol.startsWith("http")) {
+    const isOneClick = listUnsubscribePost === "List-Unsubscribe=One-Click";
+
+    if (isOneClick) {
+      return { type: "post", url: url.toString(), body: listUnsubscribePost };
+    }
+
+    return { type: "get", url: url.toString() };
+  }
+
+  if (url.protocol === "mailto:") {
+    const emailAddress = url.pathname;
+    const subject = new URLSearchParams(url.search).get("subject") || "";
+
+    return { type: "email", emailAddress, subject };
+  }
+
+  return null;
 };

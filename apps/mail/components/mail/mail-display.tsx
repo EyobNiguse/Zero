@@ -1,15 +1,29 @@
-import { BellOff, ChevronDown, Download, ExternalLink, Lock } from "lucide-react";
+import {
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+  Dialog,
+  DialogFooter,
+  DialogHeader,
+  DialogPortal,
+  DialogClose,
+} from "../ui/dialog";
+import { BellOff, Check, ChevronDown, Download, ExternalLink, Lock } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getListUnsubscribeAction } from "@/lib/email-utils";
 import AttachmentsAccordion from "./attachments-accordion";
+import { useEffect, useMemo, useState } from "react";
 import AttachmentDialog from "./attachment-dialog";
 import { useSummary } from "@/hooks/use-summary";
 import { TextShimmer } from "../ui/text-shimmer";
+import { unsubscribe } from "@/actions/mail";
+import { type ParsedMessage } from "@/types";
 import { Separator } from "../ui/separator";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { sendEmail } from "@/actions/send";
 import { MailIframe } from "./mail-iframe";
-import { type ParsedMessage } from "@/types";
 import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -104,6 +118,16 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
     }
   }, [index]);
 
+  const [unsubscribed, setUnsubscribed] = useState(false);
+
+  const listUnsubscribeAction = useMemo(() => {
+    if (!emailData?.listUnsubscribe) return null;
+    return getListUnsubscribeAction({
+      listUnsubscribe: emailData.listUnsubscribe,
+      listUnsubscribePost: emailData.listUnsubscribePost,
+    });
+  }, [emailData]);
+
   return (
     <div className={cn("relative flex-1 overflow-hidden")}>
       <div className="relative h-full overflow-y-auto">
@@ -131,6 +155,69 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                   <span className="font-semibold">{emailData?.sender?.name}</span>
                   <span className="text-muted-foreground flex grow-0 items-center gap-2 text-sm">
                     <span>{emailData?.sender?.email}</span>
+
+                    {listUnsubscribeAction && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="xs" variant="secondary" disabled={unsubscribed}>
+                            {unsubscribed && <Check className="h-4 w-4" />}
+                            {unsubscribed ? "Unsubscribed" : "Unsubscribe"}
+                          </Button>
+                        </DialogTrigger>
+
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Unsubscribe</DialogTitle>
+                            <DialogDescription className="break-words">
+                              {listUnsubscribeAction.type === "get"
+                                ? "To stop getting messages from this mailing list, go to their website to unsubscribe."
+                                : "Are you sure you want to unsubscribe from this mailing list?"}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button
+                                onClick={() => {
+                                  switch (listUnsubscribeAction.type) {
+                                    case "get":
+                                      window.open(listUnsubscribeAction.url, "_blank");
+                                      break;
+                                    case "post":
+                                      fetch(listUnsubscribeAction.url, {
+                                        mode: "no-cors",
+                                        method: "POST",
+                                        headers: {
+                                          "content-type": "application/x-www-form-urlencoded",
+                                        },
+                                        body: listUnsubscribeAction.body,
+                                      });
+                                      setUnsubscribed(true);
+                                      break;
+                                    case "email":
+                                      sendEmail({
+                                        to: listUnsubscribeAction.emailAddress,
+                                        subject: listUnsubscribeAction.subject,
+                                        message:
+                                          "Zero sent this email to unsubscribe from this mailing list.",
+                                        attachments: [],
+                                      });
+                                      setUnsubscribed(true);
+                                      break;
+                                  }
+                                }}
+                              >
+                                {listUnsubscribeAction.type === "get"
+                                  ? "Go to website"
+                                  : "Unsubscribe"}
+                              </Button>
+                            </DialogClose>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                     {isMuted && <BellOff className="h-4 w-4" />}
                   </span>
                 </div>
