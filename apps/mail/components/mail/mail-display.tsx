@@ -9,7 +9,7 @@ import { Separator } from "../ui/separator";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { MailIframe } from "./mail-iframe";
-import { ParsedMessage } from "@/types";
+import { type ParsedMessage } from "@/types";
 import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -213,7 +213,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                           </span>
                           <div className="text-muted-foreground ml-3 flex items-center gap-1">
                             <Lock className="h-4 w-4 text-green-600" />{" "}
-                            {t("common.mailDisplay.standardEncryption")} (TLS)
+                            {t("common.mailDisplay.standardEncryption")}
                           </div>
                         </div>
                       </div>

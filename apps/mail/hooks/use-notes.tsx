@@ -9,7 +9,7 @@ import {
   deleteNote as deleteNoteAction,
   reorderNotes as reorderNotesAction
 } from '@/actions/notes';
-import { Note } from '@/app/api/notes/types';
+import type { Note } from '@/app/api/notes/types';
 
 export type { Note };
 

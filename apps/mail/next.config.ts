@@ -19,9 +19,11 @@ const nextConfig: NextConfig = {
     ],
   },
   typescript: {
+    // TODO: enforce types throwing errors on build
     ignoreBuildErrors: true,
   },
   eslint: {
+    // TODO: enforce linting throwing errors on build
     ignoreDuringBuilds: true,
   },
   experimental: {

@@ -24,7 +24,7 @@ import {
     ContextMenuTrigger,
 } from "../ui/context-menu";
 import { useParams, useRouter } from "next/navigation";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { toast } from "sonner";
 import { useThreads } from "@/hooks/use-threads";
 import { useSearchValue } from "@/hooks/use-search-value";

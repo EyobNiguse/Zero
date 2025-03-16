@@ -1,7 +1,7 @@
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { db } from "@zero/db";
 import { note } from "@zero/db/schema";
-import { Note, NotesManager } from "./types";
+import type { Note, NotesManager } from "./types";
 
 export const notesManager: NotesManager = {
   async getNotes(userId: string): Promise<Note[]> {

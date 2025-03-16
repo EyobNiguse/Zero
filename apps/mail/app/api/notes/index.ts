@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { notesManager } from './db';
-import { Note } from './types';
+import type { Note } from './types';
 import { headers } from 'next/headers';
 export type { Note } from './types';
 
