@@ -1,6 +1,6 @@
 "use client";
 
-import { InitialThread, ThreadProps, MailListProps, MailSelectMode } from "@/types";
+import type { InitialThread, ThreadProps, MailListProps, MailSelectMode } from "@/types";
 import { EmptyState, type FolderType } from "@/components/mail/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn, defaultPageSize, formatDate } from "@/lib/utils";
@@ -218,24 +218,24 @@ export function DraftsList({ isCompact }: MailListProps) {
     resetSelectMode();
     const res = await markAsRead({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as read");
+      toast.success(t("common.mail.markedAsRead"));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as read");
+    } else toast.error(t("common.mail.failedToMarkAsRead"));
   });
 
   useHotKey("Control+Shift+i", async () => {
     resetSelectMode();
     const res = await markAsRead({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as read");
+      toast.success(t("common.mail.markedAsRead"));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as read");
+    } else toast.error(t("common.mail.failedToMarkAsRead"));
   });
 
   // useHotKey("Meta+Shift+j", async () => {

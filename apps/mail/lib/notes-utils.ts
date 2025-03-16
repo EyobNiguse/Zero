@@ -1,3 +1,4 @@
+import React from "react";
 import { type Note } from "@/app/api/notes/types";
 
 export const NOTE_COLORS = [

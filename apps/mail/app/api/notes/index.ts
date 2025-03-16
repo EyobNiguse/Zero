@@ -4,7 +4,7 @@ import type { Note } from './types';
 import { headers } from 'next/headers';
 export type { Note } from './types';
 
-async function getCurrentUserId() {
+async function getCurrentUserId(): Promise<string> {
   try {
     const headersList = await headers();
     const session = await auth.api.getSession({ headers: headersList });

@@ -26,6 +26,7 @@ import React from "react";
 import { useNotes } from "@/hooks/use-notes";
 import { NotesPanel } from "./note-panel";
 import { sortNotes } from "@/lib/notes-utils";
+import { toast } from "sonner";
 
 interface ThreadDisplayProps {
   mail: any;
@@ -356,60 +357,149 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
               threadId={emailData?.[0]?.threadId ?? mail}
               notes={threadNotes}
               onAddNote={async (threadId, content, color) => {
-                const newNote = await addNote(threadId, content, color);
-                if (newNote) {
-                  setThreadNotes(prev => [...prev, newNote]);
+                try {
+                  const newNote = await addNote(threadId, content, color);
+                  if (newNote) {
+                    setThreadNotes(prev => [...prev, newNote]);
+                    return newNote;
+                  }
+                  toast.error(t("common.notes.errors.failedToAddNote"));
+                  return null;
+                } catch (error) {
+                  toast.error(t("common.notes.errors.failedToAddNote"));
+                  return null;
                 }
-                return newNote;
               }}
               onEditNote={async (noteId, content) => {
-                const updatedNote = await editNote(noteId, content);
-                if (updatedNote) {
-                  setThreadNotes(prev => prev.map(note => note.id === noteId ? updatedNote : note));
+                const originalNotes = [...threadNotes];
+                const noteToUpdate = threadNotes.find(note => note.id === noteId);
+                if (noteToUpdate) {
+                  setThreadNotes(prev => prev.map(note => 
+                    note.id === noteId ? {...note, content, updatedAt: new Date()} : note
+                  ));
                 }
-                return updatedNote;
+                
+                try {
+                  const updatedNote = await editNote(noteId, content);
+                  if (updatedNote) {
+                    setThreadNotes(prev => prev.map(note => 
+                      note.id === noteId ? updatedNote : note
+                    ));
+                    return updatedNote;
+                  } else {
+                    setThreadNotes(originalNotes);
+                    toast.error(t("common.notes.errors.failedToUpdateNote"));
+                    return null;
+                  }
+                } catch (error) {
+                  setThreadNotes(originalNotes);
+                  toast.error(t("common.notes.errors.failedToUpdateNote"));
+                  return null;
+                }
               }}
               onDeleteNote={async (noteId) => {
-                const success = await deleteNote(noteId);
-                if (success) {
-                  setThreadNotes(prev => prev.filter(note => note.id !== noteId));
+                const originalNotes = [...threadNotes];
+                setThreadNotes(prev => prev.filter(note => note.id !== noteId));
+                
+                try {
+                  const success = await deleteNote(noteId);
+                  if (!success) {
+                    setThreadNotes(originalNotes);
+                    toast.error(t("common.notes.errors.failedToDeleteNote"));
+                  }
+                  return success;
+                } catch (error) {
+                  setThreadNotes(originalNotes);
+                  toast.error(t("common.notes.errors.failedToDeleteNote"));
+                  return false;
                 }
-                return success;
               }}
               onTogglePin={async (noteId) => {
-                const updatedNote = await togglePinNote(noteId);
-                if (updatedNote) {
-                  setThreadNotes(prev => prev.map(note => note.id === noteId ? updatedNote : note));
+                const originalNotes = [...threadNotes];
+                const noteToToggle = threadNotes.find(note => note.id === noteId);
+                
+                if (noteToToggle) {
+                  setThreadNotes(prev => prev.map(note => 
+                    note.id === noteId ? {...note, isPinned: !note.isPinned} : note
+                  ));
                 }
-                return updatedNote;
+                
+                try {
+                  const updatedNote = await togglePinNote(noteId);
+                  if (updatedNote) {
+                    setThreadNotes(prev => prev.map(note => 
+                      note.id === noteId ? updatedNote : note
+                    ));
+                    return updatedNote;
+                  } else {
+                    setThreadNotes(originalNotes);
+                    toast.error(t("common.notes.errors.failedToUpdateNote"));
+                    return null;
+                  }
+                } catch (error) {
+                  setThreadNotes(originalNotes);
+                  toast.error(t("common.notes.errors.failedToUpdateNote"));
+                  return null;
+                }
               }}
               onChangeColor={async (noteId, color) => {
-                const updatedNote = await changeNoteColor(noteId, color);
-                if (updatedNote) {
-                  setThreadNotes(prev => prev.map(note => note.id === noteId ? updatedNote : note));
+                const originalNotes = [...threadNotes];
+                setThreadNotes(prev => prev.map(note => 
+                  note.id === noteId ? {...note, color} : note
+                ));
+                
+                try {
+                  const updatedNote = await changeNoteColor(noteId, color);
+                  if (updatedNote) {
+                    setThreadNotes(prev => prev.map(note => 
+                      note.id === noteId ? updatedNote : note
+                    ));
+                    return updatedNote;
+                  } else {
+                    setThreadNotes(originalNotes);
+                    toast.error(t("common.notes.errors.failedToUpdateNoteColor"));
+                    return null;
+                  }
+                } catch (error) {
+                  setThreadNotes(originalNotes);
+                  toast.error(t("common.notes.errors.failedToUpdateNoteColor"));
+                  return null;
                 }
-                return updatedNote;
               }}
               onReorderNotes={async (notes) => {
-                const success = await reorderNotes(notes);
-                if (success) {
-                  setThreadNotes(prev => {
-                    const updatedNotes = [...prev];
-                    notes.forEach(({ id, order, isPinned }) => {
-                      const index = updatedNotes.findIndex(note => note.id === id);
-                      if (index !== -1) {
-                        updatedNotes[index] = {
-                          ...updatedNotes[index],
-                          order,
-                          ...(isPinned !== undefined && { isPinned }),
-                        };
-                      }
-                    });
-                    
-                    return sortNotes(updatedNotes);
+                const originalNotes = [...threadNotes];
+                setThreadNotes(prev => {
+                  const updatedNotes = [...prev];
+                  notes.forEach(({ id, order, isPinned }) => {
+                    const index = updatedNotes.findIndex(note => note.id === id);
+                    if (index !== -1) {
+                      updatedNotes[index] = {
+                        ...updatedNotes[index],
+                        order,
+                        ...(isPinned !== undefined && { isPinned }),
+                      };
+                    }
                   });
+                  
+                  return sortNotes(updatedNotes);
+                });
+                
+                try {
+                  await new Promise<void>(resolve => {
+                    setTimeout(() => resolve(), 500);
+                  });
+                  
+                  const success = await reorderNotes(notes);
+                  if (!success) {
+                    setThreadNotes(originalNotes);
+                    toast.error(t("common.notes.errors.failedToReorderNotes"));
+                  }
+                  return success;
+                } catch (error) {
+                  setThreadNotes(originalNotes);
+                  toast.error(t("common.notes.errors.failedToReorderNotes"));
+                  return false;
                 }
-                return success;
               }}
             />
             <ThreadActionButton
