@@ -91,7 +91,7 @@ export const getListUnsubscribeAction = ({
   const match = listUnsubscribe.match(/<([^>]+)>/);
 
   if (!match || !match[1]) {
-    // Some senders do not implement a spec-compliant list-unsubscribe header (e.g. Linear).
+    // NOTE: Some senders do not implement a spec-compliant list-unsubscribe header (e.g. Linear).
     // We can be a bit more lenient and try to parse the header as a URL, Gmail also does this.
     try {
       const url = new URL(listUnsubscribe);
@@ -110,6 +110,7 @@ export const getListUnsubscribeAction = ({
     }
   }
 
+  // NOTE: List-Unsubscribe can contain multiple URLs, but the spec says to process the first one we can.
   const url = new URL(match[1]);
 
   if (url.protocol.startsWith("http")) {
