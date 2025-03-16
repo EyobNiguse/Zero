@@ -1,4 +1,3 @@
-import type { MailManager } from "@/app/api/driver/types";
 import { EMAIL_HTML_TEMPLATE } from "./constants";
 import Color from "color";
 
