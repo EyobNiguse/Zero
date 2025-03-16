@@ -18,7 +18,6 @@ import { useEffect, useMemo, useState } from "react";
 import AttachmentDialog from "./attachment-dialog";
 import { useSummary } from "@/hooks/use-summary";
 import { TextShimmer } from "../ui/text-shimmer";
-import { unsubscribe } from "@/actions/mail";
 import { type ParsedMessage } from "@/types";
 import { Separator } from "../ui/separator";
 import { useTranslations } from "next-intl";
