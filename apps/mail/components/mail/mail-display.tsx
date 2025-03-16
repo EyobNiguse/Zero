@@ -137,6 +137,60 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
     });
   }, [emailData]);
 
+  const handleUnsubscribe = async () => {
+    if (!listUnsubscribeAction) return;
+
+    switch (listUnsubscribeAction.type) {
+      case "get":
+        window.open(listUnsubscribeAction.url, "_blank");
+        break;
+      case "post":
+        setIsUnsubscribing(true);
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            10000, // 10 seconds
+          );
+
+          await fetch(listUnsubscribeAction.url, {
+            mode: "no-cors",
+            method: "POST",
+            headers: {
+              "content-type": "application/x-www-form-urlencoded",
+            },
+            body: listUnsubscribeAction.body,
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          setIsUnsubscribing(false);
+          setUnsubscribed(true);
+        } catch {
+          setIsUnsubscribing(false);
+          toast.error(t("common.mailDisplay.failedToUnsubscribe"));
+        }
+        break;
+      case "email":
+        try {
+          setIsUnsubscribing(true);
+          await sendEmail({
+            to: listUnsubscribeAction.emailAddress,
+            subject: listUnsubscribeAction.subject,
+            message: "Zero sent this email to unsubscribe from this mailing list.",
+            attachments: [],
+          });
+          setIsUnsubscribing(false);
+          setUnsubscribed(true);
+        } catch {
+          setIsUnsubscribing(false);
+          toast.error(t("common.mailDisplay.failedToUnsubscribe"));
+        }
+        break;
+    }
+  };
+
   return (
     <div className={cn("relative flex-1 overflow-hidden")}>
       <div className="relative h-full overflow-y-auto">
@@ -197,60 +251,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                               <Button variant="outline">{t("common.mailDisplay.cancel")}</Button>
                             </DialogClose>
                             <DialogClose asChild>
-                              <Button
-                                onClick={async () => {
-                                  switch (listUnsubscribeAction.type) {
-                                    case "get":
-                                      window.open(listUnsubscribeAction.url, "_blank");
-                                      break;
-                                    case "post":
-                                      setIsUnsubscribing(true);
-                                      try {
-                                        const controller = new AbortController();
-                                        const timeoutId = setTimeout(
-                                          () => controller.abort(),
-                                          10000, // 10 seconds
-                                        );
-
-                                        await fetch(listUnsubscribeAction.url, {
-                                          mode: "no-cors",
-                                          method: "POST",
-                                          headers: {
-                                            "content-type": "application/x-www-form-urlencoded",
-                                          },
-                                          body: listUnsubscribeAction.body,
-                                          signal: controller.signal,
-                                        });
-
-                                        clearTimeout(timeoutId);
-
-                                        setIsUnsubscribing(false);
-                                        setUnsubscribed(true);
-                                      } catch {
-                                        setIsUnsubscribing(false);
-                                        toast.error(t("common.mailDisplay.failedToUnsubscribe"));
-                                      }
-                                      break;
-                                    case "email":
-                                      try {
-                                        setIsUnsubscribing(true);
-                                        await sendEmail({
-                                          to: listUnsubscribeAction.emailAddress,
-                                          subject: listUnsubscribeAction.subject,
-                                          message:
-                                            "Zero sent this email to unsubscribe from this mailing list.",
-                                          attachments: [],
-                                        });
-                                        setIsUnsubscribing(false);
-                                        setUnsubscribed(true);
-                                      } catch {
-                                        setIsUnsubscribing(false);
-                                        toast.error(t("common.mailDisplay.failedToUnsubscribe"));
-                                      }
-                                      break;
-                                  }
-                                }}
-                              >
+                              <Button onClick={handleUnsubscribe}>
                                 {listUnsubscribeAction.type === "get"
                                   ? t("common.mailDisplay.goToWebsite")
                                   : t("common.mailDisplay.unsubscribe")}
