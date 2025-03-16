@@ -3,7 +3,7 @@
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarProvider } from "../context/sidebar-context";
-import { VariantProps, cva } from "class-variance-authority";
+import { type VariantProps, cva } from "class-variance-authority";
 import { useSidebar } from "../context/sidebar-context";
 import { SIDEBAR_WIDTH_MOBILE } from "@/lib/constants";
 import { Separator } from "@/components/ui/separator";

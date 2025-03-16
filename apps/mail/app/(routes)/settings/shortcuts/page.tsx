@@ -2,10 +2,10 @@
 
 import { SettingsCard } from "@/components/settings/settings-card";
 import { keyboardShortcuts } from "@/config/shortcuts"; //import the shortcuts
-import { MessageKey } from "@/config/navigation";
+import type { MessageKey } from "@/config/navigation";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export default function ShortcutsPage() {
   const shortcuts = keyboardShortcuts; //now gets shortcuts from the config file

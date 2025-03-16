@@ -163,6 +163,8 @@ Zero uses PostgreSQL with Drizzle ORM. Here's how to work with it:
 - Use async/await for asynchronous operations
 - Properly handle errors and edge cases
 - Use proper TypeScript types and interfaces
+- Do not use the `any` type. We will enforce strict `"no-explicit-any"` in the future
+- Ensure all code passes type checking, as builds will check for types in the future
 
 ### React Guidelines
 

@@ -13,7 +13,7 @@ import {
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useOpenComposeModal } from "@/hooks/use-open-compose-modal";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { navigationConfig, NavItem } from "@/config/navigation";
+import { navigationConfig, type NavItem } from "@/config/navigation";
 import { useRouter, usePathname } from "next/navigation";
 import { keyboardShortcuts } from "@/config/shortcuts";
 import { ArrowUpRight } from "lucide-react";

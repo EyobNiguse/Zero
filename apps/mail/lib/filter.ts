@@ -12,7 +12,7 @@ import {
   Paperclip,
   CalendarIcon,
 } from "lucide-react";
-import { FilterSuggestion } from "./utils";
+import type { FilterSuggestion } from "./utils";
 import React from "react";
 
 export const filterSuggestions: FilterSuggestion[] = [

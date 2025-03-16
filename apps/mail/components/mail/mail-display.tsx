@@ -9,7 +9,7 @@ import { Separator } from "../ui/separator";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { MailIframe } from "./mail-iframe";
-import { ParsedMessage } from "@/types";
+import { type ParsedMessage } from "@/types";
 import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";

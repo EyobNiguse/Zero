@@ -1,5 +1,5 @@
+import { type Dispatch, type SetStateAction, useRef, useState, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dispatch, SetStateAction, useRef, useState, useEffect } from "react";
 import { UploadedFileIcon } from "@/components/create/uploaded-file-icon";
 import { ArrowUp, Paperclip, Reply, X, Plus } from "lucide-react";
 import { cleanEmailAddress, truncateFileName } from "@/lib/utils";
@@ -7,8 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import Editor from "@/components/create/editor";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
+import type { ParsedMessage } from "@/types";
 import { sendEmail } from "@/actions/send";
-import { ParsedMessage } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -44,7 +44,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       if (isFormValid) {
-        handleSendEmail(e as unknown as React.MouseEvent<HTMLButtonElement>);
+        void handleSendEmail(e as unknown as React.MouseEvent<HTMLButtonElement>);
       }
     }
   };
@@ -394,9 +394,9 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
             <Button
               size="sm"
               className="group relative h-8 w-9 overflow-hidden transition-all duration-200 hover:w-24"
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                handleSendEmail(e);
+                await handleSendEmail(e);
               }}
               disabled={!isFormValid}
               type="button"
