@@ -134,7 +134,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
       listUnsubscribe: emailData.listUnsubscribe,
       listUnsubscribePost: emailData.listUnsubscribePost,
     });
-  }, [emailData]);
+  }, [emailData?.listUnsubscribe, emailData?.listUnsubscribePost]);
 
   const handleUnsubscribe = async () => {
     if (!listUnsubscribeAction) return;
