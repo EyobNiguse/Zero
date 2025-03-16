@@ -226,6 +226,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                                             "Zero sent this email to unsubscribe from this mailing list.",
                                           attachments: [],
                                         });
+                                        setIsUnsubscribing(false);
                                         setUnsubscribed(true);
                                       } catch {
                                         setIsUnsubscribing(false);
