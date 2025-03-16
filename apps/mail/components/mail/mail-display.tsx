@@ -213,7 +213,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                           </span>
                           <div className="text-muted-foreground ml-3 flex items-center gap-1">
                             <Lock className="h-4 w-4 text-green-600" />{" "}
-                            {t("common.mailDisplay.standardEncryption")} (TLS)
+                            {t("common.mailDisplay.standardEncryption")}
                           </div>
                         </div>
                       </div>
