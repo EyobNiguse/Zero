@@ -9,7 +9,15 @@ import {
   DialogPortal,
   DialogClose,
 } from "../ui/dialog";
-import { BellOff, Check, ChevronDown, Download, ExternalLink, Lock } from "lucide-react";
+import {
+  BellOff,
+  Check,
+  ChevronDown,
+  Download,
+  ExternalLink,
+  LoaderCircleIcon,
+  Lock,
+} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getListUnsubscribeAction } from "@/lib/email-utils";
@@ -27,6 +35,7 @@ import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { toast } from "sonner";
 
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState("");
@@ -118,6 +127,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
   }, [index]);
 
   const [unsubscribed, setUnsubscribed] = useState(false);
+  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
 
   const listUnsubscribeAction = useMemo(() => {
     if (!emailData?.listUnsubscribe) return null;
@@ -158,8 +168,15 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                     {listUnsubscribeAction && (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button size="xs" variant="secondary" disabled={unsubscribed}>
+                          <Button
+                            size="xs"
+                            variant="secondary"
+                            disabled={unsubscribed || isUnsubscribing}
+                          >
                             {unsubscribed && <Check className="h-4 w-4" />}
+                            {isUnsubscribing && (
+                              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            )}
                             {unsubscribed
                               ? t("common.mailDisplay.unsubscribed")
                               : t("common.mailDisplay.unsubscribe")}
@@ -181,31 +198,46 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                             </DialogClose>
                             <DialogClose asChild>
                               <Button
-                                onClick={() => {
+                                onClick={async () => {
                                   switch (listUnsubscribeAction.type) {
                                     case "get":
                                       window.open(listUnsubscribeAction.url, "_blank");
                                       break;
                                     case "post":
-                                      fetch(listUnsubscribeAction.url, {
-                                        mode: "no-cors",
-                                        method: "POST",
-                                        headers: {
-                                          "content-type": "application/x-www-form-urlencoded",
-                                        },
-                                        body: listUnsubscribeAction.body,
-                                      });
-                                      setUnsubscribed(true);
+                                      setIsUnsubscribing(true);
+                                      try {
+                                        const res = await fetch(listUnsubscribeAction.url, {
+                                          method: "POST",
+                                          headers: {
+                                            "content-type": "application/x-www-form-urlencoded",
+                                          },
+                                          body: listUnsubscribeAction.body,
+                                        });
+                                        if (!res.ok) {
+                                          throw new Error("Unsubscribe failed");
+                                        }
+                                        setIsUnsubscribing(false);
+                                        setUnsubscribed(true);
+                                      } catch {
+                                        setIsUnsubscribing(false);
+                                        toast.error(t("common.mailDisplay.failedToUnsubscribe"));
+                                      }
                                       break;
                                     case "email":
-                                      sendEmail({
-                                        to: listUnsubscribeAction.emailAddress,
-                                        subject: listUnsubscribeAction.subject,
-                                        message:
-                                          "Zero sent this email to unsubscribe from this mailing list.",
-                                        attachments: [],
-                                      });
-                                      setUnsubscribed(true);
+                                      try {
+                                        setIsUnsubscribing(true);
+                                        await sendEmail({
+                                          to: listUnsubscribeAction.emailAddress,
+                                          subject: listUnsubscribeAction.subject,
+                                          message:
+                                            "Zero sent this email to unsubscribe from this mailing list.",
+                                          attachments: [],
+                                        });
+                                        setUnsubscribed(true);
+                                      } catch {
+                                        setIsUnsubscribing(false);
+                                        toast.error(t("common.mailDisplay.failedToUnsubscribe"));
+                                      }
                                       break;
                                   }
                                 }}

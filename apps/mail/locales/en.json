@@ -107,7 +107,8 @@
       "unsubscribeDescription": "Are you sure you want to unsubscribe from this mailing list?",
       "unsubscribeOpenSiteDescription": "To stop getting messages from this mailing list, go to their website to unsubscribe.",
       "cancel": "Cancel",
-      "goToWebsite": "Go to website"
+      "goToWebsite": "Go to website",
+      "failedToUnsubscribe": "Failed to unsubscribe from mailing list"
     },
     "threadDisplay": {
       "exitFullscreen": "Exit fullscreen",
