@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogFooter,
   DialogHeader,
-  DialogPortal,
   DialogClose,
 } from "../ui/dialog";
 import {
