@@ -161,22 +161,24 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                         <DialogTrigger asChild>
                           <Button size="xs" variant="secondary" disabled={unsubscribed}>
                             {unsubscribed && <Check className="h-4 w-4" />}
-                            {unsubscribed ? "Unsubscribed" : "Unsubscribe"}
+                            {unsubscribed
+                              ? t("common.mailDisplay.unsubscribed")
+                              : t("common.mailDisplay.unsubscribe")}
                           </Button>
                         </DialogTrigger>
 
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Unsubscribe</DialogTitle>
+                            <DialogTitle>{t("common.mailDisplay.unsubscribe")}</DialogTitle>
                             <DialogDescription className="break-words">
                               {listUnsubscribeAction.type === "get"
-                                ? "To stop getting messages from this mailing list, go to their website to unsubscribe."
-                                : "Are you sure you want to unsubscribe from this mailing list?"}
+                                ? t("common.mailDisplay.unsubscribeOpenSiteDescription")
+                                : t("common.mailDisplay.unsubscribeDescription")}
                             </DialogDescription>
                           </DialogHeader>
                           <DialogFooter className="gap-2">
                             <DialogClose asChild>
-                              <Button variant="outline">Cancel</Button>
+                              <Button variant="outline">{t("common.mailDisplay.cancel")}</Button>
                             </DialogClose>
                             <DialogClose asChild>
                               <Button
@@ -210,8 +212,8 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                                 }}
                               >
                                 {listUnsubscribeAction.type === "get"
-                                  ? "Go to website"
-                                  : "Unsubscribe"}
+                                  ? t("common.mailDisplay.goToWebsite")
+                                  : t("common.mailDisplay.unsubscribe")}
                               </Button>
                             </DialogClose>
                           </DialogFooter>

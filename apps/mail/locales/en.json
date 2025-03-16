@@ -101,7 +101,13 @@
       "signedBy": "Signed-By",
       "security": "Security",
       "standardEncryption": "Standard encryption (TLS)",
-      "loadingMailContent": "Loading mail content..."
+      "loadingMailContent": "Loading mail content...",
+      "unsubscribe": "Unsubscribe",
+      "unsubscribed": "Unsubscribed",
+      "unsubscribeDescription": "Are you sure you want to unsubscribe from this mailing list?",
+      "unsubscribeOpenSiteDescription": "To stop getting messages from this mailing list, go to their website to unsubscribe.",
+      "cancel": "Cancel",
+      "goToWebsite": "Go to website"
     },
     "threadDisplay": {
       "exitFullscreen": "Exit fullscreen",
