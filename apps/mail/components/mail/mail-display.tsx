@@ -205,24 +205,16 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                                       break;
                                     case "post":
                                       setIsUnsubscribing(true);
-                                      try {
-                                        const res = await fetch(listUnsubscribeAction.url, {
-                                          mode: "no-cors",
-                                          method: "POST",
-                                          headers: {
-                                            "content-type": "application/x-www-form-urlencoded",
-                                          },
-                                          body: listUnsubscribeAction.body,
-                                        });
-                                        if (!res.ok) {
-                                          throw new Error("Unsubscribe failed");
-                                        }
-                                        setIsUnsubscribing(false);
-                                        setUnsubscribed(true);
-                                      } catch {
-                                        setIsUnsubscribing(false);
-                                        toast.error(t("common.mailDisplay.failedToUnsubscribe"));
-                                      }
+                                      await fetch(listUnsubscribeAction.url, {
+                                        mode: "no-cors",
+                                        method: "POST",
+                                        headers: {
+                                          "content-type": "application/x-www-form-urlencoded",
+                                        },
+                                        body: listUnsubscribeAction.body,
+                                      });
+                                      setIsUnsubscribing(false);
+                                      setUnsubscribed(true);
                                       break;
                                     case "email":
                                       try {
