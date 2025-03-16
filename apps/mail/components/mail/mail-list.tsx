@@ -61,25 +61,24 @@ const highlightText = (text: string, highlight: string) => {
 const Thread = memo(
   ({ message, selectMode, demo, onClick, sessionData }: ConditionalThreadProps) => {
     const [mail] = useMail();
-    // const { data: session } = useSession();
+    const { hasNotes } = useNotes();
+    const [searchValue] = useSearchValue();
+    const t = useTranslations();
+    const format = useFormatter();
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
-    const { hasNotes } = useNotes();
-  const [searchValue] = useSearchValue();
-  const t = useTranslations();
-  const format = useFormatter();
 
     const threadHasNotes = !demo && hasNotes(message.threadId ?? message.id);
-  const isMailSelected = message.id === mail.selected;
+    const isMailSelected = message.id === mail.selected;
     const isMailBulkSelected = mail.bulkSelected.includes(message.id);
     
-  const threadLabels = [...(message.tags || [])];
-  if (threadHasNotes) {
-    threadLabels.push("notes");
-  }
+    const threadLabels = [...(message.tags || [])];
+    if (threadHasNotes) {
+      threadLabels.push("notes");
+    }
 
-  const handleMouseEnter = () => {
+    const handleMouseEnter = () => {
       if (demo) return;
       isHovering.current = true;
 
@@ -372,9 +371,22 @@ export function MailList({ isCompact }: MailListProps) {
     });
   });
 
-  useHotKey("Meta+a", async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
+  // useHotKey("Meta+Shift+j", async () => {
+  //   resetSelectMode();
+  //   const res = await markAsJunk({ ids: mail.bulkSelected });
+  //   if (res.success) toast.success("Marked as junk");
+  //   else toast.error("Failed to mark as junk");
+  // });
+
+  // useHotKey("Control+Shift+j", async () => {
+  //   resetSelectMode();
+  //   const res = await markAsJunk({ ids: mail.bulkSelected });
+  //   if (res.success) toast.success("Marked as junk");
+  //   else toast.error("Failed to mark as junk");
+  // });
+
+  useHotKey("Meta+a", (event) => {
+    event?.preventDefault();
     resetSelectMode();
     selectAll();
   });

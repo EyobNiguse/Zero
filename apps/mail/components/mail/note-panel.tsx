@@ -47,9 +47,8 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
+  type DragEndEvent,
+  type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
