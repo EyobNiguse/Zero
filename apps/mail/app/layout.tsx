@@ -1,6 +1,7 @@
 import { getLocale, getMessages } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { ReactScan } from "@/components/react-scan";
 import { NextIntlClientProvider } from "next-intl";
 import { siteConfig } from "@/lib/site-config";
 import { Toast } from "@/components/ui/toast";
@@ -30,6 +31,7 @@ export default async function RootLayout({
   const messages = await getMessages();
   return (
     <html lang={locale} suppressHydrationWarning>
+      <ReactScan />
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>
         <Providers attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <NextIntlClientProvider messages={messages}>
