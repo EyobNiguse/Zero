@@ -9,8 +9,8 @@ import { Toast } from '@/components/ui/toast';
 import { Providers } from '@/lib/providers';
 import { headers } from 'next/headers';
 import { cn } from '@/lib/utils';
-import './globals.css';
 import Head from 'next/head';
+import './globals.css';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
