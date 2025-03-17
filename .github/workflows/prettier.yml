@@ -16,7 +16,7 @@ jobs:
           bun-version: latest
       - uses: actions/setup-node@v4
       - run: |
-          bun
+          bun install
           bun run format
       - uses: autofix-ci/action@v1
         with:
