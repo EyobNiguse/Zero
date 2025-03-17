@@ -133,8 +133,8 @@ export const getListUnsubscribeAction = ({
 };
 
 const FALLBACK_SENDER = {
-  name: "Unknown",
-  email: "unknown"
+  name: "No Sender Name",
+  email: "no-sender@unknown"
 }
 
 export const parseFrom = (fromHeader: string) => {
@@ -149,11 +149,11 @@ export const parseFrom = (fromHeader: string) => {
   const name = firstSender.name || FALLBACK_SENDER.name;
 
   if (firstSender.type === "group") {
-    const email = firstSender.addresses[0]?.address || FALLBACK_SENDER.email
+    const email = firstSender.addresses?.length ? (firstSender.addresses[0]?.address || FALLBACK_SENDER.email) : FALLBACK_SENDER.email;
     return {name, email}
   }
 
-  const email = firstSender.address
+  const email = firstSender.address || FALLBACK_SENDER.email;
 
   return {name, email}
 }
