@@ -82,7 +82,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						)}
 					</AnimatePresence>
 				</SidebarHeader>
-				<SidebarContent className="py-0 pt-0">
+				<SidebarContent className="overflow-x-hidden py-0 pt-0">
 					<AnimatePresence mode="wait">
 						<motion.div
 							key={currentSection}
