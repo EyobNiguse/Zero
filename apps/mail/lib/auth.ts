@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { connection, user as _user, account } from "@zero/db/schema";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { betterAuth, BetterAuthOptions } from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { customSession } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
