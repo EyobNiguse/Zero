@@ -68,17 +68,6 @@ const AttachmentDialog = ({ selectedAttachment, setSelectedAttachment }: Props) 
                   "📎"}
               </div>
               <p className="text-muted-foreground">Preview not available</p>
-              <Button variant="outline" size="sm" className="mt-4" asChild>
-                <a
-                  href={selectedAttachment?.url}
-                  download
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Download className="mr-1 h-4 w-4" />
-                  Download File
-                </a>
-              </Button>
             </div>
           )}
         </div>
