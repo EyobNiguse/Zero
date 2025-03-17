@@ -1,5 +1,5 @@
 "use server";
-import { COOKIE_CONSENT_KEY, typeCookieCategory, CookiePreferences } from "@/lib/cookies";
+import { COOKIE_CONSENT_KEY, CookieCategory, CookiePreferences } from "@/lib/cookies";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
