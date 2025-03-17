@@ -299,7 +299,11 @@ export function NotesPanel({
 
 	const handleAddNote = async () => {
 		if (newNoteContent.trim()) {
-			await onAddNote(threadId, newNoteContent, selectedColor !== 'default' ? selectedColor : undefined);
+			await onAddNote(
+				threadId,
+				newNoteContent,
+				selectedColor !== 'default' ? selectedColor : undefined,
+			);
 			toast.success(t('common.notes.noteUpdated'));
 			setNewNoteContent('');
 			setIsAddingNewNote(false);
@@ -779,11 +783,7 @@ export function NotesPanel({
 										>
 											{t('common.notes.cancel')}
 										</Button>
-										<Button
-											variant="default"
-											size="sm"
-											onClick={() => void handleEditNote()}
-										>
+										<Button variant="default" size="sm" onClick={() => void handleEditNote()}>
 											{t('common.actions.saveChanges')}
 										</Button>
 									</div>

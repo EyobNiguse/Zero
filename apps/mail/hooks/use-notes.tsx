@@ -6,11 +6,11 @@ import {
 	deleteNote as deleteNoteAction,
 	reorderNotes as reorderNotesAction,
 } from '@/actions/notes';
-import { useCallback } from 'react';
 import type { Note } from '@/app/api/notes/types';
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 import useSWR, { mutate } from 'swr';
+import { useCallback } from 'react';
+import { toast } from 'sonner';
 
 export type { Note };
 
@@ -18,23 +18,25 @@ const THREAD_NOTES_KEY = (threadId: string) => `thread-notes-${threadId}`;
 
 export function useNotes() {
 	const t = useTranslations();
-	
-	const { data: notes = [], error, isLoading, mutate: refreshNotes } = useSWR<Note[]>(
-		'notes',
-		async () => {
-			try {
-				const result = await fetchNotes();
-				if (!result.success) {
-					throw new Error(result.error || 'Failed to fetch notes');
-				}
-				return result.data || [];
-			} catch (err: any) {
-				console.error('Error fetching notes:', err);
-				toast.error(t('common.notes.errors.failedToLoadNotes'));
-				throw err;
+
+	const {
+		data: notes = [],
+		error,
+		isLoading,
+		mutate: refreshNotes,
+	} = useSWR<Note[]>('notes', async () => {
+		try {
+			const result = await fetchNotes();
+			if (!result.success) {
+				throw new Error(result.error || 'Failed to fetch notes');
 			}
+			return result.data || [];
+		} catch (err: any) {
+			console.error('Error fetching notes:', err);
+			toast.error(t('common.notes.errors.failedToLoadNotes'));
+			throw err;
 		}
-	);
+	});
 
 	const getNotesForThread = useCallback(
 		async (threadId: string) => {
@@ -77,7 +79,7 @@ export function useNotes() {
 
 				const newNote = result.data;
 				if (newNote) {
-					await refreshNotes(prev => [...(prev || []), newNote], { revalidate: false });
+					await refreshNotes((prev) => [...(prev || []), newNote], { revalidate: false });
 					mutate(THREAD_NOTES_KEY(threadId));
 					toast.success(t('common.notes.noteAdded'));
 				}
@@ -102,9 +104,9 @@ export function useNotes() {
 
 				const updatedNote = result.data;
 				if (updatedNote) {
-					await refreshNotes(prev => 
-						(prev || []).map(note => (note.id === noteId ? updatedNote : note)),
-						{ revalidate: false }
+					await refreshNotes(
+						(prev) => (prev || []).map((note) => (note.id === noteId ? updatedNote : note)),
+						{ revalidate: false },
 					);
 					if (updatedNote.threadId) {
 						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
@@ -124,7 +126,7 @@ export function useNotes() {
 	const deleteNote = useCallback(
 		async (noteId: string) => {
 			try {
-				const noteToDelete = notes.find(note => note.id === noteId);
+				const noteToDelete = notes.find((note) => note.id === noteId);
 				const threadId = noteToDelete?.threadId;
 
 				const result = await deleteNoteAction(noteId);
@@ -133,15 +135,14 @@ export function useNotes() {
 					throw new Error(result.error || 'Failed to delete note');
 				}
 
-				await refreshNotes(prev => 
-					(prev || []).filter(note => note.id !== noteId),
-					{ revalidate: false }
-				);
-				
+				await refreshNotes((prev) => (prev || []).filter((note) => note.id !== noteId), {
+					revalidate: false,
+				});
+
 				if (threadId) {
 					mutate(THREAD_NOTES_KEY(threadId));
 				}
-				
+
 				toast.success(t('common.notes.noteDeleted'));
 				return true;
 			} catch (err: any) {
@@ -169,15 +170,15 @@ export function useNotes() {
 
 				const updatedNote = result.data;
 				if (updatedNote) {
-					await refreshNotes(prev => 
-						(prev || []).map(note => (note.id === noteId ? updatedNote : note)),
-						{ revalidate: false }
+					await refreshNotes(
+						(prev) => (prev || []).map((note) => (note.id === noteId ? updatedNote : note)),
+						{ revalidate: false },
 					);
-					
+
 					if (updatedNote.threadId) {
 						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
 					}
-					
+
 					const pinStatus = updatedNote.isPinned
 						? t('common.notes.notePinned')
 						: t('common.notes.noteUnpinned');
@@ -204,11 +205,11 @@ export function useNotes() {
 
 				const updatedNote = result.data;
 				if (updatedNote) {
-					await refreshNotes(prev => 
-						(prev || []).map(note => (note.id === noteId ? updatedNote : note)),
-						{ revalidate: false }
+					await refreshNotes(
+						(prev) => (prev || []).map((note) => (note.id === noteId ? updatedNote : note)),
+						{ revalidate: false },
 					);
-					
+
 					if (updatedNote.threadId) {
 						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
 					}
@@ -251,26 +252,29 @@ export function useNotes() {
 					reorderedNotes = validNotes;
 				}
 
-				await refreshNotes((prev) => {
-					const updatedNotes = [...(prev || [])];
-					reorderedNotes.forEach(({ id, order, isPinned }) => {
-						const index = updatedNotes.findIndex((note) => note.id === id);
-						if (index !== -1) {
-							const currentNote = updatedNotes[index];
-							if (currentNote) {
-								updatedNotes[index] = {
-									...currentNote,
-									order,
-									isPinned: isPinned !== undefined ? isPinned : currentNote.isPinned,
-								};
+				await refreshNotes(
+					(prev) => {
+						const updatedNotes = [...(prev || [])];
+						reorderedNotes.forEach(({ id, order, isPinned }) => {
+							const index = updatedNotes.findIndex((note) => note.id === id);
+							if (index !== -1) {
+								const currentNote = updatedNotes[index];
+								if (currentNote) {
+									updatedNotes[index] = {
+										...currentNote,
+										order,
+										isPinned: isPinned !== undefined ? isPinned : currentNote.isPinned,
+									};
+								}
 							}
-						}
-					});
-					return [...updatedNotes].sort((a, b) => {
-						if (!!a.isPinned !== !!b.isPinned) return a.isPinned ? -1 : 1;
-						return a.order - b.order;
-					});
-				}, { revalidate: false });
+						});
+						return [...updatedNotes].sort((a, b) => {
+							if (!!a.isPinned !== !!b.isPinned) return a.isPinned ? -1 : 1;
+							return a.order - b.order;
+						});
+					},
+					{ revalidate: false },
+				);
 
 				console.log('Sending reorder request to server:', reorderedNotes);
 				const result = await reorderNotesAction(reorderedNotes);
@@ -280,13 +284,13 @@ export function useNotes() {
 				}
 
 				const threadIds = new Set<string>();
-				notes.forEach(note => {
-					if (note.threadId && reorderedNotes.some(r => r.id === note.id)) {
+				notes.forEach((note) => {
+					if (note.threadId && reorderedNotes.some((r) => r.id === note.id)) {
 						threadIds.add(note.threadId);
 					}
 				});
-				
-				threadIds.forEach(threadId => {
+
+				threadIds.forEach((threadId) => {
 					mutate(THREAD_NOTES_KEY(threadId));
 				});
 

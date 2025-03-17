@@ -72,11 +72,11 @@ const Thread = memo(
 		const threadHasNotes = useMemo(() => {
 			return !demo && hasNotes(message.threadId ?? message.id);
 		}, [demo, hasNotes, message.threadId, message.id]);
-		
+
 		const isMailSelected = useMemo(() => {
 			return message.id === mail.selected;
 		}, [message.id, mail.selected]);
-		
+
 		const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 
 		const threadLabels = useMemo(() => {
