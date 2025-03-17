@@ -7,7 +7,13 @@ jobs:
   prettier:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code 🛎
+        uses: actions/checkout@v4
+
+      - name: Setup Bun 🌟
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
       - uses: actions/setup-node@v4
       - run: |
           bun
