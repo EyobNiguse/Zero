@@ -1,5 +1,6 @@
 import { EMAIL_HTML_TEMPLATE } from "./constants";
 import Color from "color";
+import {parseFrom as _parseFrom} from "email-addresses"
 
 export const template = (html: string) => {
   if (typeof DOMParser === "undefined") return html;
@@ -130,3 +131,29 @@ export const getListUnsubscribeAction = ({
 
   return null;
 };
+
+const FALLBACK_SENDER = {
+  name: "Unknown",
+  email: "unknown"
+}
+
+export const parseFrom = (fromHeader: string) => {
+  const parsedSender = _parseFrom(fromHeader)
+  if (!parsedSender) return FALLBACK_SENDER
+
+  // Technically the "From" header can include multiple email addresses according to
+  // RFC 2822, but this isn't used in practice. So we only show the first.
+  const firstSender = parsedSender[0]
+  if (!firstSender) return FALLBACK_SENDER
+
+  const name = firstSender.name || FALLBACK_SENDER.name;
+
+  if (firstSender.type === "group") {
+    const email = firstSender.addresses[0]?.address || FALLBACK_SENDER.email
+    return {name, email}
+  }
+
+  const email = firstSender.address
+
+  return {name, email}
+}
