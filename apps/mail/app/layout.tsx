@@ -10,6 +10,7 @@ import { Providers } from '@/lib/providers';
 import { headers } from 'next/headers';
 import { cn } from '@/lib/utils';
 import './globals.css';
+import Head from 'next/head';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -36,13 +37,13 @@ export default async function RootLayout({
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
-			<head>
+			<Head>
 				<meta name="x-user-country" content={(await headers()).get('x-user-country') || ''} />
 				<meta
 					name="x-user-eu-region"
 					content={(await headers()).get('x-user-eu-region') || 'false'}
 				/>
-			</head>
+			</Head>
 			<body className={cn(geistSans.variable, geistMono.variable, 'antialiased')}>
 				<Providers attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
 					<NextIntlClientProvider messages={messages}>
