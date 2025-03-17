@@ -1,16 +1,6 @@
 'use client';
 
 import {
-	EditorCommand,
-	EditorCommandEmpty,
-	EditorCommandItem,
-	EditorCommandList,
-	EditorContent,
-	EditorRoot,
-	useEditor,
-	type JSONContent,
-} from 'novel';
-import {
 	Bold,
 	Italic,
 	Strikethrough,
@@ -22,7 +12,19 @@ import {
 	Heading1,
 	Heading2,
 	Heading3,
+	Paperclip,
+	Plus,
 } from 'lucide-react';
+import {
+	EditorCommand,
+	EditorCommandEmpty,
+	EditorCommandItem,
+	EditorCommandList,
+	EditorContent,
+	EditorRoot,
+	useEditor,
+	type JSONContent,
+} from 'novel';
 import {
 	Dialog,
 	DialogContent,
@@ -32,6 +34,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { AnyExtension, Editor as TiptapEditor, useCurrentEditor } from '@tiptap/react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TextButtons } from '@/components/create/selectors/text-buttons';
 import { suggestionItems } from '@/components/create/slash-command';
 import { defaultExtensions } from '@/components/create/extensions';
@@ -39,13 +42,18 @@ import { ImageResizer, handleCommandNavigation } from 'novel';
 import { uploadFn } from '@/components/create/image-upload';
 import { handleImageDrop, handleImagePaste } from 'novel';
 import EditorMenu from '@/components/create/editor-menu';
+import { UploadedFileIcon } from './uploaded-file-icon';
+import { Separator } from '@/components/ui/separator';
+import { cn, truncateFileName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Markdown } from 'tiptap-markdown';
 import { useReducer, useRef } from 'react';
 import { useState } from 'react';
+import React from 'react';
 
-const extensions: AnyExtension[] = [...defaultExtensions, Markdown];
+// Fix the extensions type error by using a type assertion
+const extensions = [...defaultExtensions, Markdown] as any[];
 
 export const defaultEditorContent = {
 	type: 'doc',
@@ -64,6 +72,8 @@ interface EditorProps {
 	onFocus?: () => void;
 	onBlur?: () => void;
 	className?: string;
+	onCommandEnter?: () => void;
+	onAttachmentsChange?: (attachments: File[]) => void;
 }
 
 interface EditorState {
@@ -95,10 +105,15 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
 }
 
 // Update the MenuBar component with icons
-const MenuBar = () => {
+const MenuBar = ({
+	onAttachmentsChange,
+}: {
+	onAttachmentsChange?: (attachments: File[]) => void;
+}) => {
 	const { editor } = useCurrentEditor();
 	const [linkDialogOpen, setLinkDialogOpen] = useState(false);
 	const [linkUrl, setLinkUrl] = useState('');
+	const [attachments, setAttachments] = useState<File[]>([]);
 
 	if (!editor) {
 		return null;
@@ -137,6 +152,34 @@ const MenuBar = () => {
 		setLinkDialogOpen(false);
 	};
 
+	const handleAttachment = (files: FileList) => {
+		const newAttachments = [...attachments, ...Array.from(files)];
+		setAttachments(newAttachments);
+		onAttachmentsChange?.(newAttachments);
+	};
+
+	const handleAttachmentClick = () => {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.multiple = true;
+		input.accept = '*/*';
+
+		input.onchange = (e) => {
+			const files = (e.target as HTMLInputElement).files;
+			if (files && files.length > 0) {
+				handleAttachment(files);
+			}
+		};
+
+		input.click();
+	};
+
+	const removeAttachment = (index: number) => {
+		const newAttachments = attachments.filter((_, i) => i !== index);
+		setAttachments(newAttachments);
+		onAttachmentsChange?.(newAttachments);
+	};
+
 	return (
 		<>
 			<div className="control-group mb-2 overflow-x-auto">
@@ -165,6 +208,7 @@ const MenuBar = () => {
 						</button>
 					</div>
 
+					<Separator orientation="vertical" className="relative right-1 top-0.5 h-6" />
 					<div className="mr-2 flex items-center gap-1">
 						<button
 							onClick={() => editor.chain().focus().toggleBold().run()}
@@ -206,6 +250,8 @@ const MenuBar = () => {
 						</button>
 					</div>
 
+					<Separator orientation="vertical" className="relative right-1 top-0.5 h-6" />
+
 					<div className="flex items-center gap-1">
 						<button
 							onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -221,6 +267,70 @@ const MenuBar = () => {
 						>
 							<ListOrdered className="h-4 w-4" />
 						</button>
+
+						{attachments.length > 0 ? (
+							<Popover>
+								<PopoverTrigger asChild>
+									<button
+										className="hover:bg-muted bg-background relative rounded p-1.5"
+										title="View Attachments"
+									>
+										<Paperclip className="h-4 w-4" />
+										<span className="absolute -right-1 -top-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#016FFE] text-[10px] text-white">
+											{attachments.length}
+										</span>
+									</button>
+								</PopoverTrigger>
+								<PopoverContent className="w-80 touch-auto" align="end">
+									<div className="space-y-2">
+										<div className="flex items-center justify-between px-1">
+											<h4 className="font-medium leading-none">
+												Attachments ({attachments.length})
+											</h4>
+											<button
+												onClick={handleAttachmentClick}
+												className="hover:bg-muted bg-background text-muted-foreground rounded px-2 py-1 text-xs"
+											>
+												Add more
+											</button>
+										</div>
+										<Separator />
+										<div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
+											<div className="grid grid-cols-2 gap-2">
+												{attachments.map((file, index) => (
+													<div
+														key={index}
+														className="group relative overflow-hidden rounded-md border"
+													>
+														<UploadedFileIcon
+															removeAttachment={removeAttachment}
+															index={index}
+															file={file}
+														/>
+														<div className="bg-muted/10 p-2">
+															<p className="text-xs font-medium">
+																{truncateFileName(file.name, 20)}
+															</p>
+															<p className="text-muted-foreground text-xs">
+																{(file.size / (1024 * 1024)).toFixed(2)} MB
+															</p>
+														</div>
+													</div>
+												))}
+											</div>
+										</div>
+									</div>
+								</PopoverContent>
+							</Popover>
+						) : (
+							<button
+								onClick={handleAttachmentClick}
+								className="hover:bg-muted bg-background rounded p-1.5"
+								title="Attach Files"
+							>
+								<Paperclip className="h-4 w-4" />
+							</button>
+						)}
 					</div>
 				</div>
 			</div>
@@ -267,6 +377,8 @@ export default function Editor({
 	onFocus,
 	onBlur,
 	className,
+	onCommandEnter,
+	onAttachmentsChange,
 }: EditorProps) {
 	const [state, dispatch] = useReducer(editorReducer, {
 		openNode: false,
@@ -291,6 +403,71 @@ export default function Editor({
 		}
 	};
 
+	// Toggle AI menu
+	const toggleAIMenu = () => {
+		dispatch({ type: 'TOGGLE_AI', payload: !openAI });
+	};
+
+	// Function to clear editor content
+	const clearEditorContent = React.useCallback(() => {
+		if (editorRef.current) {
+			editorRef.current.commands.clearContent(true);
+			// Also update our reference and notify parent
+			contentRef.current = '';
+			onChange('');
+		}
+	}, [onChange]);
+
+	// Reset editor content when initialValue changes
+	React.useEffect(() => {
+		// We need to make sure both the editor reference exists AND initialValue is provided
+		if (editorRef.current && initialValue) {
+			try {
+				// Make sure the editor is ready before setting content
+				setTimeout(() => {
+					// Double-check that the editor still exists in case of unmounting
+					if (editorRef.current?.commands?.setContent) {
+						editorRef.current.commands.setContent(initialValue);
+
+						// Important: after setting content, manually trigger an update
+						// to ensure the parent component gets the latest content
+						const html = editorRef.current.getHTML();
+						contentRef.current = html;
+						onChange(html);
+					}
+				}, 0);
+			} catch (error) {
+				console.error('Error setting editor content:', error);
+			}
+		}
+	}, [initialValue, onChange]);
+
+	// Fix useImperativeHandle type errors
+	React.useImperativeHandle(editorRef, () => {
+		// Only extend the current editor if it exists
+		if (!editorRef.current) {
+			return {} as TiptapEditor;
+		}
+		// Otherwise return the editor with our additional methods
+		return {
+			...editorRef.current,
+			clearContent: clearEditorContent,
+		} as TiptapEditor;
+	}, [clearEditorContent]);
+
+	// Handle command+enter or ctrl+enter
+	const handleCommandEnter = React.useCallback(() => {
+		// Call the parent's onCommandEnter
+		onCommandEnter?.();
+
+		// Clear the editor content after sending
+		setTimeout(() => {
+			if (editorRef.current?.commands?.clearContent) {
+				clearEditorContent();
+			}
+		}, 200);
+	}, [onCommandEnter, clearEditorContent]);
+
 	return (
 		<div
 			className={`relative w-full max-w-[450px] sm:max-w-[600px] ${className || ''}`}
@@ -299,6 +476,13 @@ export default function Editor({
 				// Prevent form submission on Enter key
 				if (e.key === 'Enter' && !e.shiftKey) {
 					e.stopPropagation();
+				}
+
+				// Handle Command+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+				if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+					e.preventDefault();
+					e.stopPropagation();
+					handleCommandEnter();
 				}
 			}}
 		>
@@ -311,7 +495,15 @@ export default function Editor({
 					className="min-h-96 cursor-text"
 					editorProps={{
 						handleDOMEvents: {
-							keydown: (_view, event) => handleCommandNavigation(event),
+							keydown: (view, event) => {
+								// Handle Command+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+								if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+									event.preventDefault();
+									handleCommandEnter();
+									return true;
+								}
+								return handleCommandNavigation(event);
+							},
 							focus: () => {
 								onFocus?.();
 								return false;
@@ -338,7 +530,7 @@ export default function Editor({
 						contentRef.current = editor.getHTML();
 						onChange(editor.getHTML());
 					}}
-					slotBefore={<MenuBar />}
+					slotBefore={<MenuBar onAttachmentsChange={onAttachmentsChange} />}
 					slotAfter={<ImageResizer />}
 				>
 					{/* Make sure the command palette doesn't cause a refresh */}
@@ -385,7 +577,8 @@ export default function Editor({
 						open={openAI}
 						onOpenChange={(open) => dispatch({ type: 'TOGGLE_AI', payload: open })}
 					>
-						<TextButtons />
+						{/* Empty children to satisfy the type requirement */}
+						<div></div>
 					</EditorMenu>
 				</EditorContent>
 			</EditorRoot>
