@@ -200,7 +200,7 @@ function NavItem(item: NavItemProps & { href: string }) {
 
 	const buttonContent = (
 		<SidebarMenuButton
-			tooltip={item.title}
+			tooltip={t(item.title as MessageKey)}
 			className={cn(
 				'hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center',
 				item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-subtleBlack',
