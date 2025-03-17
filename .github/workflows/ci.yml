@@ -18,6 +18,7 @@ jobs:
       - run: |
           bun install
           bun run format
+          bun run lint
       - uses: autofix-ci/action@v1
         with:
           commit-message: "Apply Prettier format"
