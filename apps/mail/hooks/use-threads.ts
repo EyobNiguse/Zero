@@ -2,16 +2,16 @@
 
 "use client";
 
-import { InitialThread, ParsedMessage } from "@/types";
+import type { InitialThread, ParsedMessage } from "@/types";
 import { getMail, getMails } from "@/actions/mail";
 import { useSession } from "@/lib/auth-client";
 import useSWRInfinite from "swr/infinite";
 import useSWR, { preload } from "swr";
 import { useMemo } from "react";
 
-export const preloadThread = (userId: string, threadId: string, connectionId: string) => {
+export const preloadThread = async (userId: string, threadId: string, connectionId: string) => {
   console.log(`🔄 Prefetching email ${threadId}...`);
-  preload([userId, threadId, connectionId], fetchThread);
+  await preload([userId, threadId, connectionId], fetchThread);
 };
 
 type FetchEmailsTuple = [
@@ -30,14 +30,24 @@ const fetchEmails = async ([
   labelIds,
   pageToken,
 ]: FetchEmailsTuple): Promise<RawResponse> => {
-  const data = await getMails({ folder, q, max, labelIds, pageToken });
-  return data as RawResponse;
+  try {
+    const data = await getMails({ folder, q, max, labelIds, pageToken });
+    return data as RawResponse;
+  } catch (error) {
+    console.error("Error fetching emails:", error);
+    throw error;
+  }
 };
 
 const fetchThread = async (args: any[]) => {
   const [_, id] = args;
-  const data = await getMail({ id });
-  return data;
+  try {
+    const data = await getMail({ id });
+    return data;
+  } catch (error) {
+    console.error("Error fetching email:", error);
+    throw error;
+  }
 };
 
 // Based on gmail
@@ -78,9 +88,9 @@ export const useThreads = (folder: string, labelIds?: string[], query?: string, 
   const threads = data ? data.flatMap((e) => e.threads) : [];
   const isEmpty = data?.[0]?.threads.length === 0;
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
-  const loadMore = () => {
+  const loadMore = async () => {
     if (isLoading || isValidating) return;
-    setSize(size + 1);
+    await setSize(size + 1);
   };
 
   return {
