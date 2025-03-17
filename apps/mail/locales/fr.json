@@ -102,7 +102,7 @@
       "security": "Sécurité",
       "standardEncryption": "Chiffrement standard (TLS)",
       "loadingMailContent": "Chargement du contenu de l'email...",
-      "unsubscribe": "Unsubscribe",
+      "unsubscribe": "Se désabonner",
       "unsubscribed": "Unsubscribed",
       "unsubscribeDescription": "Are you sure you want to unsubscribe from this mailing list?",
       "unsubscribeOpenSiteDescription": "To stop getting messages from this mailing list, go to their website to unsubscribe.",
