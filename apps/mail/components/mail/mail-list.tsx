@@ -61,7 +61,7 @@ const highlightText = (text: string, highlight: string) => {
 const Thread = memo(
 	({ message, selectMode, demo, onClick, sessionData }: ConditionalThreadProps) => {
 		const [mail] = useMail();
-		const { hasNotes } = useNotes();
+		const { hasNotes } = demo ? {hasNotes: false} : useNotes();
 		const [searchValue] = useSearchValue();
 		const t = useTranslations();
 		const format = useFormatter();

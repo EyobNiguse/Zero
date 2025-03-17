@@ -45,7 +45,7 @@ export function useNotes() {
 				if (!result.success) {
 					throw new Error(result.error || 'Failed to fetch thread notes');
 				}
-				mutate(THREAD_NOTES_KEY(threadId), result.data || []);
+				await mutate(THREAD_NOTES_KEY(threadId), result.data || []);
 				return result.data || [];
 			} catch (err: any) {
 				console.error('Error fetching thread notes:', err);
@@ -80,7 +80,7 @@ export function useNotes() {
 				const newNote = result.data;
 				if (newNote) {
 					await refreshNotes((prev) => [...(prev || []), newNote], { revalidate: false });
-					mutate(THREAD_NOTES_KEY(threadId));
+					await mutate(THREAD_NOTES_KEY(threadId));
 					toast.success(t('common.notes.noteAdded'));
 				}
 				return newNote || null;
@@ -109,7 +109,7 @@ export function useNotes() {
 						{ revalidate: false },
 					);
 					if (updatedNote.threadId) {
-						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
+						await mutate(THREAD_NOTES_KEY(updatedNote.threadId));
 					}
 					toast.success(t('common.notes.noteUpdated'));
 				}
@@ -140,7 +140,7 @@ export function useNotes() {
 				});
 
 				if (threadId) {
-					mutate(THREAD_NOTES_KEY(threadId));
+					await mutate(THREAD_NOTES_KEY(threadId));
 				}
 
 				toast.success(t('common.notes.noteDeleted'));
@@ -176,7 +176,7 @@ export function useNotes() {
 					);
 
 					if (updatedNote.threadId) {
-						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
+						await mutate(THREAD_NOTES_KEY(updatedNote.threadId));
 					}
 
 					const pinStatus = updatedNote.isPinned
@@ -211,7 +211,7 @@ export function useNotes() {
 					);
 
 					if (updatedNote.threadId) {
-						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
+						await mutate(THREAD_NOTES_KEY(updatedNote.threadId));
 					}
 
 					toast.success(t('common.notes.colorChanged'));

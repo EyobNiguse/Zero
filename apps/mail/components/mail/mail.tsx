@@ -96,7 +96,7 @@ export function DemoMailLayout() {
 								</div>
 							</div>
 
-							<div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
+							<div className="max-h-[800px] h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
 								{isLoading ? (
 									<div className="flex flex-col">
 										{[...Array(8)].map((_, i) => (
@@ -131,7 +131,7 @@ export function DemoMailLayout() {
 								defaultSize={75}
 								minSize={25}
 							>
-								<div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
+								<div className="relative hidden max-h-[800px] h-[calc(100vh-(12px+14px))] flex-1 md:block">
 									<ThreadDemo mail={[filteredItems[0]]} onClose={handleClose} />
 								</div>
 							</ResizablePanel>
