@@ -17,12 +17,14 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         main: "bg-muted text-primary",
         // A button that resembles a dropdownItem
-        dropdownItem: "cursor-default select-none gap-2 rounded-sm text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground hover:bg-accent" 
+        dropdownItem:
+          "cursor-default select-none gap-2 rounded-sm text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground hover:bg-accent",
       },
       size: {
         dropdownItem: "px-2 py-1.5",
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
+        xs: "h-8 rounded-md px-2",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
       },

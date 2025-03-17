@@ -13,10 +13,10 @@ import { useSearchValue } from "@/hooks/use-search-value";
 import { SearchIcon } from "../icons/animated/search";
 import { useMail } from "@/components/mail/use-mail";
 import { SidebarToggle } from "../ui/sidebar-toggle";
+import type { MessageKey } from "@/config/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, defaultPageSize } from "@/lib/utils";
 import { useThreads } from "@/hooks/use-threads";
-import { MessageKey } from "@/config/navigation";
 import { Button } from "@/components/ui/button";
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useSession } from "@/lib/auth-client";
@@ -214,8 +214,7 @@ export function MailLayout() {
   });
 
   useHotKey("Esc", (event) => {
-    // @ts-expect-error
-    event.preventDefault();
+    event?.preventDefault();
     if (searchMode) {
       setSearchMode(false);
     }

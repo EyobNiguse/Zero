@@ -11,14 +11,14 @@ import {
   ArchiveX,
   FileText,
   Inbox,
-  LucideIcon,
+  type LucideIcon,
   Plus,
   SearchX,
   Send,
   Trash2,
 } from "lucide-react";
-import { emailProviders } from "@/constants/emailProviders";
 import { useConnections } from "@/hooks/use-connections";
+import { emailProviders } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";

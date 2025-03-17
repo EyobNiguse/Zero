@@ -6,11 +6,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { emailProviders } from "@/constants/emailProviders";
+import { emailProviders } from "@/lib/constants";
 import { Plus, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { motion } from "motion/react";
 import { Button } from "../ui/button";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export const AddConnectionDialog = ({

@@ -1,19 +1,40 @@
-import { BellOff, ChevronDown, Download, ExternalLink, Lock } from "lucide-react";
+import {
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+  Dialog,
+  DialogFooter,
+  DialogHeader,
+  DialogClose,
+} from "../ui/dialog";
+import {
+  BellOff,
+  Check,
+  ChevronDown,
+  Download,
+  ExternalLink,
+  LoaderCircleIcon,
+  Lock,
+} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getListUnsubscribeAction } from "@/lib/email-utils";
 import AttachmentsAccordion from "./attachments-accordion";
+import { useEffect, useMemo, useState } from "react";
 import AttachmentDialog from "./attachment-dialog";
 import { useSummary } from "@/hooks/use-summary";
 import { TextShimmer } from "../ui/text-shimmer";
+import { type ParsedMessage } from "@/types";
 import { Separator } from "../ui/separator";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { sendEmail } from "@/actions/send";
 import { MailIframe } from "./mail-iframe";
-import { ParsedMessage } from "@/types";
 import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { toast } from "sonner";
 
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState("");
@@ -104,6 +125,71 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
     }
   }, [index]);
 
+  const [unsubscribed, setUnsubscribed] = useState(false);
+  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
+
+  const listUnsubscribeAction = useMemo(() => {
+    if (!emailData?.listUnsubscribe) return null;
+    return getListUnsubscribeAction({
+      listUnsubscribe: emailData.listUnsubscribe,
+      listUnsubscribePost: emailData.listUnsubscribePost,
+    });
+  }, [emailData?.listUnsubscribe, emailData?.listUnsubscribePost]);
+
+  const handleUnsubscribe = async () => {
+    if (!listUnsubscribeAction) return;
+
+    switch (listUnsubscribeAction.type) {
+      case "get":
+        window.open(listUnsubscribeAction.url, "_blank");
+        break;
+      case "post":
+        setIsUnsubscribing(true);
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            10000, // 10 seconds
+          );
+
+          await fetch(listUnsubscribeAction.url, {
+            mode: "no-cors",
+            method: "POST",
+            headers: {
+              "content-type": "application/x-www-form-urlencoded",
+            },
+            body: listUnsubscribeAction.body,
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          setIsUnsubscribing(false);
+          setUnsubscribed(true);
+        } catch {
+          setIsUnsubscribing(false);
+          toast.error(t("common.mailDisplay.failedToUnsubscribe"));
+        }
+        break;
+      case "email":
+        try {
+          setIsUnsubscribing(true);
+          await sendEmail({
+            to: listUnsubscribeAction.emailAddress,
+            subject: listUnsubscribeAction.subject,
+            message: "Zero sent this email to unsubscribe from this mailing list.",
+            attachments: [],
+          });
+          setIsUnsubscribing(false);
+          setUnsubscribed(true);
+        } catch {
+          setIsUnsubscribing(false);
+          toast.error(t("common.mailDisplay.failedToUnsubscribe"));
+        }
+        break;
+    }
+  };
+
   return (
     <div className={cn("relative flex-1 overflow-hidden")}>
       <div className="relative h-full overflow-y-auto">
@@ -131,6 +217,49 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                   <span className="font-semibold">{emailData?.sender?.name}</span>
                   <span className="text-muted-foreground flex grow-0 items-center gap-2 text-sm">
                     <span>{emailData?.sender?.email}</span>
+
+                    {listUnsubscribeAction && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="xs"
+                            variant="secondary"
+                            disabled={unsubscribed || isUnsubscribing}
+                          >
+                            {unsubscribed && <Check className="h-4 w-4" />}
+                            {isUnsubscribing && (
+                              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            )}
+                            {unsubscribed
+                              ? t("common.mailDisplay.unsubscribed")
+                              : t("common.mailDisplay.unsubscribe")}
+                          </Button>
+                        </DialogTrigger>
+
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{t("common.mailDisplay.unsubscribe")}</DialogTitle>
+                            <DialogDescription className="break-words">
+                              {listUnsubscribeAction.type === "get"
+                                ? t("common.mailDisplay.unsubscribeOpenSiteDescription")
+                                : t("common.mailDisplay.unsubscribeDescription")}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter className="gap-2">
+                            <DialogClose asChild>
+                              <Button variant="outline">{t("common.mailDisplay.cancel")}</Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button onClick={handleUnsubscribe}>
+                                {listUnsubscribeAction.type === "get"
+                                  ? t("common.mailDisplay.goToWebsite")
+                                  : t("common.mailDisplay.unsubscribe")}
+                              </Button>
+                            </DialogClose>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                     {isMuted && <BellOff className="h-4 w-4" />}
                   </span>
                 </div>
@@ -213,7 +342,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                           </span>
                           <div className="text-muted-foreground ml-3 flex items-center gap-1">
                             <Lock className="h-4 w-4 text-green-600" />{" "}
-                            {t("common.mailDisplay.standardEncryption")} (TLS)
+                            {t("common.mailDisplay.standardEncryption")}
                           </div>
                         </div>
                       </div>

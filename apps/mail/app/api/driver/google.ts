@@ -1,7 +1,7 @@
+import { type IConfig, type MailManager } from "./types";
 import { type gmail_v1, google } from "googleapis";
-import { IConfig, MailManager } from "./types";
 import { EnableBrain } from "@/actions/brain";
-import { ParsedMessage } from "@/types";
+import { type ParsedMessage } from "@/types";
 import * as he from "he";
 
 function fromBase64Url(str: string) {
@@ -121,12 +121,20 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       payload?.headers?.find((h) => h.name?.toLowerCase() === "in-reply-to")?.value || "";
     const messageId =
       payload?.headers?.find((h) => h.name?.toLowerCase() === "message-id")?.value || "";
+    const listUnsubscribe =
+      payload?.headers?.find((h) => h.name?.toLowerCase() === "list-unsubscribe")?.value ||
+      undefined;
+    const listUnsubscribePost =
+      payload?.headers?.find((h) => h.name?.toLowerCase() === "list-unsubscribe-post")?.value ||
+      undefined;
     const [name, email] = sender.split("<");
     return {
       id: id || "ERROR",
       threadId: threadId || "",
       title: snippet ? he.decode(snippet).trim() : "ERROR",
       tags: labelIds || [],
+      listUnsubscribe,
+      listUnsubscribePost,
       references,
       inReplyTo,
       sender: {
