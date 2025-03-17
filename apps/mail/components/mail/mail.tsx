@@ -167,7 +167,7 @@ export function MailLayout() {
 	const [isMobile, setIsMobile] = useState(false);
 	const router = useRouter();
 	const { data: session, isPending } = useSession();
-  	const t = useTranslations();
+	const t = useTranslations();
 
 	useEffect(() => {
 		if (!session?.user && !isPending) {
@@ -265,77 +265,77 @@ export function MailLayout() {
 									</div>
 								)}
 
-                {!searchMode && (
-                  <>
-                    {mail.bulkSelected.length > 0 ? (
-                      <>
-                        <div className="flex flex-1 items-center justify-center">
-                          <span className="text-sm font-medium tabular-nums">
-                            {t("common.mail.selected", { count: mail.bulkSelected.length })}
-                          </span>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-muted-foreground ml-1.5 h-8 w-fit px-2"
-                                onClick={() => setMail({ ...mail, bulkSelected: [] })}
-                              >
-                                <X />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("common.mail.clearSelection")}</TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <BulkSelectActions />
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1 text-center text-sm font-medium capitalize">
-                          <MailCategoryTabs iconsOnly={!!mail.selected} />
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            variant="ghost"
-                            className="md:h-fit md:px-2"
-                            onClick={() => setSearchMode(true)}
-                            onMouseEnter={() => searchIconRef.current?.startAnimation?.()}
-                            onMouseLeave={() => searchIconRef.current?.stopAnimation?.()}
-                          >
-                            <SearchIcon ref={searchIconRef} className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
-                {isLoading ? (
-                  <div className="flex flex-col">
-                    {[...Array(8)].map((_, i) => (
-                      <div key={i} className="flex flex-col px-4 py-3">
-                        <div className="flex w-full items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="h-4 w-24" />
-                          </div>
-                          <Skeleton className="h-3 w-12" />
-                        </div>
-                        <Skeleton className="mt-2 h-3 w-32" />
-                        <Skeleton className="mt-2 h-3 w-full" />
-                        <div className="mt-2 flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-md" />
-                          <Skeleton className="h-4 w-16 rounded-md" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <MailList isCompact={true} />
-                )}
-              </div>
-            </div>
-          </ResizablePanel>
+								{!searchMode && (
+									<>
+										{mail.bulkSelected.length > 0 ? (
+											<>
+												<div className="flex flex-1 items-center justify-center">
+													<span className="text-sm font-medium tabular-nums">
+														{t('common.mail.selected', { count: mail.bulkSelected.length })}
+													</span>
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<Button
+																variant="ghost"
+																size="sm"
+																className="text-muted-foreground ml-1.5 h-8 w-fit px-2"
+																onClick={() => setMail({ ...mail, bulkSelected: [] })}
+															>
+																<X />
+															</Button>
+														</TooltipTrigger>
+														<TooltipContent>{t('common.mail.clearSelection')}</TooltipContent>
+													</Tooltip>
+												</div>
+												<BulkSelectActions />
+											</>
+										) : (
+											<>
+												<div className="flex-1 text-center text-sm font-medium capitalize">
+													<MailCategoryTabs iconsOnly={!!mail.selected} />
+												</div>
+												<div className="flex items-center gap-1.5">
+													<Button
+														variant="ghost"
+														className="md:h-fit md:px-2"
+														onClick={() => setSearchMode(true)}
+														onMouseEnter={() => searchIconRef.current?.startAnimation?.()}
+														onMouseLeave={() => searchIconRef.current?.stopAnimation?.()}
+													>
+														<SearchIcon ref={searchIconRef} className="h-4 w-4" />
+													</Button>
+												</div>
+											</>
+										)}
+									</>
+								)}
+							</div>
+							<div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
+								{isLoading ? (
+									<div className="flex flex-col">
+										{[...Array(8)].map((_, i) => (
+											<div key={i} className="flex flex-col px-4 py-3">
+												<div className="flex w-full items-center justify-between">
+													<div className="flex items-center gap-2">
+														<Skeleton className="h-4 w-24" />
+													</div>
+													<Skeleton className="h-3 w-12" />
+												</div>
+												<Skeleton className="mt-2 h-3 w-32" />
+												<Skeleton className="mt-2 h-3 w-full" />
+												<div className="mt-2 flex gap-2">
+													<Skeleton className="h-4 w-16 rounded-md" />
+													<Skeleton className="h-4 w-16 rounded-md" />
+												</div>
+											</div>
+										))}
+									</div>
+								) : (
+									<MailList isCompact={true} />
+								)}
+							</div>
+						</div>
+					</ResizablePanel>
 
 					{isDesktop && mail.selected && (
 						<>
@@ -373,28 +373,28 @@ export function MailLayout() {
 }
 
 function BulkSelectActions() {
-  const t = useTranslations();
-  
-  return (
-    <div className="flex items-center gap-1.5">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" className="md:h-fit md:px-2">
-            <BellOff />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t("common.mail.mute")}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" className="md:h-fit md:px-2">
-            <ArchiveX />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t("common.mail.moveToSpam")}</TooltipContent>
-      </Tooltip>
-    </div>
-  );
+	const t = useTranslations();
+
+	return (
+		<div className="flex items-center gap-1.5">
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<Button variant="ghost" className="md:h-fit md:px-2">
+						<BellOff />
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent>{t('common.mail.mute')}</TooltipContent>
+			</Tooltip>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<Button variant="ghost" className="md:h-fit md:px-2">
+						<ArchiveX />
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent>{t('common.mail.moveToSpam')}</TooltipContent>
+			</Tooltip>
+		</div>
+	);
 }
 
 const categories = [

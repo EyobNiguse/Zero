@@ -16,25 +16,25 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertTriangle, Bell, Briefcase, Tag, User, Users, StickyNote, Pin } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { cn, defaultPageSize, formatDate } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
+import { useTranslations, useFormatter } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMail } from '@/components/mail/use-mail';
 import { useHotKey } from '@/hooks/use-hot-key';
-import { useTranslations, useFormatter } from "next-intl";
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
+import { useNotes } from '@/hooks/use-notes';
 import { useParams } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { useNotes } from "@/hooks/use-notes";
 
 const HOVER_DELAY = 1000; // ms before prefetching
 
@@ -59,24 +59,24 @@ const highlightText = (text: string, highlight: string) => {
 };
 
 const Thread = memo(
-  ({ message, selectMode, demo, onClick, sessionData }: ConditionalThreadProps) => {
-    const [mail] = useMail();
-    const { hasNotes } = useNotes();
-    const [searchValue] = useSearchValue();
-    const t = useTranslations();
-    const format = useFormatter();
-    const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const isHovering = useRef<boolean>(false);
-    const hasPrefetched = useRef<boolean>(false);
+	({ message, selectMode, demo, onClick, sessionData }: ConditionalThreadProps) => {
+		const [mail] = useMail();
+		const { hasNotes } = useNotes();
+		const [searchValue] = useSearchValue();
+		const t = useTranslations();
+		const format = useFormatter();
+		const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+		const isHovering = useRef<boolean>(false);
+		const hasPrefetched = useRef<boolean>(false);
 
-    const threadHasNotes = !demo && hasNotes(message.threadId ?? message.id);
+		const threadHasNotes = !demo && hasNotes(message.threadId ?? message.id);
 		const isMailSelected = message.id === mail.selected;
 		const isMailBulkSelected = mail.bulkSelected.includes(message.id);
-    
-    const threadLabels = [...(message.tags || [])];
-    if (threadHasNotes) {
-      threadLabels.push("notes");
-    }
+
+		const threadLabels = [...(message.tags || [])];
+		if (threadHasNotes) {
+			threadLabels.push('notes');
+		}
 
 		const handleMouseEnter = () => {
 			if (demo) return;
@@ -166,7 +166,7 @@ const Thread = memo(
 										</span>
 									</TooltipTrigger>
 									<TooltipContent className="px-1 py-0 text-xs">
-										{t("common.mail.replies", { count: message.totalReplies })}
+										{t('common.mail.replies', { count: message.totalReplies })}
 									</TooltipContent>
 								</Tooltip>
 							) : null}
@@ -217,7 +217,7 @@ export function MailList({ isCompact }: MailListProps) {
 	const { folder } = useParams<{ folder: string }>();
 	const [mail, setMail] = useMail();
 	const { data: session } = useSession();
-  	const t = useTranslations();
+	const t = useTranslations();
 
 	const sessionData = useMemo(
 		() => ({
@@ -278,7 +278,7 @@ export function MailList({ isCompact }: MailListProps) {
 				...prev,
 				bulkSelected: [],
 			}));
-			toast.success(t("common.mail.deselectAll"));
+			toast.success(t('common.mail.deselectAll'));
 		}
 		// Otherwise select all items
 		else if (items.length > 0) {
@@ -287,9 +287,9 @@ export function MailList({ isCompact }: MailListProps) {
 				...prev,
 				bulkSelected: allIds,
 			}));
-			toast.success(t("common.mail.selectedEmails", { count: allIds.length }));
+			toast.success(t('common.mail.selectedEmails', { count: allIds.length }));
 		} else {
-			toast.info(t("common.mail.noEmailsToSelect"));
+			toast.info(t('common.mail.noEmailsToSelect'));
 		}
 	}, [items, setMail, mail.bulkSelected, t]);
 
@@ -332,18 +332,18 @@ export function MailList({ isCompact }: MailListProps) {
 			} else toast.error('Failed to mark as unread');
 		})();
 	});
-  useHotKey("Meta+Shift+u", () => {
-    resetSelectMode();
-    markAsUnread({ ids: mail.bulkSelected }).then(result => {
-      if (result.success) {
-        toast.success(t("common.mail.markedAsUnread"));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t("common.mail.failedToMarkAsUnread"));
-    });
-  });
+	useHotKey('Meta+Shift+u', () => {
+		resetSelectMode();
+		markAsUnread({ ids: mail.bulkSelected }).then((result) => {
+			if (result.success) {
+				toast.success(t('common.mail.markedAsUnread'));
+				setMail((prev) => ({
+					...prev,
+					bulkSelected: [],
+				}));
+			} else toast.error(t('common.mail.failedToMarkAsUnread'));
+		});
+	});
 
 	useHotKey('Control+Shift+u', () => {
 		resetSelectMode();
@@ -358,18 +358,18 @@ export function MailList({ isCompact }: MailListProps) {
 			} else toast.error('Failed to mark as unread');
 		})();
 	});
-  useHotKey("Control+Shift+u", () => {
-    resetSelectMode();
-    markAsUnread({ ids: mail.bulkSelected }).then(response => {
-      if (response.success) {
-        toast.success(t("common.mail.markedAsUnread"));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t("common.mail.failedToMarkAsUnread"));
-    });
-  });
+	useHotKey('Control+Shift+u', () => {
+		resetSelectMode();
+		markAsUnread({ ids: mail.bulkSelected }).then((response) => {
+			if (response.success) {
+				toast.success(t('common.mail.markedAsUnread'));
+				setMail((prev) => ({
+					...prev,
+					bulkSelected: [],
+				}));
+			} else toast.error(t('common.mail.failedToMarkAsUnread'));
+		});
+	});
 
 	useHotKey('Meta+Shift+i', () => {
 		resetSelectMode();
@@ -384,18 +384,18 @@ export function MailList({ isCompact }: MailListProps) {
 			} else toast.error('Failed to mark as read');
 		})();
 	});
-  useHotKey("Meta+Shift+i", () => {
-    resetSelectMode();
-    markAsRead({ ids: mail.bulkSelected }).then(data => {
-      if (data.success) {
-        toast.success(t("common.mail.markedAsRead"));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t("common.mail.failedToMarkAsRead"));
-    });
-  });
+	useHotKey('Meta+Shift+i', () => {
+		resetSelectMode();
+		markAsRead({ ids: mail.bulkSelected }).then((data) => {
+			if (data.success) {
+				toast.success(t('common.mail.markedAsRead'));
+				setMail((prev) => ({
+					...prev,
+					bulkSelected: [],
+				}));
+			} else toast.error(t('common.mail.failedToMarkAsRead'));
+		});
+	});
 
 	useHotKey('Control+Shift+i', () => {
 		resetSelectMode();
@@ -410,18 +410,18 @@ export function MailList({ isCompact }: MailListProps) {
 			} else toast.error('Failed to mark as read');
 		})();
 	});
-  useHotKey("Control+Shift+i", () => {
-    resetSelectMode();
-    markAsRead({ ids: mail.bulkSelected }).then(response => {
-      if (response.success) {
-        toast.success(t("common.mail.markedAsRead"));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t("common.mail.failedToMarkAsRead"));
-    });
-  });
+	useHotKey('Control+Shift+i', () => {
+		resetSelectMode();
+		markAsRead({ ids: mail.bulkSelected }).then((response) => {
+			if (response.success) {
+				toast.success(t('common.mail.markedAsRead'));
+				setMail((prev) => ({
+					...prev,
+					bulkSelected: [],
+				}));
+			} else toast.error(t('common.mail.failedToMarkAsRead'));
+		});
+	});
 
 	// useHotKey("Meta+Shift+j", async () => {
 	//   resetSelectMode();
@@ -628,8 +628,8 @@ export function MailList({ isCompact }: MailListProps) {
 
 const MailLabels = memo(
 	({ labels }: { labels: string[] }) => {
-    const t = useTranslations();
-    
+		const t = useTranslations();
+
 		if (!labels.length) return null;
 
 		const visibleLabels = labels.filter(
@@ -642,49 +642,49 @@ const MailLabels = memo(
 			<div className={cn('flex select-none items-center gap-1')}>
 				{visibleLabels.map((label) => {
 					const style = getDefaultBadgeStyle(label);
-          if (label.toLowerCase() === "notes") {
-            return (
-              <Tooltip key={label}>
-                <TooltipTrigger asChild>
-                  <Badge className="rounded-md p-1 bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    {getLabelIcon(label)}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent className="px-1 py-0 text-xs">
-                  {t("common.notes.title")}
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-          
+					if (label.toLowerCase() === 'notes') {
+						return (
+							<Tooltip key={label}>
+								<TooltipTrigger asChild>
+									<Badge className="rounded-md bg-amber-100 p-1 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400">
+										{getLabelIcon(label)}
+									</Badge>
+								</TooltipTrigger>
+								<TooltipContent className="px-1 py-0 text-xs">
+									{t('common.notes.title')}
+								</TooltipContent>
+							</Tooltip>
+						);
+					}
+
 					// Skip rendering if style is "secondary" (default case)
 					if (style === 'secondary') return null;
 
-          const normalizedLabel = getNormalizedLabelKey(label);
-          
-          let labelContent;
-          switch (normalizedLabel) {
-            case "primary":
-              labelContent = t("common.mailCategories.primary");
-              break;
-            case "important":
-              labelContent = t("common.mailCategories.important");
-              break;
-            case "personal":
-              labelContent = t("common.mailCategories.personal");
-              break;
-            case "updates":
-              labelContent = t("common.mailCategories.updates");
-              break;
-            case "promotions":
-              labelContent = t("common.mailCategories.promotions");
-              break;
-            case "social":
-              labelContent = t("common.mailCategories.social");
-              break;
-            default:
-              labelContent = capitalize(normalizedLabel);
-          }
+					const normalizedLabel = getNormalizedLabelKey(label);
+
+					let labelContent;
+					switch (normalizedLabel) {
+						case 'primary':
+							labelContent = t('common.mailCategories.primary');
+							break;
+						case 'important':
+							labelContent = t('common.mailCategories.important');
+							break;
+						case 'personal':
+							labelContent = t('common.mailCategories.personal');
+							break;
+						case 'updates':
+							labelContent = t('common.mailCategories.updates');
+							break;
+						case 'promotions':
+							labelContent = t('common.mailCategories.promotions');
+							break;
+						case 'social':
+							labelContent = t('common.mailCategories.social');
+							break;
+						default:
+							labelContent = capitalize(normalizedLabel);
+					}
 
 					return (
 						<Tooltip key={label}>
@@ -709,8 +709,8 @@ const MailLabels = memo(
 MailLabels.displayName = 'MailLabels';
 
 function getNormalizedLabelKey(label: string) {
-  const normalizedLabel = label.toLowerCase().replace(/^category_/i, "");
-  return normalizedLabel;
+	const normalizedLabel = label.toLowerCase().replace(/^category_/i, '');
+	return normalizedLabel;
 }
 
 function capitalize(str: string) {
@@ -733,8 +733,8 @@ function getLabelIcon(label: string) {
 			return <Briefcase className="h-3 w-3" />;
 		case 'forums':
 			return <Users className="h-3 w-3" />;
-    case "notes":
-      return <StickyNote className="h-3 w-3" />;
+		case 'notes':
+			return <StickyNote className="h-3 w-3" />;
 		default:
 			return null;
 	}
@@ -756,8 +756,8 @@ function getDefaultBadgeStyle(label: string): ComponentProps<typeof Badge>['vari
 			return 'default';
 		case 'forums':
 			return 'forums';
-    case "notes":
-      return "secondary";
+		case 'notes':
+			return 'secondary';
 		default:
 			return 'secondary';
 	}
