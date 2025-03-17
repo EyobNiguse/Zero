@@ -72,7 +72,7 @@ import type { Note } from '@/app/api/notes/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useFormatter } from 'next-intl';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -109,6 +109,7 @@ function SortableNote({
 		});
 
 	const t = useTranslations();
+	const format = useFormatter();
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -140,22 +141,22 @@ function SortableNote({
 						<TooltipTrigger asChild>
 							<div className="text-muted-foreground mt-2 flex cursor-default items-center text-xs">
 								<Clock className="mr-1 h-3 w-3" />
-								<span>{formatRelativeTime(note.createdAt)}</span>
+								<span>{formatRelativeTime(note.createdAt, format)}</span>
 							</div>
 						</TooltipTrigger>
 						<TooltipContent side="bottom" className="text-xs">
 							{note.updatedAt > note.createdAt ? (
 								<>
 									<p>
-										{t('common.notes.created')}: {formatDate(note.createdAt)}
+										{t('common.notes.created')}: {formatDate(note.createdAt, format)}
 									</p>
 									<p>
-										{t('common.notes.updated')}: {formatDate(note.updatedAt)}
+										{t('common.notes.updated')}: {formatDate(note.updatedAt, format)}
 									</p>
 								</>
 							) : (
 								<p>
-									{t('common.notes.created')}: {formatDate(note.createdAt)}
+									{t('common.notes.created')}: {formatDate(note.createdAt, format)}
 								</p>
 							)}
 						</TooltipContent>

@@ -41,10 +41,17 @@ export function borderToBackgroundColorClass(borderClass: string): string {
   return borderClass.replace("border-l-", "bg-");
 }
 
-export function formatRelativeTime(dateInput: string | Date): string {
+export function formatRelativeTime(dateInput: string | Date, formatter?: any): string {
   const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (formatter) {
+    return formatter.relativeTime(date, {
+      now,
+      style: 'long'
+    });
+  }
   
   if (diffInSeconds < 60) {
     return 'just now';
@@ -62,8 +69,16 @@ export function formatRelativeTime(dateInput: string | Date): string {
   }
 }
 
-export function formatDate(dateInput: string | Date): string {
+export function formatDate(dateInput: string | Date, formatter?: any): string {
   const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  
+  if (formatter) {
+    return formatter.dateTime(date, {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+  }
+  
   return date.toLocaleString(undefined, {
     year: "numeric",
     month: "short",
