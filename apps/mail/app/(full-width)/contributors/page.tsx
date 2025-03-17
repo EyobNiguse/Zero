@@ -85,7 +85,7 @@ const specialRoles: Record<string, { role: string; twitter?: string; website?: s
     twitter: "10Xpraash",
   },
   mrgsub: {
-    role: "Maintainer",
+    role: "Project Owner",
     twitter: "cmdhaus",
   },
 };
@@ -133,8 +133,8 @@ export default function OpenPage() {
   );
 
   const { data: additionalContributors } = useSWR<Contributor[]>(
-    initialContributors?.length === 100 
-      ? `https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100&page=2` 
+    initialContributors?.length === 100
+      ? `https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100&page=2`
       : null,
     fetcher,
   );
@@ -345,7 +345,7 @@ export default function OpenPage() {
         <div className="flex justify-end mb-6">
           <ThemeToggle />
         </div>
-        
+
         {/* Project Stats */}
         <div className="mb-8 overflow-hidden rounded-xl border bg-gradient-to-b from-white/50 to-white/10 p-6 backdrop-blur-sm dark:border-neutral-700 dark:from-neutral-900/50 dark:to-neutral-900/30">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -929,14 +929,14 @@ export default function OpenPage() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="hidden md:block md:w-1/3">
                   <div className="space-y-4 rounded-xl border border-neutral-200 bg-white/80 p-5 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/80">
                     <div className="flex items-center gap-4">
                       <div className="flex -space-x-2">
                         {filteredContributors?.slice(0, 5).map((contributor) => (
-                          <Avatar 
-                            key={contributor.login} 
+                          <Avatar
+                            key={contributor.login}
                             className="h-8 w-8 border-2 border-white dark:border-neutral-900"
                           >
                             <AvatarImage src={contributor.avatar_url} alt={contributor.login} />
@@ -958,7 +958,7 @@ export default function OpenPage() {
                         contributors
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-lg bg-neutral-50 p-2 dark:bg-neutral-800/50">
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">Stars</div>
