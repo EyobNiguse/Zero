@@ -1,6 +1,6 @@
+import {parseFrom as _parseFrom} from "email-addresses"
 import { EMAIL_HTML_TEMPLATE } from "./constants";
 import Color from "color";
-import {parseFrom as _parseFrom} from "email-addresses"
 
 export const template = (html: string) => {
   if (typeof DOMParser === "undefined") return html;
@@ -149,8 +149,9 @@ export const parseFrom = (fromHeader: string) => {
   const name = firstSender.name || FALLBACK_SENDER.name;
 
   if (firstSender.type === "group") {
-    const email = firstSender.addresses?.length ? (firstSender.addresses[0]?.address || FALLBACK_SENDER.email) : FALLBACK_SENDER.email;
-    return {name, email}
+     const firstAddress = firstSender.addresses?.[0]?.address;
+     const email = firstAddress || FALLBACK_SENDER.email;
+     return { name, email };
   }
 
   const email = firstSender.address || FALLBACK_SENDER.email;
