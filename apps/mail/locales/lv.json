@@ -1,0 +1,317 @@
+{
+  "common": {
+    "actions": {
+      "logout": "Atslēgties",
+      "back": "Atpakaļ",
+      "create": "Izveidot e-pastu",
+      "saveChanges": "Saglabāt izmaiņas",
+      "saving": "Tiek saglabāts...",
+      "resetToDefaults": "Atstatīt uz noklusējumu",
+      "close": "Aizvērt",
+      "signingOut": "Izrakstīšanās...",
+      "signedOutSuccess": "Veiksmīgi izrakstījies!",
+      "signOutError": "Kļūda, izrakstoties no sistēmas"
+    },
+    "themes": {
+      "dark": "Tumšs",
+      "light": "Gaišs",
+      "system": "Sistēma"
+    },
+    "commandPalette": {
+      "title": "Komandu palete",
+      "description": "Ātrā navigācija un darbības Mail-0",
+      "placeholder": "Ieraksti komandu vai meklē...",
+      "noResults": "Netika atrasts neviens rezultāts",
+      "groups": {
+        "mail": "E-pasts",
+        "settings": "Iestatījumi",
+        "actions": "Darbības",
+        "help": "Palīdzība",
+        "navigation": "Navigācija"
+      },
+      "commands": {
+        "goToInbox": "Doties uz Iesūtni",
+        "goToDrafts": "Doties uz Melnrakstiem",
+        "goToSent": "Doties uz Nosūtītajiem",
+        "goToSpam": "Doties uz Mēstulēm",
+        "goToArchive": "Doties uz Arhīvu",
+        "goToBin": "Doties uz Miskasti",
+        "goToSettings": "Doties uz Iestatījumiem",
+        "newEmail": "Jauns e-pasts",
+        "composeMessage": "Rakstīt ziņu",
+        "searchEmails": "Meklēt e-pastus",
+        "toggleTheme": "Pārslēgt krāsu tēmu",
+        "backToMail": "Atpakaļ uz e-pastu",
+        "goToDocs": "Doties uz dokumentāciju",
+        "helpWithShortcuts": "Tastatūras īsceļu palīdzība"
+      }
+    },
+    "searchBar": {
+      "pickDateRange": "Izvēlēties datumu vai diapazonu",
+      "search": "Meklēt",
+      "clearSearch": "Notīrīt meklēšanu",
+      "advancedSearch": "Izvērstā meklēšana",
+      "quickFilters": "Ātrie filtri",
+      "searchIn": "Meklēt",
+      "recipient": "Saņēmējs",
+      "sender": "Sūtītājs",
+      "subject": "Temats",
+      "dateRange": "Datumu diapazons",
+      "category": "Kategorija",
+      "folder": "Mape",
+      "allMail": "Visi E-pasti",
+      "unread": "Nelasīti",
+      "hasAttachment": "Ir pielikums ",
+      "starred": "Ar zvaigznīti",
+      "applyFilters": "Lietot filtrus",
+      "reset": "Atstatīt"
+    },
+    "navUser": {
+      "customerSupport": "Klientu atbalsts",
+      "documentation": "Dokumentācija",
+      "appTheme": "Aplikācijas motīvs",
+      "accounts": "Konti",
+      "signIn": "Pierakstīties"
+    },
+    "mailCategories": {
+      "primary": "Galvenā",
+      "important": "Svarīgi",
+      "personal": "Personīgi",
+      "updates": "Atjauninājumi",
+      "promotions": "Reklāmas",
+      "social": "Sociālie tīkli"
+    },
+    "replyCompose": {
+      "replyTo": "Atbildēt",
+      "thisEmail": "šis e-pasts",
+      "dropFiles": "Ievelciet failus, lai pievienotu",
+      "attachments": "Pielikumi",
+      "attachmentCount": "{count, plural, zero {}=0 {pielikumi} one {pielikums} other {pielikumi}}",
+      "fileCount": "{count, plural, zero {}=0 {faili} one {fails} other {faili}}",
+      "saveDraft": "Saglabāt melnrakstu",
+      "send": "Sūtīt"
+    },
+    "mailDisplay": {
+      "details": "Detaļas",
+      "from": "No",
+      "to": "Kam",
+      "cc": "Cc",
+      "date": "Datums",
+      "mailedBy": "Nosūtījis",
+      "signedBy": "Parakstījis",
+      "security": "Drošība",
+      "standardEncryption": "Standarta šifrēšana (TLS)",
+      "loadingMailContent": " Ielādē e-pasta saturu...",
+      "unsubscribe": "Unsubscribe",
+      "unsubscribed": "Unsubscribed",
+      "unsubscribeDescription": "Are you sure you want to unsubscribe from this mailing list?",
+      "unsubscribeOpenSiteDescription": "To stop getting messages from this mailing list, go to their website to unsubscribe.",
+      "cancel": "Cancel",
+      "goToWebsite": "Go to website",
+      "failedToUnsubscribe": "Failed to unsubscribe from mailing list"
+    },
+    "threadDisplay": {
+      "exitFullscreen": "Aizvērt pilnekrāna režīmu",
+      "enterFullscreen": "Atvērt pilnekrāna režīmu",
+      "archive": "Arhīvs",
+      "reply": "Atbildēt",
+      "moreOptions": "Vairāk iespējas",
+      "moveToSpam": "Pārvietot uz mēstulēm",
+      "replyAll": "Atbildēt Visiem",
+      "forward": "Pārsūtīt",
+      "markAsUnread": "Atzīmēt kā nelasītu",
+      "addLabel": "Pievienot iezīmi",
+      "muteThread": "Apklusināt pavedienu"
+    },
+    "notes": {
+      "title": "Notes",
+      "empty": "No notes for this email",
+      "emptyDescription": "Add notes to keep track of important information or follow-ups.",
+      "addNote": "Add a note",
+      "addYourNote": "Add your note here...",
+      "editNote": "Edit note",
+      "deleteNote": "Delete note",
+      "deleteConfirm": "Are you sure you want to delete this note?",
+      "deleteConfirmDescription": "This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "save": "Save note",
+      "toSave": "to save",
+      "label": "Label:",
+      "search": "Search notes...",
+      "noteCount": "{count, plural, =0 {Add notes} one {# note} other {# notes}}",
+      "notePinned": "Note pinned",
+      "noteUnpinned": "Note unpinned",
+      "colorChanged": "Note color updated",
+      "noteUpdated": "Note updated",
+      "noteDeleted": "Note deleted",
+      "noteCopied": "Copied to clipboard",
+      "noteAdded": "Note added",
+      "notesReordered": "Notes reordered",
+      "noMatchingNotes": "No notes matching \"{query}\"",
+      "clearSearch": "Clear search",
+      "pinnedNotes": "Pinned notes",
+      "otherNotes": "Other notes",
+      "created": "Created",
+      "updated": "Updated",
+      "errors": {
+        "failedToLoadNotes": "Failed to load notes",
+        "failedToLoadThreadNotes": "Failed to load thread notes",
+        "failedToAddNote": "Failed to add note",
+        "failedToUpdateNote": "Failed to update note",
+        "failedToDeleteNote": "Failed to delete note",
+        "failedToUpdateNoteColor": "Failed to update note color",
+        "noValidNotesToReorder": "No valid notes to reorder",
+        "failedToReorderNotes": "Failed to reorder notes"
+      },
+      "colors": {
+        "default": "Default",
+        "red": "Red",
+        "orange": "Orange",
+        "yellow": "Yellow",
+        "green": "Green",
+        "blue": "Blue",
+        "purple": "Purple",
+        "pink": "Pink"
+      },
+      "actions": {
+        "pin": "Pin note",
+        "unpin": "Unpin note",
+        "edit": "Edit note",
+        "delete": "Delete note",
+        "copy": "Copy note",
+        "changeColor": "Change color"
+      }
+    },
+    "mail": {
+      "replies": "{count, plural, =0 {replies} one {# reply} other {# replies}}",
+      "deselectAll": "Deselected all emails",
+      "selectedEmails": "Selected {count} emails",
+      "noEmailsToSelect": "No emails to select",
+      "markedAsRead": "Marked as read",
+      "markedAsUnread": "Marked as unread",
+      "failedToMarkAsRead": "Failed to mark as read",
+      "failedToMarkAsUnread": "Failed to mark as unread",
+      "selected": "{count} selected",
+      "clearSelection": "Clear Selection",
+      "mute": "Mute",
+      "moveToSpam": "Move to Spam",
+      "moveToInbox": "Move to Inbox",
+      "unarchive": "Unarchive",
+      "archive": "Archive",
+      "moveToTrash": "Move to Trash",
+      "markAsUnread": "Mark as Unread",
+      "addStar": "Add Star",
+      "muteThread": "Mute Thread",
+      "moving": "Moving...",
+      "moved": "Moved",
+      "errorMoving": "Error moving"
+    }
+  },
+  "navigation": {
+    "sidebar": {
+      "inbox": "Iesūtne",
+      "drafts": "Melnraksti",
+      "sent": "Nosūtītie",
+      "spam": "Mēstules",
+      "archive": "Arhīvs",
+      "bin": "Miskaste",
+      "settings": "Iestatījumi"
+    },
+    "settings": {
+      "general": "Vispārīgi",
+      "connections": "Savienojumi",
+      "security": "Drošība",
+      "appearance": "Izskats",
+      "shortcuts": "Īsceļi"
+    }
+  },
+  "pages": {
+    "error": {
+      "notFound": {
+        "title": "Lapa nav atrasta",
+        "description": "Ak! Lapa, kuru meklējat, nepastāv vai ir pārvietota.",
+        "goBack": "Atpakaļ"
+      },
+      "settingsNotFound": "404 - Iestatījumu lapa nav atrasta"
+    },
+    "settings": {
+      "general": {
+        "title": "Vispārīgi",
+        "description": "Pārvaldīt valodas un e-pasta attēlojuma iestatījumus.",
+        "language": "Valoda",
+        "timezone": "Laika zona",
+        "dynamicContent": "Dinamisks Saturs",
+        "dynamicContentDescription": "Atļaut e-pastiem rādīt dinamisku saturu.",
+        "externalImages": "Rādīt ārējos attēlus",
+        "externalImagesDescription": "Atļaut e-pastiem rādīt attēlus no ārējiem avotiem.",
+        "languageChangedTo": "Valoda nomainīta uz {language}"
+      },
+      "connections": {
+        "title": "E-pasta savienojumi",
+        "description": "Savieno savus e-pasta kontus ar Zero.",
+        "disconnectTitle": "Atvienot e-pasta kontu",
+        "disconnectDescription": "Vai tiešām vēlies atvienot šo e-pastu?",
+        "cancel": "Atcelt",
+        "remove": "Noņemt",
+        "disconnectSuccess": "Konts veiksmīgi atvienots",
+        "disconnectError": "Neizdevās atvienot kontu ",
+        "addEmail": "Pievienot savienojumu",
+        "connectEmail": "Savienot e-pastu",
+        "connectEmailDescription": "Izvēlēties e-pasta pakalpojumu sniedzēju, lai izveidotu savienojumu",
+        "moreComingSoon": "Drīzumā būs pieejams vairāk "
+      },
+      "security": {
+        "title": "Drošība",
+        "description": "Pārvaldīt savus drošības iestatījumus un konta aizsardzību.",
+        "twoFactorAuth": "Divu pakāpju autentifikācija (2FA)",
+        "twoFactorAuthDescription": "Pievieno savam kontam papildu drošības pakāpi",
+        "loginNotifications": "Paziņojumi par pierakstīšanos",
+        "loginNotificationsDescription": "Saņemt paziņojumus par jauniem mēģinājumiem pierakstīties",
+        "deleteAccount": "Dzēst kontu"
+      },
+      "appearance": {
+        "title": "Izskats",
+        "description": "Pielāgot krāsas, burtveidolus un skata iespējas.",
+        "theme": "Izskats",
+        "inboxType": "Iesūtnes tips"
+      },
+      "shortcuts": {
+        "title": "Tastatūras īsceļi",
+        "description": "Skatīt un pielāgot tastatūras īsinājumtaustiņus ātrām darbībām.",
+        "actions": {
+          "newEmail": "Jauns e-pasts",
+          "sendEmail": "Sūtīt e-pastu",
+          "reply": "Atbildēt",
+          "replyAll": "Atbildēt Visiem",
+          "forward": "Pārsūtīt",
+          "drafts": "Melnraksti",
+          "inbox": "Iesūtne",
+          "sentMail": "Nosūtītie e-pasti",
+          "delete": "Dzēst",
+          "search": "Meklēt",
+          "markAsUnread": "Atzīmēt kā nelasītu",
+          "muteThread": "Apklusināt pavedienu",
+          "printEmail": "Drukāt e-pastu",
+          "archiveEmail": "Arhivēt e-pastu",
+          "markAsSpam": "Atzīmēt kā mēstuli",
+          "moveToFolder": "Pārvietot uz mapi",
+          "undoLastAction": "Atsaukt pēdējo darbību",
+          "viewEmailDetails": "Skatīt e-pasta detaļas",
+          "goToDrafts": "Doties uz Melnrakstiem",
+          "expandEmailView": "Izvērst e-pasta skatu",
+          "helpWithShortcuts": "Tastatūras īsceļu palīdzība"
+        }
+      }
+    },
+    "createEmail": {
+      "body": "Saturs",
+      "example": "zero@0.email",
+      "attachments": "Pielikumi",
+      "dropFilesToAttach": "Ievelciet failus, lai pievienotu",
+      "writeYourMessageHere": "Raksti savu ziņu šeit...",
+      "emailSentSuccessfully": "E-pasts veiksmīgi nosūtīts",
+      "failedToSendEmail": "Neizdevās nosūtīt e-pastu. Lūdzu, mēģiniet vēlreiz."
+    }
+  }
+}
