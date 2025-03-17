@@ -297,9 +297,9 @@ export function NotesPanel({
 		}
 	}, [editingNoteId]);
 
-	const handleAddNote = () => {
+	const handleAddNote = async () => {
 		if (newNoteContent.trim()) {
-			onAddNote(threadId, newNoteContent, selectedColor !== 'default' ? selectedColor : undefined);
+			await onAddNote(threadId, newNoteContent, selectedColor !== 'default' ? selectedColor : undefined);
 			toast.success(t('common.notes.noteUpdated'));
 			setNewNoteContent('');
 			setIsAddingNewNote(false);
@@ -311,16 +311,16 @@ export function NotesPanel({
 		if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
 			e.preventDefault();
 			if (action === 'add') {
-				handleAddNote();
+				void handleAddNote();
 			} else {
-				handleEditNote();
+				void handleEditNote();
 			}
 		}
 	};
 
-	const handleEditNote = () => {
+	const handleEditNote = async () => {
 		if (editingNoteId && editContent.trim()) {
-			onEditNote(editingNoteId, editContent);
+			await onEditNote(editingNoteId, editContent);
 			toast.success(t('common.notes.noteUpdated'));
 			setEditingNoteId(null);
 			setEditContent('');
@@ -337,9 +337,9 @@ export function NotesPanel({
 		setDeleteConfirmOpen(true);
 	};
 
-	const handleDeleteNote = () => {
+	const handleDeleteNote = async () => {
 		if (noteToDelete) {
-			onDeleteNote(noteToDelete);
+			await onDeleteNote(noteToDelete);
 			toast.success(t('common.notes.noteDeleted'));
 			setDeleteConfirmOpen(false);
 			setNoteToDelete(null);
@@ -705,7 +705,7 @@ export function NotesPanel({
 															<Button
 																variant="default"
 																size="sm"
-																onClick={handleAddNote}
+																onClick={() => void handleAddNote()}
 																disabled={!newNoteContent.trim()}
 															>
 																{t('common.notes.save')}
@@ -779,7 +779,11 @@ export function NotesPanel({
 										>
 											{t('common.notes.cancel')}
 										</Button>
-										<Button variant="default" size="sm" onClick={handleEditNote}>
+										<Button
+											variant="default"
+											size="sm"
+											onClick={() => void handleEditNote()}
+										>
 											{t('common.actions.saveChanges')}
 										</Button>
 									</div>
@@ -800,7 +804,7 @@ export function NotesPanel({
 						<Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
 							{t('common.notes.cancel')}
 						</Button>
-						<Button variant="destructive" onClick={handleDeleteNote}>
+						<Button variant="destructive" onClick={() => void handleDeleteNote()}>
 							{t('common.notes.delete')}
 						</Button>
 					</DialogFooter>

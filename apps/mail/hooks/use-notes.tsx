@@ -6,62 +6,49 @@ import {
 	deleteNote as deleteNoteAction,
 	reorderNotes as reorderNotesAction,
 } from '@/actions/notes';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { Note } from '@/app/api/notes/types';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import useSWR, { mutate } from 'swr';
 
 export type { Note };
 
+const THREAD_NOTES_KEY = (threadId: string) => `thread-notes-${threadId}`;
+
 export function useNotes() {
-	const [notes, setNotes] = useState<Note[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const t = useTranslations();
-
-	const fetchAllNotes = useCallback(async () => {
-		setIsLoading(true);
-		setError(null);
-		try {
-			const result = await fetchNotes();
-
-			if (!result.success) {
-				throw new Error(result.error || 'Failed to fetch notes');
+	
+	const { data: notes = [], error, isLoading, mutate: refreshNotes } = useSWR<Note[]>(
+		'notes',
+		async () => {
+			try {
+				const result = await fetchNotes();
+				if (!result.success) {
+					throw new Error(result.error || 'Failed to fetch notes');
+				}
+				return result.data || [];
+			} catch (err: any) {
+				console.error('Error fetching notes:', err);
+				toast.error(t('common.notes.errors.failedToLoadNotes'));
+				throw err;
 			}
-
-			setNotes(result.data || []);
-		} catch (err: any) {
-			console.error('Error fetching notes:', err);
-			setError(err.message || 'Failed to fetch notes');
-			toast.error(t('common.notes.errors.failedToLoadNotes'));
-		} finally {
-			setIsLoading(false);
 		}
-	}, [t]);
-
-	useEffect(() => {
-		fetchAllNotes();
-	}, [fetchAllNotes]);
+	);
 
 	const getNotesForThread = useCallback(
 		async (threadId: string) => {
-			setIsLoading(true);
-			setError(null);
 			try {
 				const result = await fetchThreadNotes(threadId);
-
 				if (!result.success) {
 					throw new Error(result.error || 'Failed to fetch thread notes');
 				}
-
+				mutate(THREAD_NOTES_KEY(threadId), result.data || []);
 				return result.data || [];
 			} catch (err: any) {
 				console.error('Error fetching thread notes:', err);
-				setError(err.message || 'Failed to fetch thread notes');
 				toast.error(t('common.notes.errors.failedToLoadThreadNotes'));
 				return [];
-			} finally {
-				setIsLoading(false);
 			}
 		},
 		[t],
@@ -76,8 +63,6 @@ export function useNotes() {
 
 	const addNote = useCallback(
 		async (threadId: string, content: string, color: string = 'default'): Promise<Note | null> => {
-			setIsLoading(true);
-			setError(null);
 			try {
 				const result = await createNoteAction({
 					threadId,
@@ -92,26 +77,22 @@ export function useNotes() {
 
 				const newNote = result.data;
 				if (newNote) {
-					setNotes((prev) => [...prev, newNote]);
+					await refreshNotes(prev => [...(prev || []), newNote], { revalidate: false });
+					mutate(THREAD_NOTES_KEY(threadId));
+					toast.success(t('common.notes.noteAdded'));
 				}
-				toast.success(t('common.notes.noteAdded'));
 				return newNote || null;
 			} catch (err: any) {
 				console.error('Error adding note:', err);
-				setError(err.message || 'Failed to add note');
 				toast.error(t('common.notes.errors.failedToAddNote'));
 				return null;
-			} finally {
-				setIsLoading(false);
 			}
 		},
-		[t],
+		[t, refreshNotes],
 	);
 
 	const editNote = useCallback(
 		async (noteId: string, content: string): Promise<Note | null> => {
-			setIsLoading(true);
-			setError(null);
 			try {
 				const result = await updateNoteAction(noteId, { content });
 
@@ -121,58 +102,65 @@ export function useNotes() {
 
 				const updatedNote = result.data;
 				if (updatedNote) {
-					setNotes((prev) => prev.map((note) => (note.id === noteId ? updatedNote : note)));
+					await refreshNotes(prev => 
+						(prev || []).map(note => (note.id === noteId ? updatedNote : note)),
+						{ revalidate: false }
+					);
+					if (updatedNote.threadId) {
+						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
+					}
+					toast.success(t('common.notes.noteUpdated'));
 				}
-				toast.success(t('common.notes.noteUpdated'));
 				return updatedNote || null;
 			} catch (err: any) {
 				console.error('Error updating note:', err);
-				setError(err.message || 'Failed to update note');
 				toast.error(t('common.notes.errors.failedToUpdateNote'));
 				return null;
-			} finally {
-				setIsLoading(false);
 			}
 		},
-		[t],
+		[t, refreshNotes],
 	);
 
 	const deleteNote = useCallback(
 		async (noteId: string) => {
-			setIsLoading(true);
-			setError(null);
 			try {
+				const noteToDelete = notes.find(note => note.id === noteId);
+				const threadId = noteToDelete?.threadId;
+
 				const result = await deleteNoteAction(noteId);
 
 				if (!result.success) {
 					throw new Error(result.error || 'Failed to delete note');
 				}
 
-				setNotes((prev) => prev.filter((note) => note.id !== noteId));
+				await refreshNotes(prev => 
+					(prev || []).filter(note => note.id !== noteId),
+					{ revalidate: false }
+				);
+				
+				if (threadId) {
+					mutate(THREAD_NOTES_KEY(threadId));
+				}
+				
 				toast.success(t('common.notes.noteDeleted'));
 				return true;
 			} catch (err: any) {
 				console.error('Error deleting note:', err);
-				setError(err.message || 'Failed to delete note');
 				toast.error(t('common.notes.errors.failedToDeleteNote'));
 				return false;
-			} finally {
-				setIsLoading(false);
 			}
 		},
-		[t],
+		[notes, t, refreshNotes],
 	);
 
 	const togglePinNote = useCallback(
 		async (noteId: string): Promise<Note | null> => {
-			setIsLoading(true);
-			setError(null);
 			try {
 				const noteToUpdate = notes.find((note) => note.id === noteId);
 				if (!noteToUpdate) throw new Error('Note not found');
 
 				const result = await updateNoteAction(noteId, {
-					isPinned: noteToUpdate.isPinned ? false : true,
+					isPinned: !noteToUpdate.isPinned,
 				});
 
 				if (!result.success) {
@@ -181,7 +169,15 @@ export function useNotes() {
 
 				const updatedNote = result.data;
 				if (updatedNote) {
-					setNotes((prev) => prev.map((note) => (note.id === noteId ? updatedNote : note)));
+					await refreshNotes(prev => 
+						(prev || []).map(note => (note.id === noteId ? updatedNote : note)),
+						{ revalidate: false }
+					);
+					
+					if (updatedNote.threadId) {
+						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
+					}
+					
 					const pinStatus = updatedNote.isPinned
 						? t('common.notes.notePinned')
 						: t('common.notes.noteUnpinned');
@@ -190,20 +186,15 @@ export function useNotes() {
 				return updatedNote || null;
 			} catch (err: any) {
 				console.error('Error toggling pin status:', err);
-				setError(err.message || 'Failed to update note');
 				toast.error(t('common.notes.errors.failedToUpdateNote'));
 				return null;
-			} finally {
-				setIsLoading(false);
 			}
 		},
-		[notes, t],
+		[notes, t, refreshNotes],
 	);
 
 	const changeNoteColor = useCallback(
 		async (noteId: string, color: string): Promise<Note | null> => {
-			setIsLoading(true);
-			setError(null);
 			try {
 				const result = await updateNoteAction(noteId, { color });
 
@@ -213,20 +204,25 @@ export function useNotes() {
 
 				const updatedNote = result.data;
 				if (updatedNote) {
-					setNotes((prev) => prev.map((note) => (note.id === noteId ? updatedNote : note)));
+					await refreshNotes(prev => 
+						(prev || []).map(note => (note.id === noteId ? updatedNote : note)),
+						{ revalidate: false }
+					);
+					
+					if (updatedNote.threadId) {
+						mutate(THREAD_NOTES_KEY(updatedNote.threadId));
+					}
+
+					toast.success(t('common.notes.colorChanged'));
 				}
-				toast.success(t('common.notes.colorChanged'));
 				return updatedNote || null;
 			} catch (err: any) {
 				console.error('Error changing note color:', err);
-				setError(err.message || 'Failed to update note color');
 				toast.error(t('common.notes.errors.failedToUpdateNoteColor'));
 				return null;
-			} finally {
-				setIsLoading(false);
 			}
 		},
-		[t],
+		[t, refreshNotes],
 	);
 
 	const reorderNotes = useCallback(
@@ -238,8 +234,6 @@ export function useNotes() {
 				return true;
 			}
 
-			setIsLoading(true);
-			setError(null);
 			try {
 				const validNoteIds = new Set(notes.map((note) => note.id));
 				const allNotesValid = reorderedNotes.every((note) => validNoteIds.has(note.id));
@@ -257,8 +251,8 @@ export function useNotes() {
 					reorderedNotes = validNotes;
 				}
 
-				setNotes((prev) => {
-					const updatedNotes = [...prev];
+				await refreshNotes((prev) => {
+					const updatedNotes = [...(prev || [])];
 					reorderedNotes.forEach(({ id, order, isPinned }) => {
 						const index = updatedNotes.findIndex((note) => note.id === id);
 						if (index !== -1) {
@@ -276,7 +270,7 @@ export function useNotes() {
 						if (!!a.isPinned !== !!b.isPinned) return a.isPinned ? -1 : 1;
 						return a.order - b.order;
 					});
-				});
+				}, { revalidate: false });
 
 				console.log('Sending reorder request to server:', reorderedNotes);
 				const result = await reorderNotesAction(reorderedNotes);
@@ -285,30 +279,35 @@ export function useNotes() {
 					throw new Error(result.error || 'Failed to reorder notes');
 				}
 
+				const threadIds = new Set<string>();
+				notes.forEach(note => {
+					if (note.threadId && reorderedNotes.some(r => r.id === note.id)) {
+						threadIds.add(note.threadId);
+					}
+				});
+				
+				threadIds.forEach(threadId => {
+					mutate(THREAD_NOTES_KEY(threadId));
+				});
+
 				toast.success(t('common.notes.notesReordered'));
 				return true;
 			} catch (err: any) {
 				console.error('Error reordering notes:', err);
-				setError(err.message || 'Failed to reorder notes');
 				toast.error(t('common.notes.errors.failedToReorderNotes'));
 
-				fetchAllNotes().catch((e) =>
-					console.error('Failed to refresh notes after reorder error:', e),
-				);
-
+				await refreshNotes();
 				return false;
-			} finally {
-				setIsLoading(false);
 			}
 		},
-		[notes, fetchAllNotes, t],
+		[notes, refreshNotes, t],
 	);
 
 	return {
 		notes,
 		isLoading,
-		error,
-		fetchNotes: fetchAllNotes,
+		error: error ? error.message : null,
+		fetchNotes: refreshNotes,
 		getNotesForThread,
 		hasNotes,
 		addNote,

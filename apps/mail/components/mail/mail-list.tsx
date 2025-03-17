@@ -69,14 +69,23 @@ const Thread = memo(
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
 
-		const threadHasNotes = !demo && hasNotes(message.threadId ?? message.id);
-		const isMailSelected = message.id === mail.selected;
+		const threadHasNotes = useMemo(() => {
+			return !demo && hasNotes(message.threadId ?? message.id);
+		}, [demo, hasNotes, message.threadId, message.id]);
+		
+		const isMailSelected = useMemo(() => {
+			return message.id === mail.selected;
+		}, [message.id, mail.selected]);
+		
 		const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 
-		const threadLabels = [...(message.tags || [])];
-		if (threadHasNotes) {
-			threadLabels.push('notes');
-		}
+		const threadLabels = useMemo(() => {
+			const labels = [...(message.tags || [])];
+			if (threadHasNotes) {
+				labels.push('notes');
+			}
+			return labels;
+		}, [message.tags, threadHasNotes]);
 
 		const handleMouseEnter = () => {
 			if (demo) return;
@@ -321,19 +330,6 @@ export function MailList({ isCompact }: MailListProps) {
 
 	useHotKey('Meta+Shift+u', () => {
 		resetSelectMode();
-		void (async () => {
-			const res = await markAsUnread({ ids: mail.bulkSelected });
-			if (res.success) {
-				toast.success('Marked as unread');
-				setMail((prev) => ({
-					...prev,
-					bulkSelected: [],
-				}));
-			} else toast.error('Failed to mark as unread');
-		})();
-	});
-	useHotKey('Meta+Shift+u', () => {
-		resetSelectMode();
 		markAsUnread({ ids: mail.bulkSelected }).then((result) => {
 			if (result.success) {
 				toast.success(t('common.mail.markedAsUnread'));
@@ -397,19 +393,6 @@ export function MailList({ isCompact }: MailListProps) {
 		});
 	});
 
-	useHotKey('Control+Shift+i', () => {
-		resetSelectMode();
-		void (async () => {
-			const res = await markAsRead({ ids: mail.bulkSelected });
-			if (res.success) {
-				toast.success('Marked as read');
-				setMail((prev) => ({
-					...prev,
-					bulkSelected: [],
-				}));
-			} else toast.error('Failed to mark as read');
-		})();
-	});
 	useHotKey('Control+Shift+i', () => {
 		resetSelectMode();
 		markAsRead({ ids: mail.bulkSelected }).then((response) => {
