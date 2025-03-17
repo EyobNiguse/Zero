@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DraftsList } from "@/components/draft/drafts-list";
@@ -27,56 +27,56 @@ export function DraftsLayout() {
   const { data: session, isPending } = useSession();
   const t = useTranslations();
 
-  useEffect(() => {
-    if (!session?.user && !isPending) {
-      router.push("/login");
-    }
-  }, [session?.user, isPending]);
+	useEffect(() => {
+		if (!session?.user && !isPending) {
+			router.push('/login');
+		}
+	}, [session?.user, isPending]);
 
-  const { isLoading, isValidating } = useDrafts(searchValue.value, defaultPageSize);
+	const { isLoading, isValidating } = useDrafts(searchValue.value, defaultPageSize);
 
-  useHotKey("/", () => {
-    setSearchMode(true);
-  });
+	useHotKey('/', () => {
+		setSearchMode(true);
+	});
 
-  useHotKey("Esc", (event) => {
-    // @ts-expect-error
-    event.preventDefault();
-    if (searchMode) {
-      setSearchMode(false);
-    }
-  });
+	useHotKey('Esc', (event) => {
+		// @ts-expect-error
+		event.preventDefault();
+		if (searchMode) {
+			setSearchMode(false);
+		}
+	});
 
-  const searchIconRef = useRef<any>(null);
+	const searchIconRef = useRef<any>(null);
 
-  return (
-    <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit flex">
-        <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
-          <div
-            className={cn(
-              "compose-gradient h-0.5 w-full transition-opacity",
-              isValidating ? "opacity-50" : "opacity-0",
-            )}
-          />
-          <div
-            className={cn(
-              "sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors",
-            )}
-          >
-            <SidebarToggle className="h-fit px-2" />
-            {searchMode && (
-              <div className="flex flex-1 items-center justify-center gap-3">
-                <SearchBar />
-                <Button
-                  variant="ghost"
-                  className="md:h-fit md:px-2"
-                  onClick={() => setSearchMode(false)}
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+	return (
+		<TooltipProvider delayDuration={0}>
+			<div className="rounded-inherit flex">
+				<div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
+					<div
+						className={cn(
+							'compose-gradient h-0.5 w-full transition-opacity',
+							isValidating ? 'opacity-50' : 'opacity-0',
+						)}
+					/>
+					<div
+						className={cn(
+							'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors',
+						)}
+					>
+						<SidebarToggle className="h-fit px-2" />
+						{searchMode && (
+							<div className="flex flex-1 items-center justify-center gap-3">
+								<SearchBar />
+								<Button
+									variant="ghost"
+									className="md:h-fit md:px-2"
+									onClick={() => setSearchMode(false)}
+								>
+									<XIcon className="h-4 w-4" />
+								</Button>
+							</div>
+						)}
 
             {!searchMode && (
               <>
