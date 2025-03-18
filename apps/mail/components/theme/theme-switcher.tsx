@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 
-import { MessageKey } from '@/config/navigation';
+import { type MessageKey } from '@/config/navigation';
 import { Laptop, Moon, Sun } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
