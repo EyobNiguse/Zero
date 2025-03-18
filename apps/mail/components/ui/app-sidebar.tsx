@@ -2,7 +2,6 @@
 
 import { SquarePenIcon, type SquarePenIconHandle } from '../icons/animated/square-pen';
 import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
-import { useFeaturebase } from '@/hooks/use-featurebase';
 import { navigationConfig } from '@/config/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -13,7 +12,6 @@ import React, { useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useStats } from '@/hooks/use-stats';
 import { useRouter } from 'next/navigation';
-import { useAISidebar } from './ai-sidebar';
 import { useTranslations } from 'next-intl';
 import { FOLDERS } from '@/lib/utils';
 import { NavMain } from './nav-main';
@@ -24,7 +22,6 @@ import Link from 'next/link';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const { data: stats } = useStats();
-	const { openFeaturebase } = useFeaturebase();
 
 	const pathname = usePathname();
 
