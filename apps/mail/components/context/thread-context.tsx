@@ -29,6 +29,7 @@ import { useThreads } from '@/hooks/use-threads';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import { useMail } from '../mail/use-mail';
+import { useTranslations } from 'use-intl'; // Keep this if localization is needed
 import { type ReactNode } from 'react';
 import { LABELS } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -69,6 +70,7 @@ export function ThreadContextMenu({
 	const currentFolder = folder ?? '';
 	const isArchiveFolder = currentFolder === 'archive';
 	const { mutate: mutateStats } = useStats();
+	const t = useTranslations();
 
 	const noopAction = () => async () => {
 		console.log('Action will be implemented later');
@@ -110,9 +112,9 @@ export function ThreadContextMenu({
 					return setMail({ ...mail, bulkSelected: [] });
 				}),
 				{
-					loading: 'Moving...',
-					success: () => 'Moved',
-					error: 'Error moving',
+					loading: t('common.mail.moving'),
+					success: () => t('common.mail.moved'),
+					error: t('common.mail.errorMoving'),
 				},
 			);
 		} catch (error) {
@@ -152,7 +154,7 @@ export function ThreadContextMenu({
 			return [
 				{
 					id: 'move-to-inbox',
-					label: 'Move to Inbox',
+					label: t('common.mail.moveToInbox'),
 					icon: <Inbox className="mr-2.5 h-4 w-4" />,
 					action: handleMove(LABELS.SPAM, LABELS.INBOX),
 					disabled: false,
@@ -164,7 +166,7 @@ export function ThreadContextMenu({
 			return [
 				{
 					id: 'move-to-inbox',
-					label: 'Unarchive',
+					label: t('common.mail.unarchive'),
 					icon: <Inbox className="mr-2.5 h-4 w-4" />,
 					action: handleMove('', LABELS.INBOX),
 					disabled: false,
@@ -176,7 +178,7 @@ export function ThreadContextMenu({
 			return [
 				{
 					id: 'archive',
-					label: 'Archive',
+					label: t('common.mail.archive'),
 					icon: <Archive className="mr-2.5 h-4 w-4" />,
 					shortcut: 'E',
 					action: handleMove(LABELS.SENT, ''),
@@ -188,7 +190,7 @@ export function ThreadContextMenu({
 		return [
 			{
 				id: 'archive',
-				label: 'Archive',
+				label: t('common.mail.archive'),
 				icon: <Archive className="mr-2.5 h-4 w-4" />,
 				shortcut: 'E',
 				action: handleMove(LABELS.INBOX, ''),
@@ -196,7 +198,7 @@ export function ThreadContextMenu({
 			},
 			{
 				id: 'move-to-spam',
-				label: 'Move to Spam',
+				label: t('common.mail.moveToSpam'),
 				icon: <ArchiveX className="mr-2.5 h-4 w-4" />,
 				action: handleMove(LABELS.INBOX, LABELS.SPAM),
 				disabled: !isInbox,
@@ -207,7 +209,7 @@ export function ThreadContextMenu({
 	const moveActions: EmailAction[] = [
 		{
 			id: 'move-to-trash',
-			label: 'Move to Trash',
+			label: t('common.mail.moveToTrash'),
 			icon: <Trash className="mr-2.5 h-4 w-4" />,
 			action: noopAction,
 			disabled: true, // TODO: Move to trash functionality to be implemented
@@ -217,7 +219,7 @@ export function ThreadContextMenu({
 	const otherActions: EmailAction[] = [
 		{
 			id: 'mark-unread',
-			label: 'Mark as Unread',
+			label: t('common.mail.markAsUnread'),
 			icon: <Mail className="mr-2.5 h-4 w-4" />,
 			shortcut: 'U',
 			action: noopAction,
@@ -225,7 +227,7 @@ export function ThreadContextMenu({
 		},
 		{
 			id: 'star',
-			label: 'Add Star',
+			label: t('common.mail.addStar'),
 			icon: <Star className="mr-2.5 h-4 w-4" />,
 			shortcut: 'S',
 			action: noopAction,
@@ -233,7 +235,7 @@ export function ThreadContextMenu({
 		},
 		{
 			id: 'mute',
-			label: 'Mute Thread',
+			label: t('common.mail.muteThread'),
 			icon: <BellOff className="mr-2.5 h-4 w-4" />,
 			action: noopAction,
 			disabled: true, // TODO: Mute functionality to be implemented

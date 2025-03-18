@@ -9,6 +9,13 @@ export interface CategoryInfo {
   trackingCategory: TrackingCategory;
 }
 
+export interface CookiePreferences {
+	necessary: boolean
+	analytics: boolean
+	marketing: boolean
+	preferences: boolean
+}
+
 export const COOKIE_CATEGORIES: Record<CookieCategory, CategoryInfo> = {
   necessary: {
     name: "Strictly Necessary",

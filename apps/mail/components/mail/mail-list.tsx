@@ -10,19 +10,21 @@ import {
 	useState,
 } from 'react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
+import { AlertTriangle, Bell, Briefcase, Tag, User, Users, StickyNote, Pin } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertTriangle, Bell, Briefcase, Tag, User, Users } from 'lucide-react';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { cn, defaultPageSize, formatDate } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
+import { useTranslations, useFormatter } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
+import { useNotes } from '@/hooks/use-notes';
 import { useParams } from 'next/navigation';
 import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
@@ -53,14 +55,32 @@ const highlightText = (text: string, highlight: string) => {
 const Thread = memo(
 	({ message, selectMode, demo, onClick, sessionData }: ConditionalThreadProps) => {
 		const [mail] = useMail();
-		// const { data: session } = useSession();
+		const { hasNotes } = demo ? { hasNotes: () => false } : useNotes();
+		const [searchValue] = useSearchValue();
+		const t = useTranslations();
+		const format = useFormatter();
 		const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
-		const [searchValue] = useSearchValue();
 
-		const isMailSelected = message.id === mail.selected;
+		const threadHasNotes = useMemo(() => {
+			return !demo && hasNotes(message.threadId ?? message.id);
+		}, [demo, hasNotes, message.threadId, message.id]);
+
+		const isMailSelected = useMemo(() => {
+			return message.id === mail.selected;
+		}, [message.id, mail.selected]);
+
 		const isMailBulkSelected = mail.bulkSelected.includes(message.id);
+
+		const threadLabels = useMemo(() => {
+			const labels = [...(message.tags || [])];
+			if (threadHasNotes) {
+				labels.push('notes');
+			}
+			return labels;
+		}, [message.tags, threadHasNotes]);
+
 		const handleMouseEnter = () => {
 			if (demo) return;
 			isHovering.current = true;
@@ -139,7 +159,7 @@ const Thread = memo(
 							</span>{' '}
 							{message.unread ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
 						</p>
-						<MailLabels labels={message.tags} />
+						<MailLabels labels={threadLabels} />
 						<div className="flex items-center gap-1">
 							{message.totalReplies > 1 ? (
 								<Tooltip>
@@ -149,7 +169,7 @@ const Thread = memo(
 										</span>
 									</TooltipTrigger>
 									<TooltipContent className="px-1 py-0 text-xs">
-										{message.totalReplies} Replies
+										{t('common.mail.replies', { count: message.totalReplies })}
 									</TooltipContent>
 								</Tooltip>
 							) : null}
@@ -200,6 +220,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 	const { folder } = useParams<{ folder: string }>();
 	const [mail, setMail] = useMail();
 	const { data: session } = useSession();
+	const t = useTranslations();
 
 	const sessionData = useMemo(
 		() => ({
@@ -239,7 +260,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 				...prev,
 				bulkSelected: [],
 			}));
-			toast.success('Deselected all emails');
+			toast.success(t('common.mail.deselectAll'));
 		}
 		// Otherwise select all items
 		else if (items.length > 0) {
@@ -248,11 +269,11 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 				...prev,
 				bulkSelected: allIds,
 			}));
-			toast.success(`Selected ${allIds.length} emails`);
+			toast.success(t('common.mail.selectedEmails', { count: allIds.length }));
 		} else {
-			toast.info('No emails to select');
+			toast.info(t('common.mail.noEmailsToSelect'));
 		}
-	}, [items, setMail, mail.bulkSelected]);
+	}, [items, setMail, mail.bulkSelected, t]);
 
 	const resetSelectMode = () => {
 		setMassSelectMode(false);
@@ -282,16 +303,15 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
 	useHotKey('Meta+Shift+u', () => {
 		resetSelectMode();
-		void (async () => {
-			const res = await markAsUnread({ ids: mail.bulkSelected });
-			if (res.success) {
-				toast.success('Marked as unread');
+		markAsUnread({ ids: mail.bulkSelected }).then((result) => {
+			if (result.success) {
+				toast.success(t('common.mail.markedAsUnread'));
 				setMail((prev) => ({
 					...prev,
 					bulkSelected: [],
 				}));
-			} else toast.error('Failed to mark as unread');
-		})();
+			} else toast.error(t('common.mail.failedToMarkAsUnread'));
+		});
 	});
 
 	useHotKey('Control+Shift+u', () => {
@@ -307,6 +327,18 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 			} else toast.error('Failed to mark as unread');
 		})();
 	});
+	useHotKey('Control+Shift+u', () => {
+		resetSelectMode();
+		markAsUnread({ ids: mail.bulkSelected }).then((response) => {
+			if (response.success) {
+				toast.success(t('common.mail.markedAsUnread'));
+				setMail((prev) => ({
+					...prev,
+					bulkSelected: [],
+				}));
+			} else toast.error(t('common.mail.failedToMarkAsUnread'));
+		});
+	});
 
 	useHotKey('Meta+Shift+i', () => {
 		resetSelectMode();
@@ -321,19 +353,30 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 			} else toast.error('Failed to mark as read');
 		})();
 	});
-
-	useHotKey('Control+Shift+i', () => {
+	useHotKey('Meta+Shift+i', () => {
 		resetSelectMode();
-		void (async () => {
-			const res = await markAsRead({ ids: mail.bulkSelected });
-			if (res.success) {
-				toast.success('Marked as read');
+		markAsRead({ ids: mail.bulkSelected }).then((data) => {
+			if (data.success) {
+				toast.success(t('common.mail.markedAsRead'));
 				setMail((prev) => ({
 					...prev,
 					bulkSelected: [],
 				}));
-			} else toast.error('Failed to mark as read');
-		})();
+			} else toast.error(t('common.mail.failedToMarkAsRead'));
+		});
+	});
+
+	useHotKey('Control+Shift+i', () => {
+		resetSelectMode();
+		markAsRead({ ids: mail.bulkSelected }).then((response) => {
+			if (response.success) {
+				toast.success(t('common.mail.markedAsRead'));
+				setMail((prev) => ({
+					...prev,
+					bulkSelected: [],
+				}));
+			} else toast.error(t('common.mail.failedToMarkAsRead'));
+		});
 	});
 
 	// useHotKey("Meta+Shift+j", async () => {
@@ -529,6 +572,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
 const MailLabels = memo(
 	({ labels }: { labels: string[] }) => {
+		const t = useTranslations();
+
 		if (!labels.length) return null;
 
 		const visibleLabels = labels.filter(
@@ -541,8 +586,49 @@ const MailLabels = memo(
 			<div className={cn('flex select-none items-center gap-1')}>
 				{visibleLabels.map((label) => {
 					const style = getDefaultBadgeStyle(label);
+					if (label.toLowerCase() === 'notes') {
+						return (
+							<Tooltip key={label}>
+								<TooltipTrigger asChild>
+									<Badge className="rounded-md bg-amber-100 p-1 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400">
+										{getLabelIcon(label)}
+									</Badge>
+								</TooltipTrigger>
+								<TooltipContent className="px-1 py-0 text-xs">
+									{t('common.notes.title')}
+								</TooltipContent>
+							</Tooltip>
+						);
+					}
+
 					// Skip rendering if style is "secondary" (default case)
 					if (style === 'secondary') return null;
+
+					const normalizedLabel = getNormalizedLabelKey(label);
+
+					let labelContent;
+					switch (normalizedLabel) {
+						case 'primary':
+							labelContent = t('common.mailCategories.primary');
+							break;
+						case 'important':
+							labelContent = t('common.mailCategories.important');
+							break;
+						case 'personal':
+							labelContent = t('common.mailCategories.personal');
+							break;
+						case 'updates':
+							labelContent = t('common.mailCategories.updates');
+							break;
+						case 'promotions':
+							labelContent = t('common.mailCategories.promotions');
+							break;
+						case 'social':
+							labelContent = t('common.mailCategories.social');
+							break;
+						default:
+							labelContent = capitalize(normalizedLabel);
+					}
 
 					return (
 						<Tooltip key={label}>
@@ -561,10 +647,15 @@ const MailLabels = memo(
 		);
 	},
 	(prev, next) => {
-		return prev.labels === next.labels;
+		return JSON.stringify(prev.labels) === JSON.stringify(next.labels);
 	},
 );
 MailLabels.displayName = 'MailLabels';
+
+function getNormalizedLabelKey(label: string) {
+	const normalizedLabel = label.toLowerCase().replace(/^category_/i, '');
+	return normalizedLabel;
+}
 
 function capitalize(str: string) {
 	return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
@@ -586,6 +677,8 @@ function getLabelIcon(label: string) {
 			return <Briefcase className="h-3 w-3" />;
 		case 'forums':
 			return <Users className="h-3 w-3" />;
+		case 'notes':
+			return <StickyNote className="h-3 w-3" />;
 		default:
 			return null;
 	}
@@ -607,6 +700,8 @@ function getDefaultBadgeStyle(label: string): ComponentProps<typeof Badge>['vari
 			return 'default';
 		case 'forums':
 			return 'forums';
+		case 'notes':
+			return 'secondary';
 		default:
 			return 'secondary';
 	}

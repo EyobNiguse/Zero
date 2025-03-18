@@ -2,7 +2,7 @@
 
 import { updateCookiePreferences } from '@/actions/cookies';
 import { useGeoLocation } from '@/hooks/use-geo-location';
-import { CookieCategory } from '@/lib/cookies';
+import type { CookieCategory } from '@/lib/cookies';
 import React, { startTransition } from 'react';
 import { Switch } from '../ui/switch';
 
