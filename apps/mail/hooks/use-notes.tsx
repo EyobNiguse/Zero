@@ -7,11 +7,11 @@ import {
 	reorderNotes as reorderNotesAction,
 } from '@/actions/notes';
 import type { Note } from '@/app/api/notes/types';
+import { useSession } from '@/lib/auth-client';
 import { useTranslations } from 'next-intl';
 import useSWR, { mutate } from 'swr';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { useSession } from '@/lib/auth-client';
 
 export type { Note };
 
@@ -144,7 +144,7 @@ export function useNotes() {
 		async (noteId: string): Promise<Note | null> => {
 			try {
 				const noteToUpdate = notes.find((note) => note.id === noteId);
-				if (!noteToUpdate) return null
+				if (!noteToUpdate) return null;
 
 				const result = await updateNoteAction(noteId, {
 					isPinned: !noteToUpdate.isPinned,

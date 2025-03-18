@@ -49,9 +49,7 @@ export function DraftsLayout() {
 	//
 	// const searchIconRef = useRef<any>(null);
 
-	return (
-		<p>Test</p>
-	);
+	return <p>Test</p>;
 }
 
 function BulkSelectActions() {

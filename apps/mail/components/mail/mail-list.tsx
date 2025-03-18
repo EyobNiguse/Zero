@@ -27,6 +27,7 @@ import { useTranslations, useFormatter } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMail } from '@/components/mail/use-mail';
+import { useKeyState } from '@/hooks/use-hot-key';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +35,6 @@ import { useNotes } from '@/hooks/use-notes';
 import { useParams } from 'next/navigation';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { useKeyState } from '@/hooks/use-hot-key';
 
 const HOVER_DELAY = 1000; // ms before prefetching
 
