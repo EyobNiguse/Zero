@@ -244,10 +244,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 	const scrollRef = useRef<VirtuosoHandle>(null);
 
 	const handleScroll = useCallback(() => {
-		if (isLoading || isValidating) return;
+		if (isLoading || isValidating || !nextPageToken) return;
 		console.log('Loading more items...');
 		void loadMore();
-	}, [isLoading, isValidating, loadMore]);
+	}, [isLoading, isValidating, loadMore, nextPageToken]);
 
 	const [massSelectMode, setMassSelectMode] = useState(false);
 	const [rangeSelectMode, setRangeSelectMode] = useState(false);
