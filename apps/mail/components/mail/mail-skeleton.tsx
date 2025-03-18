@@ -8,7 +8,7 @@ export const MailDisplaySkeleton = ({ isFullscreen }: { isFullscreen?: boolean }
 		<>
 			<div
 				className={cn(
-					'relative m-4 flex-1 overflow-hidden',
+					'border-border bg-secondary/50 relative m-4 flex-1 overflow-hidden rounded-lg border p-4',
 					isFullscreen && 'h-[calc(100vh-4rem)]',
 				)}
 			>
@@ -48,7 +48,7 @@ export const MailDisplaySkeleton = ({ isFullscreen }: { isFullscreen?: boolean }
 			</div>
 			<div
 				className={cn(
-					'relative m-4 flex-1 overflow-hidden',
+					'border-border bg-secondary/50 relative m-4 flex-1 overflow-hidden rounded-lg border p-4',
 					isFullscreen && 'h-[calc(100vh-4rem)]',
 				)}
 			>
@@ -88,7 +88,7 @@ export const MailDisplaySkeleton = ({ isFullscreen }: { isFullscreen?: boolean }
 			</div>
 			<div
 				className={cn(
-					'relative m-4 flex-1 overflow-hidden',
+					'border-border bg-secondary/50 relative m-4 flex-1 overflow-hidden rounded-lg border p-4',
 					isFullscreen && 'h-[calc(100vh-4rem)]',
 				)}
 			>
