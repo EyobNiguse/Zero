@@ -1,25 +1,15 @@
 'use client';
-
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ArrowUpIcon, BookText, Paperclip, Plus, X } from 'lucide-react';
+import { ArrowUpIcon, Paperclip, X } from 'lucide-react';
 import { useConnections } from '@/hooks/use-connections';
 import { createDraft, getDraft } from '@/actions/drafts';
-import { UploadedFileIcon } from './uploaded-file-icon';
-import { Separator } from '@/components/ui/separator';
 import { SidebarToggle } from '../ui/sidebar-toggle';
-import Paragraph from '@tiptap/extension-paragraph';
-import { cn, truncateFileName } from '@/lib/utils';
-import Document from '@tiptap/extension-document';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { AIAssistant } from './ai-assistant';
-import { generateJSON } from '@tiptap/html';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
-import Bold from '@tiptap/extension-bold';
-import Text from '@tiptap/extension-text';
 import { useQueryState } from 'nuqs';
-import { JSONContent } from 'novel';
+import { type JSONContent } from 'novel';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';

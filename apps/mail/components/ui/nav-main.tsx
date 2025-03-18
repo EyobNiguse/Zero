@@ -4,12 +4,11 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useRef, useCallback } from 'react';
 import * as React from 'react';
 import Link from 'next/link';
-
 import { SidebarGroup, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from './sidebar';
 import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useFeaturebase } from '@/hooks/use-featurebase';
-import { MessageKeys, useTranslations } from 'next-intl';
-import { MessageKey } from '@/config/navigation';
+import { useTranslations } from 'next-intl';
+import { type MessageKey } from '@/config/navigation';
 import { Badge } from '@/components/ui/badge';
 import { useStats } from '@/hooks/use-stats';
 import { BASE_URL } from '@/lib/constants';

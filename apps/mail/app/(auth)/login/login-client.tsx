@@ -2,8 +2,8 @@
 
 import { GitHub, Google } from '@/components/icons/icons';
 import { signIn, useSession } from '@/lib/auth-client';
-import { useEffect, ReactNode, useState } from 'react';
-import { EnvVarInfo } from '@/lib/auth-providers';
+import { useEffect, type ReactNode, useState } from 'react';
+import { type EnvVarInfo } from '@/lib/auth-providers';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
