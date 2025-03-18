@@ -1,12 +1,5 @@
 'use client';
 
-import type {
-	ConditionalThreadProps,
-	InitialThread,
-	MailListProps,
-	MailSelectMode,
-	ThreadProps,
-} from '@/types';
 import {
 	type ComponentProps,
 	memo,
@@ -16,6 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertTriangle, Bell, Briefcase, Tag, User, Users } from 'lucide-react';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
@@ -24,13 +18,13 @@ import { cn, defaultPageSize, formatDate } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { useMail } from '@/components/mail/use-mail';
-import { FixedSizeList as List } from 'react-window';
+import type { VirtuosoHandle } from 'react-virtuoso';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useParams } from 'next/navigation';
+import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
 
@@ -64,6 +58,10 @@ const Thread = memo(
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
 		const [searchValue] = useSearchValue();
+
+		if (!message) {
+			return null;
+		}
 
 		const isMailSelected = message.id === mail.selected;
 		const isMailBulkSelected = mail.bulkSelected.includes(message.id);
@@ -202,7 +200,7 @@ export function MailListDemo({ items: filteredItems = items }) {
 	);
 }
 
-export function MailList({ isCompact }: MailListProps) {
+export const MailList = memo(({ isCompact }: MailListProps) => {
 	const { folder } = useParams<{ folder: string }>();
 	const [mail, setMail] = useMail();
 	const { data: session } = useSession();
@@ -226,24 +224,13 @@ export function MailList({ isCompact }: MailListProps) {
 	} = useThreads(folder, undefined, searchValue.value, defaultPageSize);
 
 	const parentRef = useRef<HTMLDivElement>(null);
-	const scrollRef = useRef<HTMLDivElement>(null);
+	const scrollRef = useRef<VirtuosoHandle>(null);
 
-	const handleScroll = useCallback(
-		(e: React.UIEvent<HTMLDivElement>) => {
-			if (isLoading || isValidating) return;
-
-			const target = e.target as HTMLDivElement;
-			const { scrollTop, scrollHeight, clientHeight } = target;
-			const scrolledToBottom = scrollHeight - (scrollTop + clientHeight) < 96 * 2;
-
-			if (scrolledToBottom) {
-				console.log('Loading more items...');
-				void loadMore();
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[isLoading, isValidating, nextPageToken],
-	);
+	const handleScroll = useCallback(() => {
+		if (isLoading || isValidating) return;
+		console.log('Loading more items...');
+		void loadMore();
+	}, [isLoading, isValidating, loadMore]);
 
 	const [massSelectMode, setMassSelectMode] = useState(false);
 	const [rangeSelectMode, setRangeSelectMode] = useState(false);
@@ -522,20 +509,13 @@ export function MailList({ isCompact }: MailListProps) {
 	return (
 		<>
 			<div ref={parentRef} className={cn('h-full w-full', selectMode === 'range' && 'select-none')}>
-				<AutoSizer>
-					{({ width, height }) => (
-						<List
-							itemKey={(index) => items[index]?.id!}
-							itemCount={items.length}
-							itemSize={96}
-							className="w-full"
-							width={width}
-							height={height}
-						>
-							{rowRenderer}
-						</List>
-					)}
-				</AutoSizer>
+				<Virtuoso
+					ref={scrollRef}
+					style={{ height: '100%' }}
+					totalCount={items.length}
+					itemContent={(index: number) => rowRenderer({ index })}
+					endReached={handleScroll}
+				/>
 			</div>
 			<div className="w-full pt-4 text-center">
 				{isLoading || isValidating ? (
@@ -548,7 +528,7 @@ export function MailList({ isCompact }: MailListProps) {
 			</div>
 		</>
 	);
-}
+});
 
 const MailLabels = memo(
 	({ labels }: { labels: string[] }) => {
