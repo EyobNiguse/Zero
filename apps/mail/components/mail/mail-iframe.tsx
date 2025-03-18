@@ -1,6 +1,7 @@
 import { fixNonReadableColors, template } from '@/lib/email-utils';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Skeleton } from '../ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
@@ -45,9 +46,24 @@ export function MailIframe({ html }: { html: string }) {
 	return (
 		<>
 			{!loaded && (
-				<div className="flex h-full w-full items-center justify-center gap-4 p-8">
-					<Loader2 className="size-4 animate-spin" />
-					<span>{t('common.mailDisplay.loadingMailContent')}</span>
+				<div className="flex h-full w-full gap-4 p-4">
+					<div className="relative inset-0 h-full w-full overflow-y-auto pb-0">
+						<div className="flex flex-col gap-4">
+							{/* <Skeleton className="h-[1px] w-full" /> */}
+							<div className="space-y-4">
+								<div className="flex flex-col space-y-2">
+									<Skeleton className="h-4 w-full" />
+									<Skeleton className="h-4 w-[90%]" />
+									<Skeleton className="h-4 w-[95%]" />
+								</div>
+								<div className="flex flex-col space-y-2">
+									<Skeleton className="h-4 w-[88%]" />
+									<Skeleton className="h-4 w-[92%]" />
+									<Skeleton className="h-4 w-[85%]" />
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			)}
 			<iframe

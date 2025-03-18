@@ -1,12 +1,5 @@
 'use client';
 
-import type {
-	ConditionalThreadProps,
-	InitialThread,
-	MailListProps,
-	MailSelectMode,
-	ThreadProps,
-} from '@/types';
 import {
 	type ComponentProps,
 	memo,
@@ -16,6 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { AlertTriangle, Bell, Briefcase, Tag, User, Users, StickyNote, Pin } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
@@ -25,14 +19,14 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { useTranslations, useFormatter } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMail } from '@/components/mail/use-mail';
+import type { VirtuosoHandle } from 'react-virtuoso';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useNotes } from '@/hooks/use-notes';
 import { useParams } from 'next/navigation';
-import { useTheme } from 'next-themes';
+import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
 
@@ -222,7 +216,7 @@ export function MailListDemo({ items: filteredItems = items }) {
 	);
 }
 
-export function MailList({ isCompact }: MailListProps) {
+export const MailList = memo(({ isCompact }: MailListProps) => {
 	const { folder } = useParams<{ folder: string }>();
 	const [mail, setMail] = useMail();
 	const { data: session } = useSession();
@@ -247,34 +241,13 @@ export function MailList({ isCompact }: MailListProps) {
 	} = useThreads(folder, undefined, searchValue.value, defaultPageSize);
 
 	const parentRef = useRef<HTMLDivElement>(null);
-	const scrollRef = useRef<HTMLDivElement>(null);
-	const itemHeight = isCompact ? 64 : 96;
+	const scrollRef = useRef<VirtuosoHandle>(null);
 
-	const virtualizer = useVirtualizer({
-		count: items.length,
-		getScrollElement: () => scrollRef.current,
-		estimateSize: useCallback(() => itemHeight, []),
-		gap: 6,
-	});
-
-	const virtualItems = virtualizer.getVirtualItems();
-
-	const handleScroll = useCallback(
-		(e: React.UIEvent<HTMLDivElement>) => {
-			if (isLoading || isValidating) return;
-
-			const target = e.target as HTMLDivElement;
-			const { scrollTop, scrollHeight, clientHeight } = target;
-			const scrolledToBottom = scrollHeight - (scrollTop + clientHeight) < itemHeight * 2;
-
-			if (scrolledToBottom) {
-				console.log('Loading more items...');
-				void loadMore();
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[isLoading, isValidating, nextPageToken, itemHeight],
-	);
+	const handleScroll = useCallback(() => {
+		if (isLoading || isValidating) return;
+		console.log('Loading more items...');
+		void loadMore();
+	}, [isLoading, isValidating, loadMore]);
 
 	const [massSelectMode, setMassSelectMode] = useState(false);
 	const [rangeSelectMode, setRangeSelectMode] = useState(false);
@@ -556,45 +529,33 @@ export function MailList({ isCompact }: MailListProps) {
 		return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
 	}
 
+	const rowRenderer = useCallback(
+		//TODO: Add proper typing
+		// @ts-expect-error
+		(props) => (
+			<Thread
+				onClick={handleMailClick}
+				selectMode={selectMode}
+				isCompact={isCompact}
+				sessionData={sessionData}
+				message={props.data}
+				{...props}
+			/>
+		),
+		[handleMailClick, selectMode, isCompact, sessionData],
+	);
+
 	return (
-		<ScrollArea
-			ref={scrollRef}
-			className="h-full pb-2"
-			type="scroll"
-			onScrollCapture={handleScroll}
-		>
-			<div
-				ref={parentRef}
-				className={cn('w-full', selectMode === 'range' && 'select-none')}
-				style={{
-					height: `${virtualizer.getTotalSize()}px`,
-					position: 'relative',
-				}}
-			>
-				{virtualItems.map(({ index, key, start }) => {
-					const item = items[index];
-					return item ? (
-						<div
-							key={key}
-							style={{
-								position: 'absolute',
-								transform: `translateY(${start ?? 0}px)`,
-								top: 0,
-								left: 0,
-								width: '100%',
-								padding: '8px',
-							}}
-						>
-							<Thread
-								onClick={handleMailClick}
-								message={item}
-								selectMode={selectMode}
-								isCompact={isCompact}
-								sessionData={sessionData}
-							/>
-						</div>
-					) : null;
-				})}
+		<>
+			<div ref={parentRef} className={cn('h-full w-full', selectMode === 'range' && 'select-none')}>
+				<Virtuoso
+					ref={scrollRef}
+					style={{ height: '100%' }}
+					totalCount={items.length}
+					itemContent={(index: number, data: InitialThread) => rowRenderer({ index, data })}
+					endReached={handleScroll}
+					data={items}
+				/>
 			</div>
 			<div className="w-full pt-4 text-center">
 				{isLoading || isValidating ? (
@@ -605,9 +566,9 @@ export function MailList({ isCompact }: MailListProps) {
 					<div className="h-4" />
 				)}
 			</div>
-		</ScrollArea>
+		</>
 	);
-}
+});
 
 const MailLabels = memo(
 	({ labels }: { labels: string[] }) => {
