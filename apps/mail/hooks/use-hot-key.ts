@@ -24,11 +24,11 @@ function initKeyListeners() {
   }
 }
 
+if (typeof window !== 'undefined') {
+  setTimeout(() => initKeyListeners(), 0);
+}
+
 export function useKeyState() {
-  useEffect(() => {
-    initKeyListeners();
-  }, []);
-  
   return useCallback((key: string) => keyStates.get(key) || false, []);
 }
 
@@ -44,10 +44,6 @@ export const useHotKey = (
     callbackRef.current = callback;
   });
   
-  useEffect(() => {
-    initKeyListeners();
-  }, []);
-
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const isTextInput =
