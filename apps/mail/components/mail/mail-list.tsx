@@ -68,6 +68,7 @@ const Thread = memo(
 		const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
+		const isKeyPressed = useKeyState();
 
 		const threadHasNotes = useMemo(() => {
 			return !demo && hasNotes(message.threadId ?? message.id);
@@ -140,7 +141,7 @@ const Thread = memo(
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				onMouseDown={(e) => {
-					if (e.ctrlKey || e.metaKey) {
+					if (isKeyPressed('Control') || isKeyPressed('Meta')) {
 						e.preventDefault();
 					}
 				}}
