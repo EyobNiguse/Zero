@@ -454,7 +454,7 @@ export function MailList({ isCompact }: MailListProps) {
 		(message: InitialThread) => () => {
 			if (isCtrlKeyPressed.current) {
 				setMassSelectMode(true);
-				
+
 				const updatedBulkSelected = mail.bulkSelected.includes(message.id)
 					? mail.bulkSelected.filter((id) => id !== message.id)
 					: [...mail.bulkSelected, message.id];
@@ -465,7 +465,7 @@ export function MailList({ isCompact }: MailListProps) {
 
 			if (isShiftKeyPressed.current) {
 				setRangeSelectMode(true);
-				
+
 				const lastSelectedItem =
 					mail.bulkSelected[mail.bulkSelected.length - 1] ?? mail.selected ?? message.id;
 
@@ -486,7 +486,7 @@ export function MailList({ isCompact }: MailListProps) {
 
 			if (isAltKeyPressed.current && isShiftKeyPressed.current) {
 				setSelectAllBelowMode(true);
-				
+
 				const mailsIndex = items.map((m) => m.id);
 				const startIdx = mailsIndex.indexOf(message.id);
 
