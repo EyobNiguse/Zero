@@ -24,13 +24,13 @@ import { cn, defaultPageSize, formatDate } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { useMail } from '@/components/mail/use-mail';
+import { FixedSizeList as List } from 'react-window';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useParams } from 'next/navigation';
-import { useTheme } from 'next-themes';
 import items from './demo.json';
 import { toast } from 'sonner';
 
@@ -227,16 +227,6 @@ export function MailList({ isCompact }: MailListProps) {
 
 	const parentRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
-	const itemHeight = isCompact ? 64 : 96;
-
-	const virtualizer = useVirtualizer({
-		count: items.length,
-		getScrollElement: () => scrollRef.current,
-		estimateSize: useCallback(() => itemHeight, []),
-		gap: 6,
-	});
-
-	const virtualItems = virtualizer.getVirtualItems();
 
 	const handleScroll = useCallback(
 		(e: React.UIEvent<HTMLDivElement>) => {
@@ -244,7 +234,7 @@ export function MailList({ isCompact }: MailListProps) {
 
 			const target = e.target as HTMLDivElement;
 			const { scrollTop, scrollHeight, clientHeight } = target;
-			const scrolledToBottom = scrollHeight - (scrollTop + clientHeight) < itemHeight * 2;
+			const scrolledToBottom = scrollHeight - (scrollTop + clientHeight) < 96 * 2;
 
 			if (scrolledToBottom) {
 				console.log('Loading more items...');
@@ -252,7 +242,7 @@ export function MailList({ isCompact }: MailListProps) {
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[isLoading, isValidating, nextPageToken, itemHeight],
+		[isLoading, isValidating, nextPageToken],
 	);
 
 	const [massSelectMode, setMassSelectMode] = useState(false);
@@ -513,45 +503,39 @@ export function MailList({ isCompact }: MailListProps) {
 		return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
 	}
 
+	const rowRenderer = useCallback(
+		//TODO: Add proper typing
+		// @ts-expect-error
+		(props) => (
+			<Thread
+				onClick={handleMailClick}
+				selectMode={selectMode}
+				isCompact={isCompact}
+				sessionData={sessionData}
+				message={items[props.index]!}
+				{...props}
+			/>
+		),
+		[handleMailClick, selectMode, isCompact, sessionData],
+	);
+
 	return (
-		<ScrollArea
-			ref={scrollRef}
-			className="h-full pb-2"
-			type="scroll"
-			onScrollCapture={handleScroll}
-		>
-			<div
-				ref={parentRef}
-				className={cn('w-full', selectMode === 'range' && 'select-none')}
-				style={{
-					height: `${virtualizer.getTotalSize()}px`,
-					position: 'relative',
-				}}
-			>
-				{virtualItems.map(({ index, key, start }) => {
-					const item = items[index];
-					return item ? (
-						<div
-							key={key}
-							style={{
-								position: 'absolute',
-								transform: `translateY(${start ?? 0}px)`,
-								top: 0,
-								left: 0,
-								width: '100%',
-								padding: '8px',
-							}}
+		<>
+			<div ref={parentRef} className={cn('h-full w-full', selectMode === 'range' && 'select-none')}>
+				<AutoSizer>
+					{({ width, height }) => (
+						<List
+							itemKey={(index) => items[index]?.id!}
+							itemCount={items.length}
+							itemSize={96}
+							className="w-full"
+							width={width}
+							height={height}
 						>
-							<Thread
-								onClick={handleMailClick}
-								message={item}
-								selectMode={selectMode}
-								isCompact={isCompact}
-								sessionData={sessionData}
-							/>
-						</div>
-					) : null;
-				})}
+							{rowRenderer}
+						</List>
+					)}
+				</AutoSizer>
 			</div>
 			<div className="w-full pt-4 text-center">
 				{isLoading || isValidating ? (
@@ -562,7 +546,7 @@ export function MailList({ isCompact }: MailListProps) {
 					<div className="h-4" />
 				)}
 			</div>
-		</ScrollArea>
+		</>
 	);
 }
 
