@@ -279,6 +279,9 @@ export function MailList({ isCompact }: MailListProps) {
 	const [massSelectMode, setMassSelectMode] = useState(false);
 	const [rangeSelectMode, setRangeSelectMode] = useState(false);
 	const [selectAllBelowMode, setSelectAllBelowMode] = useState(false);
+	const isCtrlKeyPressed = useRef(false);
+	const isShiftKeyPressed = useRef(false);
+	const isAltKeyPressed = useRef(false);
 
 	const selectAll = useCallback(() => {
 		// If there are already items selected, deselect them all
@@ -308,26 +311,6 @@ export function MailList({ isCompact }: MailListProps) {
 		setSelectAllBelowMode(false);
 	};
 
-	useHotKey('Control', () => {
-		resetSelectMode();
-		setMassSelectMode(true);
-	});
-
-	useHotKey('Meta', () => {
-		resetSelectMode();
-		setMassSelectMode(true);
-	});
-
-	useHotKey('Shift', () => {
-		resetSelectMode();
-		setRangeSelectMode(true);
-	});
-
-	useHotKey('Alt+Shift', () => {
-		resetSelectMode();
-		setSelectAllBelowMode(true);
-	});
-
 	useHotKey('Meta+Shift+u', () => {
 		resetSelectMode();
 		markAsUnread({ ids: mail.bulkSelected }).then((result) => {
@@ -341,19 +324,6 @@ export function MailList({ isCompact }: MailListProps) {
 		});
 	});
 
-	useHotKey('Control+Shift+u', () => {
-		resetSelectMode();
-		void (async () => {
-			const res = await markAsUnread({ ids: mail.bulkSelected });
-			if (res.success) {
-				toast.success('Marked as unread');
-				setMail((prev) => ({
-					...prev,
-					bulkSelected: [],
-				}));
-			} else toast.error('Failed to mark as unread');
-		})();
-	});
 	useHotKey('Control+Shift+u', () => {
 		resetSelectMode();
 		markAsUnread({ ids: mail.bulkSelected }).then((response) => {
@@ -380,18 +350,6 @@ export function MailList({ isCompact }: MailListProps) {
 			} else toast.error('Failed to mark as read');
 		})();
 	});
-	useHotKey('Meta+Shift+i', () => {
-		resetSelectMode();
-		markAsRead({ ids: mail.bulkSelected }).then((data) => {
-			if (data.success) {
-				toast.success(t('common.mail.markedAsRead'));
-				setMail((prev) => ({
-					...prev,
-					bulkSelected: [],
-				}));
-			} else toast.error(t('common.mail.failedToMarkAsRead'));
-		});
-	});
 
 	useHotKey('Control+Shift+i', () => {
 		resetSelectMode();
@@ -405,20 +363,6 @@ export function MailList({ isCompact }: MailListProps) {
 			} else toast.error(t('common.mail.failedToMarkAsRead'));
 		});
 	});
-
-	// useHotKey("Meta+Shift+j", async () => {
-	//   resetSelectMode();
-	//   const res = await markAsJunk({ ids: mail.bulkSelected });
-	//   if (res.success) toast.success("Marked as junk");
-	//   else toast.error("Failed to mark as junk");
-	// });
-
-	// useHotKey("Control+Shift+j", async () => {
-	//   resetSelectMode();
-	//   const res = await markAsJunk({ ids: mail.bulkSelected });
-	//   if (res.success) toast.success("Marked as junk");
-	//   else toast.error("Failed to mark as junk");
-	// });
 
 	useHotKey('Meta+a', (event) => {
 		event?.preventDefault();
@@ -445,30 +389,53 @@ export function MailList({ isCompact }: MailListProps) {
 	});
 
 	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Control' || e.key === 'Meta') {
+				isCtrlKeyPressed.current = true;
+			}
+			if (e.key === 'Shift') {
+				isShiftKeyPressed.current = true;
+			}
+			if (e.key === 'Alt') {
+				isAltKeyPressed.current = true;
+			}
+		};
+
 		const handleKeyUp = (e: KeyboardEvent) => {
 			if (e.key === 'Control' || e.key === 'Meta') {
+				isCtrlKeyPressed.current = false;
 				setMassSelectMode(false);
 			}
 			if (e.key === 'Shift') {
+				isShiftKeyPressed.current = false;
 				setRangeSelectMode(false);
 			}
 			if (e.key === 'Alt') {
+				isAltKeyPressed.current = false;
 				setSelectAllBelowMode(false);
 			}
 		};
 
 		const handleBlur = () => {
+			isCtrlKeyPressed.current = false;
+			isShiftKeyPressed.current = false;
+			isAltKeyPressed.current = false;
 			setMassSelectMode(false);
 			setRangeSelectMode(false);
 			setSelectAllBelowMode(false);
 		};
 
+		window.addEventListener('keydown', handleKeyDown);
 		window.addEventListener('keyup', handleKeyUp);
 		window.addEventListener('blur', handleBlur);
 
 		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
 			window.removeEventListener('keyup', handleKeyUp);
 			window.removeEventListener('blur', handleBlur);
+			isCtrlKeyPressed.current = false;
+			isShiftKeyPressed.current = false;
+			isAltKeyPressed.current = false;
 			setMassSelectMode(false);
 			setRangeSelectMode(false);
 			setSelectAllBelowMode(false);
@@ -485,7 +452,9 @@ export function MailList({ isCompact }: MailListProps) {
 
 	const handleMailClick = useCallback(
 		(message: InitialThread) => () => {
-			if (selectMode === 'mass') {
+			if (isCtrlKeyPressed.current) {
+				setMassSelectMode(true);
+				
 				const updatedBulkSelected = mail.bulkSelected.includes(message.id)
 					? mail.bulkSelected.filter((id) => id !== message.id)
 					: [...mail.bulkSelected, message.id];
@@ -494,7 +463,9 @@ export function MailList({ isCompact }: MailListProps) {
 				return;
 			}
 
-			if (selectMode === 'range') {
+			if (isShiftKeyPressed.current) {
+				setRangeSelectMode(true);
+				
 				const lastSelectedItem =
 					mail.bulkSelected[mail.bulkSelected.length - 1] ?? mail.selected ?? message.id;
 
@@ -513,7 +484,9 @@ export function MailList({ isCompact }: MailListProps) {
 				return;
 			}
 
-			if (selectMode === 'selectAllBelow') {
+			if (isAltKeyPressed.current && isShiftKeyPressed.current) {
+				setSelectAllBelowMode(true);
+				
 				const mailsIndex = items.map((m) => m.id);
 				const startIdx = mailsIndex.indexOf(message.id);
 
@@ -543,7 +516,7 @@ export function MailList({ isCompact }: MailListProps) {
 					.catch(console.error);
 			}
 		},
-		[mail, setMail, selectMode],
+		[mail, setMail, items],
 	);
 
 	const isEmpty = items.length === 0;
