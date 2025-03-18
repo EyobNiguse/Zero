@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 import { SidebarGroup, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from './sidebar';
 import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useFeaturebase } from '@/hooks/use-featurebase';
 import { MessageKeys, useTranslations } from 'next-intl';
 import { MessageKey } from '@/config/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ interface NavItemProps {
 	isSettingsButton?: boolean;
 	isSettingsPage?: boolean;
 	disabled?: boolean;
+	isFeaturebaseButton?: boolean;
 }
 
 interface NavMainProps {
@@ -51,6 +53,7 @@ type IconRefType = SVGSVGElement & {
 export function NavMain({ items }: NavMainProps) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
+	const { openFeaturebase } = useFeaturebase();
 
 	/**
 	 * Validates URLs to prevent open redirect vulnerabilities.
@@ -79,6 +82,11 @@ export function NavMain({ items }: NavMainProps) {
 			// Get the current 'from' parameter
 			const currentFrom = searchParams.get('from');
 			const category = searchParams.get('category');
+
+			// Handle Featurebase button
+			if (item.isFeaturebaseButton) {
+				return '#';
+			}
 
 			// Handle settings navigation
 			if (item.isSettingsButton) {
@@ -175,13 +183,13 @@ export function NavMain({ items }: NavMainProps) {
 function NavItem(item: NavItemProps & { href: string }) {
 	const iconRef = useRef<IconRefType>(null);
 	const { data: stats } = useStats();
-
+	const { openFeaturebase } = useFeaturebase();
 	const t = useTranslations();
 
 	if (item.disabled) {
 		return (
 			<SidebarMenuButton
-				tooltip={item.title}
+				tooltip={t(item.title as MessageKey)}
 				className="flex cursor-not-allowed items-center opacity-50"
 			>
 				{item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
@@ -190,17 +198,29 @@ function NavItem(item: NavItemProps & { href: string }) {
 		);
 	}
 
+	// Handle Featurebase button click
+	const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+		if (item.isFeaturebaseButton) {
+			e.preventDefault();
+			openFeaturebase();
+		}
+
+		if (item.onClick) {
+			item.onClick(e);
+		}
+	};
+
 	// Apply animation handlers to all buttons including back buttons
 	const linkProps = {
 		href: item.href,
-		onClick: item.onClick,
+		onClick: handleClick,
 		onMouseEnter: () => iconRef.current?.startAnimation?.(),
 		onMouseLeave: () => iconRef.current?.stopAnimation?.(),
 	};
 
 	const buttonContent = (
 		<SidebarMenuButton
-			tooltip={item.title}
+			tooltip={t(item.title as MessageKey)}
 			className={cn(
 				'hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center',
 				item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-subtleBlack',

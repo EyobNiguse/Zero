@@ -3,6 +3,7 @@ import { type gmail_v1, google } from "googleapis";
 import { EnableBrain } from "@/actions/brain";
 import { type ParsedMessage } from "@/types";
 import * as he from "he";
+import { parseFrom } from "@/lib/email-utils";
 
 function fromBase64Url(str: string) {
   return str.replace(/-/g, "+").replace(/_/g, "/");
@@ -127,7 +128,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     const listUnsubscribePost =
       payload?.headers?.find((h) => h.name?.toLowerCase() === "list-unsubscribe-post")?.value ||
       undefined;
-    const [name, email] = sender.split("<");
+
     return {
       id: id || "ERROR",
       threadId: threadId || "",
@@ -137,10 +138,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       listUnsubscribePost,
       references,
       inReplyTo,
-      sender: {
-        name: name ? name.replace(/"/g, "").trim() : "Unknown",
-        email: `<${email}`,
-      },
+      sender: parseFrom(sender),
       unread: labelIds ? labelIds.includes("UNREAD") : false,
       receivedOn,
       subject: subject ? subject.replace(/"/g, "").trim() : "(no subject)",

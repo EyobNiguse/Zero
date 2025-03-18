@@ -251,7 +251,7 @@ const sections = [
 		),
 	},
 	{
-		title: 'Contact Us',
+		title: 'Contact',
 		content: (
 			<div className="space-y-3">
 				<p>For privacy-related questions or concerns:</p>

@@ -37,13 +37,13 @@ export default async function RootLayout({
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
-			<Head>
+			<head>
 				<meta name="x-user-country" content={(await headers()).get('x-user-country') || ''} />
 				<meta
 					name="x-user-eu-region"
 					content={(await headers()).get('x-user-eu-region') || 'false'}
 				/>
-			</Head>
+			</head>
 			<body className={cn(geistSans.variable, geistMono.variable, 'antialiased')}>
 				<Providers attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
 					<NextIntlClientProvider messages={messages}>
@@ -52,7 +52,7 @@ export default async function RootLayout({
 							{cookies}
 							<Toast />
 							<Analytics />
-							{isEuRegion && <CookieConsent />}
+							{/* {isEuRegion && <CookieConsent />} */}
 						</CookieProvider>
 					</NextIntlClientProvider>
 				</Providers>

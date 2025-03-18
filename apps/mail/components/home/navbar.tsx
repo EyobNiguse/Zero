@@ -65,7 +65,7 @@ export default function Navbar() {
 									className="w-full bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-white/90"
 									asChild
 								>
-									<Link href="https://cal.com/team/0/chat">Contact Us</Link>
+									<Link href="https://cal.com/team/0/chat">Contact</Link>
 								</Button>
 							</div>
 						</div>
