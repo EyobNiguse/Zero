@@ -189,7 +189,7 @@ function NavItem(item: NavItemProps & { href: string }) {
 	if (item.disabled) {
 		return (
 			<SidebarMenuButton
-				tooltip={item.title}
+				tooltip={t(item.title as MessageKey)}
 				className="flex cursor-not-allowed items-center opacity-50"
 			>
 				{item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
@@ -220,7 +220,7 @@ function NavItem(item: NavItemProps & { href: string }) {
 
 	const buttonContent = (
 		<SidebarMenuButton
-			tooltip={item.title}
+			tooltip={t(item.title as MessageKey)}
 			className={cn(
 				'hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center',
 				item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-subtleBlack',
