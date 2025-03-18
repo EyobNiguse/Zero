@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 
-import type { InitialThread, ParsedMessage } from "@/types";
-import { getMail, getMails } from "@/actions/mail";
-import { useSession } from "@/lib/auth-client";
-import useSWRInfinite from "swr/infinite";
-import useSWR, { preload } from "swr";
-import { useMemo } from "react";
+import type { InitialThread, ParsedMessage } from '@/types';
+import { getMail, getMails } from '@/actions/mail';
+import { useSession } from '@/lib/auth-client';
+import useSWRInfinite from 'swr/infinite';
+import useSWR, { preload } from 'swr';
+import { useMemo } from 'react';
 
 export const preloadThread = async (userId: string, threadId: string, connectionId: string) => {
   console.log(`🔄 Prefetching email ${threadId}...`);
@@ -15,6 +13,7 @@ export const preloadThread = async (userId: string, threadId: string, connection
 };
 
 type FetchEmailsTuple = [
+	connectionId: string,
   folder: string,
   q?: string,
   max?: number,
@@ -24,6 +23,7 @@ type FetchEmailsTuple = [
 
 // TODO: improve the filters
 const fetchEmails = async ([
+	_,
   folder,
   q,
   max,
@@ -42,8 +42,7 @@ const fetchEmails = async ([
 const fetchThread = async (args: any[]) => {
   const [_, id] = args;
   try {
-    const data = await getMail({ id });
-    return data;
+		return await getMail({ id });
   } catch (error) {
     console.error("Error fetching email:", error);
     throw error;
@@ -58,22 +57,21 @@ interface RawResponse {
 }
 
 const getKey = (
-  pageIndex: number,
   previousPageData: RawResponse | null,
-  [folder, query, max, labelIds]: FetchEmailsTuple,
+  [connectionId, folder, query, max, labelIds]: FetchEmailsTuple,
 ): FetchEmailsTuple | null => {
   if (previousPageData && !previousPageData.nextPageToken) return null; // reached the end
 
-  return [folder, query, max, labelIds, previousPageData?.nextPageToken];
+  return [connectionId, folder, query, max, labelIds, previousPageData?.nextPageToken];
 };
 
 export const useThreads = (folder: string, labelIds?: string[], query?: string, max?: number) => {
   const { data: session } = useSession();
 
   const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(
-    (pageIndex, previousPageData) => {
-      if (!session?.user.id) return null;
-      return getKey(pageIndex, previousPageData, [folder, query, max, labelIds]);
+    (_, previousPageData) => {
+      if (!session?.user.id || !session.connectionId) return null;
+      return getKey(previousPageData, [session.connectionId, folder, query, max, labelIds]);
     },
     fetchEmails,
     {
