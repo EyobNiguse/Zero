@@ -1,5 +1,5 @@
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { fixNonReadableColors, template } from "@/lib/email-utils";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -15,7 +15,7 @@ export function MailIframe({ html }: { html: string }) {
 
   const t = useTranslations();
 
-  const calculateAndSetHeight = () => {
+  const calculateAndSetHeight = useCallback(() => {
     if (!iframeRef.current?.contentWindow?.document.body) return;
 
     const body = iframeRef.current.contentWindow.document.body;
@@ -24,7 +24,7 @@ export function MailIframe({ html }: { html: string }) {
 
     // Use the larger of the two values to ensure all content is visible
     setHeight(Math.max(boundingRectHeight, scrollHeight));
-  };
+  }, [iframeRef, setHeight]);
 
   useEffect(() => {
     if (!iframeRef.current) return;
@@ -44,7 +44,7 @@ export function MailIframe({ html }: { html: string }) {
     return () => {
       URL.revokeObjectURL(url);
     };
-  }, [iframeDoc]);
+  }, [iframeDoc, calculateAndSetHeight]);
 
   useEffect(() => {
     if (iframeRef.current?.contentWindow?.document.body) {
