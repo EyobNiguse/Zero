@@ -59,10 +59,6 @@ const Thread = memo(
 		const hasPrefetched = useRef<boolean>(false);
 		const [searchValue] = useSearchValue();
 
-		if (!message) {
-			return null;
-		}
-
 		const isMailSelected = message.id === mail.selected;
 		const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 		const handleMouseEnter = () => {
@@ -499,7 +495,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 				selectMode={selectMode}
 				isCompact={isCompact}
 				sessionData={sessionData}
-				message={items[props.index]!}
+				message={props.data}
 				{...props}
 			/>
 		),
@@ -513,8 +509,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 					ref={scrollRef}
 					style={{ height: '100%' }}
 					totalCount={items.length}
-					itemContent={(index: number) => rowRenderer({ index })}
+					itemContent={(index: number, data: InitialThread) => rowRenderer({ index, data })}
 					endReached={handleScroll}
+					data={items}
 				/>
 			</div>
 			<div className="w-full pt-4 text-center">
