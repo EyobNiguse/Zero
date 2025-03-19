@@ -64,11 +64,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import { createNote, deleteNote, reorderNotes, updateNote } from '@/actions/notes';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslations, useFormatter } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { useThreadNotes } from '@/hooks/use-notes';
 import type { Note } from '@/app/api/notes/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,13 +81,6 @@ import { toast } from 'sonner';
 
 interface NotesPanelProps {
 	threadId: string;
-	notes: Note[];
-	onAddNote: (threadId: string, content: string, color?: string) => Promise<Note | null>;
-	onEditNote: (noteId: string, content: string) => Promise<Note | null>;
-	onDeleteNote: (noteId: string) => Promise<boolean>;
-	onTogglePin?: (noteId: string) => Promise<Note | null>;
-	onChangeColor?: (noteId: string, color: string) => Promise<Note | null>;
-	onReorderNotes?: (notes: { id: string; order: number; isPinned?: boolean }[]) => Promise<boolean>;
 }
 
 function SortableNote({
@@ -249,14 +244,8 @@ function SortableNote({
 
 export function NotesPanel({
 	threadId,
-	notes = [],
-	onAddNote,
-	onEditNote,
-	onDeleteNote,
-	onTogglePin,
-	onChangeColor,
-	onReorderNotes,
 }: NotesPanelProps) {
+	const { data: notes, mutate } = useThreadNotes(threadId);
 	const [isOpen, setIsOpen] = useState(false);
 	const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 	const [newNoteContent, setNewNoteContent] = useState('');
@@ -300,12 +289,18 @@ export function NotesPanel({
 
 	const handleAddNote = async () => {
 		if (newNoteContent.trim()) {
-			await onAddNote(
-				threadId,
-				newNoteContent,
-				selectedColor !== 'default' ? selectedColor : undefined,
-			);
-			toast.success(t('common.notes.noteUpdated'));
+			setIsAddingNewNote(true)
+			toast.promise(createNote(
+				{
+					threadId,
+					color: selectedColor !== 'default' ? selectedColor : undefined,
+					content: newNoteContent
+				},
+			), {
+				success: t('common.notes.noteUpdated'),
+				loading: 'loading'
+			})
+			await mutate()
 			setNewNoteContent('');
 			setIsAddingNewNote(false);
 			setSelectedColor('default');
@@ -325,8 +320,16 @@ export function NotesPanel({
 
 	const handleEditNote = async () => {
 		if (editingNoteId && editContent.trim()) {
-			await onEditNote(editingNoteId, editContent);
-			toast.success(t('common.notes.noteUpdated'));
+			toast.promise(updateNote(
+				editingNoteId,
+				{
+					content: editContent.trim()
+				}
+			), {
+				success: t('common.notes.noteUpdated'),
+				loading: 'loading'
+			})
+			await mutate()
 			setEditingNoteId(null);
 			setEditContent('');
 		}
@@ -344,7 +347,13 @@ export function NotesPanel({
 
 	const handleDeleteNote = async () => {
 		if (noteToDelete) {
-			await onDeleteNote(noteToDelete);
+			toast.promise(deleteNote(
+				noteToDelete,
+			), {
+				success: t('common.notes.noteDeleted'),
+				loading: 'loading'
+			})
+			await mutate()
 			toast.success(t('common.notes.noteDeleted'));
 			setDeleteConfirmOpen(false);
 			setNoteToDelete(null);
@@ -356,23 +365,25 @@ export function NotesPanel({
 		toast.success(t('common.notes.noteCopied'));
 	};
 
-	const togglePinNote = (noteId: string, isPinned: boolean) => {
-		if (onTogglePin) {
-			onTogglePin(noteId);
-		}
+	const togglePinNote = async (noteId: string, isPinned: boolean) => {
+		await updateNote(noteId, {
+			isPinned: !isPinned,
+		});
+		return await mutate();
 	};
 
-	const handleChangeNoteColor = (noteId: string, color: string) => {
-		if (onChangeColor) {
-			onChangeColor(noteId, color);
-		}
+	const handleChangeNoteColor = async (noteId: string, color: string) => {
+		await updateNote(noteId, {
+			color,
+		});
+		return await mutate();
 	};
 
 	const handleDragStart = (event: DragStartEvent) => {
 		setActiveId(event.active.id as string);
 	};
 
-	const handleDragEnd = (event: DragEndEvent) => {
+	const handleDragEnd = async (event: DragEndEvent) => {
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
@@ -395,15 +406,7 @@ export function NotesPanel({
 				const reorderedPinnedNotes = assignOrdersAfterPinnedReorder(newPinnedNotes);
 
 				const newNotes = [...reorderedPinnedNotes, ...unpinnedNotes];
-				if (onReorderNotes) {
-					onReorderNotes(
-						newNotes.map((n) => ({
-							id: n.id,
-							order: n.order,
-							isPinned: n.isPinned ? true : false,
-						})),
-					);
-				}
+				await reorderNotes(newNotes)
 			} else {
 				const oldIndex = unpinnedNotes.findIndex((n) => n.id === active.id);
 				const newIndex = unpinnedNotes.findIndex((n) => n.id === over.id);
@@ -415,16 +418,9 @@ export function NotesPanel({
 				);
 
 				const newNotes = [...pinnedNotes, ...reorderedUnpinnedNotes];
-				if (onReorderNotes) {
-					onReorderNotes(
-						newNotes.map((n) => ({
-							id: n.id,
-							order: n.order,
-							isPinned: n.isPinned ? true : false,
-						})),
-					);
-				}
+				await reorderNotes(newNotes)
 			}
+			await mutate()
 		}
 
 		setActiveId(null);
