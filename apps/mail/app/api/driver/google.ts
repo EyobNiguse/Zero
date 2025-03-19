@@ -380,15 +380,9 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 			return res.data;
 		},
 		normalizeIds: (ids: string[]) => {
-			const threadIds: string[] = [];
-
-			ids.forEach((id) => {
-				if (id.startsWith('thread:')) {
-					threadIds.push(id.substring(7));
-				} else {
-					threadIds.push(id);
-				}
-			});
+			const threadIds: string[] = ids.map((id) =>
+				id.startsWith('thread:') ? id.substring(7) : id,
+			);
 
 			return { threadIds };
 		},
