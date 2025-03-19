@@ -9,19 +9,6 @@ export type ActionResult<T> = {
   error?: string;
 };
 
-export async function fetchNotes(): Promise<ActionResult<Note[]>> {
-  try {
-    const result = await notes.getNotes();
-    return { success: true, data: result };
-  } catch (error: any) {
-    console.error('Error fetching notes:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to fetch notes'
-    };
-  }
-}
-
 export async function fetchThreadNotes(threadId: string): Promise<ActionResult<Note[]>> {
   try {
     const result = await notes.getThreadNotes(threadId);
@@ -88,17 +75,17 @@ export async function deleteNote(noteId: string): Promise<ActionResult<boolean>>
 }
 
 export async function reorderNotes(
-  notesArray: { id: string; order: number; isPinned?: boolean }[]
+  notesArray: { id: string; order: number; isPinned?: boolean | null }[]
 ): Promise<ActionResult<boolean>> {
   try {
     if (!notesArray || notesArray.length === 0) {
       console.warn('Attempted to reorder an empty array of notes');
       return { success: true, data: true };
     }
-    
-    console.log(`Reordering ${notesArray.length} notes:`, 
+
+    console.log(`Reordering ${notesArray.length} notes:`,
       notesArray.map(({id, order, isPinned}) => ({id, order, isPinned})));
-    
+
     const result = await notes.reorderNotes(notesArray);
     return { success: true, data: result };
   } catch (error: any) {
@@ -108,4 +95,4 @@ export async function reorderNotes(
       error: error.message || 'Failed to reorder notes'
     };
   }
-} 
+}
