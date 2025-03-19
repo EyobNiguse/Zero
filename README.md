@@ -1,7 +1,9 @@
+<div style="text-align: center;">
 <picture>
   <source srcset="apps/mail/public/white-icon.svg" media="(prefers-color-scheme: dark)">
   <img src="apps/mail/public/black-icon.svg" alt="Zero Logo" width="64" style="background-color: #000; padding: 10px;"/>
 </picture>
+</div>
 
 # Zero
 
