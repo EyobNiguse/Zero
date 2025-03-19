@@ -7,6 +7,7 @@ import {
 	ReplyAll,
 	Maximize2,
 	Minimize2,
+	Star,
 } from 'lucide-react';
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -15,13 +16,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useThread, useThreads } from '@/hooks/use-threads';
 import { ArchiveIcon } from '../icons/animated/archive';
 import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
-import { useThread } from '@/hooks/use-threads';
 import { sortNotes } from '@/lib/notes-utils';
+import { modifyLabels } from '@/actions/mail';
 import { useNotes } from '@/hooks/use-notes';
 import ThreadSubject from './thread-subject';
 import { XIcon } from '../icons/animated/x';
@@ -197,7 +199,8 @@ function ThreadActionButton({
 
 export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const [, setMail] = useMail();
-	const { data: emailData, isLoading } = useThread(mail ?? '');
+	const { data: emailData, isLoading, mutate } = useThread(mail ?? '');
+	const { mutate: mutateThreads } = useThreads('STARRED');
 	const [isMuted, setIsMuted] = useState(false);
 	const [isReplyOpen, setIsReplyOpen] = useState(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
@@ -244,6 +247,20 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 		onClose?.();
 		setMail((m) => ({ ...m, selected: null }));
 	}, [onClose, setMail]);
+
+	const handleFavourites = () => {
+		if (!emailData) return;
+		if (emailData[0]?.tags.includes('STARRED')) {
+			modifyLabels({ threadId: [emailData[0]?.threadId || ''], removeLabels: ['STARRED'] });
+			toast('Removed from favourites.');
+		} else {
+			modifyLabels({ threadId: [emailData[0]?.threadId || ''], addLabels: ['STARRED'] });
+			toast('Added to favourites.');
+		}
+
+		mutate();
+		mutateThreads();
+	};
 
 	useEffect(() => {
 		const handleEsc = (event: KeyboardEvent) => {
@@ -294,6 +311,13 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 								icon={ArchiveIcon}
 								label={t('common.threadDisplay.archive')}
 								disabled={true}
+								className="relative top-0.5"
+							/>
+
+							<ThreadActionButton
+								icon={Star}
+								label={'Add to favourites'}
+								onClick={handleFavourites}
 								className="relative top-0.5"
 							/>
 
@@ -535,6 +559,13 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 							icon={ArchiveIcon}
 							label={t('common.threadDisplay.archive')}
 							disabled={!emailData}
+							className="relative top-0.5"
+						/>
+
+						<ThreadActionButton
+							icon={Star}
+							label={'Add to favourites'}
+							onClick={handleFavourites}
 							className="relative top-0.5"
 						/>
 						<ThreadActionButton
