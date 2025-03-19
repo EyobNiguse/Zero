@@ -11,12 +11,14 @@ import { useTranslations } from 'next-intl';
 import useSWR, { mutate } from 'swr';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+import { useSession } from '@/lib/auth-client';
 
 export type { Note };
 
 const THREAD_NOTES_KEY = (threadId: string) => `thread-notes-${threadId}`;
 
 export function useNotes() {
+	const { data: session } = useSession();
 	const t = useTranslations();
 
 	const {
@@ -24,12 +26,9 @@ export function useNotes() {
 		error,
 		isLoading,
 		mutate: refreshNotes,
-	} = useSWR<Note[]>('notes', async () => {
+	} = useSWR<Note[]>(session?.connectionId ? `notes-${session.connectionId}` : null, async () => {
 		try {
 			const result = await fetchNotes();
-			if (!result.success) {
-				throw new Error(result.error || 'Failed to fetch notes');
-			}
 			return result.data || [];
 		} catch (err: any) {
 			console.error('Error fetching notes:', err);
@@ -42,9 +41,6 @@ export function useNotes() {
 		async (threadId: string) => {
 			try {
 				const result = await fetchThreadNotes(threadId);
-				if (!result.success) {
-					throw new Error(result.error || 'Failed to fetch thread notes');
-				}
 				await mutate(THREAD_NOTES_KEY(threadId), result.data || []);
 				return result.data || [];
 			} catch (err: any) {
@@ -97,11 +93,6 @@ export function useNotes() {
 		async (noteId: string, content: string): Promise<Note | null> => {
 			try {
 				const result = await updateNoteAction(noteId, { content });
-
-				if (!result.success) {
-					throw new Error(result.error || 'Failed to update note');
-				}
-
 				const updatedNote = result.data;
 				if (updatedNote) {
 					await refreshNotes(
@@ -129,12 +120,7 @@ export function useNotes() {
 				const noteToDelete = notes.find((note) => note.id === noteId);
 				const threadId = noteToDelete?.threadId;
 
-				const result = await deleteNoteAction(noteId);
-
-				if (!result.success) {
-					throw new Error(result.error || 'Failed to delete note');
-				}
-
+				await deleteNoteAction(noteId);
 				await refreshNotes((prev) => (prev || []).filter((note) => note.id !== noteId), {
 					revalidate: false,
 				});
@@ -158,16 +144,11 @@ export function useNotes() {
 		async (noteId: string): Promise<Note | null> => {
 			try {
 				const noteToUpdate = notes.find((note) => note.id === noteId);
-				if (!noteToUpdate) throw new Error('Note not found');
+				if (!noteToUpdate) return null
 
 				const result = await updateNoteAction(noteId, {
 					isPinned: !noteToUpdate.isPinned,
 				});
-
-				if (!result.success) {
-					throw new Error(result.error || 'Failed to update note');
-				}
-
 				const updatedNote = result.data;
 				if (updatedNote) {
 					await refreshNotes(
@@ -198,11 +179,6 @@ export function useNotes() {
 		async (noteId: string, color: string): Promise<Note | null> => {
 			try {
 				const result = await updateNoteAction(noteId, { color });
-
-				if (!result.success) {
-					throw new Error(result.error || 'Failed to update note color');
-				}
-
 				const updatedNote = result.data;
 				if (updatedNote) {
 					await refreshNotes(
@@ -277,12 +253,7 @@ export function useNotes() {
 				);
 
 				console.log('Sending reorder request to server:', reorderedNotes);
-				const result = await reorderNotesAction(reorderedNotes);
-
-				if (!result.success) {
-					throw new Error(result.error || 'Failed to reorder notes');
-				}
-
+				await reorderNotesAction(reorderedNotes);
 				const threadIds = new Set<string>();
 				notes.forEach((note) => {
 					if (note.threadId && reorderedNotes.some((r) => r.id === note.id)) {
