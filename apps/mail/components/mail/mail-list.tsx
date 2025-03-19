@@ -62,6 +62,7 @@ const Thread = memo(
 		const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
+		const isKeyPressed = useKeyState();
 
 		const threadHasNotes = useMemo(() => {
 			return !demo && hasNotes(message.threadId ?? message.id);
@@ -251,9 +252,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 		void loadMore();
 	}, [isLoading, isValidating, loadMore, nextPageToken]);
 
-	const [massSelectMode, setMassSelectMode] = useState(false);
-	const [rangeSelectMode, setRangeSelectMode] = useState(false);
-	const [selectAllBelowMode, setSelectAllBelowMode] = useState(false);
+	const isKeyPressed = useKeyState();
 
 	const selectAll = useCallback(() => {
 		// If there are already items selected, deselect them all
@@ -276,34 +275,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 		}
 	}, [items, setMail, mail.bulkSelected, t]);
 
-	const resetSelectMode = () => {
-		setMassSelectMode(false);
-		setRangeSelectMode(false);
-		setSelectAllBelowMode(false);
-	};
-
-	useHotKey('Control', () => {
-		resetSelectMode();
-		setMassSelectMode(true);
-	});
-
-	useHotKey('Meta', () => {
-		resetSelectMode();
-		setMassSelectMode(true);
-	});
-
-	useHotKey('Shift', () => {
-		resetSelectMode();
-		setRangeSelectMode(true);
-	});
-
-	useHotKey('Alt+Shift', () => {
-		resetSelectMode();
-		setSelectAllBelowMode(true);
-	});
-
 	useHotKey('Meta+Shift+u', () => {
-		resetSelectMode();
 		markAsUnread({ ids: mail.bulkSelected }).then((result) => {
 			if (result.success) {
 				toast.success(t('common.mail.markedAsUnread'));
@@ -316,20 +288,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 	});
 
 	useHotKey('Control+Shift+u', () => {
-		resetSelectMode();
-		void (async () => {
-			const res = await markAsUnread({ ids: mail.bulkSelected });
-			if (res.success) {
-				toast.success('Marked as unread');
-				setMail((prev) => ({
-					...prev,
-					bulkSelected: [],
-				}));
-			} else toast.error('Failed to mark as unread');
-		})();
-	});
-	useHotKey('Control+Shift+u', () => {
-		resetSelectMode();
 		markAsUnread({ ids: mail.bulkSelected }).then((response) => {
 			if (response.success) {
 				toast.success(t('common.mail.markedAsUnread'));
@@ -342,20 +300,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 	});
 
 	useHotKey('Meta+Shift+i', () => {
-		resetSelectMode();
-		void (async () => {
-			const res = await markAsRead({ ids: mail.bulkSelected });
-			if (res.success) {
-				toast.success('Marked as read');
-				setMail((prev) => ({
-					...prev,
-					bulkSelected: [],
-				}));
-			} else toast.error('Failed to mark as read');
-		})();
-	});
-	useHotKey('Meta+Shift+i', () => {
-		resetSelectMode();
 		markAsRead({ ids: mail.bulkSelected }).then((data) => {
 			if (data.success) {
 				toast.success(t('common.mail.markedAsRead'));
@@ -368,7 +312,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 	});
 
 	useHotKey('Control+Shift+i', () => {
-		resetSelectMode();
 		markAsRead({ ids: mail.bulkSelected }).then((response) => {
 			if (response.success) {
 				toast.success(t('common.mail.markedAsRead'));
@@ -380,85 +323,43 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 		});
 	});
 
-	// useHotKey("Meta+Shift+j", async () => {
-	//   resetSelectMode();
-	//   const res = await markAsJunk({ ids: mail.bulkSelected });
-	//   if (res.success) toast.success("Marked as junk");
-	//   else toast.error("Failed to mark as junk");
-	// });
-
-	// useHotKey("Control+Shift+j", async () => {
-	//   resetSelectMode();
-	//   const res = await markAsJunk({ ids: mail.bulkSelected });
-	//   if (res.success) toast.success("Marked as junk");
-	//   else toast.error("Failed to mark as junk");
-	// });
-
 	useHotKey('Meta+a', (event) => {
 		event?.preventDefault();
-		resetSelectMode();
 		selectAll();
 	});
 
 	useHotKey('Control+a', (event) => {
 		event?.preventDefault();
-		resetSelectMode();
 		selectAll();
 	});
 
 	useHotKey('Meta+n', (event) => {
 		event?.preventDefault();
-		resetSelectMode();
 		selectAll();
 	});
 
 	useHotKey('Control+n', (event) => {
 		event?.preventDefault();
-		resetSelectMode();
 		selectAll();
 	});
 
-	useEffect(() => {
-		const handleKeyUp = (e: KeyboardEvent) => {
-			if (e.key === 'Control' || e.key === 'Meta') {
-				setMassSelectMode(false);
-			}
-			if (e.key === 'Shift') {
-				setRangeSelectMode(false);
-			}
-			if (e.key === 'Alt') {
-				setSelectAllBelowMode(false);
-			}
-		};
-
-		const handleBlur = () => {
-			setMassSelectMode(false);
-			setRangeSelectMode(false);
-			setSelectAllBelowMode(false);
-		};
-
-		window.addEventListener('keyup', handleKeyUp);
-		window.addEventListener('blur', handleBlur);
-
-		return () => {
-			window.removeEventListener('keyup', handleKeyUp);
-			window.removeEventListener('blur', handleBlur);
-			setMassSelectMode(false);
-			setRangeSelectMode(false);
-			setSelectAllBelowMode(false);
-		};
-	}, []);
-
-	const selectMode: MailSelectMode = massSelectMode
-		? 'mass'
-		: rangeSelectMode
-			? 'range'
-			: selectAllBelowMode
-				? 'selectAllBelow'
-				: 'single';
+	const getSelectMode = useCallback((): MailSelectMode => {
+		if (isKeyPressed('Control') || isKeyPressed('Meta')) {
+			return 'mass';
+		}
+		if (isKeyPressed('Shift')) {
+			return 'range';
+		}
+		if (isKeyPressed('Alt') && isKeyPressed('Shift')) {
+			return 'selectAllBelow';
+		}
+		return 'single';
+	}, [isKeyPressed]);
 
 	const handleMailClick = useCallback(
 		(message: InitialThread) => () => {
+			const selectMode = getSelectMode();
+
 			if (selectMode === 'mass') {
 				const updatedBulkSelected = mail.bulkSelected.includes(message.id)
 					? mail.bulkSelected.filter((id) => id !== message.id)
@@ -517,7 +418,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 					.catch(console.error);
 			}
 		},
-		[mail, setMail, selectMode],
+		[mail, setMail, items, getSelectMode],
 	);
 
 	const isEmpty = items.length === 0;
