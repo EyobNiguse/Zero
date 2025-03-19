@@ -242,9 +242,7 @@ function SortableNote({
 	);
 }
 
-export function NotesPanel({
-	threadId,
-}: NotesPanelProps) {
+export function NotesPanel({ threadId }: NotesPanelProps) {
 	const { data: notes, mutate } = useThreadNotes(threadId);
 	const [isOpen, setIsOpen] = useState(false);
 	const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -289,18 +287,19 @@ export function NotesPanel({
 
 	const handleAddNote = async () => {
 		if (newNoteContent.trim()) {
-			setIsAddingNewNote(true)
-			toast.promise(createNote(
-				{
+			setIsAddingNewNote(true);
+			toast.promise(
+				createNote({
 					threadId,
 					color: selectedColor !== 'default' ? selectedColor : undefined,
-					content: newNoteContent
+					content: newNoteContent,
+				}),
+				{
+					success: t('common.notes.noteUpdated'),
+					loading: 'loading',
 				},
-			), {
-				success: t('common.notes.noteUpdated'),
-				loading: 'loading'
-			})
-			await mutate()
+			);
+			await mutate();
 			setNewNoteContent('');
 			setIsAddingNewNote(false);
 			setSelectedColor('default');
@@ -320,16 +319,16 @@ export function NotesPanel({
 
 	const handleEditNote = async () => {
 		if (editingNoteId && editContent.trim()) {
-			toast.promise(updateNote(
-				editingNoteId,
+			toast.promise(
+				updateNote(editingNoteId, {
+					content: editContent.trim(),
+				}),
 				{
-					content: editContent.trim()
-				}
-			), {
-				success: t('common.notes.noteUpdated'),
-				loading: 'loading'
-			})
-			await mutate()
+					success: t('common.notes.noteUpdated'),
+					loading: 'loading',
+				},
+			);
+			await mutate();
 			setEditingNoteId(null);
 			setEditContent('');
 		}
@@ -347,13 +346,11 @@ export function NotesPanel({
 
 	const handleDeleteNote = async () => {
 		if (noteToDelete) {
-			toast.promise(deleteNote(
-				noteToDelete,
-			), {
+			toast.promise(deleteNote(noteToDelete), {
 				success: t('common.notes.noteDeleted'),
-				loading: 'loading'
-			})
-			await mutate()
+				loading: 'loading',
+			});
+			await mutate();
 			toast.success(t('common.notes.noteDeleted'));
 			setDeleteConfirmOpen(false);
 			setNoteToDelete(null);
@@ -406,7 +403,7 @@ export function NotesPanel({
 				const reorderedPinnedNotes = assignOrdersAfterPinnedReorder(newPinnedNotes);
 
 				const newNotes = [...reorderedPinnedNotes, ...unpinnedNotes];
-				await reorderNotes(newNotes)
+				await reorderNotes(newNotes);
 			} else {
 				const oldIndex = unpinnedNotes.findIndex((n) => n.id === active.id);
 				const newIndex = unpinnedNotes.findIndex((n) => n.id === over.id);
@@ -418,9 +415,9 @@ export function NotesPanel({
 				);
 
 				const newNotes = [...pinnedNotes, ...reorderedUnpinnedNotes];
-				await reorderNotes(newNotes)
+				await reorderNotes(newNotes);
 			}
-			await mutate()
+			await mutate();
 		}
 
 		setActiveId(null);

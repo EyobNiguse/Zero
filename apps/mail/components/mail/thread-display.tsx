@@ -1,11 +1,7 @@
-import {
-	ArchiveX,
-	Forward,
-	ReplyAll,
-} from 'lucide-react';
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArchiveX, Forward, ReplyAll } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
@@ -331,9 +327,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 						<ThreadSubject subject={emailData[0]?.subject} isMobile={isMobile} />
 					</div>
 					<div className="flex items-center md:gap-6">
-						<NotesPanel
-							threadId={mail}
-						/>
+						<NotesPanel threadId={mail} />
 						<ThreadActionButton
 							icon={isFullscreen ? ExpandIcon : ExpandIcon}
 							label={
