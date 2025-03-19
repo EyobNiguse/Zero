@@ -248,18 +248,18 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 		setMail((m) => ({ ...m, selected: null }));
 	}, [onClose, setMail]);
 
-	const handleFavourites = () => {
+	const handleFavourites = async () => {
 		if (!emailData) return;
 		if (emailData[0]?.tags.includes('STARRED')) {
-			modifyLabels({ threadId: [emailData[0]?.threadId || ''], removeLabels: ['STARRED'] });
+			await modifyLabels({ threadId: [emailData[0]?.threadId || ''], removeLabels: ['STARRED'] });
 			toast('Removed from favourites.');
 		} else {
-			modifyLabels({ threadId: [emailData[0]?.threadId || ''], addLabels: ['STARRED'] });
+			await modifyLabels({ threadId: [emailData[0]?.threadId || ''], addLabels: ['STARRED'] });
 			toast('Added to favourites.');
 		}
 
-		mutate();
-		mutateThreads();
+		await mutate();
+		await mutateThreads();
 	};
 
 	useEffect(() => {
