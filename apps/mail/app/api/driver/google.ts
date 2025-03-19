@@ -275,6 +275,66 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 					})
 					.filter((msg): msg is NonNullable<typeof msg> => msg !== null),
 			);
+			if (!userLabels.data.labels) {
+				return { count: 0 };
+			}
+			return await Promise.all(
+				userLabels.data.labels.map(async (label) => {
+					return gmail.users.labels
+						.get({
+							userId: 'me',
+							id: label.id ?? undefined,
+						})
+						.then((res) => ({
+							label: res.data.name ?? res.data.id ?? '',
+							count: res.data.threadsUnread,
+						}));
+				}),
+			);
+		},
+		list: async (
+			folder: string,
+			q: string,
+			maxResults = 20,
+			_labelIds: string[] = [],
+			pageToken?: string,
+		) => {
+			const { folder: normalizedFolder, q: normalizedQ } = normalizeSearch(folder, q ?? '');
+			const labelIds = [..._labelIds];
+			if (normalizedFolder) labelIds.push(normalizedFolder.toUpperCase());
+			const res = await gmail.users.threads.list({
+				userId: 'me',
+				q: normalizedQ ? normalizedQ : undefined,
+				labelIds,
+				maxResults,
+				pageToken: pageToken ? pageToken : undefined,
+			});
+			const threads = await Promise.all(
+				(res.data.threads || [])
+					.map(async (thread) => {
+						if (!thread.id) return null;
+						const msg = await gmail.users.threads.get({
+							userId: 'me',
+							id: thread.id,
+							format: 'metadata',
+							metadataHeaders: ['From', 'Subject', 'Date'],
+						});
+						const labelIds = [
+							...new Set(msg.data.messages?.flatMap((message) => message.labelIds || [])),
+						];
+						const message = msg.data.messages?.[0];
+						const parsed = parse({ ...message, labelIds });
+						return {
+							...parsed,
+							body: '',
+							processedHtml: '',
+							blobUrl: '',
+							totalReplies: msg.data.messages?.length || 0,
+							threadId: thread.id,
+						};
+					})
+					.filter((msg): msg is NonNullable<typeof msg> => msg !== null),
+			);
 
 			return { ...res.data, threads } as any;
 		},
