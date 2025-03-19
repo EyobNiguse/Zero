@@ -21,7 +21,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
-import { useHotKey } from '@/hooks/use-hot-key';
+import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useNotes } from '@/hooks/use-notes';
@@ -437,19 +437,19 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 		(props) => (
 			<Thread
 				onClick={handleMailClick}
-				selectMode={selectMode}
+				selectMode={getSelectMode()}
 				isCompact={isCompact}
 				sessionData={sessionData}
 				message={props.data}
 				{...props}
 			/>
 		),
-		[handleMailClick, selectMode, isCompact, sessionData],
+		[handleMailClick, getSelectMode, isCompact, sessionData],
 	);
 
 	return (
 		<>
-			<div ref={parentRef} className={cn('h-full w-full', selectMode === 'range' && 'select-none')}>
+			<div ref={parentRef} className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}>
 				<Virtuoso
 					ref={scrollRef}
 					style={{ height: '100%' }}
