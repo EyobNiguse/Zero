@@ -1,4 +1,4 @@
-import { pgTableCreator, text, timestamp, boolean, uuid, integer } from "drizzle-orm/pg-core";
+import { pgTableCreator, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `mail0_${name}`);
 
