@@ -263,8 +263,9 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
               format: "metadata",
               metadataHeaders: ["From", "Subject", "Date"],
             });
+            const labelIds = [...new Set(msg.data.messages?.flatMap(message => message.labelIds || []))];
             const message = msg.data.messages?.[0];
-            const parsed = parse(message as any);
+            const parsed = parse({ ...message, labelIds });
             return {
               ...parsed,
               body: "",

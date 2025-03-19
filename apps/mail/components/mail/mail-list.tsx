@@ -15,13 +15,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { cn, defaultPageSize, formatDate } from '@/lib/utils';
+import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { useFormatter, useTranslations } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
-import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useNotes } from '@/hooks/use-notes';
@@ -449,7 +449,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
 	return (
 		<>
-			<div ref={parentRef} className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}>
+			<div
+				ref={parentRef}
+				className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
+			>
 				<Virtuoso
 					ref={scrollRef}
 					style={{ height: '100%' }}
