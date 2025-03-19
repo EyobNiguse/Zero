@@ -1,12 +1,5 @@
 'use client';
 
-import type {
-	ConditionalThreadProps,
-	InitialThread,
-	MailListProps,
-	MailSelectMode,
-	ThreadProps,
-} from '@/types';
 import {
 	type ComponentProps,
 	memo,
@@ -16,23 +9,24 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { AlertTriangle, Bell, Briefcase, Tag, User, Users, StickyNote, Pin } from 'lucide-react';
+import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
+import { AlertTriangle, Bell, Briefcase, StickyNote, Tag, User, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { cn, defaultPageSize, formatDate } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
-import { useTranslations, useFormatter } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMail } from '@/components/mail/use-mail';
-import { useKeyState } from '@/hooks/use-hot-key';
+import type { VirtuosoHandle } from 'react-virtuoso';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useNotes } from '@/hooks/use-notes';
 import { useParams } from 'next/navigation';
+import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
 
@@ -136,77 +130,74 @@ const Thread = memo(
 		}, []);
 
 		return (
-			<div
-				onClick={onClick ? onClick(message) : undefined}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				onMouseDown={(e) => {
-					if (isKeyPressed('Control') || isKeyPressed('Meta')) {
-						e.preventDefault();
-					}
-				}}
-				key={message.id}
-				className={cn(
-					'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-					!message.unread && 'opacity-50',
-					(isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
-				)}
-			>
+			<div className="p-1">
 				<div
+					onClick={onClick ? onClick(message) : undefined}
+					onMouseEnter={handleMouseEnter}
+					onMouseLeave={handleMouseLeave}
+					key={message.id}
 					className={cn(
-						'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
-						isMailBulkSelected && 'translate-x-0',
-					)}
-				/>
-				<div className="flex w-full items-center justify-between">
-					<div className="flex items-center gap-1">
-						<p
-							className={cn(
-								message.unread ? 'font-bold' : 'font-medium',
-								'text-md flex items-baseline gap-1 group-hover:opacity-100',
-							)}
-						>
-							<span className={cn(mail.selected && 'max-w-[120px] truncate')}>
-								{highlightText(message.sender.name, searchValue.highlight)}
-							</span>{' '}
-							{message.unread ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
-						</p>
-						<MailLabels labels={threadLabels} />
-						<div className="flex items-center gap-1">
-							{message.totalReplies > 1 ? (
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-											{message.totalReplies}
-										</span>
-									</TooltipTrigger>
-									<TooltipContent className="px-1 py-0 text-xs">
-										{t('common.mail.replies', { count: message.totalReplies })}
-									</TooltipContent>
-								</Tooltip>
-							) : null}
-						</div>
-					</div>
-					{message.receivedOn ? (
-						<p
-							className={cn(
-								'text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
-								isMailSelected && 'opacity-100',
-							)}
-						>
-							{formatDate(message.receivedOn.split('.')[0] || '')}
-						</p>
-					) : null}
-				</div>
-				<p
-					className={cn(
-						'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
-						mail.selected ? 'line-clamp-1' : 'line-clamp-2',
-						isMailSelected && 'opacity-100',
+						'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+						!message.unread && 'opacity-50',
+						(isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
 					)}
 				>
-					{highlightText(message.subject, searchValue.highlight)}
-				</p>
+					<div
+						className={cn(
+							'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
+							isMailBulkSelected && 'translate-x-0',
+						)}
+					/>
+					<div className="flex w-full items-center justify-between">
+						<div className="flex items-center gap-1">
+							<p
+								className={cn(
+									message.unread ? 'font-bold' : 'font-medium',
+									'text-md flex items-baseline gap-1 group-hover:opacity-100',
+								)}
+							>
+								<span className={cn(mail.selected && 'max-w-[120px] truncate')}>
+									{highlightText(message.sender.name, searchValue.highlight)}
+								</span>{' '}
+								{message.unread ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
+							</p>
+							<MailLabels labels={threadLabels} />
+							<div className="flex items-center gap-1">
+								{message.totalReplies > 1 ? (
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
+												{message.totalReplies}
+											</span>
+										</TooltipTrigger>
+										<TooltipContent className="px-1 py-0 text-xs">
+											{t('common.mail.replies', { count: message.totalReplies })}
+										</TooltipContent>
+									</Tooltip>
+								) : null}
+							</div>
+						</div>
+						{message.receivedOn ? (
+							<p
+								className={cn(
+									'text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
+									isMailSelected && 'opacity-100',
+								)}
+							>
+								{formatDate(message.receivedOn.split('.')[0] || '')}
+							</p>
+						) : null}
+					</div>
+					<p
+						className={cn(
+							'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
+							mail.selected ? 'line-clamp-1' : 'line-clamp-2',
+							isMailSelected && 'opacity-100',
+						)}
+					>
+						{highlightText(message.subject, searchValue.highlight)}
+					</p>
+				</div>
 			</div>
 		);
 	},
@@ -228,7 +219,7 @@ export function MailListDemo({ items: filteredItems = items }) {
 	);
 }
 
-export function MailList({ isCompact }: MailListProps) {
+export const MailList = memo(({ isCompact }: MailListProps) => {
 	const { folder } = useParams<{ folder: string }>();
 	const [mail, setMail] = useMail();
 	const { data: session } = useSession();
@@ -253,34 +244,13 @@ export function MailList({ isCompact }: MailListProps) {
 	} = useThreads(folder, undefined, searchValue.value, defaultPageSize);
 
 	const parentRef = useRef<HTMLDivElement>(null);
-	const scrollRef = useRef<HTMLDivElement>(null);
-	const itemHeight = isCompact ? 64 : 96;
+	const scrollRef = useRef<VirtuosoHandle>(null);
 
-	const virtualizer = useVirtualizer({
-		count: items.length,
-		getScrollElement: () => scrollRef.current,
-		estimateSize: useCallback(() => itemHeight, []),
-		gap: 6,
-	});
-
-	const virtualItems = virtualizer.getVirtualItems();
-
-	const handleScroll = useCallback(
-		(e: React.UIEvent<HTMLDivElement>) => {
-			if (isLoading || isValidating) return;
-
-			const target = e.target as HTMLDivElement;
-			const { scrollTop, scrollHeight, clientHeight } = target;
-			const scrolledToBottom = scrollHeight - (scrollTop + clientHeight) < itemHeight * 2;
-
-			if (scrolledToBottom) {
-				console.log('Loading more items...');
-				void loadMore();
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[isLoading, isValidating, nextPageToken, itemHeight],
-	);
+	const handleScroll = useCallback(() => {
+		if (isLoading || isValidating || !nextPageToken) return;
+		console.log('Loading more items...');
+		void loadMore();
+	}, [isLoading, isValidating, loadMore, nextPageToken]);
 
 	const isKeyPressed = useKeyState();
 
@@ -291,7 +261,7 @@ export function MailList({ isCompact }: MailListProps) {
 				...prev,
 				bulkSelected: [],
 			}));
-			toast.success(t('common.mail.deselectAll'));
+			// toast.success(t('common.mail.deselectAll'));
 		}
 		// Otherwise select all items
 		else if (items.length > 0) {
@@ -300,7 +270,6 @@ export function MailList({ isCompact }: MailListProps) {
 				...prev,
 				bulkSelected: allIds,
 			}));
-			toast.success(t('common.mail.selectedEmails', { count: allIds.length }));
 		} else {
 			toast.info(t('common.mail.noEmailsToSelect'));
 		}
@@ -462,45 +431,34 @@ export function MailList({ isCompact }: MailListProps) {
 		return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
 	}
 
+	const rowRenderer = useCallback(
+		//TODO: Add proper typing
+		// @ts-expect-error
+		(props) => (
+			<Thread
+				onClick={handleMailClick}
+				selectMode={selectMode}
+				isCompact={isCompact}
+				sessionData={sessionData}
+				message={props.data}
+				{...props}
+			/>
+		),
+		[handleMailClick, selectMode, isCompact, sessionData],
+	);
+
 	return (
-		<ScrollArea
-			ref={scrollRef}
-			className="h-full pb-2"
-			type="scroll"
-			onScrollCapture={handleScroll}
-		>
-			<div
-				ref={parentRef}
-				className={cn('w-full', isKeyPressed('Shift') && 'select-none')}
-				style={{
-					height: `${virtualizer.getTotalSize()}px`,
-					position: 'relative',
-				}}
-			>
-				{virtualItems.map(({ index, key, start }) => {
-					const item = items[index];
-					return item ? (
-						<div
-							key={key}
-							style={{
-								position: 'absolute',
-								transform: `translateY(${start ?? 0}px)`,
-								top: 0,
-								left: 0,
-								width: '100%',
-								padding: '8px',
-							}}
-						>
-							<Thread
-								onClick={handleMailClick}
-								message={item}
-								selectMode={getSelectMode()}
-								isCompact={isCompact}
-								sessionData={sessionData}
-							/>
-						</div>
-					) : null;
-				})}
+		<>
+			<div ref={parentRef} className={cn('h-full w-full', selectMode === 'range' && 'select-none')}>
+				<Virtuoso
+					ref={scrollRef}
+					style={{ height: '100%' }}
+					totalCount={items.length}
+					itemContent={(index: number, data: InitialThread) => rowRenderer({ index, data })}
+					endReached={handleScroll}
+					data={items}
+					className="hide-scrollbar"
+				/>
 			</div>
 			<div className="w-full pt-4 text-center">
 				{isLoading || isValidating ? (
@@ -511,9 +469,9 @@ export function MailList({ isCompact }: MailListProps) {
 					<div className="h-4" />
 				)}
 			</div>
-		</ScrollArea>
+		</>
 	);
-}
+});
 
 const MailLabels = memo(
 	({ labels }: { labels: string[] }) => {

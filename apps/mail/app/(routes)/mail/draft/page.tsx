@@ -1,5 +1,5 @@
 import { DraftsLayout } from '@/components/draft/drafts';
 
-export default async function MailPage() {
+export default function MailPage() {
 	return <DraftsLayout />;
 }
