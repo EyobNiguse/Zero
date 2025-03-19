@@ -1,18 +1,18 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useRef, useCallback } from 'react';
-import * as React from 'react';
-import Link from 'next/link';
 import { SidebarGroup, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from './sidebar';
 import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useFeaturebase } from '@/hooks/use-featurebase';
-import { useTranslations } from 'next-intl';
 import { type MessageKey } from '@/config/navigation';
 import { Badge } from '@/components/ui/badge';
 import { useStats } from '@/hooks/use-stats';
+import { useTranslations } from 'next-intl';
+import { useRef, useCallback } from 'react';
 import { BASE_URL } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import * as React from 'react';
+import Link from 'next/link';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
 	ref?: React.Ref<SVGSVGElement>;

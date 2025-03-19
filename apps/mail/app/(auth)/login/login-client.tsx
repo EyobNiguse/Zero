@@ -1,9 +1,9 @@
 'use client';
 
-import { GitHub, Google } from '@/components/icons/icons';
-import { signIn, useSession } from '@/lib/auth-client';
 import { useEffect, type ReactNode, useState } from 'react';
+import { GitHub, Google } from '@/components/icons/icons';
 import { type EnvVarInfo } from '@/lib/auth-providers';
+import { signIn, useSession } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';

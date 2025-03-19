@@ -1,15 +1,15 @@
 'use client';
-import { ArrowUpIcon, Paperclip, X } from 'lucide-react';
 import { useConnections } from '@/hooks/use-connections';
 import { createDraft, getDraft } from '@/actions/drafts';
+import { ArrowUpIcon, Paperclip, X } from 'lucide-react';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { AIAssistant } from './ai-assistant';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
-import { useQueryState } from 'nuqs';
 import { type JSONContent } from 'novel';
+import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
