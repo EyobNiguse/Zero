@@ -1,7 +1,8 @@
 <p align="center">
-  <a href="https://0.email">
-    <img src="apps/mail/public/white-icon.svg" alt="Zero Logo" width="64" style="background-color: #000; padding: 10px;"/>
-  </a>
+  <picture>
+    <source srcset="apps/mail/public/white-icon.svg" media="(prefers-color-scheme: dark)">
+    <img src="apps/mail/public/black-icon.svg" alt="Zero Logo" width="64" style="background-color: #000; padding: 10px;"/>
+  </picture>
 </p>
 
 # Zero
