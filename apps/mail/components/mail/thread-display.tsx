@@ -1,18 +1,7 @@
-import {
-	Archive,
-	ArchiveX,
-	Forward,
-	MoreVertical,
-	Reply,
-	ReplyAll,
-	Maximize2,
-	Minimize2,
-	Star,
-} from 'lucide-react';
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArchiveX, Forward, ReplyAll } from 'lucide-react';
+import { ArchiveX, Forward, ReplyAll, Star } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
@@ -23,7 +12,7 @@ import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
-import { useThread } from '@/hooks/use-threads';
+import { modifyLabels } from '@/actions/mail';
 import ThreadSubject from './thread-subject';
 import { XIcon } from '../icons/animated/x';
 import ReplyCompose from './reply-composer';
@@ -32,6 +21,7 @@ import { NotesPanel } from './note-panel';
 import MailDisplay from './mail-display';
 import { useMail } from './use-mail';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ThreadDisplayProps {
 	mail: any;
