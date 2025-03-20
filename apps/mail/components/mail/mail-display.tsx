@@ -377,4 +377,3 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
 };
 
 export default MailDisplay;
-
