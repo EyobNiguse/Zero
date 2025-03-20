@@ -1,12 +1,34 @@
 'use client';
 
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+	ArchiveX,
+	BellOff,
+	X,
+	Inbox,
+	Tag,
+	AlertTriangle,
+	User,
+	Bell,
+	ListMinusIcon,
+	ArrowRightIcon,
+	Loader2,
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { ArchiveX, BellOff, X, Inbox, Tag, AlertTriangle, User, Bell } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
+import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -23,11 +45,13 @@ import { useSession } from '@/lib/auth-client';
 import { XIcon } from '../icons/animated/x';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { getMail } from '@/actions/mail';
 import { SearchBar } from './search-bar';
 import items from './demo.json';
+import { toast } from 'sonner';
 
 export function DemoMailLayout() {
-	const [mail, setMail] = useState({
+	const [mail] = useState({
 		selected: 'demo',
 		bulkSelected: [],
 	});
@@ -45,7 +69,7 @@ export function DemoMailLayout() {
 	};
 	const [activeCategory, setActiveCategory] = useState('Primary');
 	const [filteredItems, setFilteredItems] = useState(items);
-	
+
 	useEffect(() => {
 		if (activeCategory === 'Primary') {
 			setFilteredItems(items);
@@ -146,9 +170,12 @@ export function DemoMailLayout() {
 
 				{/* Mobile Drawer */}
 				{isMobile && (
-					<Drawer open={!!threadIdParam} onOpenChange={(isOpen) => {
-						if (!isOpen) handleClose();
-					}}>
+					<Drawer
+						open={!!threadIdParam}
+						onOpenChange={(isOpen) => {
+							if (!isOpen) handleClose();
+						}}
+					>
 						<DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-3rem)] overflow-hidden p-0">
 							<DrawerHeader className="sr-only">
 								<DrawerTitle>Email Details</DrawerTitle>
@@ -356,9 +383,12 @@ export function MailLayout() {
 
 				{/* Mobile Drawer */}
 				{isMobile && (
-					<Drawer open={!!threadIdParam} onOpenChange={(isOpen) => {
-						if (!isOpen) handleClose();
-					}}>
+					<Drawer
+						open={!!threadIdParam}
+						onOpenChange={(isOpen) => {
+							if (!isOpen) handleClose();
+						}}
+					>
 						<DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-4rem)] overflow-hidden p-0">
 							<DrawerHeader className="sr-only">
 								<DrawerTitle>Email Details</DrawerTitle>
@@ -378,9 +408,75 @@ export function MailLayout() {
 
 function BulkSelectActions() {
 	const t = useTranslations();
+	const [mail] = useMail();
+	const [errorQty, setErrorQty] = useState(0);
+	const [isLoading, setIsLoading] = useState(false);
+	const [isUnsub, setIsUnsub] = useState(false);
+
+	const handleMassUnsubscribe = async () => {
+		setIsLoading(true);
+		toast.promise(
+			Promise.all(
+				mail.bulkSelected.map(async (bulkSelected) => {
+					await new Promise((resolve) => setTimeout(resolve, 499));
+					const emailData = await getMail({ id: bulkSelected });
+					if (emailData) {
+						const [firstEmail] = emailData;
+						if (firstEmail)
+							return handleUnsubscribe({ emailData: firstEmail }).catch((e) => {
+								toast.error(e.message ?? 'Unknown error while unsubscribing');
+								setErrorQty((eq) => eq++);
+							});
+					}
+				}),
+			).then(() => {
+				setIsUnsub(false);
+				setIsLoading(false);
+			}),
+			{
+				description: `Processing a total of ${mail.bulkSelected.length} threads`,
+				loading: 'Unsubscribing...',
+				success: 'All done! you will no longer receive emails from these mailing lists.',
+				error: 'Something went wrong!',
+			},
+		);
+	};
 
 	return (
 		<div className="flex items-center gap-1.5">
+			<Dialog onOpenChange={setIsUnsub} open={isUnsub}>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<DialogTrigger asChild>
+							<Button variant="ghost" className="md:h-fit md:px-2">
+								<ListMinusIcon />
+							</Button>
+						</DialogTrigger>
+					</TooltipTrigger>
+					<TooltipContent>{t('common.mailDisplay.unsubscribe')}</TooltipContent>
+				</Tooltip>
+
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Mass Unsubscribe</DialogTitle>
+						<DialogDescription>
+							We will remove you from all of the mailing lists in the selected threads. If your
+							action is required to unsubscribe from certain threads, you will be notified.
+						</DialogDescription>
+					</DialogHeader>
+					<p className={'text-muted-foreground text-sm text-red-500'}>Errors: {errorQty}</p>
+					<DialogFooter>
+						<Button disabled={isLoading} onClick={handleMassUnsubscribe}>
+							{!isLoading && <span>Begin</span>}{' '}
+							{isLoading ? (
+								<Loader2 className={'animate-spin'} />
+							) : (
+								<ArrowRightIcon className="h-4 w-4" />
+							)}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Button variant="ghost" className="md:h-fit md:px-2">

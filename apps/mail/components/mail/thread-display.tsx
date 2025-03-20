@@ -23,7 +23,7 @@ import { useMail } from './use-mail';
 import { cn } from '@/lib/utils';
 
 interface ThreadDisplayProps {
-	mail: any;
+	mail?: any;
 	onClose?: () => void;
 	isMobile?: boolean;
 }
