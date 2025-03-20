@@ -301,7 +301,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
 														{t('common.mailDisplay.to')}:
 													</span>
 													<span className="text-muted-foreground ml-3">
-														{emailData?.to?.map(t => t.email).join(", ")}
+														{emailData?.to?.map((t) => t.email).join(', ')}
 													</span>
 												</div>
 												<div className="flex">
@@ -309,7 +309,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
 														{t('common.mailDisplay.cc')}:
 													</span>
 													<span className="text-muted-foreground ml-3">
-														{emailData?.cc?.map(t => t.email).join(", ")}
+														{emailData?.cc?.map((t) => t.email).join(', ')}
 													</span>
 												</div>
 												<div className="flex">
