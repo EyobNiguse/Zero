@@ -23,15 +23,15 @@ import {
 	Star,
 	Trash,
 } from 'lucide-react';
+import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { useParams } from 'next/navigation';
 import { useThreads } from '@/hooks/use-threads';
 import { useStats } from '@/hooks/use-stats';
+import { useParams } from 'next/navigation';
 import { useMail } from '../mail/use-mail';
 import { useTranslations } from 'use-intl';
 import { type ReactNode } from 'react';
 import { LABELS } from '@/lib/utils';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 
 interface EmailAction {
 	id: string;
@@ -101,12 +101,12 @@ export function ThreadContextMenu({
 			} else {
 				targets = [threadId ? `thread:${threadId}` : emailId];
 			}
-			
+
 			let destination: ThreadDestination = null;
 			if (to === LABELS.INBOX) destination = 'inbox';
 			else if (to === LABELS.SPAM) destination = 'spam';
 			else if (from && !to) destination = 'archive';
-			
+
 			return moveThreadsTo({
 				threadIds: targets,
 				currentFolder: currentFolder,
@@ -115,7 +115,7 @@ export function ThreadContextMenu({
 					await mutate();
 					await mutateStats();
 					setMail({ ...mail, bulkSelected: [] });
-				}
+				},
 			});
 		} catch (error) {
 			console.error(`Error moving ${threadId ? 'email' : 'thread'}`, error);

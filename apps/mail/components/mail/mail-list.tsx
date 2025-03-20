@@ -5,9 +5,10 @@ import { AlertTriangle, Bell, Briefcase, StickyNote, Tag, User, Users } from 'lu
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
+import { ThreadContextMenu } from '@/components/context/thread-context';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { cn, defaultPageSize, formatDate, FOLDERS } from '@/lib/utils';
+import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
@@ -20,7 +21,6 @@ import { useTranslations } from 'next-intl';
 import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { ThreadContextMenu } from '@/components/context/thread-context';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const highlightText = (text: string, highlight: string) => {
@@ -44,7 +44,15 @@ const highlightText = (text: string, highlight: string) => {
 };
 
 const Thread = memo(
-	({ message, selectMode, demo, onClick, sessionData, folder, onRefresh }: ConditionalThreadProps & {
+	({
+		message,
+		selectMode,
+		demo,
+		onClick,
+		sessionData,
+		folder,
+		onRefresh,
+	}: ConditionalThreadProps & {
 		folder?: string;
 		onRefresh?: () => void;
 	}) => {

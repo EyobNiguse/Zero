@@ -1,30 +1,30 @@
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSearchParams, useParams } from 'next/navigation';
 import { ArchiveX, Forward, ReplyAll } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSearchParams, useParams } from 'next/navigation';
 
+import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useThread, useThreads } from '@/hooks/use-threads';
 import { ArchiveIcon } from '../icons/animated/archive';
 import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
-import { useThread, useThreads } from '@/hooks/use-threads';
+import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
 import { XIcon } from '../icons/animated/x';
 import ReplyCompose from './reply-composer';
 import { useTranslations } from 'next-intl';
 import { NotesPanel } from './note-panel';
-import MailDisplay from './mail-display';
-import { useMail } from './use-mail';
 import { cn, FOLDERS } from '@/lib/utils';
-import { useStats } from '@/hooks/use-stats';
-import { toast } from 'sonner';
+import MailDisplay from './mail-display';
 import { Inbox } from 'lucide-react';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
+import { useMail } from './use-mail';
+import { toast } from 'sonner';
 
 interface ThreadDisplayProps {
 	mail: any;
@@ -204,15 +204,15 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const { mutate: mutateStats } = useStats();
 
 	const moreVerticalIconRef = useRef<any>(null);
-	
+
 	const isInInbox = folder === FOLDERS.INBOX || !folder;
 	const isInArchive = folder === FOLDERS.ARCHIVE;
 	const isInSpam = folder === FOLDERS.SPAM;
-	
+
 	const handleClose = useCallback(() => {
 		onClose?.();
 	}, [onClose]);
-	
+
 	const moveThreadTo = useCallback(
 		async (destination: ThreadDestination) => {
 			await moveThreadsTo({
@@ -223,7 +223,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 					await mutateThread();
 					await mutateStats();
 					handleClose();
-				}
+				},
 			});
 		},
 		[threadId, folder, mutateThread, mutateStats, handleClose],

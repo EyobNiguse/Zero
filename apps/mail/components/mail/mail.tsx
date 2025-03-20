@@ -1,8 +1,14 @@
 'use client';
 
+import {
+	moveThreadsTo,
+	ThreadDestination,
+	isActionAvailable,
+	getAvailableActions,
+} from '@/lib/thread-actions';
+import { ArchiveX, BellOff, X, Inbox, Tag, AlertTriangle, User, Bell, Archive } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { ArchiveX, BellOff, X, Inbox, Tag, AlertTriangle, User, Bell, Archive } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
@@ -15,19 +21,18 @@ import type { MessageKey } from '@/config/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
+import { clearBulkSelectionAtom } from './use-mail';
 import { cn, defaultPageSize } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
+import { useStats } from '@/hooks/use-stats';
 import { XIcon } from '../icons/animated/x';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import items from './demo.json';
-import { moveThreadsTo, ThreadDestination, isActionAvailable, getAvailableActions } from '@/lib/thread-actions';
-import { useStats } from '@/hooks/use-stats';
-import { clearBulkSelectionAtom } from './use-mail';
 import { useAtom } from 'jotai';
 
 export function DemoMailLayout() {
@@ -184,7 +189,7 @@ export function MailLayout() {
 	const { data: session, isPending } = useSession();
 	const t = useTranslations();
 	const prevFolderRef = useRef(folder);
-	
+
 	useEffect(() => {
 		if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
 			clearBulkSelection();
@@ -401,30 +406,30 @@ function BulkSelectActions() {
 	const { folder } = useParams<{ folder: string }>();
 	const { mutate: mutateThreads } = useThreads(folder, undefined, '', defaultPageSize);
 	const { mutate: mutateStats } = useStats();
-	
+
 	const onMoveSuccess = useCallback(async () => {
 		await mutateThreads();
 		await mutateStats();
 		setMail({ ...mail, bulkSelected: [] });
 	}, [mail, setMail, mutateThreads, mutateStats]);
-	
+
 	const availableActions = getAvailableActions(folder).filter(
-		(action): action is Exclude<ThreadDestination, null> => action !== null
+		(action): action is Exclude<ThreadDestination, null> => action !== null,
 	);
-	
+
 	const actionButtons = {
 		spam: {
 			icon: <ArchiveX />,
-			tooltip: t('common.mail.moveToSpam')
+			tooltip: t('common.mail.moveToSpam'),
 		},
 		archive: {
 			icon: <Archive />,
-			tooltip: t('common.mail.archive')
+			tooltip: t('common.mail.archive'),
 		},
 		inbox: {
 			icon: <Inbox />,
-			tooltip: t('common.mail.moveToInbox')
-		}
+			tooltip: t('common.mail.moveToInbox'),
+		},
 	};
 
 	return (
@@ -437,21 +442,21 @@ function BulkSelectActions() {
 				</TooltipTrigger>
 				<TooltipContent>{t('common.mail.mute')}</TooltipContent>
 			</Tooltip>
-			
-			{availableActions.map(action => (
+
+			{availableActions.map((action) => (
 				<Tooltip key={action}>
 					<TooltipTrigger asChild>
-						<Button 
-							variant="ghost" 
+						<Button
+							variant="ghost"
 							className="md:h-fit md:px-2"
 							onClick={() => {
 								if (mail.bulkSelected.length === 0) return;
-								
+
 								moveThreadsTo({
 									threadIds: mail.bulkSelected,
 									currentFolder: folder,
 									destination: action,
-									onSuccess: onMoveSuccess
+									onSuccess: onMoveSuccess,
 								});
 							}}
 						>
