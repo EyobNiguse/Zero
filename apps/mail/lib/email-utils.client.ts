@@ -14,7 +14,7 @@ export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessag
 			});
       if (listUnsubscribeAction) {
         track('Unsubscribe', {
-          domain: emailData.sender.email,
+          domain: emailData.sender.email.split('@')?.[1] ?? 'unknown',
         });
 				switch (listUnsubscribeAction.type) {
 					case 'get':
