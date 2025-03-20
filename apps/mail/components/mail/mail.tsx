@@ -2,7 +2,7 @@
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { ArchiveX, BellOff, X, Inbox, Tag, AlertTriangle, User, Bell } from 'lucide-react';
+import { ArchiveX, BellOff, X, Inbox, Tag, AlertTriangle, User, Bell, Archive } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
@@ -25,6 +25,10 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import items from './demo.json';
+import { moveThreadsTo, ThreadDestination, isActionAvailable, getAvailableActions } from '@/lib/thread-actions';
+import { useStats } from '@/hooks/use-stats';
+import { clearBulkSelectionAtom } from './use-mail';
+import { useAtom } from 'jotai';
 
 export function DemoMailLayout() {
 	const [mail, setMail] = useState({
@@ -174,10 +178,19 @@ export function MailLayout() {
 	const [searchMode, setSearchMode] = useState(false);
 	const [searchValue] = useSearchValue();
 	const [mail, setMail] = useMail();
+	const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
 	const [isMobile, setIsMobile] = useState(false);
 	const router = useRouter();
 	const { data: session, isPending } = useSession();
 	const t = useTranslations();
+	const prevFolderRef = useRef(folder);
+	
+	useEffect(() => {
+		if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
+			clearBulkSelection();
+		}
+		prevFolderRef.current = folder;
+	}, [folder, mail.bulkSelected.length, clearBulkSelection]);
 
 	useEffect(() => {
 		if (!session?.user && !isPending) {
@@ -350,7 +363,7 @@ export function MailLayout() {
 								minSize={25}
 							>
 								<div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-									<ThreadDisplay onClose={handleClose} />
+									<ThreadDisplay onClose={handleClose} mail={threadIdParam} />
 								</div>
 							</ResizablePanel>
 						</>
@@ -371,7 +384,7 @@ export function MailLayout() {
 							</DrawerHeader>
 							<div className="flex h-full flex-col overflow-hidden">
 								<div className="flex-1 overflow-hidden">
-									<ThreadDisplay onClose={handleClose} isMobile={true} />
+									<ThreadDisplay onClose={handleClose} isMobile={true} mail={threadIdParam} />
 								</div>
 							</div>
 						</DrawerContent>
@@ -384,6 +397,35 @@ export function MailLayout() {
 
 function BulkSelectActions() {
 	const t = useTranslations();
+	const [mail, setMail] = useMail();
+	const { folder } = useParams<{ folder: string }>();
+	const { mutate: mutateThreads } = useThreads(folder, undefined, '', defaultPageSize);
+	const { mutate: mutateStats } = useStats();
+	
+	const onMoveSuccess = useCallback(async () => {
+		await mutateThreads();
+		await mutateStats();
+		setMail({ ...mail, bulkSelected: [] });
+	}, [mail, setMail, mutateThreads, mutateStats]);
+	
+	const availableActions = getAvailableActions(folder).filter(
+		(action): action is Exclude<ThreadDestination, null> => action !== null
+	);
+	
+	const actionButtons = {
+		spam: {
+			icon: <ArchiveX />,
+			tooltip: t('common.mail.moveToSpam')
+		},
+		archive: {
+			icon: <Archive />,
+			tooltip: t('common.mail.archive')
+		},
+		inbox: {
+			icon: <Inbox />,
+			tooltip: t('common.mail.moveToInbox')
+		}
+	};
 
 	return (
 		<div className="flex items-center gap-1.5">
@@ -395,14 +437,30 @@ function BulkSelectActions() {
 				</TooltipTrigger>
 				<TooltipContent>{t('common.mail.mute')}</TooltipContent>
 			</Tooltip>
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<Button variant="ghost" className="md:h-fit md:px-2">
-						<ArchiveX />
-					</Button>
-				</TooltipTrigger>
-				<TooltipContent>{t('common.mail.moveToSpam')}</TooltipContent>
-			</Tooltip>
+			
+			{availableActions.map(action => (
+				<Tooltip key={action}>
+					<TooltipTrigger asChild>
+						<Button 
+							variant="ghost" 
+							className="md:h-fit md:px-2"
+							onClick={() => {
+								if (mail.bulkSelected.length === 0) return;
+								
+								moveThreadsTo({
+									threadIds: mail.bulkSelected,
+									currentFolder: folder,
+									destination: action,
+									onSuccess: onMoveSuccess
+								});
+							}}
+						>
+							{actionButtons[action].icon}
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>{actionButtons[action].tooltip}</TooltipContent>
+				</Tooltip>
+			))}
 		</div>
 	);
 }

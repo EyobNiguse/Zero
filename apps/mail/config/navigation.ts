@@ -68,7 +68,6 @@ export const navigationConfig: Record<string, NavConfig> = {
             title: "navigation.sidebar.archive",
             url: "/mail/archive",
             icon: ArchiveIcon,
-            disabled: true,
           },
           {
             title: "navigation.sidebar.bin",

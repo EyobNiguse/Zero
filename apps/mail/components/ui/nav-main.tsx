@@ -13,6 +13,8 @@ import { BASE_URL } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 import Link from 'next/link';
+import { clearBulkSelectionAtom } from '../mail/use-mail';
+import { useAtom } from 'jotai';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
 	ref?: React.Ref<SVGSVGElement>;
@@ -184,6 +186,7 @@ function NavItem(item: NavItemProps & { href: string }) {
 	const { data: stats } = useStats();
 	const { openFeaturebase } = useFeaturebase();
 	const t = useTranslations();
+	const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
 
 	if (item.disabled) {
 		return (
@@ -199,6 +202,8 @@ function NavItem(item: NavItemProps & { href: string }) {
 
 	// Handle Featurebase button click
 	const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+		clearBulkSelection();
+		
 		if (item.isFeaturebaseButton) {
 			e.preventDefault();
 			openFeaturebase();

@@ -24,15 +24,14 @@ import {
 	Trash,
 } from 'lucide-react';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useThreads } from '@/hooks/use-threads';
-import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import { useMail } from '../mail/use-mail';
-import { useTranslations } from 'use-intl'; // Keep this if localization is needed
+import { useTranslations } from 'use-intl';
 import { type ReactNode } from 'react';
 import { LABELS } from '@/lib/utils';
-import { toast } from 'sonner';
+import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 
 interface EmailAction {
 	id: string;
@@ -45,7 +44,7 @@ interface EmailAction {
 }
 
 interface EmailContextMenuProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	emailId: string;
 	threadId?: string;
 	isInbox?: boolean;
@@ -102,21 +101,22 @@ export function ThreadContextMenu({
 			} else {
 				targets = [threadId ? `thread:${threadId}` : emailId];
 			}
-			return toast.promise(
-				modifyLabels({
-					threadId: targets,
-					addLabels: to ? [to] : [],
-					removeLabels: from ? [from] : [],
-				}).then(async () => {
-					await mutate().then(() => mutateStats());
-					return setMail({ ...mail, bulkSelected: [] });
-				}),
-				{
-					loading: t('common.mail.moving'),
-					success: () => t('common.mail.moved'),
-					error: t('common.mail.errorMoving'),
-				},
-			);
+			
+			let destination: ThreadDestination = null;
+			if (to === LABELS.INBOX) destination = 'inbox';
+			else if (to === LABELS.SPAM) destination = 'spam';
+			else if (from && !to) destination = 'archive';
+			
+			return moveThreadsTo({
+				threadIds: targets,
+				currentFolder: currentFolder,
+				destination,
+				onSuccess: async () => {
+					await mutate();
+					await mutateStats();
+					setMail({ ...mail, bulkSelected: [] });
+				}
+			});
 		} catch (error) {
 			console.error(`Error moving ${threadId ? 'email' : 'thread'}`, error);
 		}
@@ -260,7 +260,7 @@ export function ThreadContextMenu({
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger className="w-full">{children}</ContextMenuTrigger>
-			<ContextMenuContent className="w-56">
+			<ContextMenuContent className="w-56" onContextMenu={(e) => e.preventDefault()}>
 				{primaryActions.map(renderAction)}
 
 				<ContextMenuSeparator />

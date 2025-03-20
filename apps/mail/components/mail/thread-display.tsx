@@ -3,7 +3,7 @@ import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ArchiveX, Forward, ReplyAll } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -12,7 +12,7 @@ import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
-import { useThread } from '@/hooks/use-threads';
+import { useThread, useThreads } from '@/hooks/use-threads';
 import ThreadSubject from './thread-subject';
 import { XIcon } from '../icons/animated/x';
 import ReplyCompose from './reply-composer';
@@ -20,7 +20,11 @@ import { useTranslations } from 'next-intl';
 import { NotesPanel } from './note-panel';
 import MailDisplay from './mail-display';
 import { useMail } from './use-mail';
-import { cn } from '@/lib/utils';
+import { cn, FOLDERS } from '@/lib/utils';
+import { useStats } from '@/hooks/use-stats';
+import { toast } from 'sonner';
+import { Inbox } from 'lucide-react';
+import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 
 interface ThreadDisplayProps {
 	mail: any;
@@ -187,6 +191,7 @@ function ThreadActionButton({
 export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const [, setMail] = useMail();
 	const searchParams = useSearchParams();
+	const { folder } = useParams<{ folder: string }>();
 	const threadIdParam = searchParams.get('threadId');
 	const threadId = mail ?? threadIdParam ?? '';
 	// Only fetch thread data if we have a valid threadId
@@ -195,18 +200,40 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const [isReplyOpen, setIsReplyOpen] = useState(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 	const t = useTranslations();
+	const { mutate: mutateThread } = useThreads(folder, undefined, '', 20);
+	const { mutate: mutateStats } = useStats();
 
 	const moreVerticalIconRef = useRef<any>(null);
+	
+	const isInInbox = folder === FOLDERS.INBOX || !folder;
+	const isInArchive = folder === FOLDERS.ARCHIVE;
+	const isInSpam = folder === FOLDERS.SPAM;
+	
+	const handleClose = useCallback(() => {
+		onClose?.();
+	}, [onClose]);
+	
+	const moveThreadTo = useCallback(
+		async (destination: ThreadDestination) => {
+			await moveThreadsTo({
+				threadIds: [threadId],
+				currentFolder: folder,
+				destination,
+				onSuccess: async () => {
+					await mutateThread();
+					await mutateStats();
+					handleClose();
+				}
+			});
+		},
+		[threadId, folder, mutateThread, mutateStats, handleClose],
+	);
 
 	useEffect(() => {
 		if (emailData?.[0]) {
 			setIsMuted(emailData[0].unread ?? false);
 		}
 	}, [emailData]);
-
-	const handleClose = useCallback(() => {
-		onClose?.();
-	}, [onClose]);
 
 	useEffect(() => {
 		const handleEsc = (event: KeyboardEvent) => {
@@ -345,8 +372,9 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 						<ThreadActionButton
 							icon={ArchiveIcon}
 							label={t('common.threadDisplay.archive')}
-							disabled={!emailData}
+							disabled={!emailData || (!isInInbox && !isInSpam)}
 							className="relative top-0.5"
+							onClick={() => moveThreadTo('archive')}
 						/>
 						<ThreadActionButton
 							icon={ReplyIcon}
@@ -368,9 +396,21 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
-								<DropdownMenuItem>
-									<ArchiveX className="mr-2 h-4 w-4" /> {t('common.threadDisplay.moveToSpam')}
-								</DropdownMenuItem>
+								{isInInbox && (
+									<DropdownMenuItem onClick={() => moveThreadTo('spam')}>
+										<ArchiveX className="mr-2 h-4 w-4" /> {t('common.threadDisplay.moveToSpam')}
+									</DropdownMenuItem>
+								)}
+								{isInSpam && (
+									<DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
+										<Inbox className="mr-2 h-4 w-4" /> {t('common.mail.moveToInbox')}
+									</DropdownMenuItem>
+								)}
+								{isInArchive && (
+									<DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
+										<Inbox className="mr-2 h-4 w-4" /> {t('common.mail.moveToInbox')}
+									</DropdownMenuItem>
+								)}
 								<DropdownMenuItem>
 									<ReplyAll className="mr-2 h-4 w-4" /> {t('common.threadDisplay.replyAll')}
 								</DropdownMenuItem>
