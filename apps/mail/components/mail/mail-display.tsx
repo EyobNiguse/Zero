@@ -236,24 +236,24 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                             </span>
                           </div>
                         </div>
-												<div className="flex">
-													<span className="w-24 text-end text-gray-500">
-														{t('common.mailDisplay.to')}:
-													</span>
-													<span className="text-muted-foreground ml-3">
-														{emailData?.to?.map((t) => t.email).join(', ')}
-													</span>
-												</div>
-												{emailData.cc.length > 0 && (
-													<div className="flex">
-														<span className="w-24 text-end text-gray-500">
-															{t('common.mailDisplay.cc')}:
-														</span>
-														<span className="text-muted-foreground ml-3">
-															{emailData?.cc?.map((t) => t.email).join(', ')}
-														</span>
-													</div>
-												)}
+                        <div className="flex">
+                          <span className="w-24 text-end text-gray-500">
+                            {t('common.mailDisplay.to')}:
+                          </span>
+                          <span className="text-muted-foreground ml-3">
+                            {emailData?.to?.map((t) => t.email).join(', ')}
+                          </span>
+                        </div>
+                        {emailData.cc.length > 0 && (
+                          <div className="flex">
+                            <span className="w-24 text-end text-gray-500">
+                              {t('common.mailDisplay.cc')}:
+                            </span>
+                            <span className="text-muted-foreground ml-3">
+                              {emailData?.cc?.map((t) => t.email).join(', ')}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex">
                           <span className="w-24 text-end text-gray-500">
                             {t('common.mailDisplay.date')}:
@@ -379,4 +379,3 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
 };
 
 export default MailDisplay;
-
