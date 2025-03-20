@@ -3,7 +3,7 @@ import { type gmail_v1, google } from "googleapis";
 import { EnableBrain } from "@/actions/brain";
 import { type ParsedMessage } from "@/types";
 import * as he from "he";
-import { parseFrom } from "@/lib/email-utils";
+import { parseAddressList, parseFrom } from "@/lib/email-utils";
 
 function fromBase64Url(str: string) {
   return str.replace(/-/g, "+").replace(/_/g, "/");
@@ -129,6 +129,16 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       payload?.headers?.find((h) => h.name?.toLowerCase() === "list-unsubscribe-post")?.value ||
       undefined;
 
+    const toHeaders = payload?.headers?.filter(h => h.name?.toLowerCase() === "to")
+      .map(h => h.value)
+      .filter(v => typeof v === 'string') || []
+    const to = toHeaders.flatMap(to => parseAddressList(to))
+
+    const ccHeaders = payload?.headers?.filter(h => h.name?.toLowerCase() === "cc")
+      .map(h => h.value)
+      .filter(v => typeof v === 'string') || []
+    const cc = ccHeaders.flatMap(to => parseAddressList(to))
+      
     return {
       id: id || "ERROR",
       threadId: threadId || "",
@@ -139,6 +149,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       references,
       inReplyTo,
       sender: parseFrom(sender),
+      to,
+      cc,
       unread: labelIds ? labelIds.includes("UNREAD") : false,
       receivedOn,
       subject: subject ? subject.replace(/"/g, "").trim() : "(no subject)",

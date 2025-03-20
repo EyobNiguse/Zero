@@ -1,6 +1,7 @@
-import {parseFrom as _parseFrom} from "email-addresses"
+import {parseFrom as _parseFrom, parseAddressList as _parseAddressList} from "email-addresses"
 import { EMAIL_HTML_TEMPLATE } from "./constants";
 import Color from "color";
+import { Sender } from "@/types";
 
 export const template = (html: string) => {
   if (typeof DOMParser === "undefined") return html;
@@ -157,4 +158,23 @@ export const parseFrom = (fromHeader: string) => {
   const email = firstSender.address || FALLBACK_SENDER.email;
 
   return {name, email}
+}
+
+export const parseAddressList = (header: string): Sender[] => {
+  const parsedAddressList = _parseAddressList(header)
+  if (!parsedAddressList) return [FALLBACK_SENDER]
+
+  return parsedAddressList?.flatMap(address => {
+    if (address.type === "group") {
+      return address.addresses.flatMap(address => ({
+        name: address.name || FALLBACK_SENDER.name,
+        email: address.address
+      }))
+    }
+
+    return {
+      name: address.name || FALLBACK_SENDER.name,
+      email: address.address
+    }
+  })
 }
