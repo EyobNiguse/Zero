@@ -1,30 +1,30 @@
-"use client";
+'use client';
 
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect, Suspense } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import confetti from "canvas-confetti";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { toast } from "sonner";
-import Link from "next/link";
-import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AnimatePresence, motion } from 'motion/react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect, Suspense } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import confetti from 'canvas-confetti';
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { toast } from 'sonner';
+import Link from 'next/link';
+import { z } from 'zod';
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Name must be at least 1 character" }),
+  name: z.string().min(1, { message: 'Name must be at least 1 character' }),
   email: z
     .string()
-    .min(1, { message: "Username is required" })
-    .refine((value) => !value.includes("@"), { message: "Username should not include @ symbol" }),
-  earlyAccessEmail: z.string().email({ message: "Invalid early access email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+    .min(1, { message: 'Username is required' })
+    .refine((value) => !value.includes('@'), { message: 'Username should not include @ symbol' }),
+  earlyAccessEmail: z.string().email({ message: 'Invalid early access email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 });
 
 // Add this component to safely use useSearchParams
@@ -33,15 +33,15 @@ function EarlyAccessContent() {
   const searchParams = useSearchParams();
 
   // Get current step from URL or default to 'claim'
-  const currentStep = searchParams.get("step") || "claim";
+  const currentStep = searchParams.get('step') || 'claim';
 
   const [showVerification, setShowVerification] = useState(
-    currentStep === "verify" || currentStep === "success",
+    currentStep === 'verify' || currentStep === 'success',
   );
-  const [verified, setVerified] = useState(currentStep === "success");
-  const [verificationCode, setVerificationCode] = useState("");
+  const [verified, setVerified] = useState(currentStep === 'success');
+  const [verificationCode, setVerificationCode] = useState('');
   const [verificationError, setVerificationError] = useState(false);
-  const [userEmail, setUserEmail] = useState(searchParams.get("email") || "");
+  const [userEmail, setUserEmail] = useState(searchParams.get('email') || '');
 
   // Update URL when step changes
   useEffect(() => {
@@ -49,16 +49,16 @@ function EarlyAccessContent() {
 
     // Set the appropriate step
     if (verified) {
-      params.set("step", "success");
+      params.set('step', 'success');
     } else if (showVerification) {
-      params.set("step", "verify");
+      params.set('step', 'verify');
     } else {
-      params.set("step", "claim");
+      params.set('step', 'claim');
     }
 
     // Add email to URL if we have it
     if (userEmail) {
-      params.set("email", userEmail);
+      params.set('email', userEmail);
     }
 
     const newUrl = `?${params.toString()}`;
@@ -103,8 +103,8 @@ function EarlyAccessContent() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: searchParams.get("email") || "",
-      password: "",
+      email: searchParams.get('email') || '',
+      password: '',
     },
   });
 
@@ -114,7 +114,7 @@ function EarlyAccessContent() {
     setUserEmail(fullEmail);
 
     // Use the correct sonner toast API
-    toast.success("Signup successful, please verify your email");
+    toast.success('Signup successful, please verify your email');
 
     // Show verification screen
     setShowVerification(true);
@@ -127,57 +127,57 @@ function EarlyAccessContent() {
     const errorMessageMap = [
       // Email errors
       {
-        field: "email",
-        pattern: "@ symbol",
-        message: "Zero email has to have only letters (a-z), numbers (0-9), and periods (.).",
+        field: 'email',
+        pattern: '@ symbol',
+        message: 'Zero email has to have only letters (a-z), numbers (0-9), and periods (.).',
       },
       {
-        field: "email",
-        pattern: "required",
-        message: "Username is required",
+        field: 'email',
+        pattern: 'required',
+        message: 'Username is required',
       },
 
       // Password errors
       {
-        field: "password",
-        pattern: "at least",
-        message: "Password must be at least 6 characters",
+        field: 'password',
+        pattern: 'at least',
+        message: 'Password must be at least 6 characters',
       },
       {
-        field: "password",
-        pattern: "",
-        message: "Password is required",
+        field: 'password',
+        pattern: '',
+        message: 'Password is required',
       },
 
       // Name errors
       {
-        field: "name",
-        pattern: "",
-        message: "Name is required",
+        field: 'name',
+        pattern: '',
+        message: 'Name is required',
       },
 
       // Early access email errors
       {
-        field: "earlyAccessEmail",
-        pattern: "Invalid",
-        message: "Invalid early access email address",
+        field: 'earlyAccessEmail',
+        pattern: 'Invalid',
+        message: 'Invalid early access email address',
       },
       {
-        field: "earlyAccessEmail",
-        pattern: "",
-        message: "Early access email is required",
+        field: 'earlyAccessEmail',
+        pattern: '',
+        message: 'Early access email is required',
       },
     ];
 
     // Find the first matching error and show toast
     for (const [field, fieldError] of Object.entries(errors)) {
-      const errorMessage = (fieldError as { message?: string })?.message || "";
+      const errorMessage = (fieldError as { message?: string })?.message || '';
 
       // Find matching error pattern
       const matchedError = errorMessageMap.find(
         (mapping) =>
           mapping.field === field &&
-          (mapping.pattern === "" || errorMessage.includes(mapping.pattern)),
+          (mapping.pattern === '' || errorMessage.includes(mapping.pattern)),
       );
 
       if (matchedError) {
@@ -187,27 +187,27 @@ function EarlyAccessContent() {
     }
 
     // Fallback for any other errors
-    toast.error("Please fix the form errors");
+    toast.error('Please fix the form errors');
   };
 
   function handleVerify() {
     if (verificationCode.length === 6) {
       setVerified(true);
       setVerificationError(false);
-      toast.success("Email verified successfully!");
+      toast.success('Email verified successfully!');
       // Redirect to /mail after verification
-      router.push("/mail");
+      router.push('/mail');
       // URL will be updated in the useEffect
     } else {
       setVerificationError(true);
-      toast.error("Please enter a valid 6-digit code");
+      toast.error('Please enter a valid 6-digit code');
     }
   }
 
   return (
     <div className="flex h-full min-h-screen w-full items-center justify-center bg-black">
       <AnimatePresence mode="wait">
-        {currentStep === "claim" ? (
+        {currentStep === 'claim' ? (
           // Claim screen (signup form)
           <motion.div
             key="signup"
@@ -344,43 +344,43 @@ function EarlyAccessContent() {
                   <InputOTPSlot
                     index={0}
                     className={cn(
-                      "border-input h-12 w-12 bg-black text-lg text-white",
-                      verificationError && "ring-2 ring-red-500 ring-offset-1",
+                      'border-input h-12 w-12 bg-black text-lg text-white',
+                      verificationError && 'ring-2 ring-red-500 ring-offset-1',
                     )}
                   />
                   <InputOTPSlot
                     index={1}
                     className={cn(
-                      "border-input h-12 w-12 bg-black text-lg text-white",
-                      verificationError && "ring-2 ring-red-500 ring-offset-1",
+                      'border-input h-12 w-12 bg-black text-lg text-white',
+                      verificationError && 'ring-2 ring-red-500 ring-offset-1',
                     )}
                   />
                   <InputOTPSlot
                     index={2}
                     className={cn(
-                      "border-input h-12 w-12 bg-black text-lg text-white",
-                      verificationError && "ring-2 ring-red-500 ring-offset-1",
+                      'border-input h-12 w-12 bg-black text-lg text-white',
+                      verificationError && 'ring-2 ring-red-500 ring-offset-1',
                     )}
                   />
                   <InputOTPSlot
                     index={3}
                     className={cn(
-                      "border-input h-12 w-12 bg-black text-lg text-white",
-                      verificationError && "ring-2 ring-red-500 ring-offset-1",
+                      'border-input h-12 w-12 bg-black text-lg text-white',
+                      verificationError && 'ring-2 ring-red-500 ring-offset-1',
                     )}
                   />
                   <InputOTPSlot
                     index={4}
                     className={cn(
-                      "border-input h-12 w-12 bg-black text-lg text-white",
-                      verificationError && "ring-2 ring-red-500 ring-offset-1",
+                      'border-input h-12 w-12 bg-black text-lg text-white',
+                      verificationError && 'ring-2 ring-red-500 ring-offset-1',
                     )}
                   />
                   <InputOTPSlot
                     index={5}
                     className={cn(
-                      "border-input h-12 w-12 bg-black text-lg text-white",
-                      verificationError && "ring-2 ring-red-500 ring-offset-1",
+                      'border-input h-12 w-12 bg-black text-lg text-white',
+                      verificationError && 'ring-2 ring-red-500 ring-offset-1',
                     )}
                   />
                 </InputOTPGroup>
@@ -395,9 +395,9 @@ function EarlyAccessContent() {
               </Button>
 
               <p className="text-muted-foreground text-center text-sm">
-                Didn't receive a code?{" "}
+                Didn't receive a code?{' '}
                 <button
-                  onClick={() => toast.info("New code sent!")}
+                  onClick={() => toast.info('New code sent!')}
                   className="text-primary hover:underline"
                 >
                   Resend

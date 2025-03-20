@@ -1,22 +1,23 @@
-"use client";
+'use client';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DraftsList } from "@/components/draft/drafts-list";
-import { useSearchValue } from "@/hooks/use-search-value";
-import { SearchIcon } from "../icons/animated/search";
-import { useMail } from "@/components/mail/use-mail";
-import { SidebarToggle } from "../ui/sidebar-toggle";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArchiveX, BellOff, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { cn, defaultPageSize } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useHotKey } from "@/hooks/use-hot-key";
-import { SearchBar } from "../mail/search-bar";
-import { useDrafts } from "@/hooks/use-drafts";
-import { useSession } from "@/lib/auth-client";
-import { XIcon } from "../icons/animated/x";
-import { useRouter } from "next/navigation";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DraftsList } from '@/components/draft/drafts-list';
+import { useSearchValue } from '@/hooks/use-search-value';
+import { SearchIcon } from '../icons/animated/search';
+import { useMail } from '@/components/mail/use-mail';
+import { SidebarToggle } from '../ui/sidebar-toggle';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArchiveX, BellOff, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { cn, defaultPageSize } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useHotKey } from '@/hooks/use-hot-key';
+import { SearchBar } from '../mail/search-bar';
+import { useDrafts } from '@/hooks/use-drafts';
+import { useSession } from '@/lib/auth-client';
+import { XIcon } from '../icons/animated/x';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'use-intl';
 
 export function DraftsLayout() {
   const [searchMode, setSearchMode] = useState(false);
@@ -24,20 +25,21 @@ export function DraftsLayout() {
   const [mail, setMail] = useMail();
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const t = useTranslations();
 
   useEffect(() => {
     if (!session?.user && !isPending) {
-      router.push("/login");
+      router.push('/login');
     }
   }, [session?.user, isPending]);
 
   const { isLoading, isValidating } = useDrafts(searchValue.value, defaultPageSize);
 
-  useHotKey("/", () => {
+  useHotKey('Meta+F', () => {
     setSearchMode(true);
   });
 
-  useHotKey("Esc", (event) => {
+  useHotKey('Esc', (event) => {
     // @ts-expect-error
     event.preventDefault();
     if (searchMode) {
@@ -53,13 +55,13 @@ export function DraftsLayout() {
         <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
           <div
             className={cn(
-              "compose-gradient h-0.5 w-full transition-opacity",
-              isValidating ? "opacity-50" : "opacity-0",
+              'compose-gradient h-0.5 w-full transition-opacity',
+              isValidating ? 'opacity-50' : 'opacity-0',
             )}
           />
           <div
             className={cn(
-              "sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors",
+              'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors',
             )}
           >
             <SidebarToggle className="h-fit px-2" />
@@ -82,7 +84,7 @@ export function DraftsLayout() {
                   <>
                     <div className="flex flex-1 items-center justify-center">
                       <span className="text-sm font-medium tabular-nums">
-                        {mail.bulkSelected.length} selected
+                        {t('common.mail.selected', { count: mail.bulkSelected.length })}
                       </span>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -95,7 +97,7 @@ export function DraftsLayout() {
                             <X />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Clear Selection</TooltipContent>
+                        <TooltipContent>{t('common.mail.clearSelection')}</TooltipContent>
                       </Tooltip>
                     </div>
                     <BulkSelectActions />
@@ -149,6 +151,8 @@ export function DraftsLayout() {
 }
 
 function BulkSelectActions() {
+  const t = useTranslations();
+
   return (
     <div className="flex items-center gap-1.5">
       <Tooltip>
@@ -157,7 +161,7 @@ function BulkSelectActions() {
             <BellOff />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Mute</TooltipContent>
+        <TooltipContent>{t('common.mail.mute')}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -165,7 +169,7 @@ function BulkSelectActions() {
             <ArchiveX />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Move to Spam</TooltipContent>
+        <TooltipContent>{t('common.mail.moveToSpam')}</TooltipContent>
       </Tooltip>
     </div>
   );

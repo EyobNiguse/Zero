@@ -1,24 +1,24 @@
-"use client";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
-import { Button } from "../ui/button";
-import Image from "next/image";
-import Link from "next/link";
+'use client';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useEffect, useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import { Button } from '../ui/button';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   // Automatically lose sheet on lg screen
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
     function handleChange(e: MediaQueryListEvent | MediaQueryList) {
       if (e.matches) setOpen(false);
     }
     handleChange(mediaQuery);
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   return (
@@ -65,7 +65,7 @@ export default function Navbar() {
                   className="w-full bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-white/90"
                   asChild
                 >
-                  <Link href="https://cal.com/team/0/chat">Contact Us</Link>
+                  <Link href="https://cal.com/team/0/chat">Contact</Link>
                 </Button>
               </div>
             </div>
@@ -73,7 +73,7 @@ export default function Navbar() {
         </Sheet>
       </div>
 
-      {process.env.NODE_ENV === "development" ? (
+      {process.env.NODE_ENV === 'development' ? (
         <>
           <div className="hidden items-center gap-4 lg:flex">
             <Link

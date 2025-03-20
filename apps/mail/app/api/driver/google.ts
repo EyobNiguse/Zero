@@ -1,8 +1,13 @@
+import { type IConfig, type MailManager } from "./types";
 import { type gmail_v1, google } from "googleapis";
-import { IConfig, MailManager } from "./types";
 import { EnableBrain } from "@/actions/brain";
-import { ParsedMessage } from "@/types";
+import { type ParsedMessage } from "@/types";
 import * as he from "he";
+import { parseFrom, wasSentWithTLS } from "@/lib/email-utils";
+
+function fromBase64Url(str: string) {
+  return str.replace(/-/g, "+").replace(/_/g, "/");
+}
 
 function fromBinary(str: string) {
   return decodeURIComponent(
@@ -88,7 +93,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     ].join(" ");
   if (config.auth) {
     auth.setCredentials({
-      access_token: config.auth.access_token,
       refresh_token: config.auth.refresh_token,
       scope: getScope(),
     });
@@ -111,28 +115,38 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     const sender =
       payload?.headers?.find((h) => h.name?.toLowerCase() === "from")?.value || "Failed";
     const subject =
-      payload?.headers?.find((h) => h.name?.toLowerCase() === "subject")?.value || "Failed";
+      payload?.headers?.find((h) => h.name?.toLowerCase() === "subject")?.value || "";
     const references =
       payload?.headers?.find((h) => h.name?.toLowerCase() === "references")?.value || "";
     const inReplyTo =
       payload?.headers?.find((h) => h.name?.toLowerCase() === "in-reply-to")?.value || "";
     const messageId =
       payload?.headers?.find((h) => h.name?.toLowerCase() === "message-id")?.value || "";
-    const [name, email] = sender.split("<");
+    const listUnsubscribe =
+      payload?.headers?.find((h) => h.name?.toLowerCase() === "list-unsubscribe")?.value ||
+      undefined;
+    const listUnsubscribePost =
+      payload?.headers?.find((h) => h.name?.toLowerCase() === "list-unsubscribe-post")?.value ||
+      undefined;
+
+    const receivedHeaders = payload?.headers?.filter(header => header.name?.toLowerCase() === 'received')
+      .map(header => header.value || '') || [];
+    const hasTLSReport = payload?.headers?.some(header => header.name?.toLowerCase() === 'tls-report');
+
     return {
       id: id || "ERROR",
       threadId: threadId || "",
       title: snippet ? he.decode(snippet).trim() : "ERROR",
+      tls: wasSentWithTLS(receivedHeaders) || !!hasTLSReport,
       tags: labelIds || [],
+      listUnsubscribe,
+      listUnsubscribePost,
       references,
       inReplyTo,
-      sender: {
-        name: name ? name.replace(/"/g, "").trim() : "Unknown",
-        email: `<${email}`,
-      },
+      sender: parseFrom(sender),
       unread: labelIds ? labelIds.includes("UNREAD") : false,
       receivedOn,
-      subject: subject ? subject.replace(/"/g, "").trim() : "No subject",
+      subject: subject ? subject.replace(/"/g, "").trim() : "(no subject)",
       messageId,
     };
   };
@@ -143,7 +157,25 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     return { folder, q };
   };
   const gmail = google.gmail({ version: "v1", auth });
-  return {
+  const manager = {
+    getAttachment: async (messageId: string, attachmentId: string) => {
+      try {
+        const response = await gmail.users.messages.attachments.get({
+          userId: "me",
+          messageId,
+          id: attachmentId,
+        });
+
+        const attachmentData = response.data.data || "";
+
+        const base64 = fromBase64Url(attachmentData);
+
+        return base64;
+      } catch (error) {
+        console.error("Error fetching attachment:", error);
+        throw error;
+      }
+    },
     markAsRead: async (id: string[]) => {
       await gmail.users.messages.batchModify({
         userId: "me",
@@ -161,29 +193,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           addLabelIds: ["UNREAD"],
         },
       });
-    },
-    getDraft: async (draftId: string) => {
-      try {
-        const res = await gmail.users.drafts.get({
-          userId: "me",
-          id: draftId,
-          format: "full",
-        });
-
-        if (!res.data) {
-          throw new Error("Draft not found");
-        }
-
-        const parsedDraft = parseDraft(res.data);
-        if (!parsedDraft) {
-          throw new Error("Failed to parse draft");
-        }
-
-        return parsedDraft;
-      } catch (error) {
-        console.error("Error loading draft:", error);
-        throw error;
-      }
     },
     getScope,
     getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
@@ -232,7 +241,13 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         }),
       );
     },
-    list: async (folder, q, maxResults = 20, _labelIds: string[] = [], pageToken?: string) => {
+    list: async (
+      folder: string,
+      q: string,
+      maxResults = 20,
+      _labelIds: string[] = [],
+      pageToken?: string,
+    ) => {
       const { folder: normalizedFolder, q: normalizedQ } = normalizeSearch(folder, q ?? "");
       const labelIds = [..._labelIds];
       if (normalizedFolder) labelIds.push(normalizedFolder.toUpperCase());
@@ -253,8 +268,9 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
               format: "metadata",
               metadataHeaders: ["From", "Subject", "Date"],
             });
+            const labelIds = [...new Set(msg.data.messages?.flatMap(message => message.labelIds || []))];
             const message = msg.data.messages?.[0];
-            const parsed = parse(message as any);
+            const parsed = parse({ ...message, labelIds });
             return {
               ...parsed,
               body: "",
@@ -269,51 +285,97 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
       return { ...res.data, threads } as any;
     },
-    get: async (id: string) => {
+    get: async (id: string): Promise<ParsedMessage[]> => {
       const res = await gmail.users.threads.get({ userId: "me", id, format: "full" });
-      const messages = res.data.messages?.map((message) => {
-        const bodyData =
-          message.payload?.body?.data ||
-          (message.payload?.parts ? findHtmlBody(message.payload.parts) : "") ||
-          message.payload?.parts?.[0]?.body?.data ||
-          ""; // Fallback to first part
+      if (!res.data.messages) return [];
 
-        if (!bodyData) {
-          console.log("⚠️ Driver: No email body data found");
-        } else {
-          console.log("✓ Driver: Found email body data");
-        }
+      const messages = await Promise.all(
+        res.data.messages.map(async (message) => {
+          const bodyData =
+            message.payload?.body?.data ||
+            (message.payload?.parts ? findHtmlBody(message.payload.parts) : "") ||
+            message.payload?.parts?.[0]?.body?.data ||
+            "";
 
-        // Process the body content
-        console.log("🔄 Driver: Processing email body...");
-        const decodedBody = fromBinary(bodyData);
+          if (!bodyData) {
+            console.log("⚠️ Driver: No email body data found");
+          } else {
+            console.log("✓ Driver: Found email body data");
+          }
 
-        console.log("✅ Driver: Email processing complete", {
-          hasBody: !!bodyData,
-          decodedBodyLength: decodedBody.length,
-        });
+          console.log("🔄 Driver: Processing email body...");
+          const decodedBody = fromBinary(bodyData);
 
-        // Create the full email data
-        const parsedData = parse(message);
-        const fullEmailData = {
-          ...parsedData,
-          body: "",
-          processedHtml: "",
-          // blobUrl: `data:text/html;charset=utf-8,${encodeURIComponent(decodedBody)}`,
-          blobUrl: "",
-          decodedBody,
-        };
+          console.log("✅ Driver: Email processing complete", {
+            hasBody: !!bodyData,
+            decodedBodyLength: decodedBody.length,
+          });
 
-        // Log the result for debugging
-        console.log("📧 Driver: Returning email data", {
-          id: fullEmailData.id,
-          hasBody: !!fullEmailData.body,
-          hasBlobUrl: !!fullEmailData.blobUrl,
-          blobUrlLength: fullEmailData.blobUrl.length,
-        });
+          const parsedData = parse(message);
 
-        return fullEmailData;
-      });
+          const attachments = await Promise.all(
+            message.payload?.parts
+              ?.filter((part) => part.filename && part.filename.length > 0)
+              ?.map(async (part) => {
+                console.log("Processing attachment:", part.filename);
+                const attachmentId = part.body?.attachmentId;
+                if (!attachmentId) {
+                  console.log("No attachment ID found for", part.filename);
+                  return null;
+                }
+
+                try {
+                  if (!message.id) {
+                    console.error("No message ID found for attachment");
+                    return null;
+                  }
+                  const attachmentData = await manager.getAttachment(message.id, attachmentId);
+                  console.log("Fetched attachment data:", {
+                    filename: part.filename,
+                    mimeType: part.mimeType,
+                    size: part.body?.size,
+                    dataLength: attachmentData?.length || 0,
+                    hasData: !!attachmentData,
+                  });
+                  return {
+                    filename: part.filename || "",
+                    mimeType: part.mimeType || "",
+                    size: Number(part.body?.size || 0),
+                    attachmentId: attachmentId,
+                    headers: part.headers || [],
+                    body: attachmentData,
+                  };
+                } catch (error) {
+                  console.error("Failed to fetch attachment:", part.filename, error);
+                  return null;
+                }
+              }) || [],
+          ).then((attachments) =>
+            attachments.filter((a): a is NonNullable<typeof a> => a !== null),
+          );
+
+          console.log("ATTACHMENTS:", attachments);
+
+          const fullEmailData = {
+            ...parsedData,
+            body: "",
+            processedHtml: "",
+            // blobUrl: `data:text/html;charset=utf-8,${encodeURIComponent(decodedBody)}`,
+            blobUrl: "",
+            decodedBody,
+            attachments,
+          };
+
+          console.log("📧 Driver: Returning email data", {
+            id: fullEmailData.id,
+            hasBody: !!fullEmailData.body,
+            hasBlobUrl: !!fullEmailData.blobUrl,
+            blobUrlLength: fullEmailData.blobUrl.length,
+          });
+
+          return fullEmailData;
+        }),
+      );
       return messages;
     },
     create: async (data: any) => {
@@ -324,7 +386,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const res = await gmail.users.messages.delete({ userId: "me", id });
       return res.data;
     },
-    normalizeIds: (ids) => {
+    normalizeIds: (ids: string[]) => {
       const normalizedIds: string[] = [];
       const threadIds: string[] = [];
 
@@ -338,7 +400,40 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
       return { normalizedIds, threadIds };
     },
-    listDrafts: async (q, maxResults = 20, pageToken?: string) => {
+    async modifyLabels(id: string[], options: { addLabels: string[]; removeLabels: string[] }) {
+      await gmail.users.messages.batchModify({
+        userId: "me",
+        requestBody: {
+          ids: id,
+          addLabelIds: options.addLabels,
+          removeLabelIds: options.removeLabels,
+        },
+      });
+    },
+    getDraft: async (draftId: string) => {
+      try {
+        const res = await gmail.users.drafts.get({
+          userId: "me",
+          id: draftId,
+          format: "full",
+        });
+
+        if (!res.data) {
+          throw new Error("Draft not found");
+        }
+
+        const parsedDraft = parseDraft(res.data);
+        if (!parsedDraft) {
+          throw new Error("Failed to parse draft");
+        }
+
+        return parsedDraft;
+      } catch (error) {
+        console.error("Error loading draft:", error);
+        throw error;
+      }
+    },
+    listDrafts: async (q?: string, maxResults = 20, pageToken?: string) => {
       const { q: normalizedQ } = normalizeSearch("", q ?? "");
       const res = await gmail.users.drafts.list({
         userId: "me",
@@ -407,15 +502,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
       return res.data;
     },
-    async modifyLabels(id, options) {
-      await gmail.users.messages.batchModify({
-        userId: "me",
-        requestBody: {
-          ids: id,
-          addLabelIds: options.addLabels,
-          removeLabelIds: options.removeLabels,
-        },
-      });
-    },
   };
+
+  return manager;
 };

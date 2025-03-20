@@ -1,16 +1,18 @@
-"use client";
+'use client';
 
-import { usePathname, useSearchParams } from "next/navigation";
-import { useRef, useCallback } from "react";
-import * as React from "react";
-import Link from "next/link";
-
-import { SidebarGroup, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "./sidebar";
-import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
-import { useStats } from "@/hooks/use-stats";
-import { BASE_URL } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { SidebarGroup, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from './sidebar';
+import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useFeaturebase } from '@/hooks/use-featurebase';
+import { type MessageKey } from '@/config/navigation';
+import { Badge } from '@/components/ui/badge';
+import { useStats } from '@/hooks/use-stats';
+import { useTranslations } from 'next-intl';
+import { useRef, useCallback } from 'react';
+import { BASE_URL } from '@/lib/constants';
+import { cn } from '@/lib/utils';
+import * as React from 'react';
+import Link from 'next/link';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -31,6 +33,7 @@ interface NavItemProps {
   isSettingsButton?: boolean;
   isSettingsPage?: boolean;
   disabled?: boolean;
+  isFeaturebaseButton?: boolean;
 }
 
 interface NavMainProps {
@@ -49,6 +52,7 @@ type IconRefType = SVGSVGElement & {
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { openFeaturebase } = useFeaturebase();
 
   /**
    * Validates URLs to prevent open redirect vulnerabilities.
@@ -62,7 +66,7 @@ export function NavMain({ items }: NavMainProps) {
   const isValidInternalUrl = useCallback((url: string) => {
     if (!url) return false;
     // Accept absolute paths as they are always internal
-    if (url.startsWith("/")) return true;
+    if (url.startsWith('/')) return true;
     try {
       const urlObj = new URL(url, BASE_URL);
       // Prevent redirects to external domains by checking against our base URL
@@ -75,8 +79,13 @@ export function NavMain({ items }: NavMainProps) {
   const getHref = useCallback(
     (item: NavItemProps) => {
       // Get the current 'from' parameter
-      const currentFrom = searchParams.get("from");
-      const category = searchParams.get("category");
+      const currentFrom = searchParams.get('from');
+      const category = searchParams.get('category');
+
+      // Handle Featurebase button
+      if (item.isFeaturebaseButton) {
+        return '#';
+      }
 
       // Handle settings navigation
       if (item.isSettingsButton) {
@@ -96,7 +105,7 @@ export function NavMain({ items }: NavMainProps) {
           }
         }
         // Fall back to safe default if URL is missing or invalid
-        return "/mail";
+        return '/mail';
       }
 
       // Handle settings pages navigation
@@ -111,7 +120,7 @@ export function NavMain({ items }: NavMainProps) {
       }
 
       // Handle category links
-      if (category && item.url.includes("category=")) {
+      if (category && item.url.includes('category=')) {
         return item.url;
       }
 
@@ -124,10 +133,10 @@ export function NavMain({ items }: NavMainProps) {
     (url: string) => {
       const urlObj = new URL(
         url,
-        typeof window === "undefined" ? BASE_URL : window.location.origin,
+        typeof window === 'undefined' ? BASE_URL : window.location.origin,
       );
-      const cleanPath = pathname.replace(/\/$/, "");
-      const cleanUrl = urlObj.pathname.replace(/\/$/, "");
+      const cleanPath = pathname.replace(/\/$/, '');
+      const cleanUrl = urlObj.pathname.replace(/\/$/, '');
 
       if (cleanPath !== cleanUrl) return false;
 
@@ -152,7 +161,7 @@ export function NavMain({ items }: NavMainProps) {
             className="group/collapsible"
           >
             <SidebarMenuItem>
-              <div className="space-y-1">
+              <div className="space-y-1 pb-2">
                 {section.items.map((item) => (
                   <NavItem
                     key={item.url}
@@ -173,42 +182,58 @@ export function NavMain({ items }: NavMainProps) {
 function NavItem(item: NavItemProps & { href: string }) {
   const iconRef = useRef<IconRefType>(null);
   const { data: stats } = useStats();
+  const { openFeaturebase } = useFeaturebase();
+  const t = useTranslations();
 
   if (item.disabled) {
     return (
       <SidebarMenuButton
-        tooltip={item.title}
+        tooltip={t(item.title as MessageKey)}
         className="flex cursor-not-allowed items-center opacity-50"
       >
         {item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
-        <p className="mt-0.5 text-[13px]">{item.title}</p>
+        <p className="mt-0.5 text-[13px]">{t(item.title as MessageKey)}</p>
       </SidebarMenuButton>
     );
   }
 
+  // Handle Featurebase button click
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (item.isFeaturebaseButton) {
+      e.preventDefault();
+      openFeaturebase();
+    }
+
+    if (item.onClick) {
+      item.onClick(e);
+    }
+  };
+
   // Apply animation handlers to all buttons including back buttons
   const linkProps = {
     href: item.href,
-    onClick: item.onClick,
+    onClick: handleClick,
     onMouseEnter: () => iconRef.current?.startAnimation?.(),
     onMouseLeave: () => iconRef.current?.stopAnimation?.(),
   };
 
   const buttonContent = (
     <SidebarMenuButton
-      tooltip={item.title}
+      tooltip={t(item.title as MessageKey)}
       className={cn(
-        "hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center",
-        item.isActive && "bg-subtleWhite text-accent-foreground dark:bg-subtleBlack",
+        'hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center',
+        item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-subtleBlack',
       )}
     >
       {item.icon && <item.icon ref={iconRef} className="mr-2" />}
-      <p className="mt-0.5 text-[13px]">{item.title}</p>
+      <p className="mt-0.5 text-[13px]">{t(item.title as MessageKey)}</p>
       {stats && stats.find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase()) && (
         <Badge className="ml-auto rounded-md" variant="outline">
           {stats
+
             .find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase())
-            ?.count?.toLocaleString()}
+
+            ?.count?.toLocaleString() || '0'}
         </Badge>
       )}
     </SidebarMenuButton>

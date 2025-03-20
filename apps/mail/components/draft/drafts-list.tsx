@@ -1,24 +1,26 @@
-"use client";
+'use client';
 
-import { InitialThread, ThreadProps, MailListProps, MailSelectMode } from "@/types";
-import { EmptyState, type FolderType } from "@/components/mail/empty-state";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { cn, defaultPageSize, formatDate } from "@/lib/utils";
-import { useSearchValue } from "@/hooks/use-search-value";
-import { markAsRead, markAsUnread } from "@/actions/mail";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useMail } from "@/components/mail/use-mail";
-import { useHotKey } from "@/hooks/use-hot-key";
-import { useDrafts } from "@/hooks/use-drafts";
-import { useSession } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import type { InitialThread, ThreadProps, MailListProps, MailSelectMode } from '@/types';
+import { EmptyState, type FolderType } from '@/components/mail/empty-state';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
+import { cn, defaultPageSize, formatDate } from '@/lib/utils';
+import { useSearchValue } from '@/hooks/use-search-value';
+import { markAsRead, markAsUnread } from '@/actions/mail';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useMail } from '@/components/mail/use-mail';
+import { useHotKey } from '@/hooks/use-hot-key';
+import { useDrafts } from '@/hooks/use-drafts';
+import { useSession } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'use-intl';
+import { toast } from 'sonner';
 
 const highlightText = (text: string, highlight: string) => {
   if (!highlight?.trim()) return text;
 
-  const regex = new RegExp(`(${highlight})`, "gi");
+  const regex = new RegExp(`(${highlight})`, 'gi');
   const parts = text.split(regex);
 
   return parts.map((part, i) => {
@@ -43,54 +45,56 @@ const Draft = ({ message, onClick }: ThreadProps) => {
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 
   return (
-    <div
-      onClick={onClick ? onClick(message) : undefined}
-      key={message.id}
-      className={cn(
-        "hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100",
-        !message.unread && "opacity-50",
-        (isMailSelected || isMailBulkSelected) && "border-border bg-primary/5 opacity-100",
-      )}
-    >
+    <div className="p-1">
       <div
+        onClick={onClick ? onClick(message) : undefined}
+        key={message.id}
         className={cn(
-          "bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out",
-          isMailBulkSelected && "translate-x-0",
-        )}
-      />
-      <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-1">
-          <p
-            className={cn(
-              message.unread ? "font-bold" : "font-medium",
-              "text-md flex items-baseline gap-1 group-hover:opacity-100",
-            )}
-          >
-            <span className={cn(mail.selected && "max-w-[120px] truncate")}>
-              {highlightText(message.sender.name, searchValue.highlight)}
-            </span>
-          </p>
-        </div>
-        {message.receivedOn ? (
-          <p
-            className={cn(
-              "text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100",
-              isMailSelected && "opacity-100",
-            )}
-          >
-            {formatDate(message.receivedOn.split(".")[0] || "")}
-          </p>
-        ) : null}
-      </div>
-      <p
-        className={cn(
-          "mt-1 line-clamp-1 text-xs opacity-70 transition-opacity",
-          mail.selected ? "line-clamp-1" : "line-clamp-2",
-          isMailSelected && "opacity-100",
+          'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+          !message.unread && 'opacity-50',
+          (isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
         )}
       >
-        {highlightText(message.subject, searchValue.highlight)}
-      </p>
+        <div
+          className={cn(
+            'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
+            isMailBulkSelected && 'translate-x-0',
+          )}
+        />
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-1">
+            <p
+              className={cn(
+                message.unread ? 'font-bold' : 'font-medium',
+                'text-md flex items-baseline gap-1 group-hover:opacity-100',
+              )}
+            >
+              <span className={cn(mail.selected && 'max-w-[120px] truncate')}>
+                {highlightText(message.sender.name, searchValue.highlight)}
+              </span>
+            </p>
+          </div>
+          {message.receivedOn ? (
+            <p
+              className={cn(
+                'text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
+                isMailSelected && 'opacity-100',
+              )}
+            >
+              {formatDate(message.receivedOn.split('.')[0] || '')}
+            </p>
+          ) : null}
+        </div>
+        <p
+          className={cn(
+            'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
+            mail.selected ? 'line-clamp-1' : 'line-clamp-2',
+            isMailSelected && 'opacity-100',
+          )}
+        >
+          {highlightText(message.subject, searchValue.highlight)}
+        </p>
+      </div>
     </div>
   );
 };
@@ -100,6 +104,7 @@ export function DraftsList({ isCompact }: MailListProps) {
   const { data: session } = useSession();
   const [searchValue] = useSearchValue();
   const router = useRouter();
+  const t = useTranslations();
 
   const {
     data: { drafts: items, nextPageToken },
@@ -109,32 +114,13 @@ export function DraftsList({ isCompact }: MailListProps) {
   } = useDrafts(searchValue.value, defaultPageSize);
 
   const parentRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const itemHeight = isCompact ? 64 : 96;
+  const scrollRef = useRef<VirtuosoHandle>(null);
 
-  const virtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => itemHeight,
-  });
-
-  const virtualItems = virtualizer.getVirtualItems();
-
-  const handleScroll = useCallback(
-    async (e: React.UIEvent<HTMLDivElement>) => {
-      if (isLoading || isValidating) return;
-
-      const target = e.target as HTMLDivElement;
-      const { scrollTop, scrollHeight, clientHeight } = target;
-      const scrolledToBottom = scrollHeight - (scrollTop + clientHeight) < itemHeight * 2;
-
-      if (scrolledToBottom) {
-        console.log("Loading more items...");
-        await loadMore();
-      }
-    },
-    [isLoading, isValidating, nextPageToken, itemHeight],
-  );
+  const handleScroll = useCallback(() => {
+    if (isLoading || isValidating || !nextPageToken) return;
+    console.log('Loading more items...');
+    void loadMore();
+  }, [isLoading, isValidating, loadMore, nextPageToken]);
 
   const [massSelectMode, setMassSelectMode] = useState(false);
   const [rangeSelectMode, setRangeSelectMode] = useState(false);
@@ -147,7 +133,7 @@ export function DraftsList({ isCompact }: MailListProps) {
         ...prev,
         bulkSelected: [],
       }));
-      toast.success("Deselected all emails");
+      toast.success(t('common.mail.deselectAll'));
     }
     // Otherwise select all items
     else if (items.length > 0) {
@@ -156,11 +142,10 @@ export function DraftsList({ isCompact }: MailListProps) {
         ...prev,
         bulkSelected: allIds,
       }));
-      toast.success(`Selected ${allIds.length} emails`);
     } else {
-      toast.info("No emails to select");
+      toast.info(t('common.mail.noEmailsToSelect'));
     }
-  }, [items, setMail, mail.bulkSelected]);
+  }, [items, setMail, mail.bulkSelected, t]);
 
   const resetSelectMode = () => {
     setMassSelectMode(false);
@@ -168,72 +153,72 @@ export function DraftsList({ isCompact }: MailListProps) {
     setSelectAllBelowMode(false);
   };
 
-  useHotKey("Control", () => {
+  useHotKey('Control', () => {
     resetSelectMode();
     setMassSelectMode(true);
   });
 
-  useHotKey("Meta", () => {
+  useHotKey('Meta', () => {
     resetSelectMode();
     setMassSelectMode(true);
   });
 
-  useHotKey("Shift", () => {
+  useHotKey('Shift', () => {
     resetSelectMode();
     setRangeSelectMode(true);
   });
 
-  useHotKey("Alt+Shift", () => {
+  useHotKey('Alt+Shift', () => {
     resetSelectMode();
     setSelectAllBelowMode(true);
   });
 
-  useHotKey("Meta+Shift+u", async () => {
+  useHotKey('Meta+Shift+u', async () => {
     resetSelectMode();
     const res = await markAsUnread({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as unread");
+      toast.success(t('common.mail.markedAsUnread'));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as unread");
+    } else toast.error(t('common.mail.failedToMarkAsUnread'));
   });
 
-  useHotKey("Control+Shift+u", async () => {
+  useHotKey('Control+Shift+u', async () => {
     resetSelectMode();
     const res = await markAsUnread({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as unread");
+      toast.success(t('common.mail.markedAsUnread'));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as unread");
+    } else toast.error(t('common.mail.failedToMarkAsUnread'));
   });
 
-  useHotKey("Meta+Shift+i", async () => {
+  useHotKey('Meta+Shift+i', async () => {
     resetSelectMode();
     const res = await markAsRead({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as read");
+      toast.success(t('common.mail.markedAsRead'));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as read");
+    } else toast.error(t('common.mail.failedToMarkAsRead'));
   });
 
-  useHotKey("Control+Shift+i", async () => {
+  useHotKey('Control+Shift+i', async () => {
     resetSelectMode();
     const res = await markAsRead({ ids: mail.bulkSelected });
     if (res.success) {
-      toast.success("Marked as read");
+      toast.success(t('common.mail.markedAsRead'));
       setMail((prev) => ({
         ...prev,
         bulkSelected: [],
       }));
-    } else toast.error("Failed to mark as read");
+    } else toast.error(t('common.mail.failedToMarkAsRead'));
   });
 
   // useHotKey("Meta+Shift+j", async () => {
@@ -250,28 +235,28 @@ export function DraftsList({ isCompact }: MailListProps) {
   //   else toast.error("Failed to mark as junk");
   // });
 
-  useHotKey("Meta+a", async (event) => {
+  useHotKey('Meta+a', async (event) => {
     // @ts-expect-error
     event.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
-  useHotKey("Control+a", async (event) => {
+  useHotKey('Control+a', async (event) => {
     // @ts-expect-error
     event.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
-  useHotKey("Meta+n", async (event) => {
+  useHotKey('Meta+n', async (event) => {
     // @ts-expect-error
     event.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
-  useHotKey("Control+n", async (event) => {
+  useHotKey('Control+n', async (event) => {
     // @ts-expect-error
     event.preventDefault();
     resetSelectMode();
@@ -280,13 +265,13 @@ export function DraftsList({ isCompact }: MailListProps) {
 
   useEffect(() => {
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "Control" || e.key === "Meta") {
+      if (e.key === 'Control' || e.key === 'Meta') {
         setMassSelectMode(false);
       }
-      if (e.key === "Shift") {
+      if (e.key === 'Shift') {
         setRangeSelectMode(false);
       }
-      if (e.key === "Alt") {
+      if (e.key === 'Alt') {
         setSelectAllBelowMode(false);
       }
     };
@@ -297,12 +282,12 @@ export function DraftsList({ isCompact }: MailListProps) {
       setSelectAllBelowMode(false);
     };
 
-    window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("blur", handleBlur);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
 
     return () => {
-      window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
       setMassSelectMode(false);
       setRangeSelectMode(false);
       setSelectAllBelowMode(false);
@@ -310,15 +295,15 @@ export function DraftsList({ isCompact }: MailListProps) {
   }, []);
 
   const selectMode: MailSelectMode = massSelectMode
-    ? "mass"
+    ? 'mass'
     : rangeSelectMode
-      ? "range"
+      ? 'range'
       : selectAllBelowMode
-        ? "selectAllBelow"
-        : "single";
+        ? 'selectAllBelow'
+        : 'single';
 
   const handleMailClick = (message: InitialThread) => async () => {
-    if (selectMode === "mass") {
+    if (selectMode === 'mass') {
       const updatedBulkSelected = mail.bulkSelected.includes(message.id)
         ? mail.bulkSelected.filter((id) => id !== message.id)
         : [...mail.bulkSelected, message.id];
@@ -327,7 +312,7 @@ export function DraftsList({ isCompact }: MailListProps) {
       return;
     }
 
-    if (selectMode === "range") {
+    if (selectMode === 'range') {
       const lastSelectedItem =
         mail.bulkSelected[mail.bulkSelected.length - 1] ?? mail.selected ?? message.id;
 
@@ -346,7 +331,7 @@ export function DraftsList({ isCompact }: MailListProps) {
       return;
     }
 
-    if (selectMode === "selectAllBelow") {
+    if (selectMode === 'selectAllBelow') {
       const mailsIndex = items.map((m) => m.id);
       const startIdx = mailsIndex.indexOf(message.id);
 
@@ -370,59 +355,46 @@ export function DraftsList({ isCompact }: MailListProps) {
     if (isFiltering) {
       return <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />;
     }
-    return <EmptyState folder={"draft" as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
+    return <EmptyState folder={'draft' as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
   }
 
+  const rowRenderer = useCallback(
+    //TODO: Add proper typing
+    // @ts-expect-error
+    (props) => (
+      <Draft
+        onClick={handleMailClick}
+        selectMode={selectMode}
+        isCompact={isCompact}
+        message={props.data}
+        {...props}
+      />
+    ),
+    [handleMailClick, selectMode, isCompact],
+  );
+
   return (
-    <ScrollArea
-      ref={scrollRef}
-      className="h-full pb-2"
-      type="scroll"
-      onScrollCapture={handleScroll}
-    >
-      <div
-        ref={parentRef}
-        className={cn(
-          "relative min-h-[calc(100vh-4rem)] w-full",
-          selectMode === "range" && "select-none",
-        )}
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          willChange: "transform",
-          contain: "paint",
-        }}
-      >
-        <div
-          style={{
-            transform: `translateY(${virtualItems[0]?.start ?? 0}px)`,
-            willChange: "transform",
-            contain: "paint",
-          }}
-          className="absolute left-0 top-0 w-full p-[8px]"
-        >
-          {virtualItems.map(({ index }) => {
-            const item = items[index];
-            return item ? (
-              <Draft
-                key={item.id}
-                onClick={handleMailClick}
-                message={item}
-                selectMode={selectMode}
-                isCompact={isCompact}
-              />
-            ) : null;
-          })}
-          <div className="w-full pt-2 text-center">
-            {isLoading || isValidating ? (
-              <div className="text-center">
-                <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-              </div>
-            ) : (
-              <div className="h-4" />
-            )}
-          </div>
-        </div>
+    <>
+      <div ref={parentRef} className={cn('h-full w-full', selectMode === 'range' && 'select-none')}>
+        <Virtuoso
+          ref={scrollRef}
+          style={{ height: '100%' }}
+          totalCount={items.length}
+          itemContent={(index: number, data: InitialThread) => rowRenderer({ index, data })}
+          endReached={handleScroll}
+          data={items}
+          className="hide-scrollbar"
+        />
       </div>
-    </ScrollArea>
+      <div className="w-full pt-2 text-center">
+        {isLoading || isValidating ? (
+          <div className="text-center">
+            <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+          </div>
+        ) : (
+          <div className="h-4" />
+        )}
+      </div>
+    </>
   );
 }

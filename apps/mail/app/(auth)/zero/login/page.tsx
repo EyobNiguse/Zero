@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import Link from "next/link";
-import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import Link from 'next/link';
+import { z } from 'zod';
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 });
 
 export default function LoginZero() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Use the correct sonner toast API
     toast.success(`Trying to log in with ${values.email}`, {
-      description: "Login attempt",
+      description: 'Login attempt',
     });
 
     // Here you would typically handle authentication
@@ -34,10 +34,12 @@ export default function LoginZero() {
 
   return (
     <div className="flex h-full min-h-screen w-full items-center justify-center bg-black">
-      <div className="w-full max-w-md px-6 py-8 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="animate-in slide-in-from-bottom-4 w-full max-w-md px-6 py-8 duration-500">
         <div className="mb-4 text-center">
           <h1 className="mb-2 text-4xl font-bold text-white">Login with Zero</h1>
-          <p className="text-muted-foreground">Enter your Zero email below to login to your account</p>
+          <p className="text-muted-foreground">
+            Enter your Zero email below to login to your account
+          </p>
         </div>
 
         <Form {...form}>
@@ -91,7 +93,7 @@ export default function LoginZero() {
 
             <div className="mt-6 text-center text-sm">
               <p className="text-muted-foreground">
-                Don't have an account?{" "}
+                Don't have an account?{' '}
                 <Link href="/zero/signup" className="text-white underline hover:text-white/80">
                   Sign up
                 </Link>
@@ -100,18 +102,18 @@ export default function LoginZero() {
           </form>
         </Form>
       </div>
-      
-      <footer className="absolute bottom-0 w-full py-4 px-6">
-        <div className="max-w-6xl mx-auto flex justify-center items-center gap-6">
-          <a 
-            href="/terms" 
-            className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+
+      <footer className="absolute bottom-0 w-full px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-center gap-6">
+          <a
+            href="/terms"
+            className="text-[10px] text-gray-500 transition-colors hover:text-gray-300"
           >
             Terms of Service
           </a>
-          <a 
-            href="/privacy" 
-            className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+          <a
+            href="/privacy"
+            className="text-[10px] text-gray-500 transition-colors hover:text-gray-300"
           >
             Privacy Policy
           </a>

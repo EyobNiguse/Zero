@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Github,
@@ -10,8 +10,7 @@ import {
   GitPullRequest,
   LayoutGrid,
   FileCode,
-} from "lucide-react";
-import { Discord, Twitter } from "@/components/icons/icons";
+} from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -21,18 +20,19 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from "recharts";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { useEffect, useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { fetcher } from "@/lib/utils";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
-import Image from "next/image";
-import Link from "next/link";
-import useSWR from "swr";
+} from 'recharts';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { Discord, Twitter } from '@/components/icons/icons';
+import { Separator } from '@/components/ui/separator';
+import { useEffect, useState, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { fetcher } from '@/lib/utils';
+import Image from 'next/image';
+import Link from 'next/link';
+import useSWR from 'swr';
 
 interface Contributor {
   login: string;
@@ -56,37 +56,37 @@ interface ActivityData {
   pullRequests: number;
 }
 
-const excludedUsernames = ["bot1", "dependabot", "github-actions"];
-const coreTeamMembers = ["nizzyabi", "ahmetskilinc", "ripgrim", "needlexo", "praashh", "mrgsub"];
-const REPOSITORY = "Mail-0/Zero";
+const excludedUsernames = ['bot1', 'dependabot', 'github-actions'];
+const coreTeamMembers = ['nizzyabi', 'ahmetskilinc', 'ripgrim', 'needlexo', 'praashh', 'mrgsub'];
+const REPOSITORY = 'Mail-0/Zero';
 
 const specialRoles: Record<string, { role: string; twitter?: string; website?: string }> = {
   nizzyabi: {
-    role: "Project Owner",
-    twitter: "nizzyabi",
+    role: 'Project Owner',
+    twitter: 'nizzyabi',
   },
   ahmetskilinc: {
-    role: "Maintainer",
-    twitter: "bruvimtired",
-    website: "https://ahmetk.dev/",
+    role: 'Maintainer',
+    twitter: 'bruvimtired',
+    website: 'https://ahmetk.dev/',
   },
   ripgrim: {
-    role: "Maintainer",
-    twitter: "fuckgrimlabs",
-    website: "https://ripgrim.com",
+    role: 'Maintainer',
+    twitter: 'fuckgrimlabs',
+    website: 'https://ripgrim.com',
   },
   needlexo: {
-    role: "Maintainer",
-    twitter: "needleXO",
-    website: "https://needle.rip",
+    role: 'Maintainer',
+    twitter: 'needleXO',
+    website: 'https://needle.rip',
   },
   praashh: {
-    role: "Maintainer",
-    twitter: "10Xpraash",
+    role: 'Maintainer',
+    twitter: '10Xpraash',
   },
   mrgsub: {
-    role: "Maintainer",
-    twitter: "cmdhaus",
+    role: 'Project Owner',
+    twitter: 'cmdhaus',
   },
 };
 
@@ -101,10 +101,10 @@ const ChartControls = ({
 }) => (
   <div className="mb-4 flex items-center justify-between">
     <span className="text-muted-foreground text-sm">
-      Showing {showAll ? "all" : "top 10"} contributors
+      Showing {showAll ? 'all' : 'top 10'} contributors
     </span>
     <Button variant="outline" size="sm" onClick={() => setShowAll(!showAll)} className="text-xs">
-      Show {showAll ? "less" : "all"} ({total})
+      Show {showAll ? 'less' : 'all'} ({total})
     </Button>
   </div>
 );
@@ -133,8 +133,8 @@ export default function OpenPage() {
   );
 
   const { data: additionalContributors } = useSWR<Contributor[]>(
-    initialContributors?.length === 100 
-      ? `https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100&page=2` 
+    initialContributors?.length === 100
+      ? `https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100&page=2`
       : null,
     fetcher,
   );
@@ -198,7 +198,7 @@ export default function OpenPage() {
         repoError?.message ||
           commitsError?.message ||
           prsError?.message ||
-          "An error occurred while fetching data",
+          'An error occurred while fetching data',
       );
       generateFallbackData();
       return;
@@ -223,19 +223,19 @@ export default function OpenPage() {
     const last30Days = Array.from({ length: 30 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (29 - i));
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = date.toISOString().split('T')[0];
 
       const dayCommits = commitsData.filter((commit: { commit: { author: { date: string } } }) =>
-        commit.commit.author.date.startsWith(dateStr ?? ""),
+        commit.commit.author.date.startsWith(dateStr ?? ''),
       ).length;
 
       const dayIndex = i + 1;
       const growthFactor = dayIndex / 30;
 
       return {
-        date: date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
+        date: date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
         }),
         stars: Math.floor(repoData.stargazers_count * growthFactor),
         forks: Math.floor(repoData.forks_count * growthFactor),
@@ -252,16 +252,16 @@ export default function OpenPage() {
       const daysToSubtract = today + (6 - i);
       date.setDate(date.getDate() - daysToSubtract);
 
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = date.toISOString().split('T')[0];
 
       const dayCommits = commitsData.filter((commit: { commit: { author: { date: string } } }) =>
-        commit.commit.author.date.startsWith(dateStr ?? ""),
+        commit.commit.author.date.startsWith(dateStr ?? ''),
       ).length;
 
       const commits = dayCommits || Math.floor(Math.random() * 5) + 1;
 
       return {
-        date: date.toLocaleDateString("en-US", { weekday: "short" }),
+        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
         commits,
         issues: Math.max(1, Math.floor(commits * 0.3)),
         pullRequests: Math.max(1, Math.floor(commits * 0.2)),
@@ -276,9 +276,9 @@ export default function OpenPage() {
       const date = new Date();
       date.setDate(date.getDate() - (29 - i));
       return {
-        date: date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
+        date: date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
         }),
         stars: Math.floor(Math.random() * 100),
         forks: Math.floor(Math.random() * 50),
@@ -295,7 +295,7 @@ export default function OpenPage() {
 
       const commits = Math.floor(Math.random() * 8) + 2;
       return {
-        date: date.toLocaleDateString("en-US", { weekday: "short" }),
+        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
         commits,
         issues: Math.max(1, Math.floor(commits * 0.3)),
         pullRequests: Math.max(1, Math.floor(commits * 0.2)),
@@ -339,13 +339,13 @@ export default function OpenPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-neutral-950 text-black dark:text-white">
+    <div className="min-h-screen w-full bg-white text-black dark:bg-neutral-950 dark:text-white">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Header with theme toggle */}
-        <div className="flex justify-end mb-6">
+        <div className="mb-6 flex justify-end">
           <ThemeToggle />
         </div>
-        
+
         {/* Project Stats */}
         <div className="mb-8 overflow-hidden rounded-xl border bg-gradient-to-b from-white/50 to-white/10 p-6 backdrop-blur-sm dark:border-neutral-700 dark:from-neutral-900/50 dark:to-neutral-900/30">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -644,9 +644,9 @@ export default function OpenPage() {
                 className="group relative flex items-center gap-4 rounded-xl border bg-white/50 p-4 transition-all hover:-translate-y-1 hover:bg-white hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900/50 dark:hover:bg-neutral-900 dark:hover:shadow-neutral-900/50"
                 style={{
                   animationDelay: `${index * 100}ms`,
-                  animation: "fadeInUp 0.5s ease-out forwards",
+                  animation: 'fadeInUp 0.5s ease-out forwards',
                   opacity: 0,
-                  transform: "translateY(10px)",
+                  transform: 'translateY(10px)',
                 }}
               >
                 <Avatar className="h-16 w-16 rounded-full ring-2 ring-neutral-200 transition-transform group-hover:scale-105 group-hover:ring-neutral-300 dark:ring-neutral-800 dark:group-hover:ring-neutral-700">
@@ -665,7 +665,7 @@ export default function OpenPage() {
                     {member.login}
                   </h3>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    {specialRoles[member.login.toLowerCase()]?.role || "Maintainer"}
+                    {specialRoles[member.login.toLowerCase()]?.role || 'Maintainer'}
                   </p>
                   <div className="mt-3 flex gap-2">
                     <Link
@@ -686,7 +686,7 @@ export default function OpenPage() {
                     )}
                     {specialRoles[member.login.toLowerCase()]?.website && (
                       <Link
-                        href={specialRoles[member.login.toLowerCase()]?.website || "#"}
+                        href={specialRoles[member.login.toLowerCase()]?.website || '#'}
                         target="_blank"
                         className="rounded-md p-1 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
                       >
@@ -714,7 +714,7 @@ export default function OpenPage() {
         </div>
 
         {/* Contributors Section */}
-        <div className="space-y-6 mb-16">
+        <div className="mb-16 space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-neutral-900/80 dark:text-white">
               Contributors
@@ -768,9 +768,9 @@ export default function OpenPage() {
                       className="group relative flex flex-col items-center rounded-xl border bg-white/50 p-4 transition-all hover:-translate-y-1 hover:bg-white hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900/50 dark:hover:bg-neutral-900 dark:hover:shadow-neutral-900/50"
                       style={{
                         animationDelay: `${index * 50}ms`,
-                        animation: "fadeInUp 0.5s ease-out forwards",
+                        animation: 'fadeInUp 0.5s ease-out forwards',
                         opacity: 0,
-                        transform: "translateY(10px)",
+                        transform: 'translateY(10px)',
                       }}
                     >
                       <Avatar className="h-16 w-16 rounded-full ring-2 ring-neutral-200 transition-transform group-hover:scale-105 group-hover:ring-neutral-300 dark:ring-neutral-800 dark:group-hover:ring-neutral-700">
@@ -818,7 +818,9 @@ export default function OpenPage() {
                         interval={0}
                         tick={(props) => {
                           const { x, y, payload } = props;
-                          const contributor = allContributors?.find((c) => c.login === payload.value);
+                          const contributor = allContributors?.find(
+                            (c) => c.login === payload.value,
+                          );
 
                           return (
                             <g transform={`translate(${x},${y})`}>
@@ -845,7 +847,7 @@ export default function OpenPage() {
                         className="text-neutral-600 dark:text-neutral-400"
                       />
                       <Tooltip
-                        cursor={{ fill: "rgb(0 0 0 / 0.05)" }}
+                        cursor={{ fill: 'rgb(0 0 0 / 0.05)' }}
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0]?.payload;
@@ -889,11 +891,10 @@ export default function OpenPage() {
 
         <div className="mb-8">
           <div className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-neutral-50 to-white shadow-sm dark:border-neutral-800 dark:from-neutral-900/80 dark:to-neutral-900/30">
-            <div className="absolute inset-0 opacity-20 dark:opacity-20">
-            </div>
+            <div className="absolute inset-0 opacity-20 dark:opacity-20"></div>
 
             <div className="relative p-6">
-              <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex flex-col items-center gap-8 md:flex-row">
                 <div className="w-full md:w-2/3">
                   <div className="inline-flex items-center rounded-full bg-neutral-900 px-3 py-1 text-xs font-medium text-white dark:bg-white dark:text-neutral-900">
                     <Github className="mr-1.5 h-3.5 w-3.5" />
@@ -903,14 +904,18 @@ export default function OpenPage() {
                     Let&apos;s build the future of email together
                   </h2>
                   <p className="mt-3 text-neutral-600 dark:text-neutral-300">
-                    Whether you&apos;re fixing bugs, adding features, or improving documentation, every contribution matters.
+                    Whether you&apos;re fixing bugs, adding features, or improving documentation,
+                    every contribution matters.
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
                     <Button
                       asChild
                       className="relative overflow-hidden bg-neutral-900 text-white transition-all hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                     >
-                      <Link href={`https://github.com/${REPOSITORY}/blob/main/.github/CONTRIBUTING.md`} target="_blank">
+                      <Link
+                        href={`https://github.com/${REPOSITORY}/blob/main/.github/CONTRIBUTING.md`}
+                        target="_blank"
+                      >
                         <span className="relative z-10 flex items-center">
                           <GitGraph className="mr-2 h-4 w-4" />
                           Start Contributing
@@ -929,14 +934,14 @@ export default function OpenPage() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="hidden md:block md:w-1/3">
                   <div className="space-y-4 rounded-xl border border-neutral-200 bg-white/80 p-5 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/80">
                     <div className="flex items-center gap-4">
                       <div className="flex -space-x-2">
                         {filteredContributors?.slice(0, 5).map((contributor) => (
-                          <Avatar 
-                            key={contributor.login} 
+                          <Avatar
+                            key={contributor.login}
                             className="h-8 w-8 border-2 border-white dark:border-neutral-900"
                           >
                             <AvatarImage src={contributor.avatar_url} alt={contributor.login} />
@@ -954,11 +959,11 @@ export default function OpenPage() {
                       <div className="text-sm text-neutral-600 dark:text-neutral-300">
                         <span className="font-semibold text-neutral-900 dark:text-white">
                           {filteredContributors?.length || 0}
-                        </span>{" "}
+                        </span>{' '}
                         contributors
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-lg bg-neutral-50 p-2 dark:bg-neutral-800/50">
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">Stars</div>
@@ -986,11 +991,11 @@ export default function OpenPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4 mb-6 mt-2">
+        <div className="mb-6 mt-2 flex items-center justify-center gap-4">
           <Link
             href="https://discord.gg/BCFr6FFt"
             target="_blank"
-            className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+            className="text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
             aria-label="Join our Discord"
           >
             <Discord className="h-4 w-4" />
@@ -998,13 +1003,12 @@ export default function OpenPage() {
           <Link
             href="https://x.com/zerodotemail"
             target="_blank"
-            className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+            className="text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
             aria-label="Follow us on X (Twitter)"
           >
             <Twitter className="h-4 w-4" />
           </Link>
         </div>
-
       </div>
     </div>
   );

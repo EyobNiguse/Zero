@@ -1,11 +1,11 @@
-import { motion } from "framer-motion";
+import { motion } from 'motion/react';
 
 interface SpinnerProps {
   size?: number;
   color?: string;
 }
 
-export const Spinner = ({ size = 24, color = "currentColor" }: SpinnerProps) => {
+export const Spinner = ({ size = 24, color = 'currentColor' }: SpinnerProps) => {
   return (
     <motion.svg
       width={size}
@@ -17,7 +17,7 @@ export const Spinner = ({ size = 24, color = "currentColor" }: SpinnerProps) => 
       transition={{
         duration: 1,
         repeat: Infinity,
-        ease: "linear",
+        ease: 'linear',
       }}
     >
       <motion.circle
@@ -32,10 +32,10 @@ export const Spinner = ({ size = 24, color = "currentColor" }: SpinnerProps) => 
         transition={{
           duration: 1,
           repeat: Infinity,
-          repeatType: "loop",
-          ease: "linear",
+          repeatType: 'loop',
+          ease: 'linear',
         }}
       />
     </motion.svg>
   );
-}; 
+};
