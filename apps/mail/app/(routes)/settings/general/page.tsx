@@ -16,7 +16,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { SettingsCard } from '@/components/settings/settings-card';
-import { availableLocales, defaultLocale } from '@/i18n/config';
+import { availableLocales, locales, Locale } from '@/i18n/config';
 import { useTranslations, useLocale } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 const formSchema = z.object({
-	language: z.string(),
+	language: z.enum(locales as [string, ...string[]]),
 	timezone: z.string(),
 	dynamicContent: z.boolean(),
 	externalImages: z.boolean(),
@@ -43,7 +43,7 @@ export default function GeneralPage() {
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			language: locale,
+			language: locale as Locale,
 			timezone: 'UTC',
 			dynamicContent: false,
 			externalImages: true,
@@ -55,7 +55,7 @@ export default function GeneralPage() {
 
 		// TODO: Save settings in user's account
 
-		changeLocale(values.language);
+		changeLocale(values.language as Locale);
 
 		if (values.language !== locale) {
 			const localeName = new Intl.DisplayNames([values.language], { type: 'language' }).of(

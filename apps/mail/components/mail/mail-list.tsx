@@ -1,16 +1,8 @@
 'use client';
 
-import {
-	type ComponentProps,
-	memo,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { AlertTriangle, Bell, Briefcase, StickyNote, Tag, User, Users } from 'lucide-react';
+import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
@@ -18,14 +10,13 @@ import { cn, defaultPageSize, formatDate } from '@/lib/utils';
 import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
-import { useFormatter, useTranslations } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
-import { useNotes } from '@/hooks/use-notes';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
@@ -55,18 +46,11 @@ const highlightText = (text: string, highlight: string) => {
 const Thread = memo(
 	({ message, selectMode, demo, onClick, sessionData }: ConditionalThreadProps) => {
 		const [mail] = useMail();
-		const { hasNotes } = demo ? { hasNotes: () => false } : useNotes();
 		const [searchValue] = useSearchValue();
 		const t = useTranslations();
-		const format = useFormatter();
 		const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
-		const isKeyPressed = useKeyState();
-
-		const threadHasNotes = useMemo(() => {
-			return !demo && hasNotes(message.threadId ?? message.id);
-		}, [demo, hasNotes, message.threadId, message.id]);
 
 		const isMailSelected = useMemo(() => {
 			return message.id === mail.selected;
@@ -75,12 +59,8 @@ const Thread = memo(
 		const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 
 		const threadLabels = useMemo(() => {
-			const labels = [...(message.tags || [])];
-			if (threadHasNotes) {
-				labels.push('notes');
-			}
-			return labels;
-		}, [message.tags, threadHasNotes]);
+			return [...(message.tags || [])];
+		}, [message.tags]);
 
 		const handleMouseEnter = () => {
 			if (demo) return;
@@ -559,8 +539,7 @@ const MailLabels = memo(
 MailLabels.displayName = 'MailLabels';
 
 function getNormalizedLabelKey(label: string) {
-	const normalizedLabel = label.toLowerCase().replace(/^category_/i, '');
-	return normalizedLabel;
+	return label.toLowerCase().replace(/^category_/i, '');
 }
 
 function capitalize(str: string) {

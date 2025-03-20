@@ -12,6 +12,7 @@ import {
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArchiveX, Forward, ReplyAll } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
@@ -22,9 +23,7 @@ import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
-import { sortNotes } from '@/lib/notes-utils';
-import { modifyLabels } from '@/actions/mail';
-import { useNotes } from '@/hooks/use-notes';
+import { useThread } from '@/hooks/use-threads';
 import ThreadSubject from './thread-subject';
 import { XIcon } from '../icons/animated/x';
 import ReplyCompose from './reply-composer';
@@ -33,7 +32,6 @@ import { NotesPanel } from './note-panel';
 import MailDisplay from './mail-display';
 import { useMail } from './use-mail';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface ThreadDisplayProps {
 	mail: any;
@@ -41,7 +39,7 @@ interface ThreadDisplayProps {
 	isMobile?: boolean;
 }
 
-export function ThreadDemo({ mail: emailData, onClose, isMobile }: ThreadDisplayProps) {
+export function ThreadDemo({ mail: emailData, isMobile }: ThreadDisplayProps) {
 	const isFullscreen = false;
 
 	return (
@@ -204,38 +202,9 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const [isMuted, setIsMuted] = useState(false);
 	const [isReplyOpen, setIsReplyOpen] = useState(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
-	const {
-		getNotesForThread,
-		addNote,
-		editNote,
-		deleteNote,
-		togglePinNote,
-		changeNoteColor,
-		reorderNotes,
-	} = useNotes();
-	const [threadNotes, setThreadNotes] = useState<any[]>([]);
-	const [, setIsLoadingNotes] = useState(false);
 	const t = useTranslations();
 
 	const moreVerticalIconRef = useRef<any>(null);
-
-	useEffect(() => {
-		async function fetchNotes() {
-			if (emailData?.[0]) {
-				setIsLoadingNotes(true);
-				try {
-					const notes = await getNotesForThread(emailData[0].threadId ?? mail);
-					setThreadNotes(notes);
-				} catch (error) {
-					console.error('Error fetching notes:', error);
-				} finally {
-					setIsLoadingNotes(false);
-				}
-			}
-		}
-
-		fetchNotes();
-	}, [emailData, getNotesForThread, mail]);
 
 	useEffect(() => {
 		if (emailData?.[0]) {
@@ -392,159 +361,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 						<ThreadSubject subject={emailData[0]?.subject} isMobile={isMobile} />
 					</div>
 					<div className="flex items-center md:gap-6">
-						<NotesPanel
-							threadId={emailData?.[0]?.threadId ?? mail}
-							notes={threadNotes}
-							onAddNote={async (threadId, content, color) => {
-								try {
-									const newNote = await addNote(threadId, content, color);
-									if (newNote) {
-										setThreadNotes((prev) => [...prev, newNote]);
-										return newNote;
-									}
-									toast.error(t('common.notes.errors.failedToAddNote'));
-									return null;
-								} catch (error) {
-									toast.error(t('common.notes.errors.failedToAddNote'));
-									return null;
-								}
-							}}
-							onEditNote={async (noteId, content) => {
-								const originalNotes = [...threadNotes];
-								const noteToUpdate = threadNotes.find((note) => note.id === noteId);
-								if (noteToUpdate) {
-									setThreadNotes((prev) =>
-										prev.map((note) =>
-											note.id === noteId ? { ...note, content, updatedAt: new Date() } : note,
-										),
-									);
-								}
-
-								try {
-									const updatedNote = await editNote(noteId, content);
-									if (updatedNote) {
-										setThreadNotes((prev) =>
-											prev.map((note) => (note.id === noteId ? updatedNote : note)),
-										);
-										return updatedNote;
-									} else {
-										setThreadNotes(originalNotes);
-										toast.error(t('common.notes.errors.failedToUpdateNote'));
-										return null;
-									}
-								} catch (error) {
-									setThreadNotes(originalNotes);
-									toast.error(t('common.notes.errors.failedToUpdateNote'));
-									return null;
-								}
-							}}
-							onDeleteNote={async (noteId) => {
-								const originalNotes = [...threadNotes];
-								setThreadNotes((prev) => prev.filter((note) => note.id !== noteId));
-
-								try {
-									const success = await deleteNote(noteId);
-									if (!success) {
-										setThreadNotes(originalNotes);
-										toast.error(t('common.notes.errors.failedToDeleteNote'));
-									}
-									return success;
-								} catch (error) {
-									setThreadNotes(originalNotes);
-									toast.error(t('common.notes.errors.failedToDeleteNote'));
-									return false;
-								}
-							}}
-							onTogglePin={async (noteId) => {
-								const originalNotes = [...threadNotes];
-								const noteToToggle = threadNotes.find((note) => note.id === noteId);
-
-								if (noteToToggle) {
-									setThreadNotes((prev) =>
-										prev.map((note) =>
-											note.id === noteId ? { ...note, isPinned: !note.isPinned } : note,
-										),
-									);
-								}
-
-								try {
-									const updatedNote = await togglePinNote(noteId);
-									if (updatedNote) {
-										setThreadNotes((prev) =>
-											prev.map((note) => (note.id === noteId ? updatedNote : note)),
-										);
-										return updatedNote;
-									} else {
-										setThreadNotes(originalNotes);
-										toast.error(t('common.notes.errors.failedToUpdateNote'));
-										return null;
-									}
-								} catch (error) {
-									setThreadNotes(originalNotes);
-									toast.error(t('common.notes.errors.failedToUpdateNote'));
-									return null;
-								}
-							}}
-							onChangeColor={async (noteId, color) => {
-								const originalNotes = [...threadNotes];
-								setThreadNotes((prev) =>
-									prev.map((note) => (note.id === noteId ? { ...note, color } : note)),
-								);
-
-								try {
-									const updatedNote = await changeNoteColor(noteId, color);
-									if (updatedNote) {
-										setThreadNotes((prev) =>
-											prev.map((note) => (note.id === noteId ? updatedNote : note)),
-										);
-										return updatedNote;
-									} else {
-										setThreadNotes(originalNotes);
-										toast.error(t('common.notes.errors.failedToUpdateNoteColor'));
-										return null;
-									}
-								} catch (error) {
-									setThreadNotes(originalNotes);
-									toast.error(t('common.notes.errors.failedToUpdateNoteColor'));
-									return null;
-								}
-							}}
-							onReorderNotes={async (notes) => {
-								const originalNotes = [...threadNotes];
-								setThreadNotes((prev) => {
-									const updatedNotes = [...prev];
-									notes.forEach(({ id, order, isPinned }) => {
-										const index = updatedNotes.findIndex((note) => note.id === id);
-										if (index !== -1) {
-											updatedNotes[index] = {
-												...updatedNotes[index],
-												order,
-												...(isPinned !== undefined && { isPinned }),
-											};
-										}
-									});
-
-									return sortNotes(updatedNotes);
-								});
-
-								try {
-									await new Promise<void>((resolve) => {
-										setTimeout(() => resolve(), 500);
-									});
-
-									const success = await reorderNotes(notes);
-									if (!success) {
-										setThreadNotes(originalNotes);
-										toast.error(t('common.notes.errors.failedToReorderNotes'));
-									}
-									return success;
-								} catch (error) {
-									setThreadNotes(originalNotes);
-									toast.error(t('common.notes.errors.failedToReorderNotes'));
-									return false;
-								}
-							}}
-						/>
+						<NotesPanel threadId={mail} />
 						<ThreadActionButton
 							icon={isFullscreen ? ExpandIcon : ExpandIcon}
 							label={
@@ -634,13 +451,3 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 		</div>
 	);
 }
-
-<style jsx global>{`
-	.hide-scrollbar {
-		-ms-overflow-style: none;
-		scrollbar-width: none;
-	}
-	.hide-scrollbar::-webkit-scrollbar {
-		display: none;
-	}
-`}</style>;
