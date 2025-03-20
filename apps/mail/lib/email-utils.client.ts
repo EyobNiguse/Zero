@@ -14,7 +14,7 @@ export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessag
 			});
       if (listUnsubscribeAction) {
         track('Unsubscribe', {
-          domain: listUnsubscribeAction.host,
+          domain: emailData.sender.email,
         });
 				switch (listUnsubscribeAction.type) {
 					case 'get':
