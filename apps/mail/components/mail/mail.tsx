@@ -38,10 +38,14 @@ export function DemoMailLayout() {
 	const searchParams = useSearchParams();
 	const threadIdParam = searchParams?.get('threadId');
 
-	const [open, setOpen] = useState(false);
-	const handleClose = () => setOpen(false);
+	const handleClose = () => {
+		// Update URL to remove threadId parameter
+		const currentParams = new URLSearchParams(searchParams?.toString() || '');
+		currentParams.delete('threadId');
+	};
 	const [activeCategory, setActiveCategory] = useState('Primary');
 	const [filteredItems, setFilteredItems] = useState(items);
+<<<<<<< Updated upstream
 
 	// Ensure thread display is open when threadId is in URL parameters
 	useEffect(() => {
@@ -50,6 +54,9 @@ export function DemoMailLayout() {
 		}
 	}, [threadIdParam]);
 
+=======
+	
+>>>>>>> Stashed changes
 	useEffect(() => {
 		if (activeCategory === 'Primary') {
 			setFilteredItems(items);
@@ -150,14 +157,16 @@ export function DemoMailLayout() {
 
 				{/* Mobile Drawer */}
 				{isMobile && (
-					<Drawer open={open} onOpenChange={setOpen}>
+					<Drawer open={!!threadIdParam} onOpenChange={(isOpen) => {
+						if (!isOpen) handleClose();
+					}}>
 						<DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-3rem)] overflow-hidden p-0">
 							<DrawerHeader className="sr-only">
 								<DrawerTitle>Email Details</DrawerTitle>
 							</DrawerHeader>
 							<div className="flex h-full flex-col overflow-hidden">
 								<div className="flex-1 overflow-hidden">
-									<ThreadDisplay onClose={handleClose} isMobile={true} />
+									<ThreadDisplay onClose={handleClose} isMobile={true} mail={filteredItems[0]} />
 								</div>
 							</div>
 						</DrawerContent>
@@ -191,7 +200,6 @@ export function MailLayout() {
 		defaultPageSize,
 	);
 
-	const [open, setOpen] = useState(false);
 	const isDesktop = useMediaQuery('(min-width: 768px)');
 
 	// Check if we're on mobile on mount and when window resizes
@@ -209,16 +217,9 @@ export function MailLayout() {
 	const searchParams = useSearchParams();
 	const threadIdParam = searchParams.get('threadId');
 
-	useEffect(() => {
-		if (threadIdParam) {
-			setOpen(true);
-		} else {
-			setOpen(false);
-		}
-	}, [threadIdParam]);
+	// No need to track threadIdParam with a separate state
 
 	const handleClose = useCallback(() => {
-		setOpen(false);
 		// Update URL to remove threadId parameter
 		const currentParams = new URLSearchParams(searchParams.toString());
 		currentParams.delete('threadId');
@@ -366,7 +367,9 @@ export function MailLayout() {
 
 				{/* Mobile Drawer */}
 				{isMobile && (
-					<Drawer open={open} onOpenChange={setOpen}>
+					<Drawer open={!!threadIdParam} onOpenChange={(isOpen) => {
+						if (!isOpen) handleClose();
+					}}>
 						<DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-4rem)] overflow-hidden p-0">
 							<DrawerHeader className="sr-only">
 								<DrawerTitle>Email Details</DrawerTitle>
