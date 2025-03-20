@@ -23,17 +23,6 @@ import {
   sortNotesByOrder,
 } from '@/lib/notes-utils';
 import {
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
   StickyNote,
   Edit,
   Trash2,
@@ -49,6 +38,17 @@ import {
   PaintBucket,
   MoreVertical,
 } from 'lucide-react';
+import {
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import {
   SortableContext,
   arrayMove,
