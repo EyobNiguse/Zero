@@ -242,7 +242,7 @@ export function MailLayout() {
     router.push(`/mail/${folder}?${currentParams.toString()}`);
   }, [router, folder, searchParams]);
 
-  useHotKey('/', () => {
+  useHotKey('Meta+F', () => {
     setSearchMode(true);
   });
 
