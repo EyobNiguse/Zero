@@ -166,15 +166,15 @@ export const parseAddressList = (header: string): Sender[] => {
 
   return parsedAddressList?.flatMap(address => {
     if (address.type === "group") {
-      return address.addresses.flatMap(address => ({
+      return (address.addresses || []).flatMap(address => ({
         name: address.name || FALLBACK_SENDER.name,
-        email: address.address
+        email: address.address || FALLBACK_SENDER.email
       }))
     }
 
     return {
       name: address.name || FALLBACK_SENDER.name,
-      email: address.address
+      email: address.address || FALLBACK_SENDER.email
     }
   })
 }
