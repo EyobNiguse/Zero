@@ -434,7 +434,6 @@ function BulkSelectActions() {
         setIsLoading(false);
       }),
       {
-        description: `Processing a total of ${mail.bulkSelected.length} threads`,
         loading: 'Unsubscribing...',
         success: 'All done! you will no longer receive emails from these mailing lists.',
         error: 'Something went wrong!',
