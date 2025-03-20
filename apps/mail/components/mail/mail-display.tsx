@@ -336,7 +336,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
 														{emailData?.sender?.email}
 													</span>
 												</div>
-												<div className="flex items-center">
+												{emailData.tls && (<div className="flex items-center">
 													<span className="w-24 text-end text-gray-500">
 														{t('common.mailDisplay.security')}:
 													</span>
@@ -344,7 +344,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
 														<Lock className="h-4 w-4 text-green-600" />{' '}
 														{t('common.mailDisplay.standardEncryption')}
 													</div>
-												</div>
+												</div>)}
 											</div>
 										</PopoverContent>
 									</Popover>
