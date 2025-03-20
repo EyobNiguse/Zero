@@ -196,7 +196,6 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const t = useTranslations();
 
 	const moreVerticalIconRef = useRef<any>(null);
-	console.log('emailData', emailData);
 
 	useEffect(() => {
 		if (emailData?.[0]) {
