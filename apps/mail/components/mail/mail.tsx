@@ -45,18 +45,7 @@ export function DemoMailLayout() {
 	};
 	const [activeCategory, setActiveCategory] = useState('Primary');
 	const [filteredItems, setFilteredItems] = useState(items);
-<<<<<<< Updated upstream
-
-	// Ensure thread display is open when threadId is in URL parameters
-	useEffect(() => {
-		if (threadIdParam) {
-			setOpen(true);
-		}
-	}, [threadIdParam]);
-
-=======
 	
->>>>>>> Stashed changes
 	useEffect(() => {
 		if (activeCategory === 'Primary') {
 			setFilteredItems(items);
