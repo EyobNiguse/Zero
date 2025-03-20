@@ -1,7 +1,7 @@
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArchiveX, Forward, ReplyAll, Star } from 'lucide-react';
+import { ArchiveX, Forward, ReplyAll, Star, StarOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
@@ -195,6 +195,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const t = useTranslations();
 
 	const moreVerticalIconRef = useRef<any>(null);
+	console.log('emailData', emailData);
 
 	useEffect(() => {
 		if (emailData?.[0]) {
@@ -210,15 +211,18 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 	const handleFavourites = async () => {
 		if (!emailData) return;
 		if (emailData[0]?.tags.includes('STARRED')) {
-			await modifyLabels({ threadId: [emailData[0]?.threadId || ''], removeLabels: ['STARRED'] });
-			toast('Removed from favourites.');
+			toast.promise(modifyLabels({ threadId: [mail], removeLabels: ['STARRED'] }), {
+				success: 'Removed from favourites.',
+				error: 'Failed to remove from favourites.',
+			});
 		} else {
-			await modifyLabels({ threadId: [emailData[0]?.threadId || ''], addLabels: ['STARRED'] });
-			toast('Added to favourites.');
+			toast.promise(modifyLabels({ threadId: [mail], addLabels: ['STARRED'] }), {
+				success: 'Added to favourites.',
+				error: 'Failed to add to favourites.',
+			});
 		}
 
-		await mutate();
-		await mutateThreads();
+		await Promise.all([mutate(), mutateThreads()]);
 	};
 
 	useEffect(() => {
