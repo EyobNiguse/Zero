@@ -43,6 +43,7 @@ export interface ParsedMessage {
   sender: Sender;
   to: Sender[];
   cc: Sender[];
+  tls: boolean;
   listUnsubscribe?: string;
   listUnsubscribePost?: string;
   receivedOn: string;

@@ -3,7 +3,7 @@ import { type gmail_v1, google } from "googleapis";
 import { EnableBrain } from "@/actions/brain";
 import { type ParsedMessage } from "@/types";
 import * as he from "he";
-import { parseAddressList, parseFrom } from "@/lib/email-utils";
+import { parseAddressList, parseFrom, wasSentWithTLS } from "@/lib/email-utils";
 
 function fromBase64Url(str: string) {
   return str.replace(/-/g, "+").replace(/_/g, "/");
@@ -139,10 +139,15 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       .filter(v => typeof v === 'string') || []
     const cc = ccHeaders.flatMap(to => parseAddressList(to))
       
+    const receivedHeaders = payload?.headers?.filter(header => header.name?.toLowerCase() === 'received')
+      .map(header => header.value || '') || [];
+    const hasTLSReport = payload?.headers?.some(header => header.name?.toLowerCase() === 'tls-report');
+
     return {
       id: id || "ERROR",
       threadId: threadId || "",
       title: snippet ? he.decode(snippet).trim() : "ERROR",
+      tls: wasSentWithTLS(receivedHeaders) || !!hasTLSReport,
       tags: labelIds || [],
       listUnsubscribe,
       listUnsubscribePost,
