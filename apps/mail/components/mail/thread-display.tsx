@@ -1,18 +1,19 @@
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArchiveX, Forward, ReplyAll } from 'lucide-react';
+import { ArchiveX, Forward, ReplyAll, Star, StarOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSearchParams } from 'next/navigation';
 
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useThread, useThreads } from '@/hooks/use-threads';
 import { ArchiveIcon } from '../icons/animated/archive';
 import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
-import { useThread } from '@/hooks/use-threads';
+import { modifyLabels } from '@/actions/mail';
 import ThreadSubject from './thread-subject';
 import { XIcon } from '../icons/animated/x';
 import ReplyCompose from './reply-composer';
@@ -20,6 +21,7 @@ import { useTranslations } from 'next-intl';
 import { NotesPanel } from './note-panel';
 import MailDisplay from './mail-display';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ThreadDisplayProps {
   mail?: any;
@@ -185,6 +187,7 @@ function ThreadActionButton({
 
 export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const { data: emailData, isLoading } = useThread();
+  const { mutate: mutateThreads } = useThreads();
   const [isMuted, setIsMuted] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -201,6 +204,25 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const handleClose = useCallback(() => {
     onClose?.();
   }, [onClose]);
+
+  const handleFavourites = async () => {
+    if (!emailData) return;
+    if (emailData[0]?.tags?.includes('STARRED')) {
+      toast.promise(modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }), {
+        success: 'Removed from favourites.',
+        loading: 'Removing from favourites',
+        error: 'Failed to remove from favourites.',
+      });
+    } else {
+      toast.promise(modifyLabels({ threadId: [threadId], addLabels: ['STARRED'] }), {
+        success: 'Added to favourites.',
+        loading: 'Adding to favourites.',
+        error: 'Failed to add to favourites.',
+      });
+    }
+
+    await Promise.all([mutate(), mutateThreads()]);
+  };
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -251,6 +273,13 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
                 icon={ArchiveIcon}
                 label={t('common.threadDisplay.archive')}
                 disabled={true}
+                className="relative top-0.5"
+              />
+
+              <ThreadActionButton
+                icon={emailData[0]?.tags?.includes('STARRED') ? StarOff : Star}
+                label={t('common.threadDisplay.favourites')}
+                onClick={handleFavourites}
                 className="relative top-0.5"
               />
 
@@ -340,6 +369,12 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
               icon={ArchiveIcon}
               label={t('common.threadDisplay.archive')}
               disabled={!emailData}
+              className="relative top-0.5"
+            />
+            <ThreadActionButton
+              icon={emailData[0]?.tags?.includes('STARRED') ? StarOff : Star}
+              label={t('common.threadDisplay.favourites')}
+              onClick={handleFavourites}
               className="relative top-0.5"
             />
             <ThreadActionButton
