@@ -150,7 +150,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       return { folder: undefined, q: `in:trash ${q}` };
     }
     if (folder === "archive") {
-      return { folder: undefined, q: `-in:inbox ${q}` };
+      return { folder: undefined, q: `in:archive ${q}` };
     }
     return { folder, q };
   };

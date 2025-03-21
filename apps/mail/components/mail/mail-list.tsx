@@ -447,13 +447,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 	const isEmpty = items.length === 0;
 	const isFiltering = searchValue.value.trim().length > 0;
 
-	if (isEmpty && session) {
-		if (isFiltering) {
-			return <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />;
-		}
-		return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
-	}
-
 	const rowRenderer = useCallback(
 		//TODO: Add proper typing
 		// @ts-expect-error
@@ -471,6 +464,13 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 		),
 		[handleMailClick, getSelectMode, isCompact, sessionData, folder, mutate],
 	);
+
+	if (isEmpty && session) {
+		if (isFiltering) {
+			return <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />;
+		}
+		return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
+	}
 
 	return (
 		<>
