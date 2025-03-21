@@ -172,6 +172,9 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     if (folder === 'trash') {
       return { folder: undefined, q: `in:trash ${q}` };
     }
+    if (folder === "archive") {
+      return { folder: undefined, q: `in:archive ${q}` };
+    }
     return { folder, q };
   };
   const gmail = google.gmail({ version: 'v1', auth });

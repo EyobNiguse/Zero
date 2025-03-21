@@ -5,9 +5,10 @@ import { AlertTriangle, Bell, Briefcase, StickyNote, Tag, User, Users } from 'lu
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
+import { ThreadContextMenu } from '@/components/context/thread-context';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { cn, defaultPageSize, formatDate, FOLDERS } from '@/lib/utils';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
-import { cn, defaultPageSize, formatDate } from '@/lib/utils';
 import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
@@ -21,19 +22,33 @@ import { useTranslations } from 'next-intl';
 import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
-
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
-  ({ message, selectMode, demo, onClick, sessionData }: ConditionalThreadProps) => {
-    const [mail] = useMail();
-    const [searchValue] = useSearchValue();
-    const t = useTranslations();
-    const searchParams = useSearchParams();
-    const threadIdParam = searchParams.get('threadId');
-    const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const isHovering = useRef<boolean>(false);
-    const hasPrefetched = useRef<boolean>(false);
+	({
+		message,
+		selectMode,
+		demo,
+		onClick,
+		sessionData,
+		folder,
+		onRefresh,
+	}: ConditionalThreadProps & {
+		folder?: string;
+		onRefresh?: () => void;
+	}) => {
+		const [mail] = useMail();
+		const [searchValue] = useSearchValue();
+		const t = useTranslations();
+		const searchParams = useSearchParams();
+		const threadIdParam = searchParams.get('threadId');
+		const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+		const isHovering = useRef<boolean>(false);
+		const hasPrefetched = useRef<boolean>(false);
+
+		const isFolderInbox = folder === FOLDERS.INBOX || !folder;
+		const isFolderSpam = folder === FOLDERS.SPAM;
+		const isFolderSent = folder === FOLDERS.SENT;
 
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
@@ -93,78 +108,87 @@ const Thread = memo(
       };
     }, []);
 
-    return (
-      <div className="p-1">
-        <div
-          onClick={onClick ? onClick(message) : undefined}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          key={message.id}
-          className={cn(
-            'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-            isMailSelected || !message.unread && 'opacity-50',
-            (isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
-          )}
-        >
-          <div
-            className={cn(
-              'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
-              isMailBulkSelected && 'translate-x-0',
-            )}
-          />
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-1">
-              <p
-                className={cn(
-                  message.unread && !isMailSelected ? 'font-bold' : 'font-medium',
-                  'text-md flex items-baseline gap-1 group-hover:opacity-100',
-                )}
-              >
-                <span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
-                  {highlightText(message.sender.name, searchValue.highlight)}
-                </span>{' '}
-                {message.unread && !isMailSelected ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
-              </p>
-              <MailLabels labels={threadLabels} />
-              <div className="flex items-center gap-1">
-                {message.totalReplies > 1 ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-                        {message.totalReplies}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="px-1 py-0 text-xs">
-                      {t('common.mail.replies', { count: message.totalReplies })}
-                    </TooltipContent>
-                  </Tooltip>
-                ) : null}
-              </div>
-            </div>
-            {message.receivedOn ? (
-              <p
-                className={cn(
-                  'text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
-                  isMailSelected && 'opacity-100',
-                )}
-              >
-                {formatDate(message.receivedOn.split('.')[0] || '')}
-              </p>
-            ) : null}
-          </div>
-          <p
-            className={cn(
-              'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
-              mail.selected ? 'line-clamp-1' : 'line-clamp-2',
-              isMailSelected && 'opacity-100',
-            )}
-          >
-            {highlightText(message.subject, searchValue.highlight)}
-          </p>
-        </div>
-      </div>
-    );
-  },
+		return (
+			<ThreadContextMenu
+				emailId={message.id}
+				threadId={message.threadId ?? message.id}
+				isInbox={isFolderInbox}
+				isSpam={isFolderSpam}
+				isSent={isFolderSent}
+				refreshCallback={onRefresh}
+			>
+				<div className="p-1">
+					<div
+						onClick={onClick ? onClick(message) : undefined}
+						onMouseEnter={handleMouseEnter}
+						onMouseLeave={handleMouseLeave}
+						key={message.id}
+						className={cn(
+							'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+							isMailSelected || !message.unread && 'opacity-50',
+							(isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
+						)}
+					>
+						<div
+							className={cn(
+								'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
+								isMailBulkSelected && 'translate-x-0',
+							)}
+						/>
+						<div className="flex w-full items-center justify-between">
+							<div className="flex items-center gap-1">
+								<p
+									className={cn(
+										message.unread && !isMailSelected ? 'font-bold' : 'font-medium',
+										'text-md flex items-baseline gap-1 group-hover:opacity-100',
+									)}
+								>
+									<span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
+										{highlightText(message.sender.name, searchValue.highlight)}
+									</span>{' '}
+									{message.unread && !isMailSelected ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
+								</p>
+								<MailLabels labels={threadLabels} />
+								<div className="flex items-center gap-1">
+									{message.totalReplies > 1 ? (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
+													{message.totalReplies}
+												</span>
+											</TooltipTrigger>
+											<TooltipContent className="px-1 py-0 text-xs">
+												{t('common.mail.replies', { count: message.totalReplies })}
+											</TooltipContent>
+										</Tooltip>
+									) : null}
+								</div>
+							</div>
+							{message.receivedOn ? (
+								<p
+									className={cn(
+										'text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
+										isMailSelected && 'opacity-100',
+									)}
+								>
+									{formatDate(message.receivedOn.split('.')[0] || '')}
+								</p>
+							) : null}
+						</div>
+						<p
+							className={cn(
+								'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
+								mail.selected ? 'line-clamp-1' : 'line-clamp-2',
+								isMailSelected && 'opacity-100',
+							)}
+						>
+							{highlightText(message.subject, searchValue.highlight)}
+						</p>
+					</div>
+				</div>
+			</ThreadContextMenu>
+		);
+	},
 );
 
 Thread.displayName = 'Thread';
@@ -395,15 +419,33 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [mail, setMail, items, getSelectMode, router, searchParams, folder],
   );
 
-  const isEmpty = items.length === 0;
-  const isFiltering = searchValue.value.trim().length > 0;
+	const isEmpty = items.length === 0;
+	const isFiltering = searchValue.value.trim().length > 0;
 
-  if (isEmpty && session) {
-    if (isFiltering) {
-      return <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />;
-    }
-    return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
-  }
+	const rowRenderer = useCallback(
+		//TODO: Add proper typing
+		// @ts-expect-error
+		(props) => (
+			<Thread
+				onClick={handleMailClick}
+				selectMode={getSelectMode()}
+				isCompact={isCompact}
+				sessionData={sessionData}
+				message={props.data}
+				folder={folder}
+				onRefresh={() => mutate()}
+				{...props}
+			/>
+		),
+		[handleMailClick, getSelectMode, isCompact, sessionData, folder, mutate],
+	);
+
+	if (isEmpty && session) {
+		if (isFiltering) {
+			return <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />;
+		}
+		return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
+	}
 
   return (
     <>
