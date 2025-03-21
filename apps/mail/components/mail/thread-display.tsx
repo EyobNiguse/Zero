@@ -192,13 +192,15 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const threadIdParam = searchParams.get('threadId');
   const threadId = mail ?? threadIdParam ?? '';
   // Only fetch thread data if we have a valid threadId
-  const { data: emailData, isLoading, mutate } = useThread(mail ?? '');
+  const { data: emailData, isLoading, mutate } = useThread(threadId ?? '');
   const { mutate: mutateThreads } = useThreads('STARRED');
   const [isMuted, setIsMuted] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const t = useTranslations();
+
+  console.log('emailData', emailData);
 
   const moreVerticalIconRef = useRef<any>(null);
 
@@ -216,12 +218,12 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const handleFavourites = async () => {
     if (!emailData) return;
     if (isStarred) {
-      toast.promise(modifyLabels({ threadId: [mail], removeLabels: ['STARRED'] }), {
+      toast.promise(modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }), {
         success: 'Removed from favourites.',
         error: 'Failed to remove from favourites.',
       });
     } else {
-      toast.promise(modifyLabels({ threadId: [mail], addLabels: ['STARRED'] }), {
+      toast.promise(modifyLabels({ threadId: [threadId], addLabels: ['STARRED'] }), {
         success: 'Added to favourites.',
         error: 'Failed to add to favourites.',
       });
