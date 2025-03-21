@@ -12,6 +12,7 @@ import {
   ListMinusIcon,
   ArrowRightIcon,
   Loader2,
+  Star,
 } from 'lucide-react';
 import {
   Dialog,
@@ -33,12 +34,12 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { SearchIcon } from '../icons/animated/search';
-import type { MessageKey } from '@/config/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, defaultPageSize } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
+import { MessageKey } from '@/config/navigation';
 import { Button } from '@/components/ui/button';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
@@ -501,7 +502,7 @@ function BulkSelectActions() {
 
 const categories = [
   {
-    id:'Primary',
+    id: 'Primary',
     name: 'common.mailCategories.primary',
     searchValue: '',
     icon: <Inbox className="h-4 w-4" />,
@@ -509,7 +510,7 @@ const categories = [
       'border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70',
   },
   {
-    id:'Important',
+    id: 'Important',
     name: 'common.mailCategories.important',
     searchValue: 'is:important',
     icon: <AlertTriangle className="h-4 w-4" />,
@@ -517,7 +518,7 @@ const categories = [
       'border-0 text-amber-800 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30',
   },
   {
-    id:'Personal',
+    id: 'Personal',
     name: 'common.mailCategories.personal',
     searchValue: 'is:personal',
     icon: <User className="h-4 w-4" />,
@@ -525,7 +526,7 @@ const categories = [
       'border-0 text-green-800 bg-green-100 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30',
   },
   {
-    id:'Updates',
+    id: 'Updates',
     name: 'common.mailCategories.updates',
     searchValue: 'is:updates',
     icon: <Bell className="h-4 w-4" />,
@@ -533,12 +534,20 @@ const categories = [
       'border-0 text-purple-800 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30',
   },
   {
-    id:'Promotions',
+    id: 'Promotions',
     name: 'common.mailCategories.promotions',
     searchValue: 'is:promotions',
     icon: <Tag className="h-4 w-4 rotate-90" />,
     colors:
       'border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30',
+  },
+  {
+    id: 'Favourites',
+    name: 'common.mailCategories.favourites',
+    searchValue: 'is:starred',
+    icon: <Star className="h-4 w-4 rotate-90" />,
+    colors:
+      'border-0 text-pink-800 bg-pink-100 dark:bg-pink-900/20 dark:text-pink-500 dark:hover:bg-pink-900/30',
   },
 ];
 
