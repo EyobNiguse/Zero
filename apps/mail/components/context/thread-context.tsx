@@ -26,12 +26,12 @@ import {
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useThreads } from '@/hooks/use-threads';
+import { LABELS, FOLDERS } from '@/lib/utils';
 import { useStats } from '@/hooks/use-stats';
 import { useParams } from 'next/navigation';
 import { useMail } from '../mail/use-mail';
 import { useTranslations } from 'use-intl';
 import { type ReactNode } from 'react';
-import { LABELS, FOLDERS } from '@/lib/utils';
 
 interface EmailAction {
 	id: string;
