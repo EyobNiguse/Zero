@@ -99,7 +99,7 @@ export type ThreadProps = {
   message: InitialThread;
   selectMode: MailSelectMode;
   // TODO: enforce types instead of sprinkling "any"
-  onClick?: (message: InitialThread) => () => Promise<any> | undefined;
+  onClick?: (message: InitialThread) => () => any;
   isCompact?: boolean;
 };
 
