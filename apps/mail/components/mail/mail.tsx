@@ -474,42 +474,43 @@ const Categories = () => {
 	const t = useTranslations();
 
 	return [
-	{
-		name: t('common.mailCategories.primary'),
-		searchValue: '',
-		icon: <Inbox className="h-4 w-4" />,
-		colors:
-			'border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70',
-	},
-	{
-		name: t('common.mailCategories.important'),
-		searchValue: 'is:important',
-		icon: <AlertTriangle className="h-4 w-4" />,
-		colors:
-			'border-0 text-amber-800 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30',
-	},
-	{
-		name: t('common.mailCategories.personal'),
-		searchValue: 'is:personal',
-		icon: <User className="h-4 w-4" />,
-		colors:
-			'border-0 text-green-800 bg-green-100 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30',
-	},
-	{
-		name: t('common.mailCategories.updates'),
-		searchValue: 'is:updates',
-		icon: <Bell className="h-4 w-4" />,
-		colors:
-			'border-0 text-purple-800 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30',
-	},
-	{
-		name: t('common.mailCategories.promotions'),
-		searchValue: 'is:promotions',
-		icon: <Tag className="h-4 w-4 rotate-90" />,
-		colors:
-			'border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30',
-	},
-]};
+		{
+			name: t('common.mailCategories.primary'),
+			searchValue: '',
+			icon: <Inbox className="h-4 w-4" />,
+			colors:
+				'border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70',
+		},
+		{
+			name: t('common.mailCategories.important'),
+			searchValue: 'is:important',
+			icon: <AlertTriangle className="h-4 w-4" />,
+			colors:
+				'border-0 text-amber-800 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30',
+		},
+		{
+			name: t('common.mailCategories.personal'),
+			searchValue: 'is:personal',
+			icon: <User className="h-4 w-4" />,
+			colors:
+				'border-0 text-green-800 bg-green-100 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30',
+		},
+		{
+			name: t('common.mailCategories.updates'),
+			searchValue: 'is:updates',
+			icon: <Bell className="h-4 w-4" />,
+			colors:
+				'border-0 text-purple-800 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30',
+		},
+		{
+			name: t('common.mailCategories.promotions'),
+			searchValue: 'is:promotions',
+			icon: <Tag className="h-4 w-4 rotate-90" />,
+			colors:
+				'border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30',
+		},
+	];
+};
 
 function MailCategoryTabs({
 	iconsOnly = false,
