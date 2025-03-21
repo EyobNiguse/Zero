@@ -253,17 +253,19 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
                             {t('common.mailDisplay.to')}:
                           </span>
                           <span className="text-muted-foreground ml-3">
-                            {emailData?.sender?.email}
+                            {emailData?.to?.map((t) => t.email).join(', ')}
                           </span>
                         </div>
-                        <div className="flex">
-                          <span className="w-24 text-end text-gray-500">
-                            {t('common.mailDisplay.cc')}:
-                          </span>
-                          <span className="text-muted-foreground ml-3">
-                            {emailData?.sender?.email}
-                          </span>
-                        </div>
+                        {emailData?.cc?.length > 0 && (
+                          <div className="flex">
+                            <span className="w-24 text-end text-gray-500">
+                              {t('common.mailDisplay.cc')}:
+                            </span>
+                            <span className="text-muted-foreground ml-3">
+                              {emailData?.cc?.map((t) => t.email).join(', ')}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex">
                           <span className="w-24 text-end text-gray-500">
                             {t('common.mailDisplay.date')}:
