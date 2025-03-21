@@ -31,7 +31,7 @@ import { useParams } from 'next/navigation';
 import { useMail } from '../mail/use-mail';
 import { useTranslations } from 'use-intl';
 import { type ReactNode } from 'react';
-import { LABELS } from '@/lib/utils';
+import { LABELS, FOLDERS } from '@/lib/utils';
 
 interface EmailAction {
 	id: string;
@@ -67,31 +67,13 @@ export function ThreadContextMenu({
 	const [mail, setMail] = useMail();
 	const { mutate } = useThreads(folder, undefined, searchValue.value, 20);
 	const currentFolder = folder ?? '';
-	const isArchiveFolder = currentFolder === 'archive';
+	const isArchiveFolder = currentFolder === FOLDERS.ARCHIVE;
 	const { mutate: mutateStats } = useStats();
 	const t = useTranslations();
 
 	const noopAction = () => async () => {
 		console.log('Action will be implemented later');
 	};
-
-	// const handleArchive = () => async () => {
-	//     try {
-	//         const targetId = threadId ? `thread:${threadId}` : emailId;
-	//         console.log(`🗃️ EmailContextMenu: Archiving ${threadId ? 'thread' : 'email'}: ${targetId}`);
-
-	//         const success = await archiveMail(targetId);
-	//         if (success) {
-	//             toast.success(`${threadId ? 'Email' : 'Thread'} archived`);
-	//             if (refreshCallback) refreshCallback();
-	//         } else {
-	//             throw new Error(`Failed to archive ${threadId ? 'email' : 'thread'}`);
-	//         }
-	//     } catch (error) {
-	//         console.error(`Error archiving ${threadId ? 'email' : 'thread'}:`, error);
-	//         toast.error(`Error archiving ${threadId ? 'email' : 'thread'}`);
-	//     }
-	// };
 
 	const handleMove = (from: string, to: string) => async () => {
 		try {
@@ -103,9 +85,9 @@ export function ThreadContextMenu({
 			}
 
 			let destination: ThreadDestination = null;
-			if (to === LABELS.INBOX) destination = 'inbox';
-			else if (to === LABELS.SPAM) destination = 'spam';
-			else if (from && !to) destination = 'archive';
+			if (to === LABELS.INBOX) destination = FOLDERS.INBOX;
+			else if (to === LABELS.SPAM) destination = FOLDERS.SPAM;
+			else if (from && !to) destination = FOLDERS.ARCHIVE;
 
 			return moveThreadsTo({
 				threadIds: targets,
@@ -125,7 +107,7 @@ export function ThreadContextMenu({
 	const primaryActions: EmailAction[] = [
 		{
 			id: 'reply',
-			label: 'Reply',
+			label: t('common.mail.reply'),
 			icon: <Reply className="mr-2.5 h-4 w-4" />,
 			shortcut: 'R',
 			action: noopAction,
@@ -133,7 +115,7 @@ export function ThreadContextMenu({
 		},
 		{
 			id: 'reply-all',
-			label: 'Reply All',
+			label: t('common.mail.replyAll'),
 			icon: <ReplyAll className="mr-2.5 h-4 w-4" />,
 			shortcut: '⇧R',
 			action: noopAction,
@@ -141,7 +123,7 @@ export function ThreadContextMenu({
 		},
 		{
 			id: 'forward',
-			label: 'Forward',
+			label: t('common.mail.forward'),
 			icon: <Forward className="mr-2.5 h-4 w-4" />,
 			shortcut: 'F',
 			action: noopAction,
@@ -277,16 +259,16 @@ export function ThreadContextMenu({
 				<ContextMenuSub>
 					<ContextMenuSubTrigger className="font-normal">
 						<Tag className="mr-2.5 h-4 w-4" />
-						Labels
+						{t('common.mail.labels')}
 					</ContextMenuSubTrigger>
 					<ContextMenuSubContent className="w-48">
 						<ContextMenuItem className="font-normal">
 							<MailPlus className="mr-2.5 h-4 w-4" />
-							Create New Label
+							{t('common.mail.createNewLabel')}
 						</ContextMenuItem>
 						<ContextMenuSeparator />
 						<ContextMenuItem disabled className="text-muted-foreground italic">
-							No labels available
+							{t('common.mail.noLabelsAvailable')}
 						</ContextMenuItem>
 					</ContextMenuSubContent>
 				</ContextMenuSub>

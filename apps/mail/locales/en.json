@@ -205,7 +205,13 @@
       "muteThread": "Mute Thread",
       "moving": "Moving...",
       "moved": "Moved",
-      "errorMoving": "Error moving"
+      "errorMoving": "Error moving",
+      "reply": "Reply",
+      "replyAll": "Reply All",
+      "forward": "Forward",
+      "labels": "Labels",
+      "createNewLabel": "Create New Label",
+      "noLabelsAvailable": "No labels available"
     }
   },
   "navigation": {
