@@ -62,14 +62,13 @@ export function ThreadContextMenu({
   isSent = false,
   refreshCallback,
 }: EmailContextMenuProps) {
-	const { folder } = useParams<{ folder: string }>();
-	const [searchValue] = useSearchValue();
-	const [mail, setMail] = useMail();
-	const { mutate } = useThreads(folder, undefined, searchValue.value, 20);
-	const currentFolder = folder ?? '';
+  const { folder } = useParams<{ folder: string }>();
+  const [mail, setMail] = useMail();
+  const { mutate } = useThreads();
+  const currentFolder = folder ?? '';
 	const isArchiveFolder = currentFolder === FOLDERS.ARCHIVE;
-	const { mutate: mutateStats } = useStats();
-	const t = useTranslations();
+  const { mutate: mutateStats } = useStats();
+  const t = useTranslations();
 
 	const noopAction = () => async () => {
 		console.log('Action will be implemented later');

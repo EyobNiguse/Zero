@@ -13,6 +13,7 @@ import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { highlightText } from '@/lib/email-utils.client';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '@/lib/auth-client';
@@ -22,26 +23,6 @@ import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
 const HOVER_DELAY = 1000; // ms before prefetching
-
-const highlightText = (text: string, highlight: string) => {
-  if (!highlight?.trim()) return text;
-
-  const regex = new RegExp(`(${highlight})`, 'gi');
-  const parts = text.split(regex);
-
-  return parts.map((part, i) => {
-    return i % 2 === 1 ? (
-      <span
-        key={i}
-        className="ring-0.5 bg-primary/10 inline-flex items-center justify-center rounded px-1"
-      >
-        {part}
-      </span>
-    ) : (
-      part
-    );
-  });
-};
 
 const Thread = memo(
 	({
@@ -144,7 +125,7 @@ const Thread = memo(
 						key={message.id}
 						className={cn(
 							'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-							!message.unread && 'opacity-50',
+							isMailSelected || !message.unread && 'opacity-50',
 							(isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
 						)}
 					>
@@ -158,14 +139,14 @@ const Thread = memo(
 							<div className="flex items-center gap-1">
 								<p
 									className={cn(
-										message.unread ? 'font-bold' : 'font-medium',
+										message.unread && !isMailSelected ? 'font-bold' : 'font-medium',
 										'text-md flex items-baseline gap-1 group-hover:opacity-100',
 									)}
 								>
 									<span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
 										{highlightText(message.sender.name, searchValue.highlight)}
 									</span>{' '}
-									{message.unread ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
+									{message.unread && !isMailSelected ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
 								</p>
 								<MailLabels labels={threadLabels} />
 								<div className="flex items-center gap-1">
@@ -251,7 +232,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     isValidating,
     isLoading,
     loadMore,
-  } = useThreads(folder, undefined, searchValue.value, defaultPageSize);
+  } = useThreads();
 
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<VirtuosoHandle>(null);
@@ -433,12 +414,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
         // Update URL with threadId
         router.push(`/mail/${folder}?${currentParams.toString()}`);
-      }
-
-      if (message.unread) {
-        return markAsRead({ ids: [message.id] })
-          .then(() => mutate())
-          .catch(console.error);
       }
     },
     [mail, setMail, items, getSelectMode, router, searchParams, folder],

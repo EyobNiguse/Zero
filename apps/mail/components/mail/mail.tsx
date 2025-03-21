@@ -1,6 +1,20 @@
 'use client';
 
 import {
+  ArchiveX,
+  BellOff,
+  X,
+  Inbox,
+  Tag,
+  AlertTriangle,
+  User,
+  Bell,
+  ListMinusIcon,
+  ArrowRightIcon,
+  Loader2,
+  Star,
+} from 'lucide-react';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -15,7 +29,6 @@ import {
 	isActionAvailable,
 	getAvailableActions,
 } from '@/lib/thread-actions';
-import { ArchiveX, BellOff, X, Inbox, Tag, AlertTriangle, User, Bell, Archive, Loader2, ArrowRightIcon, ListMinusIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -27,13 +40,13 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { SearchIcon } from '../icons/animated/search';
-import type { MessageKey } from '@/config/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { cn, defaultPageSize } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
+import { MessageKey } from '@/config/navigation';
 import { Button } from '@/components/ui/button';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
@@ -219,12 +232,7 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const { isLoading, isValidating } = useThreads(
-    folder,
-    undefined,
-    searchValue.value,
-    defaultPageSize,
-  );
+  const { isLoading, isValidating } = useThreads();
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
