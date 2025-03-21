@@ -1,4 +1,4 @@
-import { parseFrom, wasSentWithTLS } from '@/lib/email-utils';
+import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
 import { type IConfig, type MailManager } from './types';
 import { type gmail_v1, google } from 'googleapis';
 import { EnableBrain } from '@/actions/brain';
@@ -127,6 +127,19 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     const listUnsubscribePost =
       payload?.headers?.find((h) => h.name?.toLowerCase() === 'list-unsubscribe-post')?.value ||
       undefined;
+    const toHeaders =
+      payload?.headers
+        ?.filter((h) => h.name?.toLowerCase() === 'to')
+        .map((h) => h.value)
+        .filter((v) => typeof v === 'string') || [];
+    const to = toHeaders.flatMap((to) => parseAddressList(to));
+
+    const ccHeaders =
+      payload?.headers
+        ?.filter((h) => h.name?.toLowerCase() === 'cc')
+        .map((h) => h.value)
+        .filter((v) => typeof v === 'string') || [];
+    const cc = ccHeaders.flatMap((to) => parseAddressList(to));
 
     const receivedHeaders =
       payload?.headers
@@ -148,6 +161,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       inReplyTo,
       sender: parseFrom(sender),
       unread: labelIds ? labelIds.includes('UNREAD') : false,
+      to,
+      cc,
       receivedOn,
       subject: subject ? subject.replace(/"/g, '').trim() : '(no subject)',
       messageId,
