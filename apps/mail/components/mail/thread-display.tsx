@@ -19,7 +19,6 @@ import ReplyCompose from './reply-composer';
 import { useTranslations } from 'next-intl';
 import { NotesPanel } from './note-panel';
 import MailDisplay from './mail-display';
-import { useMail } from './use-mail';
 import { cn } from '@/lib/utils';
 
 interface ThreadDisplayProps {
@@ -185,12 +184,7 @@ function ThreadActionButton({
 }
 
 export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
-  const [, setMail] = useMail();
-  const searchParams = useSearchParams();
-  const threadIdParam = searchParams.get('threadId');
-  const threadId = mail ?? threadIdParam ?? '';
-  // Only fetch thread data if we have a valid threadId
-  const { data: emailData, isLoading } = useThread(threadId || null);
+  const { data: emailData, isLoading } = useThread();
   const [isMuted, setIsMuted] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);

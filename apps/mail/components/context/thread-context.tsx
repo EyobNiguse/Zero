@@ -64,9 +64,8 @@ export function ThreadContextMenu({
   refreshCallback,
 }: EmailContextMenuProps) {
   const { folder } = useParams<{ folder: string }>();
-  const [searchValue] = useSearchValue();
   const [mail, setMail] = useMail();
-  const { mutate } = useThreads(folder, undefined, searchValue.value, 20);
+  const { mutate } = useThreads();
   const currentFolder = folder ?? '';
   const isArchiveFolder = currentFolder === 'archive';
   const { mutate: mutateStats } = useStats();
