@@ -529,7 +529,9 @@ function MailCategoryTabs({
 	const categories = Categories();
 
 	// Initialize with just the initialCategory or "Primary"
-	const [activeCategory, setActiveCategory] = useState(initialCategory || t('common.mailCategories.primary'));
+	const [activeCategory, setActiveCategory] = useState(
+		initialCategory || t('common.mailCategories.primary'),
+	);
 
 	// Move localStorage logic to a useEffect
 	useEffect(() => {
@@ -629,9 +631,7 @@ function MailCategoryTabs({
 									)}
 								>
 									{category.icon}
-									<span className={cn('hidden', !iconsOnly && 'md:inline')}>
-										{category.name}
-									</span>
+									<span className={cn('hidden', !iconsOnly && 'md:inline')}>{category.name}</span>
 								</button>
 							</TooltipTrigger>
 							{iconsOnly && (
@@ -664,9 +664,7 @@ function MailCategoryTabs({
 								tabIndex={-1}
 							>
 								{category.icon}
-								<span className={cn('hidden', !iconsOnly && 'md:inline')}>
-									{category.name}
-								</span>
+								<span className={cn('hidden', !iconsOnly && 'md:inline')}>{category.name}</span>
 							</button>
 						</li>
 					))}
