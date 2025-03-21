@@ -64,7 +64,7 @@ export function ThreadContextMenu({
 }: EmailContextMenuProps) {
   const { folder } = useParams<{ folder: string }>();
   const [mail, setMail] = useMail();
-  const { mutate } = useThreads();
+  const { mutate, isLoading, isValidating } = useThreads();
   const currentFolder = folder ?? '';
 	const isArchiveFolder = currentFolder === FOLDERS.ARCHIVE;
   const { mutate: mutateStats } = useStats();
@@ -91,13 +91,11 @@ export function ThreadContextMenu({
 			return moveThreadsTo({
 				threadIds: targets,
 				currentFolder: currentFolder,
-				destination,
-				onSuccess: async () => {
-					await mutate();
-					await mutateStats();
-					setMail({ ...mail, bulkSelected: [] });
-				},
-			});
+				destination
+			}).then(async () => {
+        await Promise.all([mutate(), mutateStats()])
+        setMail({ ...mail, bulkSelected: [] });
+      });
 		} catch (error) {
 			console.error(`Error moving ${threadId ? 'email' : 'thread'}`, error);
 		}
@@ -240,7 +238,7 @@ export function ThreadContextMenu({
 
 	return (
 		<ContextMenu>
-			<ContextMenuTrigger className="w-full">{children}</ContextMenuTrigger>
+			<ContextMenuTrigger disabled={isLoading || isValidating} className="w-full">{children}</ContextMenuTrigger>
 			<ContextMenuContent className="w-56" onContextMenu={(e) => e.preventDefault()}>
 				{primaryActions.map(renderAction)}
 

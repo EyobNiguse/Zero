@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
 import * as React from 'react';
 import Link from 'next/link';
+import {type NavItem} from '@/config/navigation'
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -22,20 +23,12 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
   stopAnimation?: () => void;
 }
 
-interface NavItemProps {
-  title: string;
-  url: string;
-  icon?: React.ComponentType<IconProps>;
-  badge?: number;
+interface NavItemProps extends NavItem {
   isActive?: boolean;
   isExpanded?: boolean;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   suffix?: React.ComponentType<IconProps>;
-  isBackButton?: boolean;
-  isSettingsButton?: boolean;
   isSettingsPage?: boolean;
-  disabled?: boolean;
-  isFeaturebaseButton?: boolean;
 }
 
 interface NavMainProps {
@@ -54,7 +47,6 @@ type IconRefType = SVGSVGElement & {
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { openFeaturebase } = useFeaturebase();
 
   /**
    * Validates URLs to prevent open redirect vulnerabilities.
@@ -232,11 +224,11 @@ function NavItem(item: NavItemProps & { href: string }) {
     >
       {item.icon && <item.icon ref={iconRef} className="mr-2" />}
       <p className="mt-0.5 text-[13px]">{t(item.title as MessageKey)}</p>
-      {stats && stats.find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase()) && (
+      {stats && stats.find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase()) && (
         <Badge className="ml-auto rounded-md" variant="outline">
           {stats
 
-            .find((stat) => stat.label?.toLowerCase() === item.title?.toLowerCase())
+            .find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase())
 
             ?.count?.toLocaleString() || '0'}
         </Badge>

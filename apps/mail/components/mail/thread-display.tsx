@@ -218,12 +218,10 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 				threadIds: [threadId],
 				currentFolder: folder,
 				destination,
-				onSuccess: async () => {
-					await mutateThread();
-					await mutateStats();
-					handleClose();
-				},
-			});
+			}).then(async () => {
+        await Promise.all([mutateThread(),mutateStats()]);
+        handleClose();
+      });
 		},
 		[threadId, folder, mutateThread, mutateStats, handleClose],
 	);

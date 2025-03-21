@@ -12,7 +12,7 @@ import {
   ListMinusIcon,
   ArrowRightIcon,
   Loader2,
-  Star,
+  Archive
 } from 'lucide-react';
 import {
   Dialog,
@@ -459,7 +459,7 @@ function BulkSelectActions() {
   };
   const [mail, setMail] = useMail();
   const { folder } = useParams<{ folder: string }>();
-  const { mutate: mutateThreads } = useThreads(folder, undefined, '', defaultPageSize);
+  const { mutate: mutateThreads } = useThreads();
   const { mutate: mutateStats } = useStats();
 
   const onMoveSuccess = useCallback(async () => {
@@ -539,13 +539,11 @@ function BulkSelectActions() {
               className="md:h-fit md:px-2"
               onClick={() => {
                 if (mail.bulkSelected.length === 0) return;
-
                 moveThreadsTo({
                   threadIds: mail.bulkSelected,
                   currentFolder: folder,
                   destination: action,
-                  onSuccess: onMoveSuccess,
-                });
+                }).then(onMoveSuccess);
               }}
             >
               {actionButtons[action].icon}
