@@ -109,14 +109,14 @@ const Thread = memo(
     }, []);
 
 		return (
-			<ThreadContextMenu
-				emailId={message.id}
-				threadId={message.threadId ?? message.id}
-				isInbox={isFolderInbox}
-				isSpam={isFolderSpam}
-				isSent={isFolderSent}
-				refreshCallback={onRefresh}
-			>
+			// <ThreadContextMenu
+			// 	emailId={message.id}
+			// 	threadId={message.threadId ?? message.id}
+			// 	isInbox={isFolderInbox}
+			// 	isSpam={isFolderSpam}
+			// 	isSent={isFolderSent}
+			// 	refreshCallback={onRefresh}
+			// >
 				<div className="p-1">
 					<div
 						onClick={onClick ? onClick(message) : undefined}
@@ -186,7 +186,7 @@ const Thread = memo(
 						</p>
 					</div>
 				</div>
-			</ThreadContextMenu>
+			// </ThreadContextMenu>
 		);
 	},
 );
@@ -228,7 +228,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const {
     data: { threads: items, nextPageToken },
-    mutate,
     isValidating,
     isLoading,
     loadMore,
@@ -360,6 +359,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         return;
       }
 
+      // TODO: Look into making this more performant
       if (selectMode === 'range') {
         const lastSelectedItem =
           mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadIdParam ?? message.id;
@@ -416,29 +416,11 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         router.push(`/mail/${folder}?${currentParams.toString()}`);
       }
     },
-    [mail, setMail, items, getSelectMode, router, searchParams, folder],
+    [getSelectMode, folder, searchParams, items],
   );
 
 	const isEmpty = items.length === 0;
 	const isFiltering = searchValue.value.trim().length > 0;
-
-	const rowRenderer = useCallback(
-		//TODO: Add proper typing
-		// @ts-expect-error
-		(props) => (
-			<Thread
-				onClick={handleMailClick}
-				selectMode={getSelectMode()}
-				isCompact={isCompact}
-				sessionData={sessionData}
-				message={props.data}
-				folder={folder}
-				onRefresh={() => mutate()}
-				{...props}
-			/>
-		),
-		[handleMailClick, getSelectMode, isCompact, sessionData, folder, mutate],
-	);
 
 	if (isEmpty && session) {
 		if (isFiltering) {
@@ -457,14 +439,17 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           ref={scrollRef}
           style={{ height: '100%' }}
           totalCount={items.length}
-          itemContent={(_: number, data: InitialThread) => <Thread
-            onClick={handleMailClick}
-            selectMode={getSelectMode()}
-            isCompact={isCompact}
-            sessionData={sessionData}
-            message={data}
-            key={data.id}
-          />}
+          itemContent={(_: number, data: InitialThread) => (
+            <Thread
+              onClick={handleMailClick}
+              selectMode={getSelectMode()}
+              isCompact={isCompact}
+              sessionData={sessionData}
+              message={data}
+              key={data.id}
+            />
+          )}
+          increaseViewportBy={200}
           endReached={handleScroll}
           data={items}
           className="hide-scrollbar"

@@ -47,11 +47,13 @@ const fetchThread = (cb: any) => async (args: any[]) => {
   try {
 		return await getMail({ id }).then((response) => {
       if (response) {
-        const unreadMessages = response.filter(e=>e.unread).map(e=>e.id)
-        if (unreadMessages.length) {
-          markAsRead({ids: unreadMessages}).then(()=>{
-            if (cb && typeof cb === 'function') cb()
-          });
+        if (cb) {
+          const unreadMessages = response.filter(e=>e.unread).map(e=>e.id)
+          if (unreadMessages.length) {
+            markAsRead({ids: unreadMessages}).then(()=>{
+              if (cb && typeof cb === 'function') cb()
+            });
+          }
         }
         return response
       }

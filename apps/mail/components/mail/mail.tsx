@@ -131,8 +131,7 @@ export function DemoMailLayout() {
                   <MailCategoryTabs
                     iconsOnly={true}
                     onCategoryChange={(category) => {
-                      setActiveCategory(category);
-                      localStorage.setItem('mailActiveCategory', activeCategory);
+
                     }}
                     initialCategory={activeCategory}
                   />
@@ -561,7 +560,7 @@ const Categories = () => {
 
 	return [
 		{
-      id: 'primary',
+      id: 'Primary',
 			name: t('common.mailCategories.primary'),
 			searchValue: '',
 			icon: <Inbox className="h-4 w-4" />,
@@ -569,7 +568,7 @@ const Categories = () => {
 				'border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70',
 		},
 		{
-			id: 'important',
+			id: 'Important',
 			name: t('common.mailCategories.important'),
 			searchValue: 'is:important',
 			icon: <AlertTriangle className="h-4 w-4" />,
@@ -577,7 +576,7 @@ const Categories = () => {
 				'border-0 text-amber-800 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-500 dark:hover:bg-amber-900/30',
 		},
 		{
-			id: 'personal',
+			id: 'Personal',
 			name: t('common.mailCategories.personal'),
 			searchValue: 'is:personal',
 			icon: <User className="h-4 w-4" />,
@@ -585,7 +584,7 @@ const Categories = () => {
 				'border-0 text-green-800 bg-green-100 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30',
 		},
 		{
-			id: 'updates',
+			id: 'Updates',
 			name: t('common.mailCategories.updates'),
 			searchValue: 'is:updates',
 			icon: <Bell className="h-4 w-4" />,
@@ -593,7 +592,7 @@ const Categories = () => {
 				'border-0 text-purple-800 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-500 dark:hover:bg-purple-900/30',
 		},
 		{
-			id: 'promotions',
+			id: 'Promotions',
 			name: t('common.mailCategories.promotions'),
 			searchValue: 'is:promotions',
 			icon: <Tag className="h-4 w-4 rotate-90" />,
@@ -615,12 +614,11 @@ function MailCategoryTabs({
   initialCategory?: string;
 }) {
 	const [, setSearchValue] = useSearchValue();
-	const t = useTranslations();
 	const categories = Categories();
 
 	// Initialize with just the initialCategory or "Primary"
 	const [activeCategory, setActiveCategory] = useState(
-		initialCategory || t('common.mailCategories.primary'),
+		initialCategory || 'Primary',
 	);
 
   // Move localStorage logic to a useEffect
