@@ -27,10 +27,10 @@ export default function Home() {
         <div className="container mx-auto block md:hidden">
           <HeroImage />
         </div>
-        <Link href={'https://appdefensealliance.dev/casa'} target={'_blank'} className={'container mx-auto mt-2 md:mt-6 flex gap-2 items-center justify-center'}>
-          <ShieldCheckIcon />
-          <h2 className={'text-xl font-bold'}>CASA Certified</h2>
-        </Link>
+        {/*<Link href={'https://appdefensealliance.dev/casa'} target={'_blank'} className={'container mx-auto mt-2 md:mt-6 flex gap-2 items-center justify-center'}>*/}
+        {/*  <ShieldCheckIcon />*/}
+        {/*  <h2 className={'text-xl font-bold'}>CASA Certified</h2>*/}
+        {/*</Link>*/}
         <Footer />
       </div>
     </div>
