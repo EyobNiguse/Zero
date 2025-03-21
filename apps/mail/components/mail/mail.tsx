@@ -46,13 +46,14 @@ export function DemoMailLayout() {
 	const isDesktop = true;
 	const searchParams = useSearchParams();
 	const threadIdParam = searchParams?.get('threadId');
+	const t = useTranslations();
 
 	const handleClose = () => {
 		// Update URL to remove threadId parameter
 		const currentParams = new URLSearchParams(searchParams?.toString() || '');
 		currentParams.delete('threadId');
 	};
-	const [activeCategory, setActiveCategory] = useState('Primary');
+	const [activeCategory, setActiveCategory] = useState(t('common.mailCategories.primary'));
 	const [filteredItems, setFilteredItems] = useState(items);
 
 	useEffect(() => {
@@ -528,7 +529,7 @@ function MailCategoryTabs({
 	const categories = Categories();
 
 	// Initialize with just the initialCategory or "Primary"
-	const [activeCategory, setActiveCategory] = useState(initialCategory || 'Primary');
+	const [activeCategory, setActiveCategory] = useState(initialCategory || t('common.mailCategories.primary'));
 
 	// Move localStorage logic to a useEffect
 	useEffect(() => {
@@ -629,13 +630,13 @@ function MailCategoryTabs({
 								>
 									{category.icon}
 									<span className={cn('hidden', !iconsOnly && 'md:inline')}>
-										{t(category.name as MessageKey)}
+										{category.name}
 									</span>
 								</button>
 							</TooltipTrigger>
 							{iconsOnly && (
 								<TooltipContent>
-									<span>{t(category.name as MessageKey)}</span>
+									<span>{category.name}</span>
 								</TooltipContent>
 							)}
 						</Tooltip>
@@ -664,7 +665,7 @@ function MailCategoryTabs({
 							>
 								{category.icon}
 								<span className={cn('hidden', !iconsOnly && 'md:inline')}>
-									{t(category.name as MessageKey)}
+									{category.name}
 								</span>
 							</button>
 						</li>
