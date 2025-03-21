@@ -186,8 +186,10 @@ function ThreadActionButton({
 }
 
 export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
-  const { data: emailData, isLoading } = useThread();
+  const { data: emailData, isLoading, mutate } = useThread();
   const { mutate: mutateThreads } = useThreads();
+  const searchParams = useSearchParams();
+  const threadId = searchParams.get('threadId');
   const [isMuted, setIsMuted] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -206,7 +208,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   }, [onClose]);
 
   const handleFavourites = async () => {
-    if (!emailData) return;
+    if (!emailData || !threadId) return;
     if (emailData[0]?.tags?.includes('STARRED')) {
       toast.promise(modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }), {
         success: 'Removed from favourites.',
@@ -277,7 +279,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
               />
 
               <ThreadActionButton
-                icon={emailData[0]?.tags?.includes('STARRED') ? StarOff : Star}
+                icon={!(emailData) || emailData[0]?.tags?.includes('STARRED') ? StarOff : Star}
                 label={t('common.threadDisplay.favourites')}
                 onClick={handleFavourites}
                 className="relative top-0.5"
