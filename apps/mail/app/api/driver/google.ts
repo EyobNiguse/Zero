@@ -248,17 +248,16 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       if (!userLabels.data.labels) {
         return { count: 0 };
       }
-      return await Promise.all(
+      return Promise.all(
         userLabels.data.labels.map(async (label) => {
-          return gmail.users.labels
-            .get({
-              userId: 'me',
-              id: label.id ?? undefined,
-            })
-            .then((res) => ({
-              label: res.data.name ?? res.data.id ?? '',
-              count: res.data.threadsUnread,
-            }));
+          const res = await gmail.users.labels.get({
+            userId: 'me',
+            id: label.id ?? undefined,
+          });
+          return {
+            label: res.data.name ?? res.data.id ?? '',
+            count: res.data.threadsUnread,
+          };
         }),
       );
     },

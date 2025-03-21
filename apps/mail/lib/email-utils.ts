@@ -149,13 +149,15 @@ export const parseFrom = (fromHeader: string) => {
   const firstSender = parsedSender[0];
   if (!firstSender) return FALLBACK_SENDER;
 
-  const name = firstSender.name || FALLBACK_SENDER.name;
 
   if (firstSender.type === 'group') {
+    const name = firstSender.name || FALLBACK_SENDER.name;
     const firstAddress = firstSender.addresses?.[0]?.address;
     const email = firstAddress || FALLBACK_SENDER.email;
     return { name, email };
   }
+
+  const name = firstSender.name || firstSender.address;
 
   const email = firstSender.address || FALLBACK_SENDER.email;
 

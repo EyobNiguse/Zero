@@ -1,13 +1,12 @@
 'use client';
 
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
-import { AlertTriangle, Bell, Briefcase, StickyNote, Tag, User, Users } from 'lucide-react';
+import { AlertTriangle, Bell, Briefcase, Star, StickyNote, Tag, User, Users } from 'lucide-react';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
-import { ThreadContextMenu } from '@/components/context/thread-context';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { cn, defaultPageSize, formatDate, FOLDERS } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -32,10 +31,10 @@ const Thread = memo(
 		onClick,
 		sessionData,
 		folder,
-		onRefresh,
+		// onRefresh,
 	}: ConditionalThreadProps & {
 		folder?: string;
-		onRefresh?: () => void;
+		// onRefresh?: () => void;
 	}) => {
 		const [mail] = useMail();
 		const [searchValue] = useSearchValue();
@@ -46,9 +45,9 @@ const Thread = memo(
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
 
-		const isFolderInbox = folder === FOLDERS.INBOX || !folder;
-		const isFolderSpam = folder === FOLDERS.SPAM;
-		const isFolderSent = folder === FOLDERS.SENT;
+		// const isFolderInbox = folder === FOLDERS.INBOX || !folder;
+		// const isFolderSpam = folder === FOLDERS.SPAM;
+		// const isFolderSent = folder === FOLDERS.SENT;
 
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
@@ -524,6 +523,9 @@ const MailLabels = memo(
             case 'social':
               labelContent = t('common.mailCategories.social');
               break;
+            case 'starred':
+              labelContent = 'Starred'
+              break
             default:
               labelContent = capitalize(normalizedLabel);
           }
@@ -536,7 +538,7 @@ const MailLabels = memo(
                 </Badge>
               </TooltipTrigger>
               <TooltipContent className="px-1 py-0 text-xs" variant={style}>
-                {capitalize(label.replace(/^category_/i, ''))}
+                {labelContent}
               </TooltipContent>
             </Tooltip>
           );
@@ -576,6 +578,8 @@ function getLabelIcon(label: string) {
       return <Users className="h-3 w-3" />;
     case 'notes':
       return <StickyNote className="h-3 w-3" />;
+    case 'starred':
+      return <Star className="h-3 w-3" />;
     default:
       return null;
   }
@@ -585,6 +589,7 @@ function getDefaultBadgeStyle(label: string): ComponentProps<typeof Badge>['vari
   const normalizedLabel = label.toLowerCase().replace(/^category_/i, '');
 
   switch (normalizedLabel) {
+    case 'starred':
     case 'important':
       return 'important';
     case 'promotions':

@@ -209,7 +209,6 @@ export function DemoMailLayout() {
 export function MailLayout() {
 	const { folder } = useParams<{ folder: string }>();
 	const [searchMode, setSearchMode] = useState(false);
-	const [searchValue] = useSearchValue();
 	const [mail, setMail] = useMail();
 	const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
 	const [isMobile, setIsMobile] = useState(false);
