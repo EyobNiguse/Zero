@@ -190,7 +190,7 @@ function ThreadActionButton({
 }
 
 export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
-  const { data: emailData, isLoading, mutate } = useThread();
+  const { data: emailData, isLoading, mutate: mutateThread } = useThread();
   const { mutate: mutateThreads } = useThreads();
   const searchParams = useSearchParams();
   const [isMuted, setIsMuted] = useState(false);
@@ -250,7 +250,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
       });
     }
 
-    await Promise.all([mutate(), mutateThreads()]);
+    await Promise.all([mutateThread(), mutateThreads()]);
   };
 
   useEffect(() => {

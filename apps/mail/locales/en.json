@@ -121,7 +121,8 @@
       "forward": "Forward",
       "markAsUnread": "Mark as unread",
       "addLabel": "Add label",
-      "muteThread": "Mute thread"
+      "muteThread": "Mute thread",
+      "favourites": "Favourites"
     },
     "notes": {
       "title": "Notes",
