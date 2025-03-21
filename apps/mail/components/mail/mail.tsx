@@ -57,14 +57,14 @@ export function DemoMailLayout() {
 	const [filteredItems, setFilteredItems] = useState(items);
 
 	useEffect(() => {
-		if (activeCategory === 'Primary') {
+		if (activeCategory === t('common.mailCategories.primary')) {
 			setFilteredItems(items);
 		} else {
 			const categoryMap = {
-				Important: 'important',
-				Personal: 'personal',
-				Updates: 'updates',
-				Promotions: 'promotions',
+				Important: t('common.mailCategories.important'),
+				Personal: t('common.mailCategories.personal'),
+				Updates: t('common.mailCategories.updates'),
+				Promotions: t('common.mailCategories.promotions'),
 			};
 
 			const filterTag = categoryMap[activeCategory as keyof typeof categoryMap];
