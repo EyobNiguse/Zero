@@ -1,9 +1,10 @@
-import { pgTableCreator, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTableCreator, text, timestamp, boolean, integer, uuid } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 
 export const createTable = pgTableCreator((name) => `mail0_${name}`);
 
 export const user = createTable('user', {
-  id: text().primaryKey(),
+  id: uuid().primaryKey().$defaultFn(uuidv7),
   name: text().notNull(),
   email: text().notNull().unique(),
   emailVerified: boolean().notNull(),
@@ -14,7 +15,7 @@ export const user = createTable('user', {
 });
 
 export const session = createTable('session', {
-  id: text().primaryKey(),
+  id: uuid().primaryKey().$defaultFn(uuidv7),
   expiresAt: timestamp().notNull(),
   token: text().notNull().unique(),
   createdAt: timestamp().notNull(),
@@ -27,7 +28,7 @@ export const session = createTable('session', {
 });
 
 export const account = createTable('account', {
-  id: text().primaryKey(),
+  id: uuid().primaryKey().$defaultFn(uuidv7),
   accountId: text().notNull(),
   providerId: text().notNull(),
   userId: text()
@@ -45,7 +46,7 @@ export const account = createTable('account', {
 });
 
 export const verification = createTable('verification', {
-  id: text().primaryKey(),
+  id: uuid().primaryKey().$defaultFn(uuidv7),
   identifier: text().notNull(),
   value: text().notNull(),
   expiresAt: timestamp().notNull(),
@@ -54,14 +55,14 @@ export const verification = createTable('verification', {
 });
 
 export const earlyAccess = createTable('early_access', {
-  id: text().primaryKey(),
+  id: uuid().primaryKey().$defaultFn(uuidv7),
   email: text().notNull().unique(),
   createdAt: timestamp().notNull(),
   updatedAt: timestamp().notNull(),
 });
 
 export const connection = createTable('connection', {
-  id: text().primaryKey(),
+  id: uuid().primaryKey().$defaultFn(uuidv7),
   userId: text()
     .notNull()
     .references(() => user.id),
@@ -89,7 +90,7 @@ export const summary = createTable('summary', {
 });
 
 export const note = createTable('note', {
-  id: text().primaryKey(),
+  id: uuid().primaryKey().$defaultFn(uuidv7),
   userId: text()
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
