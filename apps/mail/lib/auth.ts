@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { connection, user as _user, account } from "@zero/db/schema";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { customSession } from "better-auth/plugins";
-import { eq } from "drizzle-orm";
-import { Resend } from "resend";
-import { db } from "@zero/db";
-import { getSocialProviders } from "./auth-providers";
+import { connection, user as _user, account } from '@zero/db/schema';
+import { betterAuth, type BetterAuthOptions } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { getSocialProviders } from './auth-providers';
+import { customSession } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
+import { Resend } from 'resend';
+import { db } from '@zero/db';
 
 // If there is no resend key, it might be a local dev environment
 // In that case, we don't want to send emails and just log them
@@ -16,7 +16,7 @@ const resend = process.env.RESEND_API_KEY
 
 const options = {
   database: drizzleAdapter(db, {
-    provider: "pg",
+    provider: 'pg',
   }),
   advanced: {
     ipAddress: {
@@ -33,9 +33,9 @@ const options = {
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
-        from: "0.email <onboarding@0.email>",
+        from: '0.email <onboarding@0.email>',
         to: user.email,
-        subject: "Reset your password",
+        subject: 'Reset your password',
         html: `
           <h2>Reset Your Password</h2>
           <p>Click the link below to reset your password:</p>
@@ -52,9 +52,9 @@ const options = {
       const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
 
       await resend.emails.send({
-        from: "0.email <onboarding@0.email>",
+        from: '0.email <onboarding@0.email>',
         to: user.email,
-        subject: "Verify your 0.email account",
+        subject: 'Verify your 0.email account',
         html: `
           <h2>Verify Your 0.email Account</h2>
           <p>Click the link below to verify your email:</p>
@@ -74,7 +74,7 @@ const options = {
         .limit(1);
 
       let activeConnection = null;
-      
+
       if (foundUser?.activeConnectionId) {
         // Get the active connection details
         const [connectionDetails] = await db
@@ -82,7 +82,7 @@ const options = {
           .from(connection)
           .where(eq(connection.id, foundUser.activeConnectionId))
           .limit(1);
-          
+
         if (connectionDetails) {
           activeConnection = {
             id: connectionDetails.id,
@@ -119,7 +119,6 @@ const options = {
           if (userAccount) {
             // create a new connection
             const [newConnection] = await db.insert(connection).values({
-              id: crypto.randomUUID(),
               userId: user.id,
               email: user.email,
               name: user.name,
@@ -136,7 +135,7 @@ const options = {
             } as any);
             // this type error is pissing me tf off
             if (newConnection) {
-              console.log("Created new connection for user", newConnection);
+              console.log('Created new connection for user', newConnection);
             }
           }
         }
@@ -154,5 +153,5 @@ const options = {
 
 export const auth = betterAuth({
   ...options,
-  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",") ?? [],
+  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',') ?? [],
 });
