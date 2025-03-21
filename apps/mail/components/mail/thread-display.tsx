@@ -195,19 +195,15 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const { data: emailData, isLoading, mutate } = useThread(threadId ?? '');
   const { mutate: mutateThreads } = useThreads('STARRED');
   const [isMuted, setIsMuted] = useState(false);
-  const [isStarred, setIsStarred] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const t = useTranslations();
-
-  console.log('emailData', emailData);
 
   const moreVerticalIconRef = useRef<any>(null);
 
   useEffect(() => {
     if (emailData?.[0]) {
       setIsMuted(emailData[0].unread ?? false);
-      setIsStarred(emailData[0].tags.includes('STARRED'));
     }
   }, [emailData]);
 
@@ -217,14 +213,16 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
 
   const handleFavourites = async () => {
     if (!emailData) return;
-    if (isStarred) {
+    if (emailData[0]?.tags?.includes('STARRED')) {
       toast.promise(modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }), {
         success: 'Removed from favourites.',
+        loading: 'Removing from favourites',
         error: 'Failed to remove from favourites.',
       });
     } else {
       toast.promise(modifyLabels({ threadId: [threadId], addLabels: ['STARRED'] }), {
         success: 'Added to favourites.',
+        loading: 'Adding to favourites.',
         error: 'Failed to add to favourites.',
       });
     }
@@ -285,7 +283,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
               />
 
               <ThreadActionButton
-                icon={isStarred ? StarOff : Star}
+                icon={emailData[0]?.tags?.includes('STARRED') ? StarOff : Star}
                 label={t('common.threadDisplay.favourites')}
                 onClick={handleFavourites}
                 className="relative top-0.5"
@@ -380,7 +378,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
               className="relative top-0.5"
             />
             <ThreadActionButton
-              icon={isStarred ? StarOff : Star}
+              icon={emailData[0]?.tags?.includes('STARRED') ? StarOff : Star}
               label={t('common.threadDisplay.favourites')}
               onClick={handleFavourites}
               className="relative top-0.5"
