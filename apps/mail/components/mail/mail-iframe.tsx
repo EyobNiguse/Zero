@@ -48,9 +48,12 @@ export function MailIframe({ html }: { html: string }) {
 
   useEffect(() => {
     if (iframeRef.current?.contentWindow?.document.body) {
-      iframeRef.current.contentWindow.document.body.style.backgroundColor =
+      const body = iframeRef.current.contentWindow.document.body;
+      body.style.backgroundColor =
         resolvedTheme === 'dark' ? 'rgb(10, 10, 10)' : 'rgb(245, 245, 245)';
-      fixNonReadableColors(iframeRef.current.contentWindow.document.body);
+      requestAnimationFrame(() => {
+        fixNonReadableColors(body);
+      });
     }
   }, [resolvedTheme]);
 
