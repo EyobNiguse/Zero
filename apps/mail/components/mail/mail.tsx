@@ -24,6 +24,18 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
 	moveThreadsTo,
 	ThreadDestination,
 	isActionAvailable,
@@ -208,7 +220,6 @@ export function DemoMailLayout() {
 
 export function MailLayout() {
 	const { folder } = useParams<{ folder: string }>();
-	const [searchMode, setSearchMode] = useState(false);
 	const [mail, setMail] = useMail();
 	const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
 	const [isMobile, setIsMobile] = useState(false);
@@ -258,15 +269,10 @@ export function MailLayout() {
     router.push(`/mail/${folder}?${currentParams.toString()}`);
   }, [router, folder, searchParams]);
 
-  useHotKey('Meta+F', () => {
-    setSearchMode(true);
-  });
-
+  // Search bar is always visible now, no need for keyboard shortcuts to toggle it
   useHotKey('Esc', (event) => {
     event?.preventDefault();
-    if (searchMode) {
-      setSearchMode(false);
-    }
+    // Handle other Esc key functionality if needed
   });
 
   const searchIconRef = useRef<any>(null);
@@ -297,61 +303,37 @@ export function MailLayout() {
                 )}
               >
                 <SidebarToggle className="h-fit px-2" />
-                {searchMode && (
-                  <div className="flex flex-1 items-center justify-center gap-3">
-                    <SearchBar />
-                    <Button
-                      variant="ghost"
-                      className="md:h-fit md:px-2"
-                      onClick={() => setSearchMode(false)}
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-
-                {!searchMode && (
+                
+                {mail.bulkSelected.length > 0 ? (
                   <>
-                    {mail.bulkSelected.length > 0 ? (
-                      <>
-                        <div className="flex flex-1 items-center justify-center">
-                          <span className="text-sm font-medium tabular-nums">
-                            {t('common.mail.selected', { count: mail.bulkSelected.length })}
-                          </span>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-muted-foreground ml-1.5 h-8 w-fit px-2"
-                                onClick={() => setMail({ ...mail, bulkSelected: [] })}
-                              >
-                                <X />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t('common.mail.clearSelection')}</TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <BulkSelectActions />
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1 text-center text-sm font-medium capitalize">
-                          <MailCategoryTabs iconsOnly={!!threadIdParam} />
-                        </div>
-                        <div className="flex items-center gap-1.5">
+                    <div className="flex flex-1 items-center justify-center">
+                      <span className="text-sm font-medium tabular-nums">
+                        {t('common.mail.selected', { count: mail.bulkSelected.length })}
+                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
-                            className="md:h-fit md:px-2"
-                            onClick={() => setSearchMode(true)}
-                            onMouseEnter={() => searchIconRef.current?.startAnimation?.()}
-                            onMouseLeave={() => searchIconRef.current?.stopAnimation?.()}
+                            size="sm"
+                            className="text-muted-foreground ml-1.5 h-8 w-fit px-2"
+                            onClick={() => setMail({ ...mail, bulkSelected: [] })}
                           >
-                            <SearchIcon ref={searchIconRef} className="h-4 w-4" />
+                            <X />
                           </Button>
-                        </div>
-                      </>
-                    )}
+                        </TooltipTrigger>
+                        <TooltipContent>{t('common.mail.clearSelection')}</TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <BulkSelectActions />
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1 flex justify-center">
+                      <SearchBar />
+                    </div>
+                    <div className="flex items-center">
+                      <CategorySelect />
+                    </div>
                   </>
                 )}
               </div>
@@ -600,6 +582,65 @@ const Categories = () => {
 		},
 	];
 };
+
+function CategorySelect() {
+  const [, setSearchValue] = useSearchValue();
+  const categories = Categories();
+  const [defaultCategory, setDefaultCategory] = useState('Primary');
+  
+  // Safely access localStorage on the client side only
+  useEffect(() => {
+    // Check if we're in the browser environment
+    if (typeof window !== 'undefined') {
+      const savedCategory = localStorage.getItem('mailActiveCategory');
+      if (savedCategory) {
+        setDefaultCategory(savedCategory);
+      }
+    }
+  }, []);
+  
+  return (
+    <Select
+      onValueChange={(value: string) => {
+        // Find the category and trigger its selection
+        const category = categories.find(cat => cat.id === value);
+        
+        // Always update the state to match the selected value
+        setDefaultCategory(value);
+        
+        if (category) {
+          // Update search value based on category
+          const searchValueState = {
+            value: category.searchValue || '',
+            highlight: '',
+            folder: ''
+          };
+          setSearchValue(searchValueState);
+          
+          // Save to localStorage (safely on client-side)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('mailActiveCategory', value);
+          }
+        }
+      }}
+      defaultValue={defaultCategory}
+    >
+      <SelectTrigger className="w-36 h-9 bg-popover">
+        <SelectValue placeholder="Select category" />
+      </SelectTrigger>
+      <SelectContent>
+        {categories.map((category) => (
+          <SelectItem key={category.id} value={category.id} className="cursor-pointer">
+            <div className="flex items-center gap-2">
+              {category.icon}
+              <span>{category.name}</span>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 function MailCategoryTabs({
   iconsOnly = false,
