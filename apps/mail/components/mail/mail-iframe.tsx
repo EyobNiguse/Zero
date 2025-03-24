@@ -61,7 +61,7 @@ export function MailIframe({ html }: { html: string }) {
   return (
     <>
       {!loaded && (
-        <div className="flex h-full w-full items-center justify-center gap-4 p-8">
+        <div className="flex h-full w-full items-center justify-center gap-4 p-4">
           <div className="w-full space-y-4">
             <div className="flex flex-col space-y-2">
               <Skeleton className="h-4 w-full" />
