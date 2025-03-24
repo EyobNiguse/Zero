@@ -376,15 +376,6 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
                 setMessageContent(content);
               }}
               className="sm:max-w-[600px] md:max-w-[2050px]"
-              initialValue={{
-                type: 'doc',
-                content: [
-                  {
-                    type: 'paragraph',
-                    content: [],
-                  },
-                ],
-              }}
               placeholder="Type your reply here..."
               onFocus={() => {
                 setIsEditorFocused(true);
