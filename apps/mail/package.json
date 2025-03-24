@@ -91,6 +91,7 @@
     "react-use": "^17.6.0",
     "react-virtuoso": "4.12.5",
     "react-wrap-balancer": "^1.1.1",
+    "recharts": "^2.15.1",
     "resend": "4.1.2",
     "sonner": "1.7.4",
     "swr": "2.3.2",
