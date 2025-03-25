@@ -302,7 +302,7 @@ If you'd like to help with translating Zero to other languages, check out our [t
 
 ## This project wouldn't be possible without these awesome companies
 
-<div style="display: flex; justify-content: center;">
+<div style="display: flex; justify-content: center; text-decoration: none;">
   <a href="https://vercel.com">
     <img src="public/vercel.png" alt="Vercel" width="96"/>
   </a>
