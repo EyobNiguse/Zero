@@ -316,3 +316,7 @@ If you'd like to help with translating Zero to other languages, check out our [t
     <img src="public/coderabbit.png" alt="Coderabbit AI" width="96"/>
   </a>
 </div>
+
+## 🤍 The team
+
+Curious who makes Zero? Here are our [contributors and maintainers](https://0.email/contributors)
