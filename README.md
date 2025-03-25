@@ -302,17 +302,17 @@ If you'd like to help with translating Zero to other languages, check out our [t
 
 ## This project wouldn't be possible without these awesome companies
 
-<div style="display: flex; justify-content: center; text-decoration: none;">
-  <a href="https://vercel.com">
+<div style="display: flex; justify-content: center;">
+  <a href="https://vercel.com" style="text-decoration: none;">
     <img src="public/vercel.png" alt="Vercel" width="96"/>
   </a>
-  <a href="https://better-auth.com">
+  <a href="https://better-auth.com" style="text-decoration: none;">
     <img src="public/better-auth.png" alt="Better Auth" width="96"/>
   </a>
-  <a href="https://orm.drizzle.team">
+  <a href="https://orm.drizzle.team" style="text-decoration: none;">
     <img src="public/drizzle-orm.png" alt="Drizzle ORM" width="96"/>
   </a>
-  <a href="https://coderabbit.com">
+  <a href="https://coderabbit.com" style="text-decoration: none;">
     <img src="public/coderabbit.png" alt="Coderabbit AI" width="96"/>
   </a>
 </div>
