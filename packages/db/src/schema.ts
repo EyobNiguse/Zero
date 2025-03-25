@@ -59,6 +59,7 @@ export const earlyAccess = createTable("early_access", {
   email: text("email").notNull().unique(),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
+  isEarlyAccess: boolean("is_early_access").notNull().default(false),
 });
 
 export const connection = createTable("connection", {
