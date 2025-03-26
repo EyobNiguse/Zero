@@ -153,6 +153,7 @@ export const MailQuickActions = memo(({
     
     setIsProcessing(true);
     try {
+      // TODO: Implement quick reply
       toast.info(t('common.mail.reply'));
     } finally {
       setIsProcessing(false);
@@ -160,10 +161,10 @@ export const MailQuickActions = memo(({
   }, [t, isProcessing]);
 
   const quickActions = [
-    { action: handleArchive, icon: Archive, label: isArchiveFolder || !isInbox ? 'Unarchive' : 'Archive' },
-    { action: handleToggleRead, icon: Mail, label: message.unread ? 'Mark as read' : 'Mark as unread' },
-    { action: handleDelete, icon: Trash, label: 'Delete' },
-    { action: handleQuickReply, icon: Reply, label: 'Reply' }
+    { action: handleArchive, icon: Archive, label: isArchiveFolder || !isInbox ? t('common.mail.unarchive') : t('common.mail.archive') },
+    { action: handleToggleRead, icon: Mail, label: message.unread ? t('common.mail.markAsRead') : t('common.mail.markAsUnread') },
+    { action: handleDelete, icon: Trash, label: t('common.mail.moveToTrash') },
+    { action: handleQuickReply, icon: Reply, label: t('common.mail.reply') }
   ];
 
   if (!isHovered && !isInQuickActionMode) {

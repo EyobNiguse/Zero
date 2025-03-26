@@ -120,6 +120,7 @@
       "replyAll": "Reply all",
       "forward": "Forward",
       "markAsUnread": "Mark as unread",
+      "markAsRead": "Mark as read",
       "addLabel": "Add label",
       "muteThread": "Mute thread",
       "favourites": "Favourites"
@@ -208,6 +209,7 @@
       "archive": "Archive",
       "moveToTrash": "Move to Trash",
       "markAsUnread": "Mark as Unread",
+      "markAsRead": "Mark as Read",
       "addStar": "Add Star",
       "muteThread": "Mute Thread",
       "moving": "Moving...",
