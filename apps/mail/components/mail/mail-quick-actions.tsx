@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, Mail, Reply, Trash } from 'lucide-react';
+import { Archive, Mail, Reply, Trash, Inbox } from 'lucide-react';
 import { useCallback, memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn, FOLDERS, LABELS } from '@/lib/utils';
@@ -123,48 +123,38 @@ export const MailQuickActions = memo(({
   }, [message, mutate, t, isProcessing, isLoading, closeThreadIfOpen]);
 
   const handleDelete = useCallback(async (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (isProcessing || isLoading) return;
-    
-    setIsProcessing(true);
-    try {
-      const threadId = message.threadId ?? message.id;
-      
-      await moveThreadsTo({
-        threadIds: [`thread:${threadId}`],
-        currentFolder: currentFolder,
-        destination: FOLDERS.TRASH as ThreadDestination
-      }).then(async () => {
-        await Promise.all([mutate(), mutateStats()]);
-        toast.success(t('common.mail.moveToTrash'));
-        closeThreadIfOpen();
-      });
-    } catch (error) {
-      console.error('Error moving to trash', error);
-      toast.error(t('common.mail.errorMoving'));
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [message, currentFolder, mutate, mutateStats, t, isProcessing, isLoading, closeThreadIfOpen]);
+    // TODO: Implement delete
+    toast.info(t('common.mail.moveToTrash'));
+  }, [t]);
 
   const handleQuickReply = useCallback(async (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (isProcessing) return;
-    
-    setIsProcessing(true);
-    try {
-      // TODO: Implement quick reply
-      toast.info(t('common.mail.reply'));
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [t, isProcessing]);
+    // TODO: Implement quick reply
+    toast.info(t('common.mail.reply'));
+  }, [t]);
 
   const quickActions = [
-    { action: handleArchive, icon: Archive, label: isArchiveFolder || !isInbox ? t('common.mail.unarchive') : t('common.mail.archive') },
-    { action: handleToggleRead, icon: Mail, label: message.unread ? t('common.mail.markAsRead') : t('common.mail.markAsUnread') },
-    { action: handleDelete, icon: Trash, label: t('common.mail.moveToTrash') },
-    { action: handleQuickReply, icon: Reply, label: t('common.mail.reply') }
+    { 
+      action: handleArchive, 
+      icon: isArchiveFolder || !isInbox ? Inbox : Archive, 
+      label: isArchiveFolder || !isInbox ? 'Unarchive' : 'Archive' 
+    },
+    { 
+      action: handleToggleRead, 
+      icon: Mail, 
+      label: message.unread ? 'Mark as read' : 'Mark as unread' 
+    },
+    { 
+      action: handleDelete, 
+      icon: Trash, 
+      label: 'Delete', 
+      disabled: true 
+    },
+    { 
+      action: handleQuickReply, 
+      icon: Reply, 
+      label: 'Reply', 
+      disabled: true 
+    }
   ];
 
   if (!isHovered && !isInQuickActionMode) {
@@ -187,10 +177,11 @@ export const MailQuickActions = memo(({
           className={cn(
             "h-7 w-7 mail-quick-action-button", 
             isInQuickActionMode && selectedQuickActionIndex === index && 
-            "border border-primary/60 shadow-sm"
+            "border border-primary/60 shadow-sm",
+            quickAction.disabled && "opacity-50"
           )}
           onClick={(e) => quickAction.action(e)}
-          disabled={isLoading || isProcessing}
+          disabled={isLoading || quickAction.disabled}
           aria-label={quickAction.label}
         >
           <quickAction.icon className="h-4 w-4" />
