@@ -577,7 +577,6 @@ export function SearchBar() {
         <Search className="text-muted-foreground absolute left-2.5 h-4 w-4" aria-hidden="true" />
         <Input
           placeholder={t('common.searchBar.search')}
-          autoFocus
           ref={inputRef}
           className="bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none ring-1 transition-colors focus-visible:ring-2"
           onChange={handleInputChange}
