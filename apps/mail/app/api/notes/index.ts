@@ -20,16 +20,6 @@ async function getCurrentUserId(): Promise<string> {
 }
 
 export const notes = {
-  async getNotes(): Promise<Note[]> {
-    try {
-      const userId = await getCurrentUserId();
-      return await notesManager.getNotes(userId);
-    } catch (error) {
-      console.error('Error getting notes:', error);
-      throw error;
-    }
-  },
-
   async getThreadNotes(threadId: string): Promise<Note[]> {
     try {
       const userId = await getCurrentUserId();
@@ -79,7 +69,7 @@ export const notes = {
   },
 
   async reorderNotes(
-    notesArray: { id: string; order: number; isPinned?: boolean }[]
+    notesArray: { id: string; order: number; isPinned?: boolean | null }[]
   ): Promise<boolean> {
     try {
       const userId = await getCurrentUserId();
