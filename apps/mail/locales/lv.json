@@ -116,12 +116,14 @@
       "archive": "Arhīvs",
       "reply": "Atbildēt",
       "moreOptions": "Vairāk iespējas",
-      "moveToSpam": "Pārvietot uz mēstulēm",
+      "moveToSpam": "Move to Spam",
       "replyAll": "Atbildēt Visiem",
       "forward": "Pārsūtīt",
-      "markAsUnread": "Atzīmēt kā nelasītu",
+      "markAsUnread": "Mark as Unread",
+      "markAsRead": "Mark as Read",
       "addLabel": "Pievienot iezīmi",
-      "muteThread": "Apklusināt pavedienu"
+      "muteThread": "Apklusināt pavedienu",
+      "favourites": "Favourites"
     },
     "notes": {
       "title": "Piezīmes",
@@ -183,6 +185,12 @@
         "changeColor": "Mainīt krāsu"
       }
     },
+    "settings": {
+      "notFound": "Settings not found",
+      "saved": "Settings saved",
+      "failedToSave": "Failed to save settings",
+      "languageChanged": "Language changed to {locale}"
+    },
     "mail": {
       "replies": "{count, plural, zero {}=0 {atbildes} one {# atbilde} other {# atbildes}}",
       "deselectAll": "Atcelta visu e-pastu izvēle",
@@ -201,11 +209,18 @@
       "archive": "Arhivēt",
       "moveToTrash": "Pārvietot uz Miskasti",
       "markAsUnread": "Atzīmēt kā nelasītu",
+      "markAsRead": "Mark as Read",
       "addStar": "Pievienot Zvaigzni",
       "muteThread": "Apklusināt pavedienu",
       "moving": "Pārvieto...",
       "moved": "Pārvietots",
-      "errorMoving": "Kļūda, pārvietojot"
+      "errorMoving": "Kļūda, pārvietojot",
+      "reply": "Reply",
+      "replyAll": "Reply All",
+      "forward": "Forward",
+      "labels": "Labels",
+      "createNewLabel": "Create New Label",
+      "noLabelsAvailable": "No labels available"
     }
   },
   "navigation": {
@@ -216,8 +231,8 @@
       "spam": "Mēstules",
       "archive": "Arhīvs",
       "bin": "Miskaste",
-      "feedback": "Feedback",
-      "contact": "Contact",
+      "feedback": "Atsauksmes",
+      "contact": "Kontakti",
       "settings": "Iestatījumi"
     },
     "settings": {
@@ -242,7 +257,9 @@
         "title": "Vispārīgi",
         "description": "Pārvaldīt valodas un e-pasta attēlojuma iestatījumus.",
         "language": "Valoda",
+        "selectLanguage": "Select a language",
         "timezone": "Laika zona",
+        "selectTimezone": "Select a timezone",
         "dynamicContent": "Dinamisks Saturs",
         "dynamicContentDescription": "Atļaut e-pastiem rādīt dinamisku saturu.",
         "externalImages": "Rādīt ārējos attēlus",
