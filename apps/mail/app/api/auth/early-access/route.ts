@@ -48,16 +48,16 @@ export async function POST(req: NextRequest) {
       'X-RateLimit-Remaining': remaining.toString(),
       'X-RateLimit-Reset': reset.toString(),
     };
+    const body = await req.json();
 
     if (!success) {
-      console.log(`Rate limit exceeded for IP ${ip}. Remaining: ${remaining}`);
+      console.log(`Rate limit exceeded for IP ${ip}. Remaining: ${remaining}`, body.email);
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429, headers },
       );
     }
 
-    const body = await req.json();
     console.log('Request body:', body);
 
     const { email } = body;
