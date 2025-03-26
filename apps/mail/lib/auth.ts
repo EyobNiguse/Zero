@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { connection, user as _user, account } from "@zero/db/schema";
+import { connection, user as _user, account, userSettings, earlyAccess } from "@zero/db/schema";
+import { defaultUserSettings } from "@zero/db/user_settings_default";
+import { createAuthMiddleware, customSession } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { customSession } from "better-auth/plugins";
+import { getBrowserTimezone, isValidTimezone } from "@/lib/timezones";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { db } from "@zero/db";
@@ -65,13 +67,21 @@ const options = {
   },
   plugins: [
     customSession(async ({ user, session }) => {
+      // Combine early access check with user lookup in a single query
       const [foundUser] = await db
         .select({
           activeConnectionId: _user.defaultConnectionId,
+          hasEarlyAccess: earlyAccess.isEarlyAccess,
         })
         .from(_user)
+        .leftJoin(earlyAccess, eq(_user.email, earlyAccess.email))
         .where(eq(_user.id, user.id))
         .limit(1);
+
+      // Check early access and proceed
+      if (!foundUser?.hasEarlyAccess) {
+        throw new Error("Early access required. Please join the waitlist.");
+      }
 
       let activeConnection = null;
       
@@ -150,6 +160,43 @@ const options = {
       };
     }),
   ],
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      // all hooks that run on sign-up routes
+      if (ctx.path.startsWith("/sign-up")) {
+        // only true if this request is from a new user
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          // Check if user already has settings
+          const [existingSettings] = await db
+            .select()
+            .from(userSettings)
+            .where(eq(userSettings.userId, newSession.user.id))
+            .limit(1);
+
+          if (!existingSettings) {
+            // get timezone from vercel's header
+            const headerTimezone = ctx.headers?.get("x-vercel-ip-timezone");
+            // validate timezone from header or fallback to browser timezone
+            const timezone = headerTimezone && isValidTimezone(headerTimezone) 
+              ? headerTimezone 
+              : getBrowserTimezone();
+            // write default settings against the user
+            await db.insert(userSettings).values({
+              id: crypto.randomUUID(),
+              userId: newSession.user.id,
+              settings: {
+                ...defaultUserSettings,
+                timezone,
+              },
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+        }
+      }
+    }),
+  },
 } satisfies BetterAuthOptions;
 
 export const auth = betterAuth({

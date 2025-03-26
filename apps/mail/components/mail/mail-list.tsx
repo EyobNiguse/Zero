@@ -2,7 +2,7 @@
 
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { AlertTriangle, Bell, Briefcase, Star, StickyNote, Tag, User, Users } from 'lucide-react';
-import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -21,6 +21,8 @@ import { useTranslations } from 'next-intl';
 import { Virtuoso } from 'react-virtuoso';
 import items from './demo.json';
 import { toast } from 'sonner';
+import { MailQuickActions } from './mail-quick-actions';
+import { useMailNavigation } from '@/hooks/use-mail-navigation';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -30,11 +32,16 @@ const Thread = memo(
 		demo,
 		onClick,
 		sessionData,
-		folder,
-		// onRefresh,
+    isKeyboardFocused,
+    isInQuickActionMode,
+    selectedQuickActionIndex,
+    resetNavigation,
 	}: ConditionalThreadProps & {
 		folder?: string;
-		// onRefresh?: () => void;
+    isKeyboardFocused?: boolean;
+    isInQuickActionMode?: boolean;
+    selectedQuickActionIndex?: number;
+    resetNavigation?: () => void;
 	}) => {
 		const [mail] = useMail();
 		const [searchValue] = useSearchValue();
@@ -44,10 +51,7 @@ const Thread = memo(
 		const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 		const isHovering = useRef<boolean>(false);
 		const hasPrefetched = useRef<boolean>(false);
-
-		// const isFolderInbox = folder === FOLDERS.INBOX || !folder;
-		// const isFolderSpam = folder === FOLDERS.SPAM;
-		// const isFolderSent = folder === FOLDERS.SENT;
+		const [isHovered, setIsHovered] = useState(false);
 
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
@@ -63,6 +67,7 @@ const Thread = memo(
     const handleMouseEnter = () => {
       if (demo) return;
       isHovering.current = true;
+      setIsHovered(true);
 
       // Prefetch only in single select mode
       if (selectMode === 'single' && sessionData?.userId && !hasPrefetched.current) {
@@ -88,6 +93,7 @@ const Thread = memo(
 
     const handleMouseLeave = () => {
       isHovering.current = false;
+      setIsHovered(false);
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
@@ -107,85 +113,85 @@ const Thread = memo(
       };
     }, []);
 
-		return (
-			// <ThreadContextMenu
-			// 	emailId={message.id}
-			// 	threadId={message.threadId ?? message.id}
-			// 	isInbox={isFolderInbox}
-			// 	isSpam={isFolderSpam}
-			// 	isSent={isFolderSent}
-			// 	refreshCallback={onRefresh}
-			// >
-				<div className="p-1">
-					<div
-						onClick={onClick ? onClick(message) : undefined}
-						onMouseEnter={handleMouseEnter}
-						onMouseLeave={handleMouseLeave}
-						key={message.id}
-						className={cn(
-							'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-							isMailSelected || !message.unread && 'opacity-50',
-							(isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
-						)}
-					>
-						<div
-							className={cn(
-								'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
-								isMailBulkSelected && 'translate-x-0',
-							)}
-						/>
-						<div className="flex w-full items-center justify-between">
-							<div className="flex items-center gap-1">
-								<p
-									className={cn(
-										message.unread && !isMailSelected ? 'font-bold' : 'font-medium',
-										'text-md flex items-baseline gap-1 group-hover:opacity-100',
-									)}
-								>
-									<span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
-										{highlightText(message.sender.name, searchValue.highlight)}
-									</span>{' '}
-									{message.unread && !isMailSelected ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
-								</p>
-								<MailLabels labels={threadLabels} />
-								<div className="flex items-center gap-1">
-									{message.totalReplies > 1 ? (
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-													{message.totalReplies}
-												</span>
-											</TooltipTrigger>
-											<TooltipContent className="px-1 py-0 text-xs">
-												{t('common.mail.replies', { count: message.totalReplies })}
-											</TooltipContent>
-										</Tooltip>
-									) : null}
-								</div>
-							</div>
-							{message.receivedOn ? (
-								<p
-									className={cn(
-										'text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
-										isMailSelected && 'opacity-100',
-									)}
-								>
-									{formatDate(message.receivedOn.split('.')[0] || '')}
-								</p>
-							) : null}
-						</div>
-						<p
-							className={cn(
-								'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
-								mail.selected ? 'line-clamp-1' : 'line-clamp-2',
-								isMailSelected && 'opacity-100',
-							)}
-						>
-							{highlightText(message.subject, searchValue.highlight)}
-						</p>
-					</div>
-				</div>
-			// </ThreadContextMenu>
+    return (
+      <div className="p-1">
+        <div
+          data-thread-id={message.id}
+          onClick={onClick ? onClick(message) : undefined}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          key={message.id}
+          className={cn(
+            'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+            isMailSelected || !message.unread && 'opacity-50',
+            (isMailSelected || isMailBulkSelected || isKeyboardFocused) && 'border-border bg-primary/5 opacity-100',
+            isKeyboardFocused && 'ring-2 ring-primary/50'
+          )}
+        >
+          <div
+            className={cn(
+              'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
+              isMailBulkSelected && 'translate-x-0',
+            )}
+          />
+          <MailQuickActions 
+            message={message} 
+            isHovered={isHovered || isKeyboardFocused}
+            isInQuickActionMode={isInQuickActionMode}
+            selectedQuickActionIndex={selectedQuickActionIndex}
+            resetNavigation={resetNavigation}
+          />
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-1">
+              <p
+                className={cn(
+                  message.unread && !isMailSelected ? 'font-bold' : 'font-medium',
+                  'text-md flex items-baseline gap-1 group-hover:opacity-100',
+                )}
+              >
+                <span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
+                  {highlightText(message.sender.name, searchValue.highlight)}
+                </span>{' '}
+                {message.unread && !isMailSelected ? <span className="size-2 rounded bg-[#006FFE]" /> : null}
+              </p>
+              <MailLabels labels={threadLabels} />
+              <div className="flex items-center gap-1">
+                {message.totalReplies > 1 ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
+                        {message.totalReplies}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="px-1 py-0 text-xs">
+                      {t('common.mail.replies', { count: message.totalReplies })}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
+              </div>
+            </div>
+            {message.receivedOn ? (
+              <p
+                className={cn(
+                  'text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
+                  isMailSelected && 'opacity-100',
+                )}
+              >
+                {formatDate(message.receivedOn.split('.')[0] || '')}
+              </p>
+            ) : null}
+          </div>
+          <p
+            className={cn(
+              'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
+              mail.selected ? 'line-clamp-1' : 'line-clamp-2',
+              isMailSelected && 'opacity-100',
+            )}
+          >
+            {highlightText(message.subject, searchValue.highlight)}
+          </p>
+        </div>
+      </div>
 		);
 	},
 );
@@ -234,6 +240,25 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<VirtuosoHandle>(null);
+
+  const handleNavigateToThread = useCallback((threadId: string) => {
+    const currentParams = new URLSearchParams(searchParams.toString());
+    currentParams.set('threadId', threadId);
+    router.push(`/mail/${folder}?${currentParams.toString()}`);
+  }, [folder, router, searchParams]);
+
+  const {
+    focusedIndex,
+    isQuickActionMode,
+    quickActionIndex,
+    handleMouseEnter,
+    keyboardActive,
+    resetNavigation
+  } = useMailNavigation({ 
+    items, 
+    containerRef: parentRef,
+    onNavigate: handleNavigateToThread
+  });
 
   const handleScroll = useCallback(() => {
     if (isLoading || isValidating || !nextPageToken) return;
@@ -347,6 +372,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const handleMailClick = useCallback(
     (message: InitialThread) => () => {
+      handleMouseEnter(message.id);
+      
       const selectMode = getSelectMode();
 
       if (selectMode === 'mass') {
@@ -415,7 +442,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         router.push(`/mail/${folder}?${currentParams.toString()}`);
       }
     },
-    [getSelectMode, folder, searchParams, items],
+    [getSelectMode, folder, searchParams, items, handleMouseEnter],
   );
 
 	const isEmpty = items.length === 0;
@@ -438,7 +465,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           ref={scrollRef}
           style={{ height: '100%' }}
           totalCount={items.length}
-          itemContent={(_: number, data: InitialThread) => (
+          itemContent={(index: number, data: InitialThread) => (
             <Thread
               onClick={handleMailClick}
               selectMode={getSelectMode()}
@@ -446,6 +473,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               sessionData={sessionData}
               message={data}
               key={data.id}
+              isKeyboardFocused={focusedIndex === index && keyboardActive}
+              isInQuickActionMode={isQuickActionMode && focusedIndex === index}
+              selectedQuickActionIndex={quickActionIndex}
+              resetNavigation={resetNavigation}
             />
           )}
           increaseViewportBy={200}
