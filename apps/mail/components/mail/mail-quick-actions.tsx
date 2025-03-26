@@ -136,12 +136,14 @@ export const MailQuickActions = memo(({
     { 
       action: handleArchive, 
       icon: isArchiveFolder || !isInbox ? Inbox : Archive, 
-      label: isArchiveFolder || !isInbox ? 'Unarchive' : 'Archive' 
+      label: isArchiveFolder || !isInbox ? 'Unarchive' : 'Archive',
+      disabled: false
     },
     { 
       action: handleToggleRead, 
       icon: Mail, 
-      label: message.unread ? 'Mark as read' : 'Mark as unread' 
+      label: message.unread ? 'Mark as read' : 'Mark as unread',
+      disabled: false
     },
     { 
       action: handleDelete, 
