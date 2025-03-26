@@ -183,7 +183,7 @@ export const MailQuickActions = memo(({
             quickAction.disabled && "opacity-50"
           )}
           onClick={(e) => quickAction.action(e)}
-          disabled={isLoading || quickAction.disabled}
+          disabled={isLoading || isProcessing || quickAction.disabled}
           aria-label={quickAction.label}
         >
           <quickAction.icon className="h-4 w-4" />
