@@ -117,12 +117,14 @@
       "archive": "Archivar",
       "reply": "Responder",
       "moreOptions": "Más opciones",
-      "moveToSpam": "Mover a spam",
+      "moveToSpam": "Move to Spam",
       "replyAll": "Responder a todos",
       "forward": "Reenviar",
-      "markAsUnread": "Marcar como no leído",
+      "markAsUnread": "Mark as Unread",
+      "markAsRead": "Mark as Read",
       "addLabel": "Añadir etiqueta",
-      "muteThread": "Silenciar hilo"
+      "muteThread": "Silenciar hilo",
+      "favourites": "Favourites"
     },
     "notes": {
       "title": "Notas",
@@ -184,6 +186,12 @@
         "changeColor": "Cambiar Color"
       }
     },
+    "settings": {
+      "notFound": "Settings not found",
+      "saved": "Settings saved",
+      "failedToSave": "Failed to save settings",
+      "languageChanged": "Language changed to {locale}"
+    },
     "mail": {
       "replies": "{count, plural, =0 {respuestas} one {# respuesta} other {# respuestas}}",
       "deselectAll": "Deseleccionar todos los correos",
@@ -202,11 +210,18 @@
       "archive": "Archivar",
       "moveToTrash": "Mover a la papelera",
       "markAsUnread": "Marcar como no leído",
+      "markAsRead": "Mark as Read",
       "addStar": "Destacar",
       "muteThread": "Silencia hilo",
       "moving": "Moviendo...",
       "moved": "Movido",
-      "errorMoving": "Error al mover"
+      "errorMoving": "Error al mover",
+      "reply": "Reply",
+      "replyAll": "Reply All",
+      "forward": "Forward",
+      "labels": "Labels",
+      "createNewLabel": "Create New Label",
+      "noLabelsAvailable": "No labels available"
     }
   },
   "navigation": {
@@ -217,8 +232,8 @@
       "spam": "Spam",
       "archive": "Archivar",
       "bin": "Papelera de reciclaje",
-      "feedback": "Feedback",
-      "contact": "Contact",
+      "feedback": "Sugerencias",
+      "contact": "Contacto",
       "settings": "Configuración"
     },
     "settings": {
@@ -243,7 +258,9 @@
         "title": "General",
         "description": "Administre la configuración de sus preferencias de idioma y correo electrónico.",
         "language": "Idioma",
+        "selectLanguage": "Select a language",
         "timezone": "Zona horaria",
+        "selectTimezone": "Select a timezone",
         "dynamicContent": "Contenido dinámico",
         "dynamicContentDescription": "Permitir que los correos electrónicos muestren contenido dinámico.",
         "externalImages": "Mostrar imágenes externas",
