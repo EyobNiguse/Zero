@@ -158,3 +158,183 @@ export const getFileIcon = (mimeType: string): string => {
   if (mimeType.includes("image")) return ""; // Empty for images as they're handled separately
   return "📎"; // Default icon
 };
+
+export const convertJSONToHTML = (json: any): string => {
+  if (!json) return "";
+  
+  // Handle different types
+  if (typeof json === "string") return json;
+  if (typeof json === "number" || typeof json === "boolean") return json.toString();
+  if (json === null) return "";
+  
+  // Handle arrays
+  if (Array.isArray(json)) {
+    return json.map(item => convertJSONToHTML(item)).join("");
+  }
+  
+  // Handle objects (assuming they might have specific email content structure)
+  if (typeof json === "object") {
+    // Check if it's a text node
+    if (json.type === "text") {
+      let text = json.text || "";
+      
+      // Apply formatting if present
+      if (json.bold) text = `<strong>${text}</strong>`;
+      if (json.italic) text = `<em>${text}</em>`;
+      if (json.underline) text = `<u>${text}</u>`;
+      if (json.code) text = `<code>${text}</code>`;
+      
+      return text;
+    }
+    
+    // Handle paragraph
+    if (json.type === "paragraph") {
+      return `<p>${convertJSONToHTML(json.children)}</p>`;
+    }
+    
+    // Handle headings
+    if (json.type?.startsWith("heading-")) {
+      const level = json.type.split("-")[1];
+      return `<h${level}>${convertJSONToHTML(json.children)}</h${level}>`;
+    }
+    
+    // Handle lists
+    if (json.type === "bulleted-list") {
+      return `<ul>${convertJSONToHTML(json.children)}</ul>`;
+    }
+    
+    if (json.type === "numbered-list") {
+      return `<ol>${convertJSONToHTML(json.children)}</ol>`;
+    }
+    
+    if (json.type === "list-item") {
+      return `<li>${convertJSONToHTML(json.children)}</li>`;
+    }
+    
+    // Handle links
+    if (json.type === "link") {
+      return `<a href="${json.url}">${convertJSONToHTML(json.children)}</a>`;
+    }
+    
+    // Handle images
+    if (json.type === "image") {
+      return `<img src="${json.url}" alt="${json.alt || ''}" />`;
+    }
+    
+    // Handle blockquote
+    if (json.type === "block-quote") {
+      return `<blockquote>${convertJSONToHTML(json.children)}</blockquote>`;
+    }
+    
+    // Handle code blocks
+    if (json.type === "code-block") {
+      return `<pre><code>${convertJSONToHTML(json.children)}</code></pre>`;
+    }
+    
+    // If it has children property, process it
+    if (json.children) {
+      return convertJSONToHTML(json.children);
+    }
+    
+    // Process all other properties
+    return Object.values(json).map(value => convertJSONToHTML(value)).join("");
+  }
+  
+  return "";
+};
+
+export const createAIJsonContent = (text: string): JSONContent => {
+  // Try to identify common sign-off patterns with a more comprehensive regex
+  const signOffPatterns = [
+    /\b((?:Best regards|Regards|Sincerely|Thanks|Thank you|Cheers|Best|All the best|Yours truly|Yours sincerely|Cordially)(?:,)?)\s*\n+\s*([A-Za-z][A-Za-z\s.]*)$/i
+  ];
+  
+  let mainContent = text;
+  let signatureLines: string[] = [];
+  
+  // Extract sign-off if found
+  for (const pattern of signOffPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      // Find the index where the sign-off starts
+      const signOffIndex = text.lastIndexOf(match[0]);
+      if (signOffIndex > 0) {
+        // Split the content
+        mainContent = text.substring(0, signOffIndex).trim();
+        
+        // Split the signature part into separate lines
+        const signature = text.substring(signOffIndex).trim();
+        signatureLines = signature.split(/\n+/).map(line => line.trim()).filter(Boolean);
+        break;
+      }
+    }
+  }
+  
+  // If no signature was found with regex but there are newlines at the end,
+  // check if the last lines could be a signature
+  if (signatureLines.length === 0) {
+    const allLines = text.split(/\n+/);
+    if (allLines.length > 1) {
+      // Check if last 1-3 lines might be a signature (short lines at the end)
+      const potentialSigLines = allLines.slice(-3).filter(line => 
+        line.trim().length < 60 && 
+        !line.trim().endsWith('?') && 
+        !line.trim().endsWith('.')
+      );
+      
+      if (potentialSigLines.length > 0) {
+        signatureLines = potentialSigLines;
+        mainContent = allLines.slice(0, allLines.length - potentialSigLines.length).join('\n').trim();
+      }
+    }
+  }
+  
+  // Split the main content into paragraphs
+  const paragraphs = mainContent.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  
+  if (paragraphs.length === 0 && signatureLines.length === 0) {
+    // If no paragraphs and no signature were found, treat the whole text as one paragraph
+    paragraphs.push(text);
+  }
+  
+  // Create a content array with appropriate spacing between paragraphs
+  const content = [];
+  
+  paragraphs.forEach((paragraph, index) => {
+    // Add the content paragraph
+    content.push({
+      type: "paragraph",
+      content: [{ type: "text", text: paragraph }]
+    });
+    
+    // Add an empty paragraph between main paragraphs
+    if (index < paragraphs.length - 1) {
+      content.push({
+        type: "paragraph"
+      });
+    }
+  });
+  
+  // If we found a signature, add it with proper spacing
+  if (signatureLines.length > 0) {
+    // Add spacing before the signature if there was content
+    if (paragraphs.length > 0) {
+      content.push({
+        type: "paragraph"
+      });
+    }
+    
+    // Add each line of the signature as a separate paragraph
+    signatureLines.forEach(line => {
+      content.push({
+        type: "paragraph",
+        content: [{ type: "text", text: line }]
+      });
+    });
+  }
+  
+  return {
+    type: "doc",
+    content: content
+  };
+};

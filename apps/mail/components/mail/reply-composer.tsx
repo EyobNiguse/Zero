@@ -1,16 +1,87 @@
-import { type Dispatch, type SetStateAction, useRef, useState, useEffect, useCallback } from 'react';
+'use client';
+
+import { type Dispatch, type SetStateAction, useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
-import { ArrowUp, Paperclip, Reply, X, Plus } from 'lucide-react';
-import { cleanEmailAddress, truncateFileName } from '@/lib/utils';
+import { ArrowUp, Paperclip, Reply, X, Plus, Sparkles, Check, X as XIcon } from 'lucide-react';
+import { cleanEmailAddress, truncateFileName, cn, convertJSONToHTML, createAIJsonContent } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
 import type { ParsedMessage } from '@/types';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import type { JSONContent } from 'novel';
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
+import { generateAIResponse } from '@/actions/ai-reply';
+
+// Define state interfaces
+interface ComposerState {
+  isUploading: boolean;
+  isComposerOpen: boolean;
+  isDragging: boolean;
+  isEditorFocused: boolean;
+  editorKey: number;
+  editorInitialValue?: JSONContent;
+}
+
+interface AIState {
+  isLoading: boolean;
+  suggestion: string | null;
+  showOptions: boolean;
+}
+
+// Define action types
+type ComposerAction =
+  | { type: 'SET_UPLOADING'; payload: boolean }
+  | { type: 'SET_COMPOSER_OPEN'; payload: boolean }
+  | { type: 'SET_DRAGGING'; payload: boolean }
+  | { type: 'SET_EDITOR_FOCUSED'; payload: boolean }
+  | { type: 'INCREMENT_EDITOR_KEY' }
+  | { type: 'SET_EDITOR_INITIAL_VALUE'; payload: JSONContent | undefined };
+
+type AIAction =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_SUGGESTION'; payload: string | null }
+  | { type: 'SET_SHOW_OPTIONS'; payload: boolean }
+  | { type: 'RESET' };
+
+// Create reducers
+const composerReducer = (state: ComposerState, action: ComposerAction): ComposerState => {
+  switch (action.type) {
+    case 'SET_UPLOADING':
+      return { ...state, isUploading: action.payload };
+    case 'SET_COMPOSER_OPEN':
+      return { ...state, isComposerOpen: action.payload };
+    case 'SET_DRAGGING':
+      return { ...state, isDragging: action.payload };
+    case 'SET_EDITOR_FOCUSED':
+      return { ...state, isEditorFocused: action.payload };
+    case 'INCREMENT_EDITOR_KEY':
+      return { ...state, editorKey: state.editorKey + 1 };
+    case 'SET_EDITOR_INITIAL_VALUE':
+      return { ...state, editorInitialValue: action.payload };
+    default:
+      return state;
+  }
+};
+
+const aiReducer = (state: AIState, action: AIAction): AIState => {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    case 'SET_SUGGESTION':
+      return { ...state, suggestion: action.payload };
+    case 'SET_SHOW_OPTIONS':
+      return { ...state, showOptions: action.payload };
+    case 'RESET':
+      return { isLoading: false, suggestion: null, showOptions: false };
+    default:
+      return state;
+  }
+};
 
 interface ReplyComposeProps {
   emailData: ParsedMessage[];
@@ -18,24 +89,40 @@ interface ReplyComposeProps {
   setIsOpen?: Dispatch<SetStateAction<boolean>>;
 }
 
+type FormData = {
+  messageContent: string;
+};
+
 export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComposeProps) {
-  const editorRef = useRef<HTMLTextAreaElement>(null);
+  // Keep attachments separate as it's an array that needs direct manipulation
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [messageContent, setMessageContent] = useState('');
-  const [isComposerOpen, setIsComposerOpen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isEditorFocused, setIsEditorFocused] = useState(false);
+  
+  // Use reducers instead of multiple useState
+  const [composerState, composerDispatch] = useReducer(composerReducer, {
+    isUploading: false,
+    isComposerOpen: false,
+    isDragging: false,
+    isEditorFocused: false,
+    editorKey: 0,
+    editorInitialValue: undefined,
+  });
+
+  const [aiState, aiDispatch] = useReducer(aiReducer, {
+    isLoading: false,
+    suggestion: null,
+    showOptions: false,
+  });
+
   const composerRef = useRef<HTMLFormElement>(null);
   const t = useTranslations();
 
   // Use external state if provided, otherwise use internal state
-  const composerIsOpen = isOpen !== undefined ? isOpen : isComposerOpen;
+  const composerIsOpen = isOpen !== undefined ? isOpen : composerState.isComposerOpen;
   const setComposerIsOpen = (value: boolean) => {
     if (setIsOpen) {
       setIsOpen(value);
     } else {
-      setIsComposerOpen(value);
+      composerDispatch({ type: 'SET_COMPOSER_OPEN', payload: value });
     }
   };
 
@@ -52,12 +139,12 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
 
   const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setIsUploading(true);
+      composerDispatch({ type: 'SET_UPLOADING', payload: true });
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
         setAttachments([...attachments, ...Array.from(e.target.files)]);
       } finally {
-        setIsUploading(false);
+        composerDispatch({ type: 'SET_UPLOADING', payload: false });
       }
     }
   };
@@ -70,7 +157,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
       e.preventDefault();
       e.stopPropagation();
-      setIsDragging(true);
+      composerDispatch({ type: 'SET_DRAGGING', payload: true });
     }
   };
 
@@ -78,7 +165,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
       e.preventDefault();
       e.stopPropagation();
-      setIsDragging(false);
+      composerDispatch({ type: 'SET_DRAGGING', payload: false });
     }
   };
 
@@ -86,7 +173,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
       e.preventDefault();
       e.stopPropagation();
-      setIsDragging(false);
+      composerDispatch({ type: 'SET_DRAGGING', payload: false });
 
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         setAttachments([...attachments, ...Array.from(e.dataTransfer.files)]);
@@ -122,6 +209,12 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     `;
   };
 
+  const form = useForm<FormData>({
+    defaultValues: {
+      messageContent: '',
+    },
+  });
+
   const handleSendEmail = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     try {
@@ -137,7 +230,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
       const messageId = emailData[0]?.messageId;
       const threadId = emailData[0]?.threadId;
 
-      const formattedMessage = messageContent;
+      const formattedMessage = form.getValues('messageContent');
 
       const replyBody = constructReplyBody(
         formattedMessage,
@@ -166,7 +259,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
         },
       });
 
-      setMessageContent('');
+      form.reset();
       setComposerIsOpen(false);
       toast.success(t('pages.createEmail.emailSentSuccessfully'));
     } catch (error) {
@@ -200,8 +293,8 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
 
   // Check if the message is empty
   const isMessageEmpty =
-    !messageContent ||
-    messageContent ===
+    !form.getValues('messageContent') ||
+    form.getValues('messageContent') ===
       JSON.stringify({
         type: 'doc',
         content: [
@@ -214,6 +307,71 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
 
   // Check if form is valid for submission
   const isFormValid = !isMessageEmpty || attachments.length > 0;
+
+  const handleAIButtonClick = async () => {
+    aiDispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      // Extract relevant information from the email thread for context
+      const latestEmail = emailData[emailData.length - 1];
+      const originalSender = latestEmail?.sender?.name || 'the recipient';
+      
+      // Create a summary of the thread content for context
+      const threadContent = emailData
+        .map((email) => {
+          return `
+From: ${email.sender?.name || 'Unknown'} <${email.sender?.email || 'unknown@email.com'}>
+Subject: ${email.subject || 'No Subject'}
+Date: ${new Date(email.receivedOn || '').toLocaleString()}
+
+${email.decodedBody || 'No content'}
+          `;
+        })
+        .join('\n---\n');
+
+      const suggestion = await generateAIResponse(threadContent, originalSender);
+      aiDispatch({ type: 'SET_SUGGESTION', payload: suggestion });
+      composerDispatch({ 
+        type: 'SET_EDITOR_INITIAL_VALUE', 
+        payload: createAIJsonContent(suggestion) 
+      });
+      composerDispatch({ type: 'INCREMENT_EDITOR_KEY' });
+      aiDispatch({ type: 'SET_SHOW_OPTIONS', payload: true });
+    } catch (error: any) {
+      console.error('Error generating AI response:', error);
+      
+      let errorMessage = 'Failed to generate AI response. Please try again or compose manually.';
+      
+      if (error.message) {
+        if (error.message.includes('OpenAI API')) {
+          errorMessage = 'AI service is currently unavailable. Please try again later.';
+        } else if (error.message.includes('key is not configured')) {
+          errorMessage = 'AI service is not properly configured. Please contact support.';
+        }
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      aiDispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const acceptAISuggestion = () => {
+    if (aiState.suggestion) {
+      const jsonContent = createAIJsonContent(aiState.suggestion);
+      const htmlContent = convertJSONToHTML(jsonContent);
+      
+      form.setValue('messageContent', htmlContent);
+      
+      composerDispatch({ type: 'SET_EDITOR_INITIAL_VALUE', payload: undefined });
+      aiDispatch({ type: 'RESET' });
+    }
+  };
+
+  const rejectAISuggestion = () => {
+    composerDispatch({ type: 'SET_EDITOR_INITIAL_VALUE', payload: undefined });
+    composerDispatch({ type: 'INCREMENT_EDITOR_KEY' });
+    aiDispatch({ type: 'RESET' });
+  };
 
   if (!composerIsOpen) {
     return (
@@ -239,18 +397,17 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
         ref={composerRef}
         className={cn(
           'border-border ring-offset-background flex h-fit flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-shadow duration-300 ease-in-out',
-          isEditorFocused ? 'ring-2 ring-[#3D3D3D] ring-offset-1' : '',
+          composerState.isEditorFocused ? 'ring-2 ring-[#3D3D3D] ring-offset-1' : '',
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onSubmit={(e) => {
-          // Prevent default form submission
           e.preventDefault();
         }}
         onKeyDown={handleKeyDown}
       >
-        {isDragging && (
+        {composerState.isDragging && (
           <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
             <div className="text-muted-foreground flex flex-col items-center gap-2">
               <Paperclip className="text-muted-foreground h-12 w-12" />
@@ -280,24 +437,31 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
           </Button>
         </div>
 
-        <div 
-          className="w-full flex-grow"
-        >
-          <div
-            className="min-h-[150px] max-h-[800px] w-full overflow-y-auto"
-          >
+        {aiState.showOptions && (
+          <div className="flex items-center gap-2 px-2 py-1 bg-blue-50 dark:bg-blue-950 rounded-md text-xs">
+            <Sparkles className="h-3.5 w-3.5 text-[#016FFE]" />
+            <span className="text-[#016FFE] dark:text-[#016FFE]">AI reply suggestion. Review and edit before sending.</span>
+          </div>
+        )}
+
+        <div className="w-full flex-grow">
+          <div className="min-h-[150px] max-h-[800px] w-full overflow-y-auto">
             <Editor
+              key={composerState.editorKey}
               onChange={(content) => {
-                setMessageContent(content);
+                form.setValue('messageContent', content);
               }}
-              className="sm:max-w-[600px] md:max-w-[2050px]"
-              placeholder="Type your reply here..."
+              initialValue={composerState.editorInitialValue}
+              className={cn(
+                "sm:max-w-[600px] md:max-w-[2050px]",
+                aiState.showOptions ? "border border-blue-200 dark:border-blue-800 rounded-md bg-blue-50/30 dark:bg-blue-950/30 p-1" : ""
+              )}
+              placeholder={aiState.showOptions ? "AI-generated reply (you can edit)" : "Type your reply here..."}
               onFocus={() => {
-                setIsEditorFocused(true);
+                composerDispatch({ type: 'SET_EDITOR_FOCUSED', payload: true });
               }}
               onBlur={() => {
-                console.log('Editor blurred');
-                setIsEditorFocused(false);
+                composerDispatch({ type: 'SET_EDITOR_FOCUSED', payload: false });
               }}
             />
           </div>
@@ -318,6 +482,52 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
                 {t('common.replyCompose.attachments')}
               </span>
             </Button>
+            
+            {!aiState.showOptions ? (
+              <Button 
+                variant="outline" 
+                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-40"
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleAIButtonClick();
+                }}
+                disabled={aiState.isLoading}
+              >
+                {aiState.isLoading ? (
+                  <div className="absolute left-[9px] h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+                ) : (
+                  <Sparkles className="absolute left-[9px] h-6 w-6" />
+                )}
+                <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  {aiState.isLoading ? "Generating..." : "AI Draft Reply"}
+                </span>
+              </Button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    acceptAISuggestion();
+                  }}
+                >
+                  <Check className="h-5 w-5 text-green-500" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    rejectAISuggestion();
+                  }}
+                >
+                  <XIcon className="h-5 w-5 text-red-500" />
+                </Button>
+              </div>
+            )}
 
             {attachments.length > 0 && (
               <Popover>
