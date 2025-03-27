@@ -331,9 +331,11 @@ export function MailLayout() {
                     <div className="flex-1 flex justify-center">
                       <SearchBar />
                     </div>
-                    <div className="flex items-center">
-                      <CategorySelect />
-                    </div>
+                    {!threadIdParam && (
+                      <div className="flex items-center">
+                        <CategorySelect />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
