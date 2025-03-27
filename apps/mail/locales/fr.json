@@ -79,8 +79,7 @@
       "personal": "Personnel",
       "updates": "Mises à jour",
       "promotions": "Promotions",
-      "social": "Social",
-      "favourites": "Favoris"
+      "social": "Social"
     },
     "replyCompose": {
       "replyTo": "Répondre à",
@@ -120,7 +119,7 @@
       "moveToSpam": "Move to Spam",
       "replyAll": "Répondre à tous",
       "forward": "Transférer",
-      "markAsUnread": "Mark as Unread",
+      "markAsUnread": "Marquer comme non lu",
       "markAsRead": "Mark as Read",
       "addLabel": "Ajouter un label",
       "muteThread": "Mettre en sourdine",
@@ -188,7 +187,7 @@
     },
     "settings": {
       "notFound": "Settings not found",
-      "saved": "Settings saved",
+      "saved": "Paramètres enregistrés",
       "failedToSave": "Failed to save settings",
       "languageChanged": "Language changed to {locale}"
     },
@@ -217,11 +216,11 @@
       "moved": "Déplacé",
       "errorMoving": "Erreur lors du déplacement",
       "reply": "Reply",
-      "replyAll": "Reply All",
-      "forward": "Forward",
+      "replyAll": "Répondre à tous",
+      "forward": "Transférer",
       "labels": "Labels",
       "createNewLabel": "Create New Label",
-      "noLabelsAvailable": "No labels available"
+      "noLabelsAvailable": "Aucune étiquette disponible"
     }
   },
   "navigation": {
