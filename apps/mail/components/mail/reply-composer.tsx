@@ -1,4 +1,11 @@
-import { type Dispatch, type SetStateAction, useRef, useState, useEffect, useCallback } from 'react';
+import {
+  type Dispatch,
+  type SetStateAction,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { ArrowUp, Paperclip, Reply, X, Plus } from 'lucide-react';
@@ -6,6 +13,7 @@ import { cleanEmailAddress, truncateFileName } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
+import { useSession } from '@/lib/auth-client';
 import type { ParsedMessage } from '@/types';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
@@ -21,6 +29,7 @@ interface ReplyComposeProps {
 export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComposeProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const { data: session } = useSession();
   const [isUploading, setIsUploading] = useState(false);
   const [messageContent, setMessageContent] = useState('');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -280,12 +289,8 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
           </Button>
         </div>
 
-        <div 
-          className="w-full flex-grow"
-        >
-          <div
-            className="min-h-[150px] max-h-[800px] w-full overflow-y-auto"
-          >
+        <div className="w-full flex-grow">
+          <div className="max-h-[800px] min-h-[150px] w-full overflow-y-auto">
             <Editor
               onChange={(content) => {
                 setMessageContent(content);
@@ -296,8 +301,15 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
                 setIsEditorFocused(true);
               }}
               onBlur={() => {
-                console.log('Editor blurred');
                 setIsEditorFocused(false);
+              }}
+              myInfo={{
+                name: session?.user.name,
+                email: session?.user.email,
+              }}
+              senderInfo={{
+                name: emailData[0]?.sender?.name,
+                email: emailData[0]?.sender?.email,
               }}
             />
           </div>
