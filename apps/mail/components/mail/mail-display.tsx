@@ -18,13 +18,13 @@ import { useEffect, useMemo, useState } from 'react';
 import AttachmentDialog from './attachment-dialog';
 import { useSummary } from '@/hooks/use-summary';
 import { TextShimmer } from '../ui/text-shimmer';
+import { cn, getEmailLogo } from '@/lib/utils';
 import { type ParsedMessage } from '@/types';
 import { Separator } from '../ui/separator';
 import { useTranslations } from 'next-intl';
 import { MailIframe } from './mail-iframe';
 import { Button } from '../ui/button';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 const StreamingText = ({ text }: { text: string }) => {
@@ -150,20 +150,13 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
         <div className="flex flex-col gap-4 p-4 pb-2 transition-all duration-200">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start justify-center gap-4">
-              <Avatar className="rounded-md">
-                <AvatarImage alt={emailData?.sender?.name} className="rounded-md" />
-                <AvatarFallback
-                  className={cn(
-                    'rounded-md',
-                    demo && 'compose-gradient-animated font-bold text-black',
-                  )}
-                >
-                  {emailData?.sender?.name
-                    ?.split(' ')
-                    .map((chunk) => chunk[0]?.toUpperCase())
-                    .filter((char) => char?.match(/[A-Z]/))
-                    .slice(0, 2)
-                    .join('')}
+              <Avatar className="h-8 w-8 rounded-full">
+                <AvatarImage
+                  src={getEmailLogo(emailData?.sender?.email)}
+                  className="rounded-full"
+                />
+                <AvatarFallback className="rounded-full">
+                  {emailData?.sender?.name[0]}
                 </AvatarFallback>
               </Avatar>
               <div className="relative bottom-1 flex-1">
