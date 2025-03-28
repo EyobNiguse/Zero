@@ -469,24 +469,12 @@ ${email.decodedBody || 'No content'}
 
         <div className="mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-32"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('attachment-input')?.click();
-              }}
-            >
-              <Plus className="absolute left-[9px] h-6 w-6" />
-              <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                {t('common.replyCompose.attachments')}
-              </span>
-            </Button>
+            
             
             {!aiState.showOptions ? (
               <Button 
                 variant="outline" 
-                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-40"
+                className="group relative overflow-hidden transition-all duration-200 w-40"
                 onClick={(e) => {
                   e.preventDefault();
                   void handleAIButtonClick();
@@ -498,8 +486,8 @@ ${email.decodedBody || 'No content'}
                 ) : (
                   <Sparkles className="absolute left-[9px] h-6 w-6" />
                 )}
-                <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  {aiState.isLoading ? "Generating..." : "AI Draft Reply"}
+                <span className="whitespace-nowrap pl-5">
+                  {aiState.isLoading ? "Generating..." : "Generate Email"}
                 </span>
               </Button>
             ) : (
@@ -595,7 +583,7 @@ ${email.decodedBody || 'No content'}
             </Button>
             <Button
               size="sm"
-              className="group relative h-8 w-9 overflow-hidden transition-all duration-200 hover:w-24"
+              className="rounded-full relative h-8 w-8"
               onClick={async (e) => {
                 e.preventDefault();
                 await handleSendEmail(e);
@@ -603,10 +591,8 @@ ${email.decodedBody || 'No content'}
               disabled={!isFormValid}
               type="button"
             >
-              <span className="whitespace-nowrap pr-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                {t('common.replyCompose.send')}
-              </span>
-              <ArrowUp className="absolute right-2.5 h-4 w-4" />
+              
+              <ArrowUp className="h-4 w-4" />
             </Button>
           </div>
         </div>
