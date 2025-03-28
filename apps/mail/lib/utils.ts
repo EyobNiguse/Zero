@@ -1,9 +1,10 @@
-import { format, isToday, isThisMonth, differenceInCalendarMonths } from 'date-fns';
-import { MAX_URL_LENGTH } from './constants';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import LZString from 'lz-string';
-import axios from 'axios';
+import { format, isToday, isThisMonth, differenceInCalendarMonths } from "date-fns";
+import { MAX_URL_LENGTH } from "./constants";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import LZString from "lz-string";
+import axios from "axios";
+import { JSONContent } from "novel";
 
 export const FOLDERS = {
   SPAM: 'spam',
@@ -248,7 +249,7 @@ export const convertJSONToHTML = (json: any): string => {
 export const createAIJsonContent = (text: string): JSONContent => {
   // Try to identify common sign-off patterns with a more comprehensive regex
   const signOffPatterns = [
-    /\b((?:Best regards|Regards|Sincerely|Thanks|Thank you|Cheers|Best|All the best|Yours truly|Yours sincerely|Cordially)(?:,)?)\s*\n+\s*([A-Za-z][A-Za-z\s.]*)$/i,
+    /\b((?:Best regards|Regards|Sincerely|Thanks|Thank you|Cheers|Best|All the best|Yours truly|Yours sincerely|Kind regards|Cordially)(?:,)?)\s*\n+\s*([A-Za-z][A-Za-z\s.]*)$/i
   ];
 
   let mainContent = text;
