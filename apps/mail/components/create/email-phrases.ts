@@ -6,28 +6,28 @@ export interface EmailPhrases {
 
 export const emailPhrases: EmailPhrases = {
   openers: [
-    'Dear {name},\n\n',
-    'To whom it may concern,\n\n',
-    'Dear Sir/Madam,\n\n',
-    'Dear [Job Title],\n\n',
+    'Dear {name},',
+    'To whom it may concern,',
+    'Dear Sir/Madam,',
+    'Dear [Job Title],',
 
-    'Hi {name},\n\n',
-    'Hello {name},\n\n',
-    'Hey {name},\n\n',
+    'Hi {name},',
+    'Hello {name},',
+    'Hey {name},',
 
-    'Good morning {name},\n\n',
-    'Good afternoon {name},\n\n',
-    'Good evening {name},\n\n',
+    'Good morning {name},',
+    'Good afternoon {name},',
+    'Good evening {name},',
 
-    'I hope this email finds you well.\n\n',
-    "I trust you're doing well.\n\n",
-    "I hope you're having a great week.\n\n",
-    'I hope you had a great weekend.\n\n',
+    'I hope this email finds you well.',
+    "I trust you're doing well.",
+    "I hope you're having a great week.",
+    'I hope you had a great weekend.',
 
-    'Following up on our previous conversation,\n\n',
-    'As discussed earlier,\n\n',
-    'Thank you for your prompt response.\n\n',
-    'Thanks for getting back to me.\n\n',
+    'Following up on our previous conversation,',
+    'As discussed earlier,',
+    'Thank you for your prompt response.',
+    'Thanks for getting back to me.',
   ],
 
   closers: [
