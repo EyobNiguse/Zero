@@ -1,6 +1,17 @@
 'use client';
 
 import {
+  AlertTriangle,
+  Bell,
+  Briefcase,
+  ChevronDown,
+  Star,
+  StickyNote,
+  Tag,
+  User,
+  Users,
+} from 'lucide-react';
+import {
   type ComponentProps,
   memo,
   useCallback,
@@ -10,7 +21,6 @@ import {
   useState,
 } from 'react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
-import { AlertTriangle, Bell, Briefcase, Star, StickyNote, Tag, User, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -29,7 +39,7 @@ import type { VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
-import { Virtuoso } from 'react-virtuoso';
+import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
 const HOVER_DELAY = 1000; // ms before prefetching
@@ -144,13 +154,13 @@ const Thread = memo(
               isMailBulkSelected && 'translate-x-0',
             )}
           />
-          {/* <MailQuickActions
+          <MailQuickActions
             message={message}
             isHovered={isHovered || isKeyboardFocused}
             isInQuickActionMode={isInQuickActionMode}
             selectedQuickActionIndex={selectedQuickActionIndex}
             resetNavigation={resetNavigation}
-          /> */}
+          />
 
           <div className="flex w-full items-center justify-between gap-4">
             <Avatar className="h-8 w-8 rounded-full">
@@ -483,28 +493,27 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         ref={parentRef}
         className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
       >
-        <Virtuoso
-          ref={scrollRef}
-          totalCount={items.length}
-          itemContent={(index: number, data: InitialThread) => (
-            <Thread
-              onClick={handleMailClick}
-              selectMode={getSelectMode()}
-              isCompact={isCompact}
-              sessionData={sessionData}
-              message={data}
-              key={data.id}
-              isKeyboardFocused={focusedIndex === index && keyboardActive}
-              isInQuickActionMode={isQuickActionMode && focusedIndex === index}
-              selectedQuickActionIndex={quickActionIndex}
-              resetNavigation={resetNavigation}
-            />
-          )}
-          increaseViewportBy={200}
-          endReached={handleScroll}
-          data={items}
-          className="hide-scrollbar"
-        />
+        <ScrollArea className="hide-scrollbar h-full overflow-auto pb-4">
+          {items.map((data, index) => {
+            return (
+              <Thread
+                onClick={handleMailClick}
+                selectMode={getSelectMode()}
+                isCompact={isCompact}
+                sessionData={sessionData}
+                message={data}
+                key={data.id}
+                isKeyboardFocused={focusedIndex === index && keyboardActive}
+                isInQuickActionMode={isQuickActionMode && focusedIndex === index}
+                selectedQuickActionIndex={quickActionIndex}
+                resetNavigation={resetNavigation}
+              />
+            );
+          })}
+          <Button variant={'ghost'} className="w-full" onClick={handleScroll}>
+            Load more <ChevronDown />
+          </Button>
+        </ScrollArea>
       </div>
       <div className="w-full pt-4 text-center">
         {isLoading || isValidating ? (
