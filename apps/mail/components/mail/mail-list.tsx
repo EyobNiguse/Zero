@@ -1,6 +1,17 @@
 'use client';
 
 import {
+  AlertTriangle,
+  Bell,
+  Briefcase,
+  ChevronDown,
+  Star,
+  StickyNote,
+  Tag,
+  User,
+  Users,
+} from 'lucide-react';
+import {
   type ComponentProps,
   memo,
   useCallback,
@@ -10,7 +21,6 @@ import {
   useState,
 } from 'react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
-import { AlertTriangle, Bell, Briefcase, Star, StickyNote, Tag, User, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -29,7 +39,7 @@ import type { VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
-import { Virtuoso } from 'react-virtuoso';
+import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
 const HOVER_DELAY = 1000; // ms before prefetching
@@ -124,7 +134,6 @@ const Thread = memo(
 
     return (
       <div className="p-1">
-        {/**/}
         <div
           data-thread-id={message.id}
           onClick={onClick ? onClick(message) : undefined}
@@ -168,9 +177,7 @@ const Thread = memo(
                         'text-md flex items-baseline gap-1 group-hover:opacity-100',
                       )}
                     >
-                      <span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
-                        {highlightText(message.sender.name, searchValue.highlight)}
-                      </span>{' '}
+                      <span>{highlightText(message.sender.name, searchValue.highlight)}</span>{' '}
                       {message.unread && !isMailSelected ? (
                         <span className="size-2 rounded bg-[#006FFE]" />
                       ) : null}
@@ -486,29 +493,41 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         ref={parentRef}
         className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
       >
-        <Virtuoso
-          ref={scrollRef}
-          style={{ height: '100%' }}
-          totalCount={items.length}
-          itemContent={(index: number, data: InitialThread) => (
-            <Thread
-              onClick={handleMailClick}
-              selectMode={getSelectMode()}
-              isCompact={isCompact}
-              sessionData={sessionData}
-              message={data}
-              key={data.id}
-              isKeyboardFocused={focusedIndex === index && keyboardActive}
-              isInQuickActionMode={isQuickActionMode && focusedIndex === index}
-              selectedQuickActionIndex={quickActionIndex}
-              resetNavigation={resetNavigation}
-            />
-          )}
-          increaseViewportBy={200}
-          endReached={handleScroll}
-          data={items}
-          className="hide-scrollbar"
-        />
+        <ScrollArea className="hide-scrollbar h-full overflow-auto">
+          {items.map((data, index) => {
+            return (
+              <Thread
+                onClick={handleMailClick}
+                selectMode={getSelectMode()}
+                isCompact={isCompact}
+                sessionData={sessionData}
+                message={data}
+                key={data.id}
+                isKeyboardFocused={focusedIndex === index && keyboardActive}
+                isInQuickActionMode={isQuickActionMode && focusedIndex === index}
+                selectedQuickActionIndex={quickActionIndex}
+                resetNavigation={resetNavigation}
+              />
+            );
+          })}
+          <Button 
+            variant={'ghost'} 
+            className="w-full rounded-none" 
+            onClick={handleScroll}
+            disabled={isLoading || isValidating}
+          >
+            {isLoading || isValidating ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                Loading...
+              </div>
+            ) : (
+              <>
+                Load more <ChevronDown />
+              </>
+            )}
+          </Button>
+        </ScrollArea>
       </div>
       <div className="w-full pt-4 text-center">
         {isLoading || isValidating ? (

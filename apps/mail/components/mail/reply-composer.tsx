@@ -224,8 +224,12 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     },
   });
 
+  // Add a loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSendEmail = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    setIsSubmitting(true); // Set loading state to true before sending
     try {
       const originalSubject = emailData[0]?.subject || '';
       const subject = originalSubject.startsWith('Re:')
@@ -274,6 +278,8 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error(t('pages.createEmail.failedToSendEmail'));
+    } finally {
+      setIsSubmitting(false); // Reset loading state regardless of outcome
     }
   };
 
@@ -345,6 +351,15 @@ ${email.decodedBody || 'No content'}
       });
       composerDispatch({ type: 'INCREMENT_EDITOR_KEY' });
       aiDispatch({ type: 'SET_SHOW_OPTIONS', payload: true });
+
+      // Add this: Focus the editor after AI content is set
+      setTimeout(() => {
+        const editorElement = document.querySelector('.ProseMirror');
+        if (editorElement instanceof HTMLElement) {
+          editorElement.focus();
+        }
+      }, 100); // Small delay to ensure content is rendered
+
     } catch (error: any) {
       console.error('Error generating AI response:', error);
       
@@ -381,6 +396,24 @@ ${email.decodedBody || 'No content'}
     composerDispatch({ type: 'INCREMENT_EDITOR_KEY' });
     aiDispatch({ type: 'RESET' });
   };
+
+  // Create a ref for the send button
+  const sendButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Update the Editor's onCommandEnter prop
+  const handleCommandEnter = () => {
+    // Programmatically click the send button
+    sendButtonRef.current?.click();
+  };
+
+  // Add a handler for tab key acceptance
+  const handleTabAccept = useCallback(() => {
+    if (aiState.showOptions && aiState.suggestion) {
+      acceptAISuggestion();
+      return true; // Return true to indicate we handled the tab
+    }
+    return false; // Return false to allow normal tab behavior
+  }, [aiState.showOptions, aiState.suggestion]);
 
   if (!composerIsOpen) {
     return (
@@ -446,12 +479,7 @@ ${email.decodedBody || 'No content'}
           </Button>
         </div>
 
-        {aiState.showOptions && (
-          <div className="flex items-center gap-2 px-2 py-1 bg-blue-50 dark:bg-blue-950 rounded-md text-xs">
-            <Sparkles className="h-3.5 w-3.5 text-[#016FFE]" />
-            <span className="text-[#016FFE] dark:text-[#016FFE]">AI reply suggestion. Review and edit before sending.</span>
-          </div>
-        )}
+        
 
         <div className="w-full flex-grow">
           <div className="min-h-[150px] max-h-[800px] w-full overflow-y-auto">
@@ -461,9 +489,13 @@ ${email.decodedBody || 'No content'}
                 form.setValue('messageContent', content);
               }}
               initialValue={composerState.editorInitialValue}
+              onCommandEnter={handleCommandEnter}
+              onTab={handleTabAccept}
+              disabled={isSubmitting}
               className={cn(
                 "sm:max-w-[600px] md:max-w-[2050px]",
-                aiState.showOptions ? "border border-blue-200 dark:border-blue-800 rounded-md bg-blue-50/30 dark:bg-blue-950/30 p-1" : ""
+                aiState.showOptions ? "border border-blue-200 dark:border-blue-800 border-dotted rounded-md bg-blue-50/30 dark:bg-blue-950/30 p-1" : "p-1 border border-transparent",
+                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
               )}
               placeholder={aiState.showOptions ? "AI-generated reply (you can edit)" : "Type your reply here..."}
               onFocus={() => {
@@ -483,6 +515,12 @@ ${email.decodedBody || 'No content'}
             />
           </div>
         </div>
+
+        {aiState.showOptions && (
+          <div className="text-xs text-muted-foreground ml-2 mt-1">
+            Press <kbd className="px-1 py-0.5 bg-muted rounded">Tab</kbd> to accept
+          </div>
+        )}
 
         <div className="mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -510,26 +548,28 @@ ${email.decodedBody || 'No content'}
             ) : (
               <div className="flex items-center gap-1">
                 <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
+                  variant="ghost"
+                  className='hover:bg-transparent w-20 border h-9 px-12 dark:text-black text-white bg-black dark:bg-white'
+                 
                   onClick={(e) => {
                     e.preventDefault();
                     acceptAISuggestion();
                   }}
                 >
-                  <Check className="h-5 w-5 text-green-500" />
+                  <Check className="h-5 w-5" />
+                  Accept
                 </Button>
                 <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
+                  variant="ghost"
+                 
+                  className='hover:bg-transparent w-20 dark:text-white/50 text-black/50'
                   onClick={(e) => {
                     e.preventDefault();
                     rejectAISuggestion();
                   }}
                 >
-                  <XIcon className="h-5 w-5 text-red-500" />
+                  <XIcon className="h-5 w-5" />
+                  Reject
                 </Button>
               </div>
             )}
@@ -595,20 +635,28 @@ ${email.decodedBody || 'No content'}
             />
           </div>
           <div className="mr-2 flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="h-8">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8"
+              disabled={isSubmitting}
+            >
               {t('common.replyCompose.saveDraft')}
             </Button>
             <Button
+              ref={sendButtonRef}
               size="sm"
-              className="rounded-full relative h-8 w-8"
+              className={cn(
+                "rounded-full relative h-8 w-8",
+                isSubmitting && "cursor-not-allowed"
+              )}
               onClick={async (e) => {
                 e.preventDefault();
                 await handleSendEmail(e);
               }}
-              disabled={!isFormValid}
+              disabled={isSubmitting}
               type="button"
             >
-              
               <ArrowUp className="h-4 w-4" />
             </Button>
           </div>
@@ -617,3 +665,5 @@ ${email.decodedBody || 'No content'}
     </div>
   );
 }
+
+

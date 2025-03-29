@@ -80,6 +80,7 @@ interface EditorProps {
     name?: string;
     email?: string;
   };
+  onTab?: () => boolean;
 }
 
 interface EditorState {
@@ -384,6 +385,7 @@ export default function Editor({
   onBlur,
   className,
   onCommandEnter,
+  onTab,
   onAttachmentsChange,
   senderInfo,
   myInfo,
@@ -476,7 +478,15 @@ export default function Editor({
       className={`relative w-full max-w-[450px] sm:max-w-[600px] ${className || ''}`}
       onClick={focusEditor}
       onKeyDown={(e) => {
-        // Prevent form submission on Enter key
+        // Handle tab key
+        if (e.key === 'Tab' && !e.shiftKey) {
+          if (onTab && onTab()) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+        }
+
         if (e.key === 'Enter' && !e.shiftKey) {
           e.stopPropagation();
         }
@@ -530,6 +540,14 @@ export default function Editor({
           editorProps={{
             handleDOMEvents: {
               keydown: (view, event) => {
+                // Handle tab key
+                if (event.key === 'Tab' && !event.shiftKey) {
+                  if (onTab && onTab()) {
+                    event.preventDefault();
+                    return true;
+                  }
+                }
+
                 // Handle Command+Enter (Mac) or Ctrl+Enter (Windows/Linux)
                 if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
                   event.preventDefault();
