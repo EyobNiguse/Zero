@@ -406,14 +406,9 @@ export default function Editor({
 
   // Function to focus the editor
   const focusEditor = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === containerRef.current) {
-      editorRef.current?.commands.focus('end');
+    if (e.target === containerRef.current && editorRef.current?.commands) {
+      editorRef.current.commands.focus('end');
     }
-  };
-
-  // Toggle AI menu
-  const toggleAIMenu = () => {
-    dispatch({ type: 'TOGGLE_AI', payload: !openAI });
   };
 
   // Function to clear editor content
