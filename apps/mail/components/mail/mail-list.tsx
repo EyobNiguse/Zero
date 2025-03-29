@@ -124,7 +124,6 @@ const Thread = memo(
 
     return (
       <div className="p-1">
-        {/**/}
         <div
           data-thread-id={message.id}
           onClick={onClick ? onClick(message) : undefined}
@@ -145,13 +144,13 @@ const Thread = memo(
               isMailBulkSelected && 'translate-x-0',
             )}
           />
-          <MailQuickActions
+          {/* <MailQuickActions
             message={message}
             isHovered={isHovered || isKeyboardFocused}
             isInQuickActionMode={isInQuickActionMode}
             selectedQuickActionIndex={selectedQuickActionIndex}
             resetNavigation={resetNavigation}
-          />
+          /> */}
 
           <div className="flex w-full items-center justify-between gap-4">
             <Avatar className="h-8 w-8 rounded-full">
@@ -168,9 +167,7 @@ const Thread = memo(
                         'text-md flex items-baseline gap-1 group-hover:opacity-100',
                       )}
                     >
-                      <span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
-                        {highlightText(message.sender.name, searchValue.highlight)}
-                      </span>{' '}
+                      <span>{highlightText(message.sender.name, searchValue.highlight)}</span>{' '}
                       {message.unread && !isMailSelected ? (
                         <span className="size-2 rounded bg-[#006FFE]" />
                       ) : null}
@@ -488,7 +485,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       >
         <Virtuoso
           ref={scrollRef}
-          style={{ height: '100%' }}
           totalCount={items.length}
           itemContent={(index: number, data: InitialThread) => (
             <Thread
