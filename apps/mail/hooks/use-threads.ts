@@ -50,7 +50,6 @@ const fetchThread = (cb: any) => async (args: any[]) => {
         if (cb) {
           const unreadMessages = response.filter((e) => e.unread).map((e) => e.id);
           if (unreadMessages.length) {
-            alert('marking as read');
             markAsRead({ ids: unreadMessages }).then(() => {
               if (cb && typeof cb === 'function') cb();
             });
