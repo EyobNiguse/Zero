@@ -264,7 +264,10 @@
         "dynamicContentDescription": "Allow emails to display dynamic content.",
         "externalImages": "Display External Images",
         "externalImagesDescription": "Allow emails to display images from external sources.",
-        "languageChangedTo": "Language changed to {language}"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "Email Connections",

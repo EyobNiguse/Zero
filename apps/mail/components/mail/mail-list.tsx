@@ -493,7 +493,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         ref={parentRef}
         className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
       >
-        <ScrollArea className="hide-scrollbar h-full overflow-auto pb-4">
+        <ScrollArea className="hide-scrollbar h-full overflow-auto">
           {items.map((data, index) => {
             return (
               <Thread
@@ -510,8 +510,22 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               />
             );
           })}
-          <Button variant={'ghost'} className="w-full" onClick={handleScroll}>
-            Load more <ChevronDown />
+          <Button 
+            variant={'ghost'} 
+            className="w-full rounded-none" 
+            onClick={handleScroll}
+            disabled={isLoading || isValidating}
+          >
+            {isLoading || isValidating ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                Loading...
+              </div>
+            ) : (
+              <>
+                Load more <ChevronDown />
+              </>
+            )}
           </Button>
         </ScrollArea>
       </div>
