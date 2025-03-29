@@ -588,7 +588,6 @@ ${email.decodedBody || 'No content'}
                 e.preventDefault();
                 await handleSendEmail(e);
               }}
-              disabled={!isFormValid}
               type="button"
             >
               
