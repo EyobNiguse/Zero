@@ -15,7 +15,7 @@ import { useSession } from '@/lib/auth-client';
 import { ScrollArea } from '../ui/scroll-area';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'use-intl';
-import { Button } from 'react-day-picker';
+import { Button } from '../ui/button';
 import { toast } from 'sonner';
 
 const Draft = ({ message, onClick }: ThreadProps) => {
@@ -344,6 +344,7 @@ export function DraftsList({ isCompact }: MailListProps) {
     // @ts-expect-error
     (props) => (
       <Draft
+        key={props.data.id}
         onClick={handleMailClick}
         selectMode={selectMode}
         isCompact={isCompact}
@@ -361,9 +362,9 @@ export function DraftsList({ isCompact }: MailListProps) {
           {items.map((item, index) => {
             return rowRenderer({ index, data: item });
           })}
-          <Button onClick={handleScroll}>Load more</Button>
         </ScrollArea>
       </div>
+      <Button onClick={handleScroll}>Load more</Button>
       <div className="w-full pt-2 text-center">
         {isLoading || isValidating ? (
           <div className="text-center">
