@@ -1,7 +1,8 @@
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import { Extension } from '@tiptap/core';
+import { emailPhrases } from './email-phrases';
 import { EditorView } from '@tiptap/pm/view';
+import { Extension } from '@tiptap/core';
 import './ghost-text.css';
 
 export interface SenderInfo {
@@ -9,15 +10,17 @@ export interface SenderInfo {
   email?: string;
 }
 
+export interface EmailSuggestions {
+  openers?: string[];
+  closers?: string[];
+  custom?: string[];
+  commonPhrases?: string[];
+  timeBased?: string[];
+  contextBased?: string[];
+}
+
 export interface AutoCompleteOptions {
-  suggestions: {
-    openers?: string[];
-    closers?: string[];
-    custom?: string[];
-    commonPhrases?: string[];
-    timeBased?: string[];
-    contextBased?: string[];
-  };
+  suggestions: EmailSuggestions;
   sender?: SenderInfo;
   myInfo?: SenderInfo;
   context?: {
@@ -35,17 +38,16 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
     const key = new PluginKey('ghostText');
     const options = this.options;
 
-    // Track used suggestions to avoid repetition
     const usedSuggestions = new Set<string>();
 
     const findMatchingSuggestions = (currentText: string, opts: AutoCompleteOptions) => {
       if (!currentText) return [];
 
-      // Get the full document text to check context
       const doc = opts.editor?.state.doc;
       const fullText = doc ? doc.textContent : '';
 
-      // Time-based greetings
+      opts.suggestions = opts.suggestions || {};
+
       const timeOfDay = opts.context?.timeOfDay;
       if (timeOfDay && opts.sender?.name) {
         const { name } = opts.sender;
@@ -56,18 +58,18 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
         ];
       }
 
-      // Context-based suggestions based on previous emails
       if (opts.context?.previousEmails?.length) {
         const lastEmail = opts.context.previousEmails[opts.context.previousEmails.length - 1];
-        opts.suggestions.contextBased = [
+        opts.suggestions.contextBased = opts.suggestions.contextBased || [];
+        opts.suggestions.contextBased.push(
           `Thank you for your email regarding ${lastEmail}.`,
           `I received your message about ${lastEmail}.`,
           `I understand your point about ${lastEmail}.`,
-        ];
+        );
       }
 
-      // Common email phrases
       opts.suggestions.commonPhrases = [
+        ...emailPhrases.custom,
         `I hope this email finds you well.`,
         `I wanted to follow up on our previous conversation.`,
         `I'm writing to discuss...`,
@@ -80,25 +82,21 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
         `I'll be in touch soon.`,
       ];
 
-      // Sender-based greetings
       if (opts.sender) {
         const { name } = opts.sender;
         if (name) {
-          opts.suggestions.openers?.push(
-            `Hello ${name},`,
-            `Hi ${name},`,
-            `Dear ${name},`,
-            `Good morning ${name},`,
-            `Good afternoon ${name},`,
-            `Good evening ${name},`,
+          const customizedOpeners = emailPhrases.openers.map((opener) =>
+            opener.replace('{name}', name),
+          );
+          opts.suggestions.openers = [
+            ...customizedOpeners,
             `I hope you're doing well ${name},`,
             `I trust this email finds you well ${name},`,
             `I hope you're having a great day ${name},`,
-          );
+          ];
         }
       }
 
-      // My info-based closings
       if (opts.myInfo) {
         const { name } = opts.myInfo;
         if (name) {
@@ -118,47 +116,45 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
       }
 
       const allSuggestions = [
-        ...(opts.suggestions.openers || []),
-        ...(opts.suggestions.closers || []),
-        ...(opts.suggestions.custom || []),
-        ...(opts.suggestions.commonPhrases || []),
-        ...(opts.suggestions.timeBased || []),
-        ...(opts.suggestions.contextBased || []),
-      ];
+        ...(opts.suggestions?.openers || []),
+        ...(opts.suggestions?.closers || []),
+        ...(opts.suggestions?.custom || []),
+        ...(opts.suggestions?.commonPhrases || []),
+        ...(opts.suggestions?.timeBased || []),
+        ...(opts.suggestions?.contextBased || []),
+      ].filter(Boolean);
 
       return allSuggestions
         .filter((suggestion) => {
-          // Check if the suggestion matches the current text
-          const matchesCurrentText = suggestion.toLowerCase().startsWith(currentText.toLowerCase()) &&
+          const suggestionStart = suggestion.toLowerCase().slice(0, 2);
+          const textStart = currentText.toLowerCase().slice(0, 2);
+          const matchesCurrentText =
+            suggestionStart === textStart &&
+            suggestion.toLowerCase().startsWith(currentText.toLowerCase()) &&
             suggestion.length > currentText.length;
 
-          // Check if the suggestion has already been used in the email
           const isAlreadyUsed = usedSuggestions.has(suggestion);
 
-          // Check if a similar greeting is already in the email
-          const isSimilarGreetingUsed = fullText.includes(suggestion.split(',')[0]);
+          const isSimilarGreetingUsed = fullText.includes(suggestion?.split(',')[0] || '');
 
-          // Check if we're in the middle of the email (not at the start)
           const isInMiddleOfEmail = fullText.length > 100;
 
-          // Filter out suggestions that:
-          // 1. Don't match the current text
-          // 2. Have already been used
-          // 3. Are greetings and we're in the middle of the email
-          // 4. Are similar to already used greetings
-          return matchesCurrentText && 
-                 !isAlreadyUsed && 
-                 (!isInMiddleOfEmail || !suggestion.includes('Hello') && !suggestion.includes('Hi') && !suggestion.includes('Dear')) &&
-                 !isSimilarGreetingUsed;
+          return (
+            matchesCurrentText &&
+            !isAlreadyUsed &&
+            (!isInMiddleOfEmail ||
+              (!suggestion.includes('Hello') &&
+                !suggestion.includes('Hi') &&
+                !suggestion.includes('Dear'))) &&
+            !isSimilarGreetingUsed
+          );
         })
         .sort((a, b) => {
-          // Prioritize exact matches
           const aExactMatch = a.toLowerCase().startsWith(currentText.toLowerCase());
           const bExactMatch = b.toLowerCase().startsWith(currentText.toLowerCase());
           if (aExactMatch && !bExactMatch) return -1;
           if (!aExactMatch && bExactMatch) return 1;
-          
-          // Then sort by length
+
           return a.length - b.length;
         });
     };
@@ -177,17 +173,16 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
             }
 
             const pos = selection.$cursor.pos;
-            const currentLine = state.doc.textBetween(
-              state.doc.resolve(pos).start(),
-              pos,
-              '\n',
-              '\0',
-            );
+            const lineStart = state.doc.resolve(pos).start();
+            const currentLine = state.doc.textBetween(lineStart, pos, '\n', '\0');
+
+            if (!currentLine) return false;
 
             const suggestions = findMatchingSuggestions(currentLine, {
               ...options,
               editor: view,
             });
+
             if (!suggestions.length) return false;
 
             const suggestion = suggestions[0];
@@ -196,27 +191,26 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
             const remainingText = suggestion.slice(currentLine.length);
             if (!remainingText) return false;
 
-            // Prevent default tab behavior
             event.preventDefault();
 
-            // Mark this suggestion as used
-            usedSuggestions.add(suggestion);
+            try {
+              const tr = state.tr;
 
-            // Create a transaction that:
-            // 1. Inserts the remaining text
-            // 2. Sets the cursor to the end of the inserted text
-            const tr = view.state.tr
-              .insertText(remainingText, pos)
-              .setSelection(TextSelection.create(
-                view.state.doc,
-                pos + remainingText.length
-              ));
+              tr.insertText(remainingText, pos);
 
-            // Apply the transaction
-            view.dispatch(tr);
+              view.dispatch(tr);
+
+              usedSuggestions.add(suggestion);
+
+              return true;
+            } catch (error) {
+              console.error('Error applying suggestion:', error);
+              return false;
+            }
 
             return true;
           },
+          // @ts-expect-error: tiptap types are not compatible with prosemirror
           decorations: (state, view) => {
             const { doc, selection } = state;
             const decorations: Decoration[] = [];
@@ -226,21 +220,24 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
             }
 
             const pos = selection.$cursor.pos;
-            const currentLine = doc.textBetween(doc.resolve(pos).start(), pos, '\n', '\0');
+            const lineStart = doc.resolve(pos).start();
+            const currentLine = doc.textBetween(lineStart, pos, '\n', '\0');
 
-            // Find matching suggestions using the local function
+            if (!currentLine) return DecorationSet.empty;
+
             const suggestions = findMatchingSuggestions(currentLine, {
               ...options,
               editor: view,
             });
+
             if (!suggestions.length) return DecorationSet.empty;
 
             const suggestion = suggestions[0];
             if (!suggestion) return DecorationSet.empty;
 
             const remainingText = suggestion.slice(currentLine.length);
+            if (!remainingText) return DecorationSet.empty;
 
-            // Create a decoration with shimmering effect
             const decoration = Decoration.widget(pos, () => {
               const span = document.createElement('span');
               span.textContent = remainingText;
