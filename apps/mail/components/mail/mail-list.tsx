@@ -72,6 +72,7 @@ const Thread = memo(
     const hasPrefetched = useRef<boolean>(false);
     const [isHovered, setIsHovered] = useState(false);
 
+    
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
       return threadId === threadIdParam;
