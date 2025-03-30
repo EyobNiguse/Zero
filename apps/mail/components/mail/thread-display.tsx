@@ -26,6 +26,7 @@ import MailDisplay from './mail-display';
 import { Inbox } from 'lucide-react';
 import { useMail } from './use-mail';
 import { toast } from 'sonner';
+import { ForwardIcon } from '../icons/animated/forward';
 
 interface ThreadDisplayProps {
   mail?: any;
@@ -196,6 +197,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isForwardOpen, setIsForwardOpen] = useState(false);
   const t = useTranslations();
   const { mutate: mutateStats } = useStats();
   const { folder } = useParams<{ folder: string }>();
@@ -249,6 +251,10 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
     }
 
     await Promise.all([mutateThread(), mutateThreads()]);
+  };
+
+  const handleForward = () => {
+    setIsForwardOpen(true);
   };
 
   useEffect(() => {
@@ -334,7 +340,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
                   <DropdownMenuItem>
                     <ReplyAll className="mr-2 h-4 w-4" /> {t('common.threadDisplay.replyAll')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleForward}>
                     <Forward className="mr-2 h-4 w-4" /> {t('common.threadDisplay.forward')}
                   </DropdownMenuItem>
                   <DropdownMenuItem>{t('common.threadDisplay.markAsUnread')}</DropdownMenuItem>
@@ -437,7 +443,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
                 <DropdownMenuItem>
                   <ReplyAll className="mr-2 h-4 w-4" /> {t('common.threadDisplay.replyAll')}
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleForward}>
                   <Forward className="mr-2 h-4 w-4" /> {t('common.threadDisplay.forward')}
                 </DropdownMenuItem>
                 <DropdownMenuItem>{t('common.threadDisplay.markAsUnread')}</DropdownMenuItem>
@@ -470,7 +476,20 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
             </div>
           </ScrollArea>
           <div className={`relative ${isFullscreen ? '' : 'top-1'} flex-shrink-0`}>
-            <ReplyCompose emailData={emailData} isOpen={isReplyOpen} setIsOpen={setIsReplyOpen} />
+            <ReplyCompose 
+              emailData={emailData} 
+              isOpen={isReplyOpen} 
+              setIsOpen={setIsReplyOpen}
+              mode="reply"
+            />
+            {isForwardOpen && (
+              <ReplyCompose 
+                emailData={emailData} 
+                isOpen={isForwardOpen} 
+                setIsOpen={setIsForwardOpen}
+                mode="forward"
+              />
+            )}
           </div>
         </div>
       </div>

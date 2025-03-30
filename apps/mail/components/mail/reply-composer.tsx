@@ -3,7 +3,7 @@
 import { type Dispatch, type SetStateAction, useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
-import { ArrowUp, Paperclip, Reply, X, Plus, Sparkles, Check, X as XIcon } from 'lucide-react';
+import { ArrowUp, Paperclip, Reply, X, Plus, Sparkles, Check, X as XIcon, Forward } from 'lucide-react';
 import { cleanEmailAddress, truncateFileName, cn, convertJSONToHTML, createAIJsonContent } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import Editor from '@/components/create/editor';
@@ -16,6 +16,7 @@ import type { JSONContent } from 'novel';
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { generateAIResponse } from '@/actions/ai-reply';
+import { useSession } from '@/lib/auth-client';
 
 // Define state interfaces
 interface ComposerState {
@@ -87,13 +88,18 @@ interface ReplyComposeProps {
   emailData: ParsedMessage[];
   isOpen?: boolean;
   setIsOpen?: Dispatch<SetStateAction<boolean>>;
+  mode?: 'reply' | 'forward';
 }
 
 type FormData = {
   messageContent: string;
+  to: string;
 };
 
-export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComposeProps) {
+export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: ReplyComposeProps) {
+  // Move useSession to the top level of the component
+  const { data: session } = useSession();
+  
   // Keep attachments separate as it's an array that needs direct manipulation
   const [attachments, setAttachments] = useState<File[]>([]);
   
@@ -209,9 +215,38 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
     `;
   };
 
+  const [toInput, setToInput] = useState('');
+  const [toEmails, setToEmails] = useState<string[]>([]);
+
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleAddEmail = (email: string) => {
+    const trimmedEmail = email.trim().replace(/,$/, '');
+
+    if (!trimmedEmail) return;
+
+    if (toEmails.includes(trimmedEmail)) {
+      setToInput('');
+      return;
+    }
+
+    if (!isValidEmail(trimmedEmail)) {
+      toast.error(`Invalid email format: ${trimmedEmail}`);
+      return;
+    }
+
+    setToEmails([...toEmails, trimmedEmail]);
+    setToInput('');
+    form.setValue('to', toEmails.join(', '));
+  };
+
   const form = useForm<FormData>({
     defaultValues: {
       messageContent: '',
+      to: '',
     },
   });
 
@@ -220,39 +255,66 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
 
   const handleSendEmail = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setIsSubmitting(true); // Set loading state to true before sending
+    setIsSubmitting(true);
     try {
-      const originalSubject = emailData[0]?.subject || '';
-      const subject = originalSubject.startsWith('Re:')
-        ? originalSubject
-        : `Re: ${originalSubject}`;
+      const originalEmail = emailData[0];
+      const userEmail = session?.activeConnection?.email?.toLowerCase();
 
-      const originalSender = emailData[0]?.sender;
-      const cleanedToEmail = cleanEmailAddress(emailData[emailData.length - 1]?.sender?.email);
-      const originalDate = new Date(emailData[0]?.receivedOn || '').toLocaleString();
-      const quotedMessage = emailData[0]?.decodedBody;
-      const messageId = emailData[0]?.messageId;
-      const threadId = emailData[0]?.threadId;
+      if (!userEmail) {
+        throw new Error('Active connection email not found');
+      }
 
+      // Handle subject based on mode
+      const subject = mode === 'forward' 
+        ? `Fwd: ${originalEmail?.subject || ''}`
+        : originalEmail?.subject?.startsWith('Re:')
+          ? originalEmail.subject 
+          : `Re: ${originalEmail?.subject || ''}`;
+
+      // For forwarding, use the entered email addresses
+      const recipients = mode === 'forward' 
+        ? toEmails.join(', ')
+        : [
+            // Original sender
+            ...(originalEmail?.sender?.email ? [cleanEmailAddress(originalEmail.sender.email)] : []),
+            // All TO recipients
+            ...(originalEmail?.to?.map(to => cleanEmailAddress(to.email)) || []),
+            // All CC recipients
+            ...(originalEmail?.cc?.map(cc => cleanEmailAddress(cc.email)) || [])
+          ]
+            .filter(Boolean)
+            .filter((email, index, self) => 
+              self.indexOf(email) === index && 
+              email.toLowerCase() !== userEmail
+            )
+            .join(', ');
+
+      if (!recipients) {
+        throw new Error('No valid recipients found');
+      }
+
+      const messageId = originalEmail?.messageId;
+      const threadId = originalEmail?.threadId;
       const formattedMessage = form.getValues('messageContent');
+      const originalDate = new Date(originalEmail?.receivedOn || '').toLocaleString();
+      const quotedMessage = originalEmail?.decodedBody;
 
       const replyBody = constructReplyBody(
         formattedMessage,
         originalDate,
-        originalSender,
-        cleanedToEmail,
+        originalEmail?.sender,
+        recipients,
         quotedMessage,
       );
 
       const inReplyTo = messageId;
-
-      const existingRefs = emailData[0]?.references?.split(' ') || [];
-      const references = [...existingRefs, emailData[0]?.inReplyTo, cleanEmailAddress(messageId)]
+      const existingRefs = originalEmail?.references?.split(' ') || [];
+      const references = [...existingRefs, originalEmail?.inReplyTo, cleanEmailAddress(messageId)]
         .filter(Boolean)
         .join(' ');
 
       await sendEmail({
-        to: cleanedToEmail,
+        to: recipients,
         subject,
         message: replyBody,
         attachments,
@@ -270,7 +332,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen }: ReplyComp
       console.error('Error sending email:', error);
       toast.error(t('pages.createEmail.failedToSendEmail'));
     } finally {
-      setIsSubmitting(false); // Reset loading state regardless of outcome
+      setIsSubmitting(false);
     }
   };
 
@@ -407,21 +469,26 @@ ${email.decodedBody || 'No content'}
   }, [aiState.showOptions, aiState.suggestion]);
 
   if (!composerIsOpen) {
-    return (
-      <div className="bg-offsetLight dark:bg-offsetDark w-full p-2">
-        <Button
-          onClick={toggleComposer}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-md"
-          variant="outline"
-        >
-          <Reply className="h-4 w-4" />
-          <span>
-            {t('common.replyCompose.replyTo')}{' '}
-            {emailData[emailData.length - 1]?.sender?.name || t('common.replyCompose.thisEmail')}
-          </span>
-        </Button>
-      </div>
-    );
+    // Only show the reply button if we're not in forward mode
+    if (mode !== 'forward') {
+      return (
+        <div className="bg-offsetLight dark:bg-offsetDark w-full p-2">
+          <Button
+            onClick={toggleComposer}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md"
+            variant="outline"
+          >
+            <Reply className="h-4 w-4" />
+            <span>
+              {t('common.replyCompose.replyTo')}{' '}
+              {emailData[emailData.length - 1]?.sender?.name || t('common.replyCompose.thisEmail')}
+            </span>
+          </Button>
+        </div>
+      );
+    }
+    // Return null if in forward mode to hide the button completely
+    return null;
   }
 
   return (
@@ -470,7 +537,56 @@ ${email.decodedBody || 'No content'}
           </Button>
         </div>
 
-        
+        {mode === 'forward' && (
+          <div className="flex items-center ml-1">
+            <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] font-[600] opacity-50">
+              {t('common.mailDisplay.to')}
+            </div>
+            <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+              {toEmails.map((email, index) => (
+                <div
+                  key={index}
+                  className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
+                >
+                  <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                    {email}
+                  </span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                    onClick={() => {
+                      setToEmails((emails) => emails.filter((_, i) => i !== index));
+                      form.setValue('to', toEmails.join(', '));
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              <input
+                type="email"
+                className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+                value={toInput}
+                onChange={(e) => setToInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
+                    e.preventDefault();
+                    handleAddEmail(toInput);
+                  } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
+                    setToEmails((emails) => emails.slice(0, -1));
+                    form.setValue('to', toEmails.join(', '));
+                  }
+                }}
+                onBlur={() => {
+                  if (toInput.trim()) {
+                    handleAddEmail(toInput);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="w-full flex-grow">
           <div className="min-h-[150px] max-h-[800px] w-full overflow-y-auto">

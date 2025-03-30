@@ -95,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {attachments} one {attachment} other {attachments}}",
       "fileCount": "{count, plural, =0 {files} one {file} other {files}}",
       "saveDraft": "Save draft",
-      "send": "Send"
+      "send": "Send",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Details",
