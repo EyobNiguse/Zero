@@ -384,41 +384,31 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: Rep
     }
   }, [composerIsOpen]);
 
-  // Handle dynamic resizing
+  // Add these state variables near the top of your ReplyCompose component
+  const [isResizing, setIsResizing] = useState(false);
+  const [editorHeight, setEditorHeight] = useState(150); // Default height
+  const resizeStartY = useRef(0);
+  const startHeight = useRef(0);
+
+  // Update your handleMouseMove function to use these state variables
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (isResizing) {
         e.preventDefault();
-        // Invert the delta so dragging up grows the editor and dragging down shrinks it
         const deltaY = resizeStartY.current - e.clientY;
         let newHeight = Math.max(100, Math.min(500, startHeight.current + deltaY));
-        
-        // Ensure height stays within bounds
-        newHeight = Math.max(100, Math.min(500, newHeight));
         setEditorHeight(newHeight);
       }
     },
     [isResizing]
   );
 
-  const handleMouseUp = useCallback(() => {
-    if (isResizing) {
-      setIsResizing(false);
-    }
-  }, [isResizing]);
-
-  // Set up and clean up event listeners for resizing
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing, handleMouseMove, handleMouseUp]);
+  // Add a function to handle starting the resize
+  const handleResizeStart = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    resizeStartY.current = e.clientY;
+    startHeight.current = editorHeight;
+  };
 
   // Auto-grow effect when typing
   useEffect(() => {
@@ -601,13 +591,15 @@ ${email.decodedBody || 'No content'}
         )}
 
         <div className="text-muted-foreground flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
+          {mode !== 'forward' && (
+            <div className="flex items-center gap-2">
             <Reply className="h-4 w-4" />
             <p className="truncate">
               {emailData[emailData.length - 1]?.sender?.name} (
               {emailData[emailData.length - 1]?.sender?.email})
             </p>
           </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -673,7 +665,10 @@ ${email.decodedBody || 'No content'}
         )}
 
         <div className="w-full flex-grow">
-          <div className="max-h-[800px] min-h-[150px] w-full overflow-y-auto">
+          <div 
+            className="max-h-[800px] min-h-[150px] w-full overflow-y-auto"
+            style={{ height: `${editorHeight}px` }}
+          >
             <Editor
               key={composerState.editorKey}
               onChange={(content) => {
@@ -708,6 +703,10 @@ ${email.decodedBody || 'No content'}
                 name: emailData[0]?.sender?.name,
                 email: emailData[0]?.sender?.email,
               }}
+            />
+            <div
+              className="h-2 w-full cursor-ns-resize hover:bg-gray-200 dark:hover:bg-gray-700"
+              onMouseDown={handleResizeStart}
             />
           </div>
         </div>
