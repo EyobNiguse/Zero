@@ -495,10 +495,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           {isLoading || searchValue.isLoading ? (
             <div className="flex flex-col items-center gap-4">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-              <p className="text-muted-foreground text-sm">
-                {searchValue.isLoading
-                  ? t('common.searchBar.aiSearching')
-                  : t('common.searchBar.searching')}
+              <p className="text-sm text-muted-foreground">
+                {searchValue.isAISearching ? t('common.searchBar.aiSearching') : t('common.searchBar.searching')}
               </p>
             </div>
           ) : (

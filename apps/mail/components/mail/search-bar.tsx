@@ -13,6 +13,17 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import React from 'react';
+import { enhanceSearchQuery } from '@/actions/ai-search';
+
+const SEARCH_SUGGESTIONS = [
+  '"Emails from last week..."',
+  '"Emails with attachments..."',
+  '"Unread emails..."',
+  '"Emails from Caroline and Josh..."',
+  '"Starred emails..."',
+  '"Emails with links..."',
+  '"Emails from last month..."',
+];
 
 // function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRange) => void }) {
 //   const t = useTranslations('common.searchBar');
@@ -74,6 +85,7 @@ export function SearchBar() {
   // const [popoverOpen, setPopoverOpen] = useState(false);
   const [, setSearchValue] = useSearchValue();
   const [isSearching, setIsSearching] = useState(false);
+  const [isAISearching, setIsAISearching] = useState(false);
   const [value, setValue] = useState<SearchForm>({
     folder: '',
     subject: '',
@@ -129,37 +141,52 @@ export function SearchBar() {
     [value],
   );
 
+  const [isFocused, setIsFocused] = useState(false);
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const suggestionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isFocused && !formValues.q) {
+      suggestionIntervalRef.current = setInterval(() => {
+        setIsAnimating(true);
+        setTimeout(() => {
+          setCurrentSuggestionIndex((prev) => (prev + 1) % SEARCH_SUGGESTIONS.length);
+          setIsAnimating(false);
+        }, 300);
+      }, 3000);
+    } else {
+      if (suggestionIntervalRef.current) {
+        clearInterval(suggestionIntervalRef.current);
+      }
+    }
+
+    return () => {
+      if (suggestionIntervalRef.current) {
+        clearInterval(suggestionIntervalRef.current);
+      }
+    };
+  }, [isFocused, formValues.q]);
+
   const submitSearch = useCallback(
     async (data: SearchForm) => {
       setIsSearching(true);
       let searchTerms = [];
 
       try {
-        // Get AI-enhanced query
-        const response = await fetch('/api/ai-search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: data.q,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('AI Search failed');
-        }
-
-        const aiData = await response.json();
-        
-        // Use the AI-enhanced query
-        if (aiData.enhancedQuery) {
-          data.q = aiData.enhancedQuery;
-        }
-
-        // Add the enhanced query to search terms
-        if (data.q) {
-          searchTerms.push(data.q);
+        // Only enhance the query if there's a search term
+        if (data.q.trim()) {
+          setIsAISearching(true);
+          const { enhancedQuery, error } = await enhanceSearchQuery(data.q.trim());
+          setIsAISearching(false);
+          
+          if (error) {
+            console.error('AI enhancement error:', error);
+            // Fallback to original query if AI enhancement fails
+            searchTerms.push(data.q.trim());
+          } else {
+            searchTerms.push(enhancedQuery);
+          }
         }
 
         // Add any additional filters
@@ -168,22 +195,27 @@ export function SearchBar() {
         if (data.subject) searchTerms.push(`subject:(${data.subject})`);
         if (data.dateRange.from)
           searchTerms.push(`after:${format(data.dateRange.from, 'yyyy/MM/dd')}`);
-        if (data.dateRange.to) searchTerms.push(`before:${format(data.dateRange.to, 'yyyy/MM/dd')}`);
+        if (data.dateRange.to) 
+          searchTerms.push(`before:${format(data.dateRange.to, 'yyyy/MM/dd')}`);
 
         const searchQuery = searchTerms.join(' ');
         const folder = data.folder ? data.folder.toUpperCase() : '';
 
+        console.log('Final search query:', searchQuery);
+        
         setSearchValue({
           value: searchQuery,
           highlight: data.q,
           folder: folder,
+          isLoading: true,
+          isAISearching: isAISearching
         });
 
       } catch (error) {
         console.error('Search error:', error);
         // Fallback to regular search if AI fails
         if (data.q) {
-          searchTerms.push(data.q);
+          searchTerms.push(data.q.trim());
         }
         const searchQuery = searchTerms.join(' ');
         const folder = data.folder ? data.folder.toUpperCase() : '';
@@ -191,12 +223,14 @@ export function SearchBar() {
           value: searchQuery,
           highlight: data.q,
           folder: folder,
+          isLoading: true,
+          isAISearching: false
         });
       } finally {
         setIsSearching(false);
       }
     },
-    [setSearchValue],
+    [setSearchValue, isAISearching],
   );
 
   const handleInputChange = useCallback(
@@ -586,6 +620,8 @@ export function SearchBar() {
       value: '',
       highlight: '',
       folder: '',
+      isLoading: false,
+      isAISearching: false
     });
   }, [form, setSearchValue]);
 
@@ -593,15 +629,31 @@ export function SearchBar() {
     <div className="relative flex-1 md:max-w-[600px]">
       <form className="relative flex items-center" onSubmit={form.handleSubmit(submitSearch)}>
         <Search className="text-muted-foreground absolute left-2.5 h-4 w-4" aria-hidden="true" />
-        <Input
-          placeholder={t('common.searchBar.search')}
-          ref={inputRef}
-          className="bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none r"
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          value={formValues.q}
-          disabled={isSearching}
-        />
+        <div className="relative w-full">
+          <Input
+            placeholder={isFocused ? "" : "Search..."}
+            ref={inputRef}
+            className="bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none transition-all duration-300"
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            value={formValues.q}
+            disabled={isSearching}
+          />
+          {isFocused && !formValues.q && (
+            <div 
+              className={cn(
+                "absolute left-9 right-0 bottom-[5.5px] -translate-y-1/2 text-muted-foreground/70 pointer-events-none text-sm",
+                isAnimating 
+                  ? "opacity-0 translate-y-2 transition-all duration-300 ease-out" 
+                  : "opacity-100 translate-y-0 transition-all duration-300 ease-in"
+              )}
+            >
+              {SEARCH_SUGGESTIONS[currentSuggestionIndex]}
+            </div>
+          )}
+        </div>
         {renderSuggestions()}
         {renderDatePicker()}
         {/* <div className="absolute right-1 z-20 flex items-center gap-1">
