@@ -64,7 +64,13 @@
       "hasAttachment": "Has Attachment",
       "starred": "Starred",
       "applyFilters": "Apply filters",
-      "reset": "Reset"
+      "reset": "Reset",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Customer Support",

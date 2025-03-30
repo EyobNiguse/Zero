@@ -259,7 +259,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [session],
   );
 
-  const [searchValue] = useSearchValue();
+  const [searchValue, setSearchValue] = useSearchValue();
 
   const {
     data: { threads: items, nextPageToken },
@@ -481,9 +481,33 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const isEmpty = items.length === 0;
   const isFiltering = searchValue.value.trim().length > 0;
 
+  // Add effect to handle search loading state
+  useEffect(() => {
+    if (isFiltering && !isLoading) {
+      // Reset the search value when loading is complete
+      setSearchValue(prev => ({
+        ...prev,
+        isLoading: false
+      }));
+    }
+  }, [isLoading, isFiltering, setSearchValue]);
+
   if (isEmpty && session) {
     if (isFiltering) {
-      return <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />;
+      return (
+        <div className="flex min-h-[90vh] md:min-h-[90vh] flex-col items-center justify-center">
+          {(isLoading || searchValue.isLoading) ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+              <p className="text-sm text-muted-foreground">
+                {searchValue.isLoading ? t('common.searchBar.aiSearching') : t('common.searchBar.searching')}
+              </p>
+            </div>
+          ) : (
+            <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />
+          )}
+        </div>
+      );
     }
     return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
   }
@@ -511,23 +535,25 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               />
             );
           })}
-          <Button 
-            variant={'ghost'} 
-            className="w-full rounded-none" 
-            onClick={handleScroll}
-            disabled={isLoading || isValidating}
-          >
-            {isLoading || isValidating ? (
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                Loading...
-              </div>
-            ) : (
-              <>
-                Load more <ChevronDown />
-              </>
-            )}
-          </Button>
+          {items.length >= 9 && (
+            <Button 
+              variant={'ghost'} 
+              className="w-full rounded-none" 
+              onClick={handleScroll}
+              disabled={isLoading || isValidating}
+            >
+              {isLoading || isValidating ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                  Loading...
+                </div>
+              ) : (
+                <>
+                  Load more <ChevronDown />
+                </>
+              )}
+            </Button>
+          )}
         </ScrollArea>
       </div>
       <div className="w-full pt-4 text-center">

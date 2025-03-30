@@ -96,6 +96,15 @@ const getKey = (
   ];
 };
 
+// Add fetcher function
+const fetcher = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch threads');
+  }
+  return response.json();
+};
+
 export const useThreads = () => {
   const { folder } = useParams<{ folder: string }>();
   const [searchValue] = useSearchValue();
@@ -112,6 +121,10 @@ export const useThreads = () => {
       ]);
     },
     fetchEmails,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    },
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
