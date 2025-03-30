@@ -42,6 +42,8 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
+import { MailQuickActions } from './mail-quick-actions';
+import { useMailNavigation } from '@/hooks/use-mail-navigation';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -71,8 +73,6 @@ const Thread = memo(
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
     const [isHovered, setIsHovered] = useState(false);
-
-    
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
       return threadId === threadIdParam;
@@ -162,7 +162,6 @@ const Thread = memo(
             selectedQuickActionIndex={selectedQuickActionIndex}
             resetNavigation={resetNavigation}
           />
-
           <div className="flex w-full items-center justify-between gap-4">
             <Avatar className="h-8 w-8 rounded-full">
               <AvatarImage src={getEmailLogo(message.sender.email)} className="rounded-full" />
@@ -406,7 +405,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const handleMailClick = useCallback(
     (message: InitialThread) => () => {
       handleMouseEnter(message.id);
-
       const selectMode = getSelectMode();
 
       if (selectMode === 'mass') {

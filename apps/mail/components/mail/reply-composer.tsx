@@ -384,6 +384,66 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: Rep
     }
   }, [composerIsOpen]);
 
+  // Handle dynamic resizing
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (isResizing) {
+        e.preventDefault();
+        // Invert the delta so dragging up grows the editor and dragging down shrinks it
+        const deltaY = resizeStartY.current - e.clientY;
+        let newHeight = Math.max(100, Math.min(500, startHeight.current + deltaY));
+        
+        // Ensure height stays within bounds
+        newHeight = Math.max(100, Math.min(500, newHeight));
+        setEditorHeight(newHeight);
+      }
+    },
+    [isResizing]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (isResizing) {
+      setIsResizing(false);
+    }
+  }, [isResizing]);
+
+  // Set up and clean up event listeners for resizing
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  // Auto-grow effect when typing
+  useEffect(() => {
+    if (composerIsOpen) {
+      const editorElement = document.querySelector('.ProseMirror');
+      if (editorElement instanceof HTMLElement) {
+        // Observer to watch for content changes and adjust height
+        const resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const contentHeight = entry.contentRect.height;
+            
+            // If content exceeds current height but is less than max, grow the container
+            if (contentHeight > editorHeight - 20 && editorHeight < 500) {
+              const newHeight = Math.min(500, contentHeight + 20);
+              setEditorHeight(newHeight);
+            }
+          }
+        });
+        
+        resizeObserver.observe(editorElement);
+        return () => resizeObserver.disconnect();
+      }
+    }
+  }, [composerIsOpen, editorHeight]);
+
   // Check if the message is empty
   const isMessageEmpty =
     !form.getValues('messageContent') ||
