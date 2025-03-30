@@ -6,12 +6,30 @@ import {
   useRef,
   useState,
   useEffect,
-  useCallback, useReducer,
+  useCallback,
+  useReducer,
 } from 'react';
+import {
+  ArrowUp,
+  Paperclip,
+  Reply,
+  X,
+  Plus,
+  Sparkles,
+  Check,
+  X as XIcon,
+  Forward,
+} from 'lucide-react';
+import {
+  cleanEmailAddress,
+  truncateFileName,
+  cn,
+  convertJSONToHTML,
+  createAIJsonContent,
+} from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
-import { ArrowUp, Paperclip, Reply, X, Plus, Sparkles, Check, X as XIcon, Forward } from 'lucide-react';
-import { cleanEmailAddress, truncateFileName, cn, convertJSONToHTML, createAIJsonContent } from '@/lib/utils';
+import { generateAIResponse } from '@/actions/ai-reply';
 import { Separator } from '@/components/ui/separator';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
@@ -19,12 +37,10 @@ import { useSession } from '@/lib/auth-client';
 import type { ParsedMessage } from '@/types';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
-import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
 import type { JSONContent } from 'novel';
-import { useForm } from "react-hook-form";
-import type { z } from "zod";
-import { generateAIResponse } from '@/actions/ai-reply';
-import { useSession } from '@/lib/auth-client';
+import { toast } from 'sonner';
+import type { z } from 'zod';
 
 // Define state interfaces
 interface ComposerState {
@@ -105,13 +121,9 @@ type FormData = {
 };
 
 export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: ReplyComposeProps) {
-  // Move useSession to the top level of the component
-  const { data: session } = useSession();
-  
-  // Keep attachments separate as it's an array that needs direct manipulation
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
-  
+
   // Use reducers instead of multiple useState
   const [composerState, composerDispatch] = useReducer(composerReducer, {
     isUploading: false,
@@ -274,29 +286,33 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: Rep
       }
 
       // Handle subject based on mode
-      const subject = mode === 'forward' 
-        ? `Fwd: ${originalEmail?.subject || ''}`
-        : originalEmail?.subject?.startsWith('Re:')
-          ? originalEmail.subject 
-          : `Re: ${originalEmail?.subject || ''}`;
+      const subject =
+        mode === 'forward'
+          ? `Fwd: ${originalEmail?.subject || ''}`
+          : originalEmail?.subject?.startsWith('Re:')
+            ? originalEmail.subject
+            : `Re: ${originalEmail?.subject || ''}`;
 
       // For forwarding, use the entered email addresses
-      const recipients = mode === 'forward' 
-        ? toEmails.join(', ')
-        : [
-            // Original sender
-            ...(originalEmail?.sender?.email ? [cleanEmailAddress(originalEmail.sender.email)] : []),
-            // All TO recipients
-            ...(originalEmail?.to?.map(to => cleanEmailAddress(to.email)) || []),
-            // All CC recipients
-            ...(originalEmail?.cc?.map(cc => cleanEmailAddress(cc.email)) || [])
-          ]
-            .filter(Boolean)
-            .filter((email, index, self) => 
-              self.indexOf(email) === index && 
-              email.toLowerCase() !== userEmail
-            )
-            .join(', ');
+      const recipients =
+        mode === 'forward'
+          ? toEmails.join(', ')
+          : [
+              // Original sender
+              ...(originalEmail?.sender?.email
+                ? [cleanEmailAddress(originalEmail.sender.email)]
+                : []),
+              // All TO recipients
+              ...(originalEmail?.to?.map((to) => cleanEmailAddress(to.email)) || []),
+              // All CC recipients
+              ...(originalEmail?.cc?.map((cc) => cleanEmailAddress(cc.email)) || []),
+            ]
+              .filter(Boolean)
+              .filter(
+                (email, index, self) =>
+                  self.indexOf(email) === index && email.toLowerCase() !== userEmail,
+              )
+              .join(', ');
 
       if (!recipients) {
         throw new Error('No valid recipients found');
@@ -391,7 +407,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: Rep
       // Extract relevant information from the email thread for context
       const latestEmail = emailData[emailData.length - 1];
       const originalSender = latestEmail?.sender?.name || 'the recipient';
-      
+
       // Create a summary of the thread content for context
       const threadContent = emailData
         .map((email) => {
@@ -407,9 +423,9 @@ ${email.decodedBody || 'No content'}
 
       const suggestion = await generateAIResponse(threadContent, originalSender);
       aiDispatch({ type: 'SET_SUGGESTION', payload: suggestion });
-      composerDispatch({ 
-        type: 'SET_EDITOR_INITIAL_VALUE', 
-        payload: createAIJsonContent(suggestion) 
+      composerDispatch({
+        type: 'SET_EDITOR_INITIAL_VALUE',
+        payload: createAIJsonContent(suggestion),
       });
       composerDispatch({ type: 'INCREMENT_EDITOR_KEY' });
       aiDispatch({ type: 'SET_SHOW_OPTIONS', payload: true });
@@ -421,12 +437,11 @@ ${email.decodedBody || 'No content'}
           editorElement.focus();
         }
       }, 100); // Small delay to ensure content is rendered
-
     } catch (error: any) {
       console.error('Error generating AI response:', error);
-      
+
       let errorMessage = 'Failed to generate AI response. Please try again or compose manually.';
-      
+
       if (error.message) {
         if (error.message.includes('OpenAI API')) {
           errorMessage = 'AI service is currently unavailable. Please try again later.';
@@ -434,7 +449,7 @@ ${email.decodedBody || 'No content'}
           errorMessage = 'AI service is not properly configured. Please contact support.';
         }
       }
-      
+
       toast.error(errorMessage);
     } finally {
       aiDispatch({ type: 'SET_LOADING', payload: false });
@@ -445,9 +460,9 @@ ${email.decodedBody || 'No content'}
     if (aiState.suggestion) {
       const jsonContent = createAIJsonContent(aiState.suggestion);
       const htmlContent = convertJSONToHTML(jsonContent);
-      
+
       form.setValue('messageContent', htmlContent);
-      
+
       composerDispatch({ type: 'SET_EDITOR_INITIAL_VALUE', payload: undefined });
       aiDispatch({ type: 'RESET' });
     }
@@ -547,7 +562,7 @@ ${email.decodedBody || 'No content'}
         </div>
 
         {mode === 'forward' && (
-          <div className="flex items-center ml-1">
+          <div className="ml-1 flex items-center">
             <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] font-[600] opacity-50">
               {t('common.mailDisplay.to')}
             </div>
@@ -598,7 +613,7 @@ ${email.decodedBody || 'No content'}
         )}
 
         <div className="w-full flex-grow">
-          <div className="min-h-[150px] max-h-[800px] w-full overflow-y-auto">
+          <div className="max-h-[800px] min-h-[150px] w-full overflow-y-auto">
             <Editor
               key={composerState.editorKey}
               onChange={(content) => {
@@ -607,13 +622,18 @@ ${email.decodedBody || 'No content'}
               initialValue={composerState.editorInitialValue}
               onCommandEnter={handleCommandEnter}
               onTab={handleTabAccept}
-              disabled={isSubmitting}
               className={cn(
-                "sm:max-w-[600px] md:max-w-[2050px]",
-                aiState.showOptions ? "border border-blue-200 dark:border-blue-800 border-dotted rounded-md bg-blue-50/30 dark:bg-blue-950/30 p-1" : "p-1 border border-transparent",
-                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                'sm:max-w-[600px] md:max-w-[2050px]',
+                aiState.showOptions
+                  ? 'rounded-md border border-dotted border-blue-200 bg-blue-50/30 p-1 dark:border-blue-800 dark:bg-blue-950/30'
+                  : 'border border-transparent p-1',
+                isSubmitting ? 'cursor-not-allowed opacity-50' : '',
               )}
-              placeholder={aiState.showOptions ? "AI-generated reply (you can edit)" : "Type your reply here..."}
+              placeholder={
+                aiState.showOptions
+                  ? 'AI-generated reply (you can edit)'
+                  : 'Type your reply here...'
+              }
               onFocus={() => {
                 composerDispatch({ type: 'SET_EDITOR_FOCUSED', payload: true });
               }}
@@ -633,19 +653,17 @@ ${email.decodedBody || 'No content'}
         </div>
 
         {aiState.showOptions && (
-          <div className="text-xs text-muted-foreground ml-2 mt-1">
-            Press <kbd className="px-1 py-0.5 bg-muted rounded">Tab</kbd> to accept
+          <div className="text-muted-foreground ml-2 mt-1 text-xs">
+            Press <kbd className="bg-muted rounded px-1 py-0.5">Tab</kbd> to accept
           </div>
         )}
 
         <div className="mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            
-            
             {!aiState.showOptions ? (
-              <Button 
-                variant="outline" 
-                className="group relative overflow-hidden transition-all duration-200 w-40"
+              <Button
+                variant="outline"
+                className="group relative w-40 overflow-hidden transition-all duration-200"
                 onClick={(e) => {
                   e.preventDefault();
                   void handleAIButtonClick();
@@ -658,15 +676,14 @@ ${email.decodedBody || 'No content'}
                   <Sparkles className="absolute left-[9px] h-6 w-6" />
                 )}
                 <span className="whitespace-nowrap pl-5">
-                  {aiState.isLoading ? "Generating..." : "Generate Email"}
+                  {aiState.isLoading ? 'Generating...' : 'Generate Email'}
                 </span>
               </Button>
             ) : (
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  className='hover:bg-transparent w-20 border h-9 px-12 dark:text-black text-white bg-black dark:bg-white'
-                 
+                  className="h-9 w-20 border bg-black px-12 text-white hover:bg-transparent dark:bg-white dark:text-black"
                   onClick={(e) => {
                     e.preventDefault();
                     acceptAISuggestion();
@@ -677,8 +694,7 @@ ${email.decodedBody || 'No content'}
                 </Button>
                 <Button
                   variant="ghost"
-                 
-                  className='hover:bg-transparent w-20 dark:text-white/50 text-black/50'
+                  className="w-20 text-black/50 hover:bg-transparent dark:text-white/50"
                   onClick={(e) => {
                     e.preventDefault();
                     rejectAISuggestion();
@@ -751,21 +767,13 @@ ${email.decodedBody || 'No content'}
             />
           </div>
           <div className="mr-2 flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8"
-              disabled={isSubmitting}
-            >
+            <Button variant="ghost" size="sm" className="h-8" disabled={isSubmitting}>
               {t('common.replyCompose.saveDraft')}
             </Button>
             <Button
               ref={sendButtonRef}
               size="sm"
-              className={cn(
-                "rounded-full relative h-8 w-8",
-                isSubmitting && "cursor-not-allowed"
-              )}
+              className={cn('relative h-8 w-8 rounded-full', isSubmitting && 'cursor-not-allowed')}
               onClick={async (e) => {
                 e.preventDefault();
                 await handleSendEmail(e);
@@ -781,5 +789,3 @@ ${email.decodedBody || 'No content'}
     </div>
   );
 }
-
-
