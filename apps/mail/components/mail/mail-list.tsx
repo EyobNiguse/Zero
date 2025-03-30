@@ -42,8 +42,6 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { MailQuickActions } from './mail-quick-actions';
-import { useMailNavigation } from '@/hooks/use-mail-navigation';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -483,9 +481,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   useEffect(() => {
     if (isFiltering && !isLoading) {
       // Reset the search value when loading is complete
-      setSearchValue(prev => ({
+      setSearchValue((prev) => ({
         ...prev,
-        isLoading: false
+        isLoading: false,
       }));
     }
   }, [isLoading, isFiltering, setSearchValue]);
@@ -493,12 +491,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   if (isEmpty && session) {
     if (isFiltering) {
       return (
-        <div className="flex min-h-[90vh] md:min-h-[90vh] flex-col items-center justify-center">
-          {(isLoading || searchValue.isLoading) ? (
+        <div className="flex min-h-[90vh] flex-col items-center justify-center md:min-h-[90vh]">
+          {isLoading || searchValue.isLoading ? (
             <div className="flex flex-col items-center gap-4">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-              <p className="text-sm text-muted-foreground">
-                {searchValue.isLoading ? t('common.searchBar.aiSearching') : t('common.searchBar.searching')}
+              <p className="text-muted-foreground text-sm">
+                {searchValue.isLoading
+                  ? t('common.searchBar.aiSearching')
+                  : t('common.searchBar.searching')}
               </p>
             </div>
           ) : (
@@ -534,9 +534,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             );
           })}
           {items.length >= 9 && (
-            <Button 
-              variant={'ghost'} 
-              className="w-full rounded-none" 
+            <Button
+              variant={'ghost'}
+              className="w-full rounded-none"
               onClick={handleScroll}
               disabled={isLoading || isValidating}
             >
