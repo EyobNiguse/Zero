@@ -1,17 +1,9 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { matchFilterPrefix, filterSuggestionsFunction, filterSuggestions } from '@/lib/filter';
-import { cn, extractFilterValue, type FilterSuggestion, FOLDER_NAMES } from '@/lib/utils';
+import { cn, extractFilterValue, type FilterSuggestion } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, SlidersHorizontal, CalendarIcon, X } from 'lucide-react';
+import { Search, CalendarIcon } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { type DateRange } from 'react-day-picker';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -19,55 +11,54 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
-import { Toggle } from '../ui/toggle';
 import { format } from 'date-fns';
 import React from 'react';
 
-function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRange) => void }) {
-  const t = useTranslations('common.searchBar');
+// function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRange) => void }) {
+//   const t = useTranslations('common.searchBar');
 
-  return (
-    <div className="grid gap-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id="date"
-            variant={'outline'}
-            className={cn(
-              'justify-start text-left font-normal',
-              !date && 'text-muted-foreground',
-              'bg-muted/50 h-10 rounded-md',
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, 'LLL dd, y')} - {format(date.to, 'LLL dd, y')}
-                </>
-              ) : (
-                format(date.from, 'LLL dd, y')
-              )
-            ) : (
-              <span>{t('pickDateRange')}</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto rounded-md p-0" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={(range) => range && setDate(range)}
-            numberOfMonths={useIsMobile() ? 1 : 2}
-            disabled={(date) => date > new Date()}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
+//   return (
+//     <div className="grid gap-2">
+//       <Popover>
+//         <PopoverTrigger asChild>
+//           <Button
+//             id="date"
+//             variant={'outline'}
+//             className={cn(
+//               'justify-start text-left font-normal',
+//               !date && 'text-muted-foreground',
+//               'bg-muted/50 h-10 rounded-md',
+//             )}
+//           >
+//             <CalendarIcon className="mr-2 h-4 w-4" />
+//             {date?.from ? (
+//               date.to ? (
+//                 <>
+//                   {format(date.from, 'LLL dd, y')} - {format(date.to, 'LLL dd, y')}
+//                 </>
+//               ) : (
+//                 format(date.from, 'LLL dd, y')
+//               )
+//             ) : (
+//               <span>{t('pickDateRange')}</span>
+//             )}
+//           </Button>
+//         </PopoverTrigger>
+//         <PopoverContent className="w-auto rounded-md p-0" align="start">
+//           <Calendar
+//             initialFocus
+//             mode="range"
+//             defaultMonth={date?.from}
+//             selected={date}
+//             onSelect={(range) => range && setDate(range)}
+//             numberOfMonths={useIsMobile() ? 1 : 2}
+//             disabled={(date) => date > new Date()}
+//           />
+//         </PopoverContent>
+//       </Popover>
+//     </div>
+//   );
+// }
 
 type SearchForm = {
   subject: string;
@@ -80,7 +71,7 @@ type SearchForm = {
 };
 
 export function SearchBar() {
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  // const [popoverOpen, setPopoverOpen] = useState(false);
   const [, setSearchValue] = useSearchValue();
   const [isSearching, setIsSearching] = useState(false);
   const [value, setValue] = useState<SearchForm>({
@@ -605,7 +596,7 @@ export function SearchBar() {
         <Input
           placeholder={t('common.searchBar.search')}
           ref={inputRef}
-          className="bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none ring-1 transition-colors focus-visible:ring-2"
+          className="bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none r"
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           value={formValues.q}
@@ -613,7 +604,7 @@ export function SearchBar() {
         />
         {renderSuggestions()}
         {renderDatePicker()}
-        <div className="absolute right-1 z-20 flex items-center gap-1">
+        {/* <div className="absolute right-1 z-20 flex items-center gap-1">
           {filtering && (
             <button
               type="button"
@@ -820,7 +811,7 @@ export function SearchBar() {
               </div>
             </PopoverContent>
           </Popover>
-        </div>
+        </div> */}
       </form>
     </div>
   );
