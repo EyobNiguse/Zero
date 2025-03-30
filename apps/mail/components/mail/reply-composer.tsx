@@ -1,6 +1,13 @@
 'use client';
 
-import { type Dispatch, type SetStateAction, useRef, useState, useEffect, useCallback, useReducer } from 'react';
+import {
+  type Dispatch,
+  type SetStateAction,
+  useRef,
+  useState,
+  useEffect,
+  useCallback, useReducer,
+} from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { ArrowUp, Paperclip, Reply, X, Plus, Sparkles, Check, X as XIcon, Forward } from 'lucide-react';
@@ -8,6 +15,7 @@ import { cleanEmailAddress, truncateFileName, cn, convertJSONToHTML, createAIJso
 import { Separator } from '@/components/ui/separator';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
+import { useSession } from '@/lib/auth-client';
 import type { ParsedMessage } from '@/types';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
@@ -102,6 +110,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: Rep
   
   // Keep attachments separate as it's an array that needs direct manipulation
   const [attachments, setAttachments] = useState<File[]>([]);
+  const { data: session } = useSession();
   
   // Use reducers instead of multiple useState
   const [composerState, composerDispatch] = useReducer(composerReducer, {
@@ -610,6 +619,14 @@ ${email.decodedBody || 'No content'}
               }}
               onBlur={() => {
                 composerDispatch({ type: 'SET_EDITOR_FOCUSED', payload: false });
+              }}
+              myInfo={{
+                name: session?.user.name,
+                email: session?.user.email,
+              }}
+              senderInfo={{
+                name: emailData[0]?.sender?.name,
+                email: emailData[0]?.sender?.email,
               }}
             />
           </div>
