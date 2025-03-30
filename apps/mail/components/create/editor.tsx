@@ -549,11 +549,11 @@ export default function Editor({
                 }
 
                 // Handle Command+Enter (Mac) or Ctrl+Enter (Windows/Linux)
-                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-                  event.preventDefault();
-                  handleCommandEnter();
-                  return true;
-                }
+                // if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                //   event.preventDefault();
+                //   handleCommandEnter();
+                //   return true;
+                // }
                 return handleCommandNavigation(event);
               },
               focus: () => {
