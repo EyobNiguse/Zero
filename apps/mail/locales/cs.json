@@ -19,8 +19,8 @@
     },
     "commandPalette": {
       "title": "Paleta příkazů",
-      "description": "Quick navigation and actions for Mail-0",
-      "placeholder": "Type a command or search...",
+      "description": "Rychlá navigace a akce v Mail-0",
+      "placeholder": "Napište příkaz nebo vyhledejte...",
       "noResults": "Nebyly nalezeny žádné výsledky",
       "groups": {
         "mail": "Pošta",
@@ -43,11 +43,11 @@
         "toggleTheme": "Přepnout motiv",
         "backToMail": "Zpět na Email",
         "goToDocs": "Přejít do dokumentace",
-        "helpWithShortcuts": "Help with shortcuts"
+        "helpWithShortcuts": "Nápověda se zkratkami"
       }
     },
     "searchBar": {
-      "pickDateRange": "Pick a date or a range",
+      "pickDateRange": "Vyberte datum nebo rozsah",
       "search": "Hledat",
       "clearSearch": "Vymazat vyhledávání",
       "advancedSearch": "Pokročilé vyhledávání",
@@ -64,7 +64,13 @@
       "hasAttachment": "Má přílohu",
       "starred": "Oblíbené",
       "applyFilters": "Použít filtry",
-      "reset": "Obnovit"
+      "reset": "Obnovit",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Zákaznická podpora",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {příloh} one {příloha} few {přílohy} many {příloh} other {příloh}}",
       "fileCount": "{count, plural, =0 {souborů} one {soubor} few {soubory} many {souborů} other {souborů}}",
       "saveDraft": "Uložit koncept",
-      "send": "Odeslat"
+      "send": "Odeslat",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Podrobnosti",
@@ -116,29 +123,29 @@
       "archive": "Archivovat",
       "reply": "Odpovědět",
       "moreOptions": "Více možností",
-      "moveToSpam": "Move to Spam",
+      "moveToSpam": "Přesunout do šložky Spam",
       "replyAll": "Odpovědět všem",
       "forward": "Přeposlat",
-      "markAsUnread": "Mark as Unread",
-      "markAsRead": "Mark as Read",
+      "markAsUnread": "Označit jako nepřečtené",
+      "markAsRead": "Označit jako přečtené",
       "addLabel": "Přidat značku",
       "muteThread": "Ztlumit vlákno",
-      "favourites": "Favourites"
+      "favourites": "Oblíbené"
     },
     "notes": {
       "title": "Poznámky",
       "empty": "Žádné poznámky k tomuto emailu",
-      "emptyDescription": "Add notes to keep track of important information or follow-ups.",
+      "emptyDescription": "Přidejte poznámky a sledujte důležité informace a následné kroky.",
       "addNote": "Přidat poznámku",
       "addYourNote": "Přidat poznámku zde...",
       "editNote": "Upravit poznámku",
       "deleteNote": "Smazat poznámku",
-      "deleteConfirm": "Are you sure you want to delete this note?",
-      "deleteConfirmDescription": "This action cannot be undone.",
+      "deleteConfirm": "Opravdu chcete smazat tuto poznámku?",
+      "deleteConfirmDescription": "Tuto akci nelze vrátit zpět.",
       "cancel": "Zrušit",
       "delete": "Smazat",
       "save": "Uložit poznámku",
-      "toSave": "to save",
+      "toSave": "uložit",
       "label": "Značka:",
       "search": "Hledat poznámky...",
       "noteCount": "{count, plural, =0 {Přidat poznámku} one {# poznámka} few {# poznámky} many {# poznámky} other {# poznámek}}",
@@ -162,9 +169,9 @@
         "failedToAddNote": "Nepodařilo se přidat poznámku",
         "failedToUpdateNote": "Nepodařilo se aktualizovat poznámku",
         "failedToDeleteNote": "Nepodařilo se odstranit poznámku",
-        "failedToUpdateNoteColor": "Failed to update note color",
-        "noValidNotesToReorder": "No valid notes to reorder",
-        "failedToReorderNotes": "Failed to reorder notes"
+        "failedToUpdateNoteColor": "Nepodařilo se aktualizovat barvu poznámky",
+        "noValidNotesToReorder": "Žádné platné poznámky k přeřazení",
+        "failedToReorderNotes": "Nepodařilo se přeřadit poznámky"
       },
       "colors": {
         "default": "Výchozí",
@@ -186,16 +193,16 @@
       }
     },
     "settings": {
-      "notFound": "Settings not found",
-      "saved": "Settings saved",
-      "failedToSave": "Failed to save settings",
-      "languageChanged": "Language changed to {locale}"
+      "notFound": "Nastavení nebylo nalezeno",
+      "saved": "Nastavení bylo uloženo",
+      "failedToSave": "Nepodařilo se uložit nastavení",
+      "languageChanged": "Jazyk změněn na {locale}"
     },
     "mail": {
       "replies": "{count, plural, =0 {odpovědí} one {#odpověď} few {#odpovědi} many {#odpovědí} other {#odpovědí}}",
-      "deselectAll": "Deselected all emails",
-      "selectedEmails": "Selected {count} emails",
-      "noEmailsToSelect": "No emails to select",
+      "deselectAll": "Zrušit všechny emaily",
+      "selectedEmails": "Vybráno {count} emailů",
+      "noEmailsToSelect": "Žádné emaily k vybrání",
       "markedAsRead": "Ozančit jako přečtené",
       "markedAsUnread": "Označeno jako nepřečtené",
       "failedToMarkAsRead": "Nepodařilo se označit jako přečtené",
@@ -209,18 +216,18 @@
       "archive": "Archiv",
       "moveToTrash": "Přesunout do Odstraněné pošty",
       "markAsUnread": "Označit jako nepřečtené",
-      "markAsRead": "Mark as Read",
+      "markAsRead": "Označit jako přečtené",
       "addStar": "Přidat hvězdu",
       "muteThread": "Ztlumit vlákno",
       "moving": "Přesouvání...",
       "moved": "Přesunuto",
       "errorMoving": "Chyba při přesunutí",
-      "reply": "Reply",
-      "replyAll": "Reply All",
-      "forward": "Forward",
-      "labels": "Labels",
-      "createNewLabel": "Create New Label",
-      "noLabelsAvailable": "No labels available"
+      "reply": "Odpovědět",
+      "replyAll": "Odpovědět všem",
+      "forward": "Přeposlat",
+      "labels": "Štítky",
+      "createNewLabel": "Vytvořit nový štítek",
+      "noLabelsAvailable": "Nejsou dostupné žádné štítky"
     }
   },
   "navigation": {
@@ -255,16 +262,19 @@
     "settings": {
       "general": {
         "title": "Obecné",
-        "description": "Manage settings for your language and email display preferences.",
+        "description": "Spravujte nastavení jazyka a zobrazení emailů.",
         "language": "Jazyk",
-        "selectLanguage": "Select a language",
+        "selectLanguage": "Vybrat jazyk",
         "timezone": "Časové pásmo",
-        "selectTimezone": "Select a timezone",
+        "selectTimezone": "Vybrat časové pásmo",
         "dynamicContent": "Dynamický obsah",
-        "dynamicContentDescription": "Allow emails to display dynamic content.",
+        "dynamicContentDescription": "Povolit emailům zobrazení dynamického obsahu.",
         "externalImages": "Zobrazit externí obrázky",
         "externalImagesDescription": "Povolit zobrazení emailů z externích zdrojů.",
-        "languageChangedTo": "Jazyk změněn na {language}"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "Propojení emailu",
@@ -284,7 +294,7 @@
         "title": "Zabezpečení",
         "description": "Spravujte své zabezpečení a ochranu účtu.",
         "twoFactorAuth": "Dvoufázové ověření",
-        "twoFactorAuthDescription": "Add an extra layer of security to your account",
+        "twoFactorAuthDescription": "Přidejte ke svému účtu další vrstu zabezpečení",
         "loginNotifications": "Upozornění o přihlášení",
         "loginNotificationsDescription": "Získejte upozornění při novém pokusu o přihlášení",
         "deleteAccount": "Smazat účet"
@@ -297,7 +307,7 @@
       },
       "shortcuts": {
         "title": "Klávesové zkratky",
-        "description": "View and customize keyboard shortcuts for quick actions.",
+        "description": "Zobrazit a přizpůsobit klávesové zkratky pro rychlé akce.",
         "actions": {
           "newEmail": "Nový email",
           "sendEmail": "Odeslat email",
@@ -315,7 +325,7 @@
           "archiveEmail": "Archvivoat email",
           "markAsSpam": "Označit jako spam",
           "moveToFolder": "Přesunout do šložky",
-          "undoLastAction": "Undo Last Action",
+          "undoLastAction": "Zrušit poslední akci",
           "viewEmailDetails": "Zobrazit detaily emailu",
           "goToDrafts": "Přejít do Konceptů",
           "expandEmailView": "Rozbalit zobrazení emailu",
