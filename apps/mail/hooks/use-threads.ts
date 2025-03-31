@@ -124,24 +124,14 @@ export const useThreads = () => {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
+      refreshInterval: 30000,
+      revalidateOnMount: true,
+      revalidateIfStale: true,
     },
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
-  const threads = useMemo(
-    () =>
-      data
-        ? data
-            .flatMap((e) => e.threads)
-            .sort((a, b) => {
-              // Parse dates and compare them (newest first)
-              const dateA = new Date(a.receivedOn || '');
-              const dateB = new Date(b.receivedOn || '');
-              return dateB.getTime() - dateA.getTime();
-            })
-        : [],
-    [data],
-  );
+  const threads = data?.[0]?.threads || [];
   const isEmpty = useMemo(() => threads.length === 0, [threads]);
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
   const loadMore = async () => {
