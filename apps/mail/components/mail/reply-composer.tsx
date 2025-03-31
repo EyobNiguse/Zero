@@ -50,6 +50,7 @@ interface ComposerState {
   isEditorFocused: boolean;
   editorKey: number;
   editorInitialValue?: JSONContent;
+  contentHeight: number;
 }
 
 interface AIState {
@@ -65,7 +66,8 @@ type ComposerAction =
   | { type: 'SET_DRAGGING'; payload: boolean }
   | { type: 'SET_EDITOR_FOCUSED'; payload: boolean }
   | { type: 'INCREMENT_EDITOR_KEY' }
-  | { type: 'SET_EDITOR_INITIAL_VALUE'; payload: JSONContent | undefined };
+  | { type: 'SET_EDITOR_INITIAL_VALUE'; payload: JSONContent | undefined }
+  | { type: 'SET_CONTENT_HEIGHT'; payload: number };
 
 type AIAction =
   | { type: 'SET_LOADING'; payload: boolean }
@@ -88,6 +90,8 @@ const composerReducer = (state: ComposerState, action: ComposerAction): Composer
       return { ...state, editorKey: state.editorKey + 1 };
     case 'SET_EDITOR_INITIAL_VALUE':
       return { ...state, editorInitialValue: action.payload };
+    case 'SET_CONTENT_HEIGHT':
+      return { ...state, contentHeight: action.payload };
     default:
       return state;
   }
@@ -132,6 +136,7 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode = 'rep
     isEditorFocused: false,
     editorKey: 0,
     editorInitialValue: undefined,
+    contentHeight: 150,
   });
 
   const [aiState, aiDispatch] = useReducer(aiReducer, {
@@ -654,9 +659,13 @@ ${email.decodedBody || 'No content'}
       <form
         ref={composerRef}
         className={cn(
-          'border-border ring-offset-background flex h-fit flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-shadow duration-300 ease-in-out',
+          'border-border ring-offset-background flex flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
           composerState.isEditorFocused ? 'ring-2 ring-[#3D3D3D] ring-offset-1' : '',
         )}
+        style={{
+          minHeight: '150px',
+          maxHeight: '800px',
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -675,15 +684,26 @@ ${email.decodedBody || 'No content'}
         {/* Recipient input for forward mode */}
         {mode === 'forward' && <RecipientInput />}
 
-        <div className="w-full flex-grow">
+        {/* Editor container with fixed menu and growing content */}
+        <div className="flex flex-col flex-grow">
           <div 
-            className="max-h-[800px] min-h-[150px] w-full overflow-y-auto"
-            style={{ height: `${editorHeight}px` }}
+            className="w-full overflow-y-auto"
+            style={{ 
+              height: `${composerState.contentHeight}px`,
+              minHeight: '150px',
+              maxHeight: '600px'
+            }}
           >
             <Editor
               key={composerState.editorKey}
               onChange={(content) => {
                 form.setValue('messageContent', content);
+                // Update content height when content changes
+                const editorElement = document.querySelector('.ProseMirror');
+                if (editorElement instanceof HTMLElement) {
+                  const newHeight = Math.min(600, Math.max(150, editorElement.scrollHeight + 50));
+                  composerDispatch({ type: 'SET_CONTENT_HEIGHT', payload: newHeight });
+                }
               }}
               initialValue={composerState.editorInitialValue}
               onCommandEnter={handleCommandEnter}
