@@ -64,7 +64,13 @@
       "hasAttachment": "Anhang vorhanden",
       "starred": "Favoriten",
       "applyFilters": "Filter anwenden",
-      "reset": "Zurücksetzen"
+      "reset": "Zurücksetzen",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Kundensupport",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {attachments} one {attachment} other {attachments}}",
       "fileCount": "{count, plural, =0 {files} one {file} other {files}}",
       "saveDraft": "Entwurf speichern",
-      "send": "Senden"
+      "send": "Senden",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Details",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "Dynamischen Inhalt erlauben",
         "externalImages": "Externe Bilder anzeigen",
         "externalImagesDescription": "Externe Bilder erlauben",
-        "languageChangedTo": "Sprache zu {language} geändert"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "E-Mail Verbindungen",
