@@ -120,7 +120,7 @@ type FormData = {
   to: string;
 };
 
-export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode }: ReplyComposeProps) {
+export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode = 'reply' }: ReplyComposeProps) {
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
 
@@ -542,9 +542,94 @@ ${email.decodedBody || 'No content'}
     return false; // Return false to allow normal tab behavior
   }, [aiState.showOptions, aiState.suggestion]);
 
+  // Helper function to render the header content based on mode
+  const renderHeaderContent = () => {
+    if (mode === 'forward') {
+      return (
+        <div className="flex items-center gap-2">
+          <Forward className="h-4 w-4" />
+          <p className="truncate">Forward email</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <Reply className="h-4 w-4" />
+        <p className="truncate">
+          {emailData[emailData.length - 1]?.sender?.name} (
+          {emailData[emailData.length - 1]?.sender?.email})
+        </p>
+      </div>
+    );
+  };
+
+  // Extract recipient input component for reusability
+  const RecipientInput = () => (
+    <div className="ml-1 flex items-center">
+      <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] font-[600] opacity-50">
+        {t('common.mailDisplay.to')}
+      </div>
+      <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+        {toEmails.map((email, index) => (
+          <EmailTag 
+            key={index} 
+            email={email} 
+            onRemove={() => {
+              setToEmails((emails) => emails.filter((_, i) => i !== index));
+              form.setValue('to', toEmails.join(', '));
+            }} 
+          />
+        ))}
+        <input
+          type="email"
+          className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+          placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+          value={toInput}
+          onChange={(e) => setToInput(e.target.value)}
+          onKeyDown={handleEmailInputKeyDown}
+          onBlur={handleEmailInputBlur}
+        />
+      </div>
+    </div>
+  );
+
+  // Extract email tag component
+  const EmailTag = ({ email, onRemove }: { email: string; onRemove: () => void }) => (
+    <div className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium">
+      <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+        {email}
+      </span>
+      <button
+        type="button"
+        className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+        onClick={onRemove}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+
+  // Extract email input handlers
+  const handleEmailInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
+      e.preventDefault();
+      handleAddEmail(toInput);
+    } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
+      setToEmails((emails) => emails.slice(0, -1));
+      form.setValue('to', toEmails.join(', '));
+    }
+  };
+
+  const handleEmailInputBlur = () => {
+    if (toInput.trim()) {
+      handleAddEmail(toInput);
+    }
+  };
+
+  // Simplified composer visibility check
   if (!composerIsOpen) {
-    // Only show the reply button if we're not in forward mode
-    if (mode !== 'forward') {
+    if (mode === 'reply') {
       return (
         <div className="bg-offsetLight dark:bg-offsetDark w-full p-2">
           <Button
@@ -561,7 +646,6 @@ ${email.decodedBody || 'No content'}
         </div>
       );
     }
-    // Return null if in forward mode to hide the button completely
     return null;
   }
 
@@ -576,93 +660,20 @@ ${email.decodedBody || 'No content'}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onSubmit={(e) => {
-          e.preventDefault();
-        }}
+        onSubmit={(e) => e.preventDefault()}
         onKeyDown={handleKeyDown}
       >
-        {composerState.isDragging && (
-          <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
-            <div className="text-muted-foreground flex flex-col items-center gap-2">
-              <Paperclip className="text-muted-foreground h-12 w-12" />
-              <p className="text-lg font-medium">{t('common.replyCompose.dropFiles')}</p>
-            </div>
-          </div>
-        )}
+        {/* Drag overlay */}
+        {composerState.isDragging && <DragOverlay />}
 
+        {/* Header */}
         <div className="text-muted-foreground flex items-center justify-between text-sm">
-          {mode !== 'forward' && (
-            <div className="flex items-center gap-2">
-            <Reply className="h-4 w-4" />
-            <p className="truncate">
-              {emailData[emailData.length - 1]?.sender?.name} (
-              {emailData[emailData.length - 1]?.sender?.email})
-            </p>
-          </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.preventDefault();
-              toggleComposer();
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          {renderHeaderContent()}
+          <CloseButton onClick={toggleComposer} />
         </div>
 
-        {mode === 'forward' && (
-          <div className="ml-1 flex items-center">
-            <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] font-[600] opacity-50">
-              {t('common.mailDisplay.to')}
-            </div>
-            <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-              {toEmails.map((email, index) => (
-                <div
-                  key={index}
-                  className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
-                >
-                  <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
-                    {email}
-                  </span>
-                  <button
-                    type="button"
-                    className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
-                    onClick={() => {
-                      setToEmails((emails) => emails.filter((_, i) => i !== index));
-                      form.setValue('to', toEmails.join(', '));
-                    }}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              <input
-                type="email"
-                className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
-                value={toInput}
-                onChange={(e) => setToInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
-                    e.preventDefault();
-                    handleAddEmail(toInput);
-                  } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-                    setToEmails((emails) => emails.slice(0, -1));
-                    form.setValue('to', toEmails.join(', '));
-                  }
-                }}
-                onBlur={() => {
-                  if (toInput.trim()) {
-                    handleAddEmail(toInput);
-                  }
-                }}
-              />
-            </div>
-          </div>
-        )}
+        {/* Recipient input for forward mode */}
+        {mode === 'forward' && <RecipientInput />}
 
         <div className="w-full flex-grow">
           <div 
@@ -848,3 +859,27 @@ ${email.decodedBody || 'No content'}
     </div>
   );
 }
+
+// Extract smaller components
+const DragOverlay = () => (
+  <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
+    <div className="text-muted-foreground flex flex-col items-center gap-2">
+      <Paperclip className="text-muted-foreground h-12 w-12" />
+      <p className="text-lg font-medium">{t('common.replyCompose.dropFiles')}</p>
+    </div>
+  </div>
+);
+
+const CloseButton = ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
+  <Button
+    variant="ghost"
+    size="icon"
+    className="h-6 w-6"
+    onClick={(e) => {
+      e.preventDefault();
+      onClick(e);
+    }}
+  >
+    <X className="h-4 w-4" />
+  </Button>
+);

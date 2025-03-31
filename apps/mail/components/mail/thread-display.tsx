@@ -472,20 +472,18 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
             </div>
           </ScrollArea>
           <div className={`relative ${isFullscreen ? '' : 'top-1'} flex-shrink-0`}>
-            <ReplyCompose 
-              emailData={emailData} 
-              isOpen={isReplyOpen} 
-              setIsOpen={setIsReplyOpen}
-              mode="reply"
+            <ReplyCompose
+              emailData={emailData}
+              isOpen={isReplyOpen || isForwardOpen}
+              setIsOpen={(open) => {
+                if (isForwardOpen) {
+                  setIsForwardOpen(open);
+                } else {
+                  setIsReplyOpen(open);
+                }
+              }}
+              mode={isForwardOpen ? 'forward' : 'reply'}
             />
-            {isForwardOpen && (
-              <ReplyCompose 
-                emailData={emailData} 
-                isOpen={isForwardOpen} 
-                setIsOpen={setIsForwardOpen}
-                mode="forward"
-              />
-            )}
           </div>
         </div>
       </div>
