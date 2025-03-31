@@ -64,7 +64,13 @@
       "hasAttachment": "Ir pielikums",
       "starred": "Ar zvaigznīti",
       "applyFilters": "Lietot filtrus",
-      "reset": "Atstatīt"
+      "reset": "Atstatīt",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Klientu atbalsts",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, zero {}=0 {pielikumi} one {pielikums} other {pielikumi}}",
       "fileCount": "{count, plural, zero {}=0 {faili} one {fails} other {faili}}",
       "saveDraft": "Saglabāt melnrakstu",
-      "send": "Sūtīt"
+      "send": "Sūtīt",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Detaļas",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "Atļaut e-pastiem rādīt dinamisku saturu.",
         "externalImages": "Rādīt ārējos attēlus",
         "externalImagesDescription": "Atļaut e-pastiem rādīt attēlus no ārējiem avotiem.",
-        "languageChangedTo": "Valoda nomainīta uz {language}"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "E-pasta savienojumi",

@@ -64,7 +64,13 @@
       "hasAttachment": "अटैचमेंट है",
       "starred": "स्टार के निशान वाले",
       "applyFilters": "फिल्टर लगाएं",
-      "reset": "रीसेट करें"
+      "reset": "रीसेट करें",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "कस्टमर सपोर्ट",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {अटैचमेंटस} one {अटैचमेंट} other {अटैचमेंटस}}",
       "fileCount": "{count, plural, =0 {फ़ाइलें} one {फाइल्} other {फ़ाइलें}}",
       "saveDraft": "ड्राफ्ट सेव करें",
-      "send": "भेजें"
+      "send": "भेजें",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "डिटेल्स",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "ईमेल्स को डायनामिक कंटेंट दिखाने की अनुमति दें।",
         "externalImages": "बाहरी इमेजेस प्रदर्शित करें",
         "externalImagesDescription": "ईमेल्स को बाहरी स्रोतों से इमेजेस दिखाने की अनुमति दें।",
-        "languageChangedTo": "भाषा {language} में बदली गई"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "ईमेल कनेक्शन्स",

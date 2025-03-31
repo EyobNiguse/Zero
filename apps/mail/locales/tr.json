@@ -64,7 +64,13 @@
       "hasAttachment": "Dosya Eki Var",
       "starred": "Yıldızlı",
       "applyFilters": "Filtreleri Uygula",
-      "reset": "Sıfırla"
+      "reset": "Sıfırla",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Müşteri Desteği",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {ekler} one {ek} other {ekler}}",
       "fileCount": "{count, plural, =0 {dosyalar} one {dosya} other {dosyalar}}",
       "saveDraft": "Taslağı kaydet",
-      "send": "Gönder"
+      "send": "Gönder",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Detaylar",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "E-postaların dinamik içerik göstermesine izin verin.",
         "externalImages": "Harici Görselleri Göster",
         "externalImagesDescription": "E-postaların harici kaynaklardan görselleri göstermesine izin verin.",
-        "languageChangedTo": "{language} dili seçildi"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "E-posta Bağlantıları",

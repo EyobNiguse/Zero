@@ -64,7 +64,13 @@
       "hasAttachment": "Есть вложения",
       "starred": "Звездочечка",
       "applyFilters": "Применить фильтры",
-      "reset": "Сбросить"
+      "reset": "Сбросить",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Поддержка",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {attachments} one {attachment} other {attachments}}",
       "fileCount": "{count, plural, =0 {files} one {file} other {files}}",
       "saveDraft": "Сохранить черновик",
-      "send": "Отправить"
+      "send": "Отправить",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Подробнее",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "Позволяет электронной почте отображать динамический контент.",
         "externalImages": "Отображать внешние изображения",
         "externalImagesDescription": "Позволяет электронной почте отображать изображения из внешних источников.",
-        "languageChangedTo": "Язык изменен на {language}"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "Подключения",

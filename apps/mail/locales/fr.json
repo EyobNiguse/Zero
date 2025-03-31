@@ -64,7 +64,13 @@
       "hasAttachment": "Avec pièce jointe",
       "starred": "Étoilé",
       "applyFilters": "Appliquer les filtres",
-      "reset": "Réinitialiser"
+      "reset": "Réinitialiser",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Support aux clients",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {pièces jointes} one {pièce jointe} other {pièces jointes}}",
       "fileCount": "{count, plural, =0 {fichiers} one {fichier} other {fichiers}}",
       "saveDraft": "Enregistrer le brouillon",
-      "send": "Envoyer"
+      "send": "Envoyer",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Détails",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "Autoriser les courriels à afficher du contenu dynamique.",
         "externalImages": "Afficher les images externes",
         "externalImagesDescription": "Autoriser les courriels à afficher des images provenant de sources externes.",
-        "languageChangedTo": "Langue changée en {language}"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "Connexions de courriels",

@@ -64,7 +64,13 @@
       "hasAttachment": "Té adjunt",
       "starred": "Destacat",
       "applyFilters": "Aplicar filtres",
-      "reset": "Restablir"
+      "reset": "Restablir",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "Atenció al client",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {adjunts} one {adjunt} other {adjunts}}",
       "fileCount": "{count, plural, =0 {fitxers} one {fitxer} other {fitxers}}",
       "saveDraft": "Desa l'esborrany",
-      "send": "Enviar"
+      "send": "Enviar",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "Detalls",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "Permet que els correus mostrin contingut dinàmic.",
         "externalImages": "Mostrar imatges externes",
         "externalImagesDescription": "Permet que els correus mostrin imatges des de fonts externes.",
-        "languageChangedTo": "Idioma canviat a {language}"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "Connexions Correu",

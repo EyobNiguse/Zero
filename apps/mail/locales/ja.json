@@ -64,7 +64,13 @@
       "hasAttachment": "添付ファイルあり",
       "starred": "スター付き",
       "applyFilters": "フィルタを適用",
-      "reset": "リセット"
+      "reset": "リセット",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "カスタマーサポート",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {attachments} other {attachments}}",
       "fileCount": "{count, plural, =0 {files} other {files}}",
       "saveDraft": "下書きを保存",
-      "send": "送信"
+      "send": "送信",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "詳細",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "電子メールの動的なコンテンツの表示を許可します。",
         "externalImages": "外部画像を表示する",
         "externalImagesDescription": "電子メールによる外部ソースからの画像の表示を許可します。",
-        "languageChangedTo": "{language}に切り替えました"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "メールの接続",
