@@ -75,7 +75,7 @@ const getKey = (
   previousPageData: RawResponse | null,
   [connectionId, folder, query, max, labelIds]: FetchEmailsTuple,
 ): FetchEmailsTuple | null => {
-  if (previousPageData && !previousPageData.nextPageToken) return null; // reached the end
+  if (previousPageData && !previousPageData.nextPageToken) return null; // reached the end);
   return [connectionId, folder, query, max, labelIds, previousPageData?.nextPageToken];
 };
 
@@ -96,10 +96,13 @@ export const useThreads = () => {
     },
     fetchEmails,
     {
+      keepPreviousData: true,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      refreshInterval: 30000 * 2,
       revalidateOnMount: true,
+      revalidateAll: false,
+      parallel: true,
+      revalidateFirstPage: true,
     },
   );
 
