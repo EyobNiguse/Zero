@@ -42,6 +42,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
+import Link from 'next/link';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -67,6 +68,7 @@ const Thread = memo(
     const t = useTranslations();
     const searchParams = useSearchParams();
     const threadIdParam = searchParams.get('threadId');
+    const { folder } = useParams<{ folder: string }>();
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
@@ -132,10 +134,10 @@ const Thread = memo(
     }, []);
 
     return (
-      <div className="p-1">
-        <div
+      <div className="p-1" onClick={onClick ? onClick(message) : undefined}>
+        <Link
+          href={`/mail/${folder}?threadId=${message.threadId ?? message.id}`}
           data-thread-id={message.id}
-          onClick={onClick ? onClick(message) : undefined}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           key={message.id}
@@ -217,7 +219,7 @@ const Thread = memo(
               </div>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     );
   },
@@ -445,31 +447,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         }
         return;
       }
-
-      const threadId = message.threadId ?? message.id;
-      const currentParams = new URLSearchParams(searchParams.toString());
-
-      if (threadIdParam === threadId) {
-        // Deselect the thread and update URL to remove threadId
-        currentParams.delete('threadId');
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-
-        // Update URL to remove threadId
-        router.push(`/mail/${folder}?${currentParams.toString()}`);
-      } else {
-        // Select the thread and update URL with threadId
-        currentParams.set('threadId', threadId);
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-
-        // Update URL with threadId
-        router.push(`/mail/${folder}?${currentParams.toString()}`);
-      }
     },
     [getSelectMode, folder, searchParams, items, handleMouseEnter],
   );
@@ -495,8 +472,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           {isLoading || searchValue.isLoading ? (
             <div className="flex flex-col items-center gap-4">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-              <p className="text-sm text-muted-foreground">
-                {searchValue.isAISearching ? t('common.searchBar.aiSearching') : t('common.searchBar.searching')}
+              <p className="text-muted-foreground text-sm">
+                {searchValue.isAISearching
+                  ? t('common.searchBar.aiSearching')
+                  : t('common.searchBar.searching')}
               </p>
             </div>
           ) : (

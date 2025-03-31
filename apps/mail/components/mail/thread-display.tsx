@@ -24,9 +24,8 @@ import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
 import { Inbox } from 'lucide-react';
-import { useMail } from './use-mail';
 import { toast } from 'sonner';
-import { ForwardIcon } from '../icons/animated/forward';
+import Link from 'next/link';
 
 interface ThreadDisplayProps {
   mail?: any;
@@ -378,12 +377,9 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
       >
         <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[10px]">
           <div className="flex flex-1 items-center gap-2">
-            <ThreadActionButton
-              icon={XIcon}
-              label={t('common.actions.close')}
-              disabled={!emailData}
-              onClick={handleClose}
-            />
+            <Link href={`/mail/${folder}`}>
+              <XIcon className="size-6" />
+            </Link>
             <ThreadSubject subject={emailData[0]?.subject} />
           </div>
           <div className="flex items-center md:gap-2">

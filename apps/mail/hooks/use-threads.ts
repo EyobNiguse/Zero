@@ -98,9 +98,8 @@ export const useThreads = () => {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      refreshInterval: 30000,
+      refreshInterval: 30000 * 2,
       revalidateOnMount: true,
-      revalidateIfStale: true,
     },
   );
 
