@@ -21,7 +21,7 @@ type FetchEmailsTuple = [
   q?: string,
   max?: number,
   labelIds?: string[],
-  pageToken?: string | number,
+  pageToken?: string,
 ];
 
 // TODO: improve the filters
@@ -76,33 +76,7 @@ const getKey = (
   [connectionId, folder, query, max, labelIds]: FetchEmailsTuple,
 ): FetchEmailsTuple | null => {
   if (previousPageData && !previousPageData.nextPageToken) return null; // reached the end
-
-  console.log('got key', [
-    connectionId,
-    folder,
-    query,
-    max,
-    labelIds,
-    previousPageData ? previousPageData.nextPageToken : '0',
-  ]);
-
-  return [
-    connectionId,
-    folder,
-    query,
-    max,
-    labelIds,
-    previousPageData ? previousPageData.nextPageToken : 0,
-  ];
-};
-
-// Add fetcher function
-const fetcher = async (url: string) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('Failed to fetch threads');
-  }
-  return response.json();
+  return [connectionId, folder, query, max, labelIds, previousPageData?.nextPageToken];
 };
 
 export const useThreads = () => {
@@ -131,7 +105,7 @@ export const useThreads = () => {
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
-  const threads = data?.[0]?.threads || [];
+  const threads = useMemo(() => (data ? data.flatMap((e) => e.threads) : []), [data]);
   const isEmpty = useMemo(() => threads.length === 0, [threads]);
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
   const loadMore = async () => {
