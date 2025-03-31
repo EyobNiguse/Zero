@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import AttachmentsAccordion from './attachments-accordion';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import AttachmentDialog from './attachment-dialog';
 import { useSummary } from '@/hooks/use-summary';
 import { TextShimmer } from '../ui/text-shimmer';
@@ -92,6 +92,8 @@ type Props = {
 
 const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+  const [unsubscribed, setUnsubscribed] = useState(false);
+  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<null | {
     id: string;
     name: string;
@@ -115,9 +117,6 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
       setIsCollapsed(false);
     }
   }, [index]);
-
-  const [unsubscribed, setUnsubscribed] = useState(false);
-  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
 
   const listUnsubscribeAction = useMemo(
     () =>
@@ -383,4 +382,4 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
   );
 };
 
-export default MailDisplay;
+export default memo(MailDisplay);

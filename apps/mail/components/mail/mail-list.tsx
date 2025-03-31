@@ -1,6 +1,17 @@
 'use client';
 
 import {
+  AlertTriangle,
+  Bell,
+  Briefcase,
+  ChevronDown,
+  Star,
+  StickyNote,
+  Tag,
+  User,
+  Users,
+} from 'lucide-react';
+import {
   type ComponentProps,
   memo,
   useCallback,
@@ -10,7 +21,6 @@ import {
   useState,
 } from 'react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
-import { AlertTriangle, Bell, Briefcase, Star, StickyNote, Tag, User, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -29,9 +39,10 @@ import type { VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
-import { Virtuoso } from 'react-virtuoso';
+import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
+import Link from 'next/link';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -57,11 +68,11 @@ const Thread = memo(
     const t = useTranslations();
     const searchParams = useSearchParams();
     const threadIdParam = searchParams.get('threadId');
+    const { folder } = useParams<{ folder: string }>();
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
     const [isHovered, setIsHovered] = useState(false);
-
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
       return threadId === threadIdParam;
@@ -123,11 +134,10 @@ const Thread = memo(
     }, []);
 
     return (
-      <div className="p-1">
-        {/**/}
-        <div
+      <div className="p-1" onClick={onClick ? onClick(message) : undefined}>
+        <Link
+          href={`/mail/${folder}?threadId=${message.threadId ?? message.id}`}
           data-thread-id={message.id}
-          onClick={onClick ? onClick(message) : undefined}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           key={message.id}
@@ -152,7 +162,6 @@ const Thread = memo(
             selectedQuickActionIndex={selectedQuickActionIndex}
             resetNavigation={resetNavigation}
           />
-
           <div className="flex w-full items-center justify-between gap-4">
             <Avatar className="h-8 w-8 rounded-full">
               <AvatarImage src={getEmailLogo(message.sender.email)} className="rounded-full" />
@@ -168,9 +177,7 @@ const Thread = memo(
                         'text-md flex items-baseline gap-1 group-hover:opacity-100',
                       )}
                     >
-                      <span className={cn(threadIdParam && 'max-w-[120px] truncate')}>
-                        {highlightText(message.sender.name, searchValue.highlight)}
-                      </span>{' '}
+                      <span>{highlightText(message.sender.name, searchValue.highlight)}</span>{' '}
                       {message.unread && !isMailSelected ? (
                         <span className="size-2 rounded bg-[#006FFE]" />
                       ) : null}
@@ -212,7 +219,7 @@ const Thread = memo(
               </div>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     );
   },
@@ -251,7 +258,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [session],
   );
 
-  const [searchValue] = useSearchValue();
+  const [searchValue, setSearchValue] = useSearchValue();
 
   const {
     data: { threads: items, nextPageToken },
@@ -398,7 +405,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const handleMailClick = useCallback(
     (message: InitialThread) => () => {
       handleMouseEnter(message.id);
-
       const selectMode = getSelectMode();
 
       if (selectMode === 'mass') {
@@ -441,31 +447,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         }
         return;
       }
-
-      const threadId = message.threadId ?? message.id;
-      const currentParams = new URLSearchParams(searchParams.toString());
-
-      if (threadIdParam === threadId) {
-        // Deselect the thread and update URL to remove threadId
-        currentParams.delete('threadId');
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-
-        // Update URL to remove threadId
-        router.push(`/mail/${folder}?${currentParams.toString()}`);
-      } else {
-        // Select the thread and update URL with threadId
-        currentParams.set('threadId', threadId);
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-
-        // Update URL with threadId
-        router.push(`/mail/${folder}?${currentParams.toString()}`);
-      }
     },
     [getSelectMode, folder, searchParams, items, handleMouseEnter],
   );
@@ -473,9 +454,35 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const isEmpty = items.length === 0;
   const isFiltering = searchValue.value.trim().length > 0;
 
+  // Add effect to handle search loading state
+  useEffect(() => {
+    if (isFiltering && !isLoading) {
+      // Reset the search value when loading is complete
+      setSearchValue((prev) => ({
+        ...prev,
+        isLoading: false,
+      }));
+    }
+  }, [isLoading, isFiltering, setSearchValue]);
+
   if (isEmpty && session) {
     if (isFiltering) {
-      return <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />;
+      return (
+        <div className="flex min-h-[90vh] flex-col items-center justify-center md:min-h-[90vh]">
+          {isLoading || searchValue.isLoading ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+              <p className="text-muted-foreground text-sm">
+                {searchValue.isAISearching
+                  ? t('common.searchBar.aiSearching')
+                  : t('common.searchBar.searching')}
+              </p>
+            </div>
+          ) : (
+            <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />
+          )}
+        </div>
+      );
     }
     return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
   }
@@ -486,29 +493,43 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         ref={parentRef}
         className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
       >
-        <Virtuoso
-          ref={scrollRef}
-          style={{ height: '100%' }}
-          totalCount={items.length}
-          itemContent={(index: number, data: InitialThread) => (
-            <Thread
-              onClick={handleMailClick}
-              selectMode={getSelectMode()}
-              isCompact={isCompact}
-              sessionData={sessionData}
-              message={data}
-              key={data.id}
-              isKeyboardFocused={focusedIndex === index && keyboardActive}
-              isInQuickActionMode={isQuickActionMode && focusedIndex === index}
-              selectedQuickActionIndex={quickActionIndex}
-              resetNavigation={resetNavigation}
-            />
+        <ScrollArea className="hide-scrollbar h-full overflow-auto">
+          {items.map((data, index) => {
+            return (
+              <Thread
+                onClick={handleMailClick}
+                selectMode={getSelectMode()}
+                isCompact={isCompact}
+                sessionData={sessionData}
+                message={data}
+                key={data.id}
+                isKeyboardFocused={focusedIndex === index && keyboardActive}
+                isInQuickActionMode={isQuickActionMode && focusedIndex === index}
+                selectedQuickActionIndex={quickActionIndex}
+                resetNavigation={resetNavigation}
+              />
+            );
+          })}
+          {items.length >= 9 && (
+            <Button
+              variant={'ghost'}
+              className="w-full rounded-none"
+              onClick={handleScroll}
+              disabled={isLoading || isValidating}
+            >
+              {isLoading || isValidating ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                  Loading...
+                </div>
+              ) : (
+                <>
+                  Load more <ChevronDown />
+                </>
+              )}
+            </Button>
           )}
-          increaseViewportBy={200}
-          endReached={handleScroll}
-          data={items}
-          className="hide-scrollbar"
-        />
+        </ScrollArea>
       </div>
       <div className="w-full pt-4 text-center">
         {isLoading || isValidating ? (

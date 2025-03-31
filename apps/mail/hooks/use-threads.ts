@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { getMail, getMails, markAsRead } from '@/actions/mail';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -16,7 +16,7 @@ export const preloadThread = async (userId: string, threadId: string, connection
 };
 
 type FetchEmailsTuple = [
-	connectionId: string,
+  connectionId: string,
   folder: string,
   q?: string,
   max?: number,
@@ -26,7 +26,7 @@ type FetchEmailsTuple = [
 
 // TODO: improve the filters
 const fetchEmails = async ([
-	_,
+  _,
   folder,
   q,
   max,
@@ -37,7 +37,7 @@ const fetchEmails = async ([
     const data = await getMails({ folder, q, max, labelIds, pageToken });
     return data as RawResponse;
   } catch (error) {
-    console.error("Error fetching emails:", error);
+    console.error('Error fetching emails:', error);
     throw error;
   }
 };
@@ -45,21 +45,21 @@ const fetchEmails = async ([
 const fetchThread = (cb: any) => async (args: any[]) => {
   const [_, id] = args;
   try {
-		return await getMail({ id }).then((response) => {
+    return await getMail({ id }).then((response) => {
       if (response) {
         if (cb) {
-          const unreadMessages = response.filter(e=>e.unread).map(e=>e.id)
+          const unreadMessages = response.filter((e) => e.unread).map((e) => e.id);
           if (unreadMessages.length) {
-            markAsRead({ids: unreadMessages}).then(()=>{
-              if (cb && typeof cb === 'function') cb()
+            markAsRead({ ids: unreadMessages }).then(() => {
+              if (cb && typeof cb === 'function') cb();
             });
           }
         }
-        return response
+        return response;
       }
     });
   } catch (error) {
-    console.error("Error fetching email:", error);
+    console.error('Error fetching email:', error);
     throw error;
   }
 };
@@ -75,8 +75,7 @@ const getKey = (
   previousPageData: RawResponse | null,
   [connectionId, folder, query, max, labelIds]: FetchEmailsTuple,
 ): FetchEmailsTuple | null => {
-  if (previousPageData && !previousPageData.nextPageToken) return null; // reached the end
-
+  if (previousPageData && !previousPageData.nextPageToken) return null; // reached the end);
   return [connectionId, folder, query, max, labelIds, previousPageData?.nextPageToken];
 };
 
@@ -88,26 +87,28 @@ export const useThreads = () => {
   const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(
     (_, previousPageData) => {
       if (!session?.user.id || !session.connectionId) return null;
-      return getKey(previousPageData, [session.connectionId, folder, searchValue.value, defaultPageSize]);
+      return getKey(previousPageData, [
+        session.connectionId,
+        folder,
+        searchValue.value,
+        defaultPageSize,
+      ]);
     },
     fetchEmails,
     {
-      persistSize: false,
-      revalidateIfStale: true,
-      revalidateAll: false,
+      keepPreviousData: true,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
       revalidateOnMount: true,
+      revalidateAll: false,
+      parallel: true,
       revalidateFirstPage: true,
     },
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
-  const threads = data ? data.flatMap((e) => e.threads).sort((a, b) => {
-    // Parse dates and compare them (newest first)
-    const dateA = new Date(a.receivedOn || '');
-    const dateB = new Date(b.receivedOn || '');
-    return dateB.getTime() - dateA.getTime();
-  }) : [];
-  const isEmpty = data?.[0]?.threads.length === 0;
+  const threads = useMemo(() => (data ? data.flatMap((e) => e.threads) : []), [data]);
+  const isEmpty = useMemo(() => threads.length === 0, [threads]);
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
   const loadMore = async () => {
     if (isLoading || isValidating) return;
@@ -128,11 +129,11 @@ export const useThreads = () => {
   };
 };
 
-export const useThread = () => {
+export const useThread = (threadId?: string) => {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
-  const id = searchParams.get('threadId');
-  const {mutate: mutateThreads} = useThreads()
+  const id = threadId ? threadId : searchParams.get('threadId');
+  const { mutate: mutateThreads } = useThreads();
 
   const { data, isLoading, error, mutate } = useSWR<ParsedMessage[]>(
     session?.user.id && id ? [session.user.id, id, session.connectionId] : null,
