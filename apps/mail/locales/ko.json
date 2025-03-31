@@ -64,7 +64,13 @@
       "hasAttachment": "첨부 파일 있음",
       "starred": "별표 처리됨",
       "applyFilters": "필터 적용",
-      "reset": "초기화"
+      "reset": "초기화",
+      "searching": "Searching...",
+      "aiSuggestions": "AI Suggestions",
+      "aiSearching": "AI is searching...",
+      "aiSearchError": "AI search failed. Please try again.",
+      "aiNoResults": "No AI suggestions found",
+      "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
       "customerSupport": "고객 지원",
@@ -89,7 +95,8 @@
       "attachmentCount": "{count, plural, =0 {첨부 파일} other {첨부 파일}}",
       "fileCount": "{count, plural, =0 {파일} other {파일}}",
       "saveDraft": "임시 저장",
-      "send": "전송"
+      "send": "전송",
+      "forward": "Forward"
     },
     "mailDisplay": {
       "details": "세부 사항",
@@ -264,7 +271,10 @@
         "dynamicContentDescription": "이메일에 동적 콘텐츠를 표시하도록 허용합니다.",
         "externalImages": "외부 이미지 표시",
         "externalImagesDescription": "이메일에 외부 소스의 이미지를 표시하도록 허용합니다.",
-        "languageChangedTo": "언어가 {language}(으)로 변경되었습니다"
+        "languageChangedTo": "Language changed to {locale}",
+        "customPrompt": "Custom AI Prompt",
+        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
       },
       "connections": {
         "title": "이메일 연결",
