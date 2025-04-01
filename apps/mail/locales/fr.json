@@ -11,7 +11,7 @@
       "signingOut": "Déconnexion...",
       "signedOutSuccess": "Déconnecté avec succès !",
       "signOutError": "Erreur de déconnexion",
-      "refresh": "Refresh"
+      "refresh": "Actualiser"
     },
     "themes": {
       "dark": "Sombre",
