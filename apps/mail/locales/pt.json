@@ -11,7 +11,8 @@
       "signingOut": "Saindo...",
       "signedOutSuccess": "Sessão terminada com sucesso!",
       "signOutError": "Erro ao sair",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "loading": "Loading..."
     },
     "themes": {
       "dark": "Escuro",
@@ -228,7 +229,8 @@
       "forward": "Forward",
       "labels": "Labels",
       "createNewLabel": "Create New Label",
-      "noLabelsAvailable": "No labels available"
+      "noLabelsAvailable": "No labels available",
+      "loadMore": "Load more"
     }
   },
   "navigation": {

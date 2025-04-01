@@ -11,7 +11,8 @@
       "signingOut": "Déconnexion...",
       "signedOutSuccess": "Déconnecté avec succès !",
       "signOutError": "Erreur de déconnexion",
-      "refresh": "Refresh"
+      "refresh": "Actualiser",
+      "loading": "Loading..."
     },
     "themes": {
       "dark": "Sombre",
@@ -228,7 +229,8 @@
       "forward": "Transférer",
       "labels": "Labels",
       "createNewLabel": "Create New Label",
-      "noLabelsAvailable": "Aucune étiquette disponible"
+      "noLabelsAvailable": "Aucune étiquette disponible",
+      "loadMore": "Load more"
     }
   },
   "navigation": {

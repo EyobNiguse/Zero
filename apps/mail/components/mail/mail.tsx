@@ -48,6 +48,7 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { RefreshIcon } from '../icons/animated/refresh';
 import { SearchIcon } from '../icons/animated/search';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
@@ -68,13 +69,13 @@ import { SearchBar } from './search-bar';
 import items from './demo.json';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
-import { RefreshIcon } from '../icons/animated/refresh';
 
 export function DemoMailLayout() {
   const [mail, setMail] = useState({
     selected: 'demo',
     bulkSelected: [],
   });
+  const [selectedMail, setSelectedMail] = useState<any>(null);
   const isMobile = false;
   const isValidating = false;
   const isLoading = false;
@@ -83,6 +84,11 @@ export function DemoMailLayout() {
   const threadIdParam = searchParams?.get('threadId');
   const [activeCategory, setActiveCategory] = useState('Primary');
   const [filteredItems, setFilteredItems] = useState(items);
+
+  const handleSelectMail = useCallback((message: any) => {
+    setSelectedMail(message);
+    setMail((prev) => ({ ...prev, selected: message.id }));
+  }, []);
 
   useEffect(() => {
     if (activeCategory === 'Primary') {
@@ -100,6 +106,12 @@ export function DemoMailLayout() {
       setFilteredItems(filtered);
     }
   }, [activeCategory]);
+
+  useEffect(() => {
+    if (filteredItems.length > 0 && !selectedMail) {
+      handleSelectMail(filteredItems[0]);
+    }
+  }, [filteredItems, selectedMail, handleSelectMail]);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -162,7 +174,7 @@ export function DemoMailLayout() {
                     ))}
                   </div>
                 ) : (
-                  <MailListDemo items={filteredItems} />
+                  <MailListDemo items={filteredItems} onSelectMail={handleSelectMail} />
                 )}
               </div>
             </div>
@@ -177,7 +189,7 @@ export function DemoMailLayout() {
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] max-h-[800px] flex-1 md:block">
-                  <ThreadDemo mail={[filteredItems[0]]} />
+                  <ThreadDemo mail={selectedMail ? [selectedMail] : [filteredItems[0]]} />
                 </div>
               </ResizablePanel>
             </>
