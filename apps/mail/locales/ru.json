@@ -10,7 +10,8 @@
       "close": "Закрыть",
       "signingOut": "Выход...",
       "signedOutSuccess": "Выход успешен",
-      "signOutError": "Ошибка при выходе"
+      "signOutError": "Ошибка при выходе",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "Тёмный",
