@@ -10,7 +10,8 @@
       "close": "閉じる",
       "signingOut": "ログアウトしています...",
       "signedOutSuccess": "正常にログアウトしました！",
-      "signOutError": "サインアウトエラー"
+      "signOutError": "サインアウトエラー",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "ダーク",

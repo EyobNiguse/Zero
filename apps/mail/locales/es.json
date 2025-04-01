@@ -10,7 +10,8 @@
       "close": "Cerrar",
       "signingOut": "Cerrando sesión...",
       "signedOutSuccess": "Sesión cerrada correctamente",
-      "signOutError": "Error al cerrar sesión"
+      "signOutError": "Error al cerrar sesión",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "Oscuro",

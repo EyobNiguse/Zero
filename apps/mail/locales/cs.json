@@ -10,7 +10,8 @@
       "close": "Zavřít",
       "signingOut": "Odhlašování...",
       "signedOutSuccess": "Odhlášení proběhlo úspěšně!",
-      "signOutError": "Chyba při odhlášení"
+      "signOutError": "Chyba při odhlášení",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "Tmavé",

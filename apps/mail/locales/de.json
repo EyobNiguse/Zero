@@ -10,7 +10,8 @@
       "close": "Schließen",
       "signingOut": "Abmelden...",
       "signedOutSuccess": "Erfolgreich abgemeldet!",
-      "signOutError": "Fehler beim Abmelden"
+      "signOutError": "Fehler beim Abmelden",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "Dunkel",

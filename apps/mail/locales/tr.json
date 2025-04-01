@@ -10,7 +10,8 @@
       "close": "Kapat",
       "signingOut": "Çıkış yapılıyor...",
       "signedOutSuccess": "Çıkış yapıldı!",
-      "signOutError": "Çıkış yapılırken hata oluştu"
+      "signOutError": "Çıkış yapılırken hata oluştu",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "Koyu",
