@@ -48,6 +48,7 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { RefreshIcon } from '../icons/animated/refresh';
 import { SearchIcon } from '../icons/animated/search';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
@@ -86,7 +87,7 @@ export function DemoMailLayout() {
 
   const handleSelectMail = useCallback((message: any) => {
     setSelectedMail(message);
-    setMail(prev => ({ ...prev, selected: message.id }));
+    setMail((prev) => ({ ...prev, selected: message.id }));
   }, []);
 
   useEffect(() => {
@@ -173,10 +174,7 @@ export function DemoMailLayout() {
                     ))}
                   </div>
                 ) : (
-                  <MailListDemo 
-                    items={filteredItems} 
-                    onSelectMail={handleSelectMail} 
-                  />
+                  <MailListDemo items={filteredItems} onSelectMail={handleSelectMail} />
                 )}
               </div>
             </div>

@@ -300,7 +300,10 @@ const Thread = memo(
 
 Thread.displayName = 'Thread';
 
-export function MailListDemo({ items: filteredItems = items, onSelectMail }: { 
+export function MailListDemo({
+  items: filteredItems = items,
+  onSelectMail,
+}: {
   items?: typeof items;
   onSelectMail?: (message: any) => void;
 }) {
@@ -310,11 +313,11 @@ export function MailListDemo({ items: filteredItems = items, onSelectMail }: {
         <div className="absolute left-0 top-0 w-full p-[8px]">
           {filteredItems.map((item) => {
             return item ? (
-              <Thread 
-                demo 
-                key={item.id} 
-                message={item} 
-                selectMode={'single'} 
+              <Thread
+                demo
+                key={item.id}
+                message={item}
+                selectMode={'single'}
                 onClick={(message) => () => onSelectMail && onSelectMail(message)}
               />
             ) : null;
