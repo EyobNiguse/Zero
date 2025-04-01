@@ -5,6 +5,7 @@ export const defaultUserSettings = {
     timezone: "UTC",
     dynamicContent: false,
     externalImages: true,
+    customPrompt: "",
 };
 
 export const userSettingsSchema = z.object({
@@ -12,6 +13,7 @@ export const userSettingsSchema = z.object({
     timezone: z.string(),
     dynamicContent: z.boolean(),
     externalImages: z.boolean(),
+    customPrompt: z.string(),
 });
 
 export type UserSettings = typeof defaultUserSettings;

@@ -30,12 +30,14 @@ import * as z from 'zod';
 import { useSettings } from '@/hooks/use-settings';
 import { getBrowserTimezone } from '@/lib/timezones';
 import { saveUserSettings } from '@/actions/settings';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   language: z.enum(locales as [string, ...string[]]),
   timezone: z.string(),
   dynamicContent: z.boolean(),
   externalImages: z.boolean(),
+  customPrompt: z.string(),
 });
 
 export default function GeneralPage() {
@@ -51,6 +53,7 @@ export default function GeneralPage() {
       timezone: getBrowserTimezone(),
       dynamicContent: false,
       externalImages: true,
+      customPrompt: "",
     },
   });
 
@@ -189,6 +192,25 @@ export default function GeneralPage() {
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="customPrompt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.settings.general.customPrompt')}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder={t('pages.settings.general.customPromptPlaceholder')}
+                      className="min-h-[350px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t('pages.settings.general.customPromptDescription')}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
           </form>
         </Form>
       </SettingsCard>
