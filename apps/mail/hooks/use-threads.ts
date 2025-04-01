@@ -34,8 +34,8 @@ const fetchEmails = async ([
   pageToken,
 ]: FetchEmailsTuple): Promise<RawResponse> => {
   try {
-    const data = await getMails({ folder, q, max, labelIds, pageToken });
-    return data as RawResponse;
+    const data = (await getMails({ folder, q, max, labelIds, pageToken })) as RawResponse;
+    return data;
   } catch (error) {
     console.error('Error fetching emails:', error);
     throw error;
@@ -96,13 +96,10 @@ export const useThreads = () => {
     },
     fetchEmails,
     {
-      keepPreviousData: true,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       revalidateOnMount: true,
-      revalidateAll: false,
-      parallel: true,
-      revalidateFirstPage: true,
+      refreshInterval: 30000 * 2,
     },
   );
 

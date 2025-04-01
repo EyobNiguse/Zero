@@ -137,10 +137,10 @@ const Thread = memo(
       <div className="p-1" onClick={onClick ? onClick(message) : undefined}>
         <Link
           href={`/mail/${folder}?threadId=${message.threadId ?? message.id}`}
-          data-thread-id={message.id}
+          data-thread-id={message.threadId ?? message.id}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          key={message.id}
+          key={message.threadId ?? message.id}
           className={cn(
             'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
             isMailSelected || (!message.unread && 'opacity-50'),
