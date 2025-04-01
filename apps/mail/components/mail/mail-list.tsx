@@ -155,13 +155,13 @@ const Thread = memo(
               isMailBulkSelected && 'translate-x-0',
             )}
           />
-          <MailQuickActions
+          {/* <MailQuickActions
             message={message}
             isHovered={isHovered || isKeyboardFocused}
             isInQuickActionMode={isInQuickActionMode}
             selectedQuickActionIndex={selectedQuickActionIndex}
             resetNavigation={resetNavigation}
-          />
+          /> */}
           <div className="flex w-full items-center justify-between gap-4">
             <Avatar className="h-8 w-8 rounded-full">
               <AvatarImage src={getEmailLogo(message.sender.email)} className="rounded-full" />
@@ -265,7 +265,18 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     isValidating,
     isLoading,
     loadMore,
+    mutate,
   } = useThreads();
+
+  // Add event listener for refresh
+  useEffect(() => {
+    const handleRefresh = () => {
+      void mutate();
+    };
+
+    window.addEventListener('refreshMailList', handleRefresh);
+    return () => window.removeEventListener('refreshMailList', handleRefresh);
+  }, [mutate]);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<VirtuosoHandle>(null);

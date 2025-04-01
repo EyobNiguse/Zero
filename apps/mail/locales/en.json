@@ -10,7 +10,8 @@
       "close": "Close",
       "signingOut": "Signing out...",
       "signedOutSuccess": "Signed out successfully!",
-      "signOutError": "Error signing out"
+      "signOutError": "Error signing out",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "Dark",

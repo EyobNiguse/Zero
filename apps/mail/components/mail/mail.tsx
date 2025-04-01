@@ -13,6 +13,7 @@ import {
   ArrowRightIcon,
   Loader2,
   Archive,
+  RotateCw,
 } from 'lucide-react';
 import {
   Dialog,
@@ -67,6 +68,7 @@ import { SearchBar } from './search-bar';
 import items from './demo.json';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+import { RefreshIcon } from '../icons/animated/refresh';
 
 export function DemoMailLayout() {
   const [mail, setMail] = useState({
@@ -286,7 +288,26 @@ export function MailLayout() {
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors',
                 )}
               >
-                <SidebarToggle className="h-fit px-2" />
+                <div className="flex items-center gap-2">
+                  <SidebarToggle className="h-fit px-2" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          // Trigger a refresh of the mail list
+                          const event = new CustomEvent('refreshMailList');
+                          window.dispatchEvent(event);
+                        }}
+                      >
+                        <RotateCw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('common.actions.refresh')}</TooltipContent>
+                  </Tooltip>
+                </div>
 
                 {mail.bulkSelected.length > 0 ? (
                   <>
