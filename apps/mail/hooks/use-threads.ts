@@ -112,6 +112,13 @@ export const useThreads = () => {
     await setSize(size + 1);
   };
 
+  // Create a new mutate function that resets the pagination state
+  const refresh = async () => {
+    await mutate(undefined, { revalidate: true });
+    // Reset the size to 1 to clear pagination
+    await setSize(1);
+  };
+
   return {
     data: {
       threads,
@@ -122,7 +129,7 @@ export const useThreads = () => {
     error,
     loadMore,
     isReachingEnd,
-    mutate,
+    mutate: refresh,
   };
 };
 
@@ -130,11 +137,10 @@ export const useThread = (threadId?: string) => {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const id = threadId ? threadId : searchParams.get('threadId');
-  const { mutate: mutateThreads } = useThreads();
 
   const { data, isLoading, error, mutate } = useSWR<ParsedMessage[]>(
     session?.user.id && id ? [session.user.id, id, session.connectionId] : null,
-    fetchThread(mutateThreads) as any,
+    fetchThread(undefined) as any,
   );
 
   const hasUnread = useMemo(() => data?.some((e) => e.unread), [data]);
