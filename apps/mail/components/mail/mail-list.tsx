@@ -521,7 +521,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               />
             );
           })}
-          {items.length >= 9 && (
+          {items.length >= 9 && nextPageToken && (
             <Button
               variant={'ghost'}
               className="w-full rounded-none"
@@ -531,11 +531,11 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               {isLoading || isValidating ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                  Loading...
+                  {t('common.actions.loading')}
                 </div>
               ) : (
                 <>
-                  Load more <ChevronDown />
+                  {t('common.mail.loadMore')} <ChevronDown />
                 </>
               )}
             </Button>
