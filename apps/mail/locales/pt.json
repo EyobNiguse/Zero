@@ -10,7 +10,8 @@
       "close": "Fechar",
       "signingOut": "Saindo...",
       "signedOutSuccess": "Sessão terminada com sucesso!",
-      "signOutError": "Erro ao sair"
+      "signOutError": "Erro ao sair",
+      "refresh": "Refresh"
     },
     "themes": {
       "dark": "Escuro",
