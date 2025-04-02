@@ -80,7 +80,19 @@ const options = {
 
       // Check early access and proceed
       if (!foundUser?.hasEarlyAccess && process.env.NODE_ENV === 'production') {
-        throw new Error('Early access required. Please join the waitlist.');
+        await db
+          .insert(earlyAccess)
+          .values({
+            id: crypto.randomUUID(),
+            email: user.email,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .catch((err) =>
+            console.log('Tried to add user to earlyAccess after error, failed', user.email, err),
+          );
+        return {};
+        // throw new Error('Early access required. Please join the waitlist.');
       }
 
       let activeConnection = null;
