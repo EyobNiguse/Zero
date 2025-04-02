@@ -53,7 +53,6 @@ export async function generateAIResponse(
 
   // Create the prompt for OpenAI
   const prompt = `
-  ${process.env.AI_SYSTEM_PROMPT}
 
  You should write as if your name is ${session.user.name}, who is the user writing an email reply.
 
@@ -87,12 +86,12 @@ ${customPrompt}
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
             content:
-              'You are a helpful email assistant that generates concise, professional replies.',
+              process.env.AI_SYSTEM_PROMPT,
           },
           { role: 'user', content: prompt },
         ],
