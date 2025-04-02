@@ -91,8 +91,8 @@ const options = {
           .catch((err) =>
             console.log('Tried to add user to earlyAccess after error, failed', user.email, err),
           );
-        return {};
-        // throw new Error('Early access required. Please join the waitlist.');
+        // return {};
+        throw new Error('Early access required. Please join the waitlist.');
       }
 
       let activeConnection = null;
