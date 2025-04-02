@@ -26,7 +26,7 @@ function truncateThreadContent(threadContent: string, maxTokens: number = 12000)
     truncatedContent = newContent;
   }
 
-  return truncatedContent;
+  return truncatedContent ?? '';
 }
 
 export async function generateAIResponse(
@@ -56,15 +56,15 @@ export async function generateAIResponse(
   ${process.env.AI_SYSTEM_PROMPT}
 
  You should write as if your name is ${session.user.name}, who is the user writing an email reply.
-  
+
   Here's the context of the email thread:
   ${truncatedThreadContent}
-  
+
   Generate a professional, helpful, and concise email reply to ${originalSender}.
-  
+
   Requirements:
   - Be concise but thorough (2-3 paragraphs maximum)
-  - Base your reply on the context provided. sometimes there will be an email that needs to be replied in an orderly manner while other times you will want a casual reply. 
+  - Base your reply on the context provided. sometimes there will be an email that needs to be replied in an orderly manner while other times you will want a casual reply.
   - Address the key points from the original email
   - Close with an appropriate sign-off
   - Don't use placeholder text or mention that you're an AI
