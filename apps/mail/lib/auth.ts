@@ -6,6 +6,7 @@ import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
+import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { db } from '@zero/db';
@@ -67,7 +68,6 @@ const options = {
   },
   plugins: [
     customSession(async ({ user, session }) => {
-      // Combine early access check with user lookup in a single query
       const [foundUser] = await db
         .select({
           activeConnectionId: _user.defaultConnectionId,
@@ -91,8 +91,7 @@ const options = {
           .catch((err) =>
             console.log('Tried to add user to earlyAccess after error, failed', user.email, err),
           );
-        // return {};
-        throw new Error('Early access required. Please join the waitlist.');
+        return redirect('/login');
       }
 
       let activeConnection = null;
