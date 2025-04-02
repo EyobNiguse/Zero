@@ -152,7 +152,7 @@ export default function GeneralPage() {
                 )}
               />
             </div>
-            <div className="flex flex-col md:flex-row w-full items-center gap-5">
+            {/* <div className="flex flex-col md:flex-row w-full items-center gap-5">
               <FormField
                 control={form.control}
                 name="dynamicContent"
@@ -191,7 +191,7 @@ export default function GeneralPage() {
                   </FormItem>
                 )}
               />
-            </div>
+            </div> */}
             <FormField
               control={form.control}
               name="customPrompt"
