@@ -214,8 +214,7 @@ const Thread = memo(
             </div>
           </div>
         ) : (
-          <Link
-            href={`/mail/${folder}?threadId=${message.threadId ?? message.id}`}
+          <div
             data-thread-id={message.threadId ?? message.id}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -291,7 +290,7 @@ const Thread = memo(
                 </div>
               </div>
             </div>
-          </Link>
+          </div>
         )}
       </div>
     );
@@ -545,6 +544,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         }
         return;
       }
+
+      router.push(`/mail/inbox?threadId=${message.id}`);
     },
     [getSelectMode, folder, searchParams, items, handleMouseEnter],
   );
