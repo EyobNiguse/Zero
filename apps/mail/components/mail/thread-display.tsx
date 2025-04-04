@@ -113,9 +113,6 @@ export function ThreadDemo({ mail: emailData, isMobile }: ThreadDisplayProps) {
                 <DropdownMenuItem>
                   <Forward className="mr-2 h-4 w-4" /> Forward
                 </DropdownMenuItem>
-                <DropdownMenuItem>Mark as unread</DropdownMenuItem>
-                <DropdownMenuItem>Add label</DropdownMenuItem>
-                <DropdownMenuItem>Mute thread</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
