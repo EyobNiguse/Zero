@@ -7,7 +7,7 @@ import { redis } from '@/lib/redis';
 
 const ratelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(5000, '1m'),
+  limiter: Ratelimit.slidingWindow(60, '1m'),
   analytics: true,
   prefix: 'ratelimit:list-threads',
 });
