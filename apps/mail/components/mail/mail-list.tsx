@@ -255,7 +255,7 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span className={cn(threadIdParam ? 'max-w-[3ch] truncate' : '')}>
+                        <span className={cn(threadIdParam ? 'max-w-[5ch] truncate' : '')}>
                           {highlightText(message.sender.name, searchValue.highlight)}
                         </span>{' '}
                         {message.unread && !isMailSelected ? (
@@ -287,16 +287,7 @@ const Thread = memo(
                       </p>
                     ) : null}
                   </div>
-                  <p
-                    className={cn(
-                      'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
-                      mail.selected
-                        ? 'max-w-[3ch] overflow-hidden text-ellipsis whitespace-nowrap'
-                        : 'line-clamp-2',
-                      isMailSelected &&
-                        'max-w-[3ch] overflow-hidden text-ellipsis whitespace-nowrap opacity-100',
-                    )}
-                  >
+                  <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
                     {highlightText(message.subject, searchValue.highlight)}
                   </p>
                 </div>
