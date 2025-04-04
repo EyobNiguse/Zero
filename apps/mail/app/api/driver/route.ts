@@ -13,17 +13,18 @@ const ratelimit = new Ratelimit({
 });
 
 export const GET = async (req: NextRequest) => {
+  console.error(req.headers.entries().map((e) => JSON.stringify(e)));
   const ip = req.headers.get('CF-Connecting-IP');
+  if (!ip && process.env.NODE_ENV === 'production') {
+    console.log('No IP detected');
+    return NextResponse.json({ error: 'No IP detected' }, { status: 400 });
+  }
   console.log(
     'Request from IP:',
     ip,
     req.headers.get('x-forwarded-for'),
     req.headers.get('CF-Connecting-IP'),
   );
-  if (!ip && process.env.NODE_ENV === 'production') {
-    console.log('No IP detected');
-    return NextResponse.json({ error: 'No IP detected' }, { status: 400 });
-  }
   const { success, limit, reset, remaining } = await ratelimit.limit(ip!);
   const headers = {
     'X-RateLimit-Limit': limit.toString(),
