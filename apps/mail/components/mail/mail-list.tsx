@@ -548,7 +548,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         return;
       }
 
-      router.push(`/mail/inbox?threadId=${message.id}`);
+      router.push(`/mail/inbox?threadId=${message.threadId ?? message.id}`);
     },
     [getSelectMode, folder, searchParams, items, handleMouseEnter],
   );
