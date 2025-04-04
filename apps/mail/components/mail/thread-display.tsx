@@ -1,7 +1,7 @@
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArchiveX, Forward, ReplyAll, Star, StarOff, X } from 'lucide-react';
+import { Archive, ArchiveX, Expand, Forward, MoreVertical, Reply, ReplyAll, Star, StarOff, X } from 'lucide-react';
 import { useSearchParams, useParams } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -379,14 +379,16 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
         <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[10px]">
           <div className="flex flex-1 items-center gap-2">
             <Link href={`/mail/${folder}`}>
-              <X className="h-4 w-4" />
+              <Button variant="ghost" className="md:h-fit md:px-2">
+                <X className="h-4 w-4 hover:text-red-500" />
+              </Button>
             </Link>
             <ThreadSubject subject={emailData[0]?.subject} />
           </div>
           <div className="flex items-center md:gap-2">
             {/* <NotesPanel threadId={mail} /> */}
             <ThreadActionButton
-              icon={isFullscreen ? ExpandIcon : ExpandIcon}
+              icon={Expand}
               label={
                 isFullscreen
                   ? t('common.threadDisplay.exitFullscreen')
@@ -396,14 +398,13 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
               onClick={() => setIsFullscreen(!isFullscreen)}
             />
             <ThreadActionButton
-              icon={ArchiveIcon}
+              icon={Archive}
               label={t('common.threadDisplay.archive')}
               disabled={!emailData || (!isInInbox && !isInSpam)}
-              className="relative top-0.5"
               onClick={() => moveThreadTo('archive')}
             />
             <ThreadActionButton
-              icon={ReplyIcon}
+              icon={Reply}
               label={t('common.threadDisplay.reply')}
               disabled={!emailData}
               onClick={() => setIsReplyOpen(true)}
@@ -417,7 +418,7 @@ export function ThreadDisplay({ mail, onClose, isMobile }: ThreadDisplayProps) {
                   onMouseEnter={() => moreVerticalIconRef.current?.startAnimation?.()}
                   onMouseLeave={() => moreVerticalIconRef.current?.stopAnimation?.()}
                 >
-                  <MoreVerticalIcon ref={moreVerticalIconRef} className="h-4 w-4" />
+                  <MoreVertical ref={moreVerticalIconRef} className="h-4 w-4" />
                   <span className="sr-only">{t('common.threadDisplay.moreOptions')}</span>
                 </Button>
               </DropdownMenuTrigger>
