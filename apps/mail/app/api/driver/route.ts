@@ -13,7 +13,7 @@ const ratelimit = new Ratelimit({
 });
 
 export const GET = async (req: NextRequest) => {
-  console.error(req.headers.entries().map((e) => JSON.stringify(e)));
+  console.error(req.headers.values().toArray());
   const ip = req.headers.get('CF-Connecting-IP');
   if (!ip && process.env.NODE_ENV === 'production') {
     console.log('No IP detected');
