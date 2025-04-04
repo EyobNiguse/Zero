@@ -13,26 +13,21 @@ const ratelimit = new Ratelimit({
 });
 
 export const GET = async (req: NextRequest) => {
-  console.error(req.headers.values().toArray());
-  const ip = req.headers.get('CF-Connecting-IP');
-  if (!ip && process.env.NODE_ENV === 'production') {
+  const cfIP = req.headers.get('CF-Connecting-IP');
+  const ip = req.headers.get('x-forwarded-for');
+  if (!ip && !cfIP && process.env.NODE_ENV === 'production') {
     console.log('No IP detected');
     return NextResponse.json({ error: 'No IP detected' }, { status: 400 });
   }
-  console.log(
-    'Request from IP:',
-    ip,
-    req.headers.get('x-forwarded-for'),
-    req.headers.get('CF-Connecting-IP'),
-  );
-  const { success, limit, reset, remaining } = await ratelimit.limit(ip!);
+  const finalIp: string = cfIP ?? ip!;
+  const { success, limit, reset, remaining } = await ratelimit.limit(finalIp);
   const headers = {
     'X-RateLimit-Limit': limit.toString(),
     'X-RateLimit-Remaining': remaining.toString(),
     'X-RateLimit-Reset': reset.toString(),
   };
   if (!success) {
-    console.log(`Rate limit exceeded for IP ${ip}. Remaining: ${remaining}`);
+    console.log(`Rate limit exceeded for IP ${finalIp}. Remaining: ${remaining}`);
     return NextResponse.json(
       { error: 'Too many requests. Please try again later.' },
       { status: 429, headers },
