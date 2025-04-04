@@ -31,7 +31,7 @@ export const GET = async (req: NextRequest) => {
     'X-RateLimit-Reset': reset.toString(),
   };
   if (!success) {
-    console.log(`Rate limit exceeded for IP ${ip}. Remaining: ${remaining}`, body.email);
+    console.log(`Rate limit exceeded for IP ${ip}. Remaining: ${remaining}`);
     return NextResponse.json(
       { error: 'Too many requests. Please try again later.' },
       { status: 429, headers },
