@@ -214,7 +214,9 @@ const Thread = memo(
             </div>
           </div>
         ) : (
-          <div
+          <Link
+            prefetch
+            href={`/mail/${folder}?threadId=${message.id}`}
             data-thread-id={message.threadId ?? message.id}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -290,7 +292,7 @@ const Thread = memo(
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         )}
       </div>
     );
