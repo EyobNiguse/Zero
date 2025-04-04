@@ -234,7 +234,6 @@ const Thread = memo(
               isKeyboardFocused && 'ring-primary/50 ring-2',
             )}
           >
-            {message.id === message.threadId ? 'y' : 'n'}
             <div
               className={cn(
                 'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
