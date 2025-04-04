@@ -24,7 +24,7 @@ export const GET = async (req: NextRequest) => {
     req.headers.get('x-forwarded-for'),
     req.headers.get('CF-Connecting-IP'),
   );
-  const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+  const { success, limit, reset, remaining } = await ratelimit.limit(ip!);
   const headers = {
     'X-RateLimit-Limit': limit.toString(),
     'X-RateLimit-Remaining': remaining.toString(),
