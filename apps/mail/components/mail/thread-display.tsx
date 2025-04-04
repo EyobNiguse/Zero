@@ -108,9 +108,6 @@ export function ThreadDemo({ mail: emailData, isMobile }: ThreadDisplayProps) {
                   <ArchiveX className="mr-2 h-4 w-4" /> Move to spam
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <ReplyAll className="mr-2 h-4 w-4" /> Reply all
-                </DropdownMenuItem>
-                <DropdownMenuItem>
                   <Forward className="mr-2 h-4 w-4" /> Forward
                 </DropdownMenuItem>
               </DropdownMenuContent>
