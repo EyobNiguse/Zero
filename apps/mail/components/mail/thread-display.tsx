@@ -284,7 +284,7 @@ export function ThreadDisplay({
       >
         <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[10px]">
           <div className="flex flex-1 items-center gap-2">
-            <Link href={`/mail/${folder}`}>
+            <Link prefetch href={`/mail/${folder}`}>
               <Button variant="ghost" className="md:h-fit md:px-2">
                 <X className="h-4 w-4 hover:text-red-500" />
               </Button>
