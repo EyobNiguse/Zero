@@ -14,7 +14,7 @@ const ratelimit = new Ratelimit({
 
 export const GET = async (req: NextRequest) => {
   const ip = req.headers.get('CF-Connecting-IP');
-  if (!ip) {
+  if (!ip && process.env.NODE_ENV === 'production') {
     console.log('No IP detected');
     return NextResponse.json({ error: 'No IP detected' }, { status: 400 });
   }
@@ -57,10 +57,6 @@ export const GET = async (req: NextRequest) => {
   });
   return NextResponse.json(threadsResponse, {
     status: 200,
-    headers: {
-      'X-RateLimit-Limit': limit.toString(),
-      'X-RateLimit-Remaining': remaining.toString(),
-      'X-RateLimit-Reset': reset.toString(),
-    },
+    headers,
   });
 };
