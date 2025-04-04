@@ -275,6 +275,28 @@ export function MailLayout() {
 
   const searchIconRef = useRef<any>(null);
 
+  // Add mailto protocol handler registration
+  useEffect(() => {
+    // Register as a mailto protocol handler if browser supports it
+    if (typeof window !== 'undefined' && 'registerProtocolHandler' in navigator) {
+      try {
+        // Register the mailto protocol handler
+        // When a user clicks a mailto: link, it will be passed to our dedicated handler
+        // which will:
+        // 1. Parse the mailto URL to extract email, subject and body
+        // 2. Create a draft with these values
+        // 3. Redirect to the compose page with just the draft ID
+        // This ensures we don't keep the email content in the URL
+        navigator.registerProtocolHandler(
+          'mailto',
+          `${window.location.origin}/mail/compose/handle-mailto?mailto=%s`
+        );
+      } catch (error) {
+        console.error('Failed to register protocol handler:', error);
+      }
+    }
+  }, []);
+
   return (
     <TooltipProvider delayDuration={0}>
       <div className="rounded-inherit flex">
