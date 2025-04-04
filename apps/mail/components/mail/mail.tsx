@@ -25,12 +25,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  moveThreadsTo,
-  ThreadDestination,
-  isActionAvailable,
-  getAvailableActions,
-} from '@/lib/thread-actions';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -39,8 +33,8 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { moveThreadsTo, ThreadDestination, getAvailableActions } from '@/lib/thread-actions';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
@@ -48,24 +42,21 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { RefreshIcon } from '../icons/animated/refresh';
-import { SearchIcon } from '../icons/animated/search';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
-import { cn, defaultPageSize } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
-import { MessageKey } from '@/config/navigation';
 import { Button } from '@/components/ui/button';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
-import { XIcon } from '../icons/animated/x';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { getMail } from '@/actions/mail';
 import { SearchBar } from './search-bar';
+import { ParsedMessage } from '@/types';
+import { cn } from '@/lib/utils';
 import items from './demo.json';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
@@ -189,7 +180,7 @@ export function DemoMailLayout() {
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] max-h-[800px] flex-1 md:block">
-                  <ThreadDemo mail={selectedMail ? [selectedMail] : [filteredItems[0]]} />
+                  <ThreadDemo messages={selectedMail ? [selectedMail] : []} />
                 </div>
               </ResizablePanel>
             </>
@@ -205,7 +196,7 @@ export function DemoMailLayout() {
               </DrawerHeader>
               <div className="flex h-full flex-col overflow-hidden">
                 <div className="flex-1 overflow-hidden">
-                  <ThreadDisplay isMobile={true} mail={filteredItems[0]} />
+                  <ThreadDisplay isMobile={true} messages={selectedMail ? [selectedMail] : []} />
                 </div>
               </div>
             </DrawerContent>
@@ -216,7 +207,7 @@ export function DemoMailLayout() {
   );
 }
 
-export function MailLayout() {
+export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
   const { folder } = useParams<{ folder: string }>();
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
@@ -272,8 +263,6 @@ export function MailLayout() {
     event?.preventDefault();
     // Handle other Esc key functionality if needed
   });
-
-  const searchIconRef = useRef<any>(null);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -391,7 +380,7 @@ export function MailLayout() {
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDisplay onClose={handleClose} mail={threadIdParam} />
+                  <ThreadDisplay onClose={handleClose} messages={messages} />
                 </div>
               </ResizablePanel>
             </>
@@ -412,7 +401,7 @@ export function MailLayout() {
               </DrawerHeader>
               <div className="flex h-full flex-col overflow-hidden">
                 <div className="flex-1 overflow-hidden">
-                  <ThreadDisplay onClose={handleClose} isMobile={true} mail={threadIdParam} />
+                  <ThreadDisplay onClose={handleClose} isMobile={true} messages={messages} />
                 </div>
               </div>
             </DrawerContent>
