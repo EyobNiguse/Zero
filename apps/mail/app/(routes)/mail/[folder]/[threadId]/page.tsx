@@ -1,3 +1,4 @@
+import { MailLayout } from '@/components/mail/mail';
 import { getMail } from '@/actions/mail';
 
 interface MailPageProps {
