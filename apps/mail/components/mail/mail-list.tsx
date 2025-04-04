@@ -157,7 +157,7 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8 rounded-full">
-                {/* <AvatarImage src={getEmailLogo(message.sender.email)} className="rounded-full" /> */}
+                <AvatarImage src={getEmailLogo(message.sender.email)} className="rounded-full" />
                 <AvatarFallback className="rounded-full">{message.sender.name[0]}</AvatarFallback>
               </Avatar>
               <div className="flex w-full justify-between">
@@ -242,7 +242,7 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8 rounded-full">
-                {/* <AvatarImage src={getEmailLogo(message.sender.email)} className="rounded-full" /> */}
+                <AvatarImage src={getEmailLogo(message.sender.email)} className="rounded-full" />
                 <AvatarFallback className="rounded-full">{message.sender.name[0]}</AvatarFallback>
               </Avatar>
               <div className="flex w-full justify-between">
