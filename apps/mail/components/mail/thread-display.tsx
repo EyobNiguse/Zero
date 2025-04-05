@@ -3,6 +3,7 @@ import {
   ArchiveX,
   Expand,
   Forward,
+  Mail,
   MoreVertical,
   Reply,
   ReplyAll,
@@ -17,6 +18,7 @@ import { useSearchParams, useParams } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
+import { markAsUnread } from '@/actions/mail';
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useThread, useThreads } from '@/hooks/use-threads';
@@ -38,9 +40,10 @@ import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useMail } from '../mail/use-mail';
 
 interface ThreadDisplayProps {
-  mail?: any;
+  threadParam?: any;
   onClose?: () => void;
   isMobile?: boolean;
   messages?: ParsedMessage[];
@@ -195,7 +198,7 @@ function ThreadActionButton({
   );
 }
 
-export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProps) {
+export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisplayProps) {
   const { data: emailData, isLoading } = useThread(id ?? null);
   const { mutate: mutateThreads } = useThreads();
   const searchParams = useSearchParams();
@@ -207,7 +210,8 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
   const { mutate: mutateStats } = useStats();
   const { folder } = useParams<{ folder: string }>();
   const threadIdParam = searchParams.get('threadId');
-  const threadId = mail ?? threadIdParam ?? '';
+  const threadId = threadParam ?? threadIdParam ?? '';
+  const [, setMailState] = useMail();
 
   const moreVerticalIconRef = useRef<any>(null);
 
@@ -221,23 +225,47 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
 
   const moveThreadTo = useCallback(
     async (destination: ThreadDestination) => {
-      await moveThreadsTo({
-        threadIds: [threadId],
-        currentFolder: folder,
-        destination,
-      }).then(async () => {
+      const promise = async () => {
+        await moveThreadsTo({
+          threadIds: [threadId],
+          currentFolder: folder,
+          destination,
+        });
         await Promise.all([mutateStats(), mutateThreads()]);
         handleClose();
+      };
+
+      toast.promise(promise(), {
+        loading: t('common.actions.moving'),
+        success: destination === 'inbox' 
+          ? t('common.actions.movedToInbox') 
+          : destination === 'spam'
+          ? t('common.actions.movedToSpam')
+          : t('common.actions.archived'),
+        error: t('common.actions.failedToMove'),
       });
     },
-    [threadId, folder, mutateStats, handleClose],
+    [threadId, folder, mutateStats, mutateThreads, handleClose, t],
   );
 
-  useEffect(() => {
-    if (emailData?.[0]) {
-      setIsMuted(emailData[0].unread ?? false);
-    }
-  }, [emailData]);
+  const handleMarkAsUnread = useCallback(async () => {
+    if (!emailData || !threadId) return;
+    
+    const promise = async () => {
+      const result = await markAsUnread({ ids: [threadId] });
+      if (!result.success) throw new Error('Failed to mark as unread');
+      
+      setMailState(prev => ({ ...prev, bulkSelected: [] }));
+      await Promise.all([mutateStats(), mutateThreads()]);
+      handleClose();
+    };
+
+    toast.promise(promise(), {
+      loading: t('common.actions.markingAsUnread'),
+      success: t('common.mail.markedAsUnread'),
+      error: t('common.mail.failedToMarkAsUnread'),
+    });
+  }, [emailData, threadId, mutateStats, mutateThreads, t, handleClose, setMailState]);
 
   const handleFavourites = async () => {
     if (!emailData || !threadId) return;
@@ -350,12 +378,6 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
                   <DropdownMenuItem>
                     <ReplyAll className="mr-2 h-4 w-4" /> {t('common.threadDisplay.replyAll')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleForward}>
-                    <Forward className="mr-2 h-4 w-4" /> {t('common.threadDisplay.forward')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>{t('common.threadDisplay.markAsUnread')}</DropdownMenuItem>
-                  <DropdownMenuItem>{t('common.threadDisplay.addLabel')}</DropdownMenuItem>
-                  <DropdownMenuItem>{t('common.threadDisplay.muteThread')}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -396,7 +418,7 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
             <ThreadSubject subject={emailData[0]?.subject} />
           </div>
           <div className="flex items-center md:gap-2">
-            {/* <NotesPanel threadId={mail} /> */}
+            <NotesPanel threadId={threadId} />
             <ThreadActionButton
               icon={Expand}
               label={
@@ -407,11 +429,34 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
               disabled={!emailData}
               onClick={() => setIsFullscreen(!isFullscreen)}
             />
+            {(isInSpam || isInArchive) ? (
+              <ThreadActionButton
+                icon={Inbox}
+                label={t('common.mail.moveToInbox')}
+                disabled={!emailData}
+                onClick={() => moveThreadTo('inbox')}
+              />
+            ) : (
+              <>
+                <ThreadActionButton
+                  icon={Archive}
+                  label={t('common.threadDisplay.archive')}
+                  disabled={!emailData}
+                  onClick={() => moveThreadTo('archive')}
+                />
+                <ThreadActionButton
+                  icon={ArchiveX}
+                  label={t('common.threadDisplay.moveToSpam')}
+                  disabled={!emailData}
+                  onClick={() => moveThreadTo('spam')}
+                />
+              </>
+            )}
             <ThreadActionButton
-              icon={Archive}
-              label={t('common.threadDisplay.archive')}
-              disabled={!emailData || (!isInInbox && !isInSpam)}
-              onClick={() => moveThreadTo('archive')}
+              icon={Mail}
+              label={t('common.mail.markAsUnread')}
+              disabled={!emailData}
+              onClick={handleMarkAsUnread}
             />
             <ThreadActionButton
               icon={Reply}
@@ -419,7 +464,7 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
               disabled={!emailData}
               onClick={() => setIsReplyOpen(true)}
             />
-            <DropdownMenu>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -454,11 +499,13 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
                 <DropdownMenuItem onClick={handleForward}>
                   <Forward className="mr-2 h-4 w-4" /> {t('common.threadDisplay.forward')}
                 </DropdownMenuItem>
-                <DropdownMenuItem>{t('common.threadDisplay.markAsUnread')}</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMarkAsUnread}>
+                  <Mail className="mr-2 h-4 w-4" /> {t('common.mail.markAsUnread')}
+                </DropdownMenuItem>
                 <DropdownMenuItem>{t('common.threadDisplay.addLabel')}</DropdownMenuItem>
                 <DropdownMenuItem>{t('common.threadDisplay.muteThread')}</DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
