@@ -224,9 +224,7 @@ const Thread = memo(
             </div>
           </div>
         ) : (
-          <Link
-            prefetch
-            href={`/mail/${folder}?threadId=${message.threadId ?? message.id}`}
+          <div
             data-thread-id={message.threadId ?? message.id}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -247,7 +245,10 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8">
-                <AvatarImage className="bg-muted-foreground/50 dark:bg-muted/50 p-2" src={getEmailLogo(message.sender.email)} />
+                <AvatarImage
+                  className="bg-muted-foreground/50 dark:bg-muted/50 p-2"
+                  src={getEmailLogo(message.sender.email)}
+                />
                 <AvatarFallback className="">
                   {message?.sender?.name[0]?.toUpperCase()}
                 </AvatarFallback>
@@ -300,7 +301,7 @@ const Thread = memo(
                 </div>
               </div>
             </div>
-          </Link>
+          </div>
         )}
       </div>
     );
