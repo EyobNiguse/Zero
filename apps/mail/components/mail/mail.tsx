@@ -56,7 +56,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { getMail } from '@/actions/mail';
 import { SearchBar } from './search-bar';
-import { ParsedMessage } from '@/types';
+import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import items from './demo.json';
 import { useAtom } from 'jotai';
@@ -72,8 +72,7 @@ export function DemoMailLayout() {
   const isValidating = false;
   const isLoading = false;
   const isDesktop = true;
-  const searchParams = useSearchParams();
-  const threadIdParam = searchParams?.get('threadId');
+  const threadIdParam = useQueryState('threadId');
   const [activeCategory, setActiveCategory] = useState('Primary');
   const [filteredItems, setFilteredItems] = useState(items);
 
@@ -247,31 +246,18 @@ export function MailLayout() {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  const searchParams = useSearchParams();
-  const threadIdParam = searchParams.get('threadId');
-
-  // No need to track threadIdParam with a separate state
+  const [threadId, setThreadId] = useQueryState('threadId');
 
   const handleClose = useCallback(() => {
-    // Update URL to remove threadId parameter while preserving category
-    const currentParams = new URLSearchParams(searchParams.toString());
-    const category = currentParams.get('category');
-    currentParams.delete('threadId');
-    // If there was a category, make sure to keep it
-    if (category) {
-      currentParams.set('category', category);
-    }
-    
-    router.push(`/mail/${folder}?${currentParams.toString()}`);
-  }, [router, folder, searchParams]);
+    setThreadId(null);
+    router.push(`/mail/${folder}`);
+  }, [router, folder, setThreadId]);
 
   // Search bar is always visible now, no need for keyboard shortcuts to toggle it
   useHotKey('Esc', (event) => {
     event?.preventDefault();
     // Handle other Esc key functionality if needed
   });
-
-  const searchIconRef = useRef<any>(null);
 
   // Add mailto protocol handler registration
   useEffect(() => {
@@ -304,7 +290,7 @@ export function MailLayout() {
           className="rounded-inherit gap-1.5 overflow-hidden"
         >
           <ResizablePanel
-            className={cn('border-none !bg-transparent', threadIdParam ? 'md:hidden lg:block' : '')}
+            className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}
             defaultSize={isMobile ? 100 : 25}
             minSize={isMobile ? 100 : 25}
           >
@@ -368,7 +354,7 @@ export function MailLayout() {
                     <div className="flex flex-1 justify-center">
                       <SearchBar />
                     </div>
-                    {!threadIdParam && (
+                    {!threadId && (
                       <div className="flex items-center">
                         <CategorySelect />
                       </div>
@@ -408,13 +394,13 @@ export function MailLayout() {
               <ResizablePanel
                 className={cn(
                   'bg-offsetLight dark:bg-offsetDark shadow-sm md:rounded-2xl md:border md:shadow-sm',
-                  threadIdParam ? 'md:flex' : 'hidden',
+                  threadId ? 'md:flex' : 'hidden',
                 )}
                 defaultSize={75}
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDisplay onClose={handleClose} id={threadIdParam ?? undefined} />
+                  <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
                 </div>
               </ResizablePanel>
             </>
@@ -424,7 +410,7 @@ export function MailLayout() {
         {/* Mobile Drawer */}
         {isMobile && (
           <Drawer
-            open={!!threadIdParam}
+            open={!!threadId}
             onOpenChange={(isOpen) => {
               if (!isOpen) handleClose();
             }}
@@ -435,8 +421,8 @@ export function MailLayout() {
               </DrawerHeader>
               <div className="flex h-full flex-col overflow-hidden">
                 <div className="flex-1 overflow-hidden">
-                  {threadIdParam ? (
-                    <ThreadDisplay onClose={handleClose} isMobile={true} id={threadIdParam} />
+                  {threadId ? (
+                    <ThreadDisplay onClose={handleClose} isMobile={true} id={threadId} />
                   ) : null}
                 </div>
               </div>
@@ -639,8 +625,9 @@ function CategorySelect() {
   const [, setSearchValue] = useSearchValue();
   const categories = Categories();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get('category') || 'Primary';
+  const [category, setCategory] = useQueryState('category', {
+    defaultValue: 'Primary'
+  });
 
   return (
     <Select
@@ -657,13 +644,11 @@ function CategorySelect() {
           };
           setSearchValue(searchValueState);
 
-          // Update URL with new category while preserving other params
-          const newParams = new URLSearchParams(searchParams.toString());
-          newParams.set('category', value);
-          router.push(`?${newParams.toString()}`);
+        // Update category in URL - nuqs will preserve other params automatically
+        setCategory(value);
         }
       }}
-      value={currentCategory}
+      value={category}
     >
       <SelectTrigger className="bg-popover h-9 w-36">
         <SelectValue placeholder="Select category" />
