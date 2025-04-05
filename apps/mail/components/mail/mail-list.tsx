@@ -501,46 +501,46 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       handleMouseEnter(message.id);
       const selectMode = getSelectMode();
 
-      if (selectMode === 'mass') {
-        const updatedBulkSelected = mail.bulkSelected.includes(message.id)
-          ? mail.bulkSelected.filter((id) => id !== message.id)
-          : [...mail.bulkSelected, message.id];
+      // if (selectMode === 'mass') {
+      //   const updatedBulkSelected = mail.bulkSelected.includes(message.id)
+      //     ? mail.bulkSelected.filter((id) => id !== message.id)
+      //     : [...mail.bulkSelected, message.id];
 
-        setMail({ ...mail, bulkSelected: updatedBulkSelected });
-        return;
-      }
+      //   setMail({ ...mail, bulkSelected: updatedBulkSelected });
+      //   return;
+      // }
 
-      // TODO: Look into making this more performant
-      if (selectMode === 'range') {
-        const lastSelectedItem =
-          mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadIdParam ?? message.id;
+      // // TODO: Look into making this more performant
+      // if (selectMode === 'range') {
+      //   const lastSelectedItem =
+      //     mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadIdParam ?? message.id;
 
-        const mailsIndex = items.map((m) => m.id);
-        const startIdx = mailsIndex.indexOf(lastSelectedItem);
-        const endIdx = mailsIndex.indexOf(message.id);
+      //   const mailsIndex = items.map((m) => m.id);
+      //   const startIdx = mailsIndex.indexOf(lastSelectedItem);
+      //   const endIdx = mailsIndex.indexOf(message.id);
 
-        if (startIdx !== -1 && endIdx !== -1) {
-          const selectedRange = mailsIndex.slice(
-            Math.min(startIdx, endIdx),
-            Math.max(startIdx, endIdx) + 1,
-          );
+      //   if (startIdx !== -1 && endIdx !== -1) {
+      //     const selectedRange = mailsIndex.slice(
+      //       Math.min(startIdx, endIdx),
+      //       Math.max(startIdx, endIdx) + 1,
+      //     );
 
-          setMail({ ...mail, bulkSelected: selectedRange });
-        }
-        return;
-      }
+      //     setMail({ ...mail, bulkSelected: selectedRange });
+      //   }
+      //   return;
+      // }
 
-      if (selectMode === 'selectAllBelow') {
-        const mailsIndex = items.map((m) => m.id);
-        const startIdx = mailsIndex.indexOf(message.id);
+      // if (selectMode === 'selectAllBelow') {
+      //   const mailsIndex = items.map((m) => m.id);
+      //   const startIdx = mailsIndex.indexOf(message.id);
 
-        if (startIdx !== -1) {
-          const selectedRange = mailsIndex.slice(startIdx);
+      //   if (startIdx !== -1) {
+      //     const selectedRange = mailsIndex.slice(startIdx);
 
-          setMail({ ...mail, bulkSelected: selectedRange });
-        }
-        return;
-      }
+      //     setMail({ ...mail, bulkSelected: selectedRange });
+      //   }
+      //   return;
+      // }
 
       void markAsRead({ ids: [message.threadId ?? message.id] });
 
