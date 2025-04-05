@@ -245,11 +245,8 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8">
-                <AvatarImage
-                  className="bg-muted-foreground/50 dark:bg-muted/50 p-2"
-                  src={getEmailLogo(message.sender.email)}
-                />
-                <AvatarFallback className="">
+                <AvatarImage className="bg-muted-foreground/50 dark:bg-muted/50 p-2" src={getEmailLogo(message.sender.email)} />
+                <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50">
                   {message?.sender?.name[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
