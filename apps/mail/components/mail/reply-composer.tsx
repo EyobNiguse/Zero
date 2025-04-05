@@ -498,7 +498,7 @@ ${email.decodedBody || 'No content'}
       let errorMessage = 'Failed to generate AI response. Please try again or compose manually.';
 
       if (error.message) {
-        if (error.message.includes('OpenAI API')) {
+        if (error.message.includes('Groq API')) {
           errorMessage = 'AI service is currently unavailable. Please try again later.';
         } else if (error.message.includes('key is not configured')) {
           errorMessage = 'AI service is not properly configured. Please contact support.';
