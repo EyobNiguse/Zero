@@ -350,9 +350,11 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
                   if (imageData) {
                     // Remove < and > from Content-ID if present
                     const cleanContentId = contentId.replace(/[<>]/g, '');
+
+                    const escapedContentId = cleanContentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     // Replace cid: URL with data URL
                     processedBody = processedBody.replace(
-                      new RegExp(`cid:${cleanContentId}`, 'g'),
+                      new RegExp(`cid:${escapedContentId}`, 'g'),
                       `data:${part.mimeType};base64,${imageData}`
                     );
                   }
