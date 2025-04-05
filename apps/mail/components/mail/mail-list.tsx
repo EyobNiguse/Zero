@@ -11,16 +11,8 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import {
-  type ComponentProps,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
+import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -33,7 +25,6 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
-import { MailQuickActions } from './mail-quick-actions';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '@/lib/auth-client';
@@ -42,7 +33,6 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
-import Link from 'next/link';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -68,11 +58,9 @@ const Thread = memo(
     const t = useTranslations();
     const searchParams = useSearchParams();
     const threadIdParam = searchParams.get('threadId');
-    const { folder } = useParams<{ folder: string }>();
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
-    const [isHovered, setIsHovered] = useState(false);
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
       return threadId === threadIdParam;
@@ -87,7 +75,6 @@ const Thread = memo(
     const handleMouseEnter = () => {
       if (demo) return;
       isHovering.current = true;
-      setIsHovered(true);
 
       // Prefetch only in single select mode
       if (selectMode === 'single' && sessionData?.userId && !hasPrefetched.current) {
@@ -113,7 +100,6 @@ const Thread = memo(
 
     const handleMouseLeave = () => {
       isHovering.current = false;
-      setIsHovered(false);
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
@@ -245,7 +231,10 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8">
-                <AvatarImage className="bg-muted-foreground/50 dark:bg-muted/50 p-2" src={getEmailLogo(message.sender.email)} />
+                <AvatarImage
+                  className="bg-muted-foreground/50 dark:bg-muted/50 p-2"
+                  src={getEmailLogo(message.sender.email)}
+                />
                 <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50">
                   {message?.sender?.name[0]?.toUpperCase()}
                 </AvatarFallback>
