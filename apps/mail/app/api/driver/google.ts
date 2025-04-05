@@ -314,16 +314,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const res = await gmail.users.threads.get({ userId: 'me', id, format: 'full' });
       if (!res.data.messages) return [];
 
-      // const allLabels = [...new Set(res.data.messages.flatMap(msg => msg.labelIds || []))];
-      // console.log('Thread Labels:', JSON.stringify({
-      //   threadId: id,
-      //   allLabels,
-      //   messageLabels: res.data.messages.map(msg => ({
-      //     messageId: msg.id,
-      //     labels: msg.labelIds || []
-      //   }))
-      // }, null, 2));
-
       const messages = await Promise.all(
         res.data.messages.map(async (message) => {
           const bodyData =
