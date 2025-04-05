@@ -329,18 +329,59 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           }
 
           console.log('🔄 Driver: Processing email body...');
-          const decodedBody = fromBinary(bodyData);
+          const decodedBody = bodyData ? fromBinary(bodyData) : '';
+
+          // Process inline images if present
+          let processedBody = decodedBody;
+          if (message.payload?.parts) {
+            const inlineImages = message.payload.parts
+              .filter(part => {
+                const contentDisposition = part.headers?.find(h => h.name?.toLowerCase() === 'content-disposition')?.value || '';
+                const isInline = contentDisposition.toLowerCase().includes('inline');
+                const hasContentId = part.headers?.some(h => h.name?.toLowerCase() === 'content-id');
+                return isInline && hasContentId;
+              });
+
+            for (const part of inlineImages) {
+              const contentId = part.headers?.find(h => h.name?.toLowerCase() === 'content-id')?.value;
+              if (contentId && part.body?.attachmentId) {
+                try {
+                  const imageData = await manager.getAttachment(message.id!, part.body.attachmentId);
+                  if (imageData) {
+                    // Remove < and > from Content-ID if present
+                    const cleanContentId = contentId.replace(/[<>]/g, '');
+                    // Replace cid: URL with data URL
+                    processedBody = processedBody.replace(
+                      new RegExp(`cid:${cleanContentId}`, 'g'),
+                      `data:${part.mimeType};base64,${imageData}`
+                    );
+                  }
+                } catch (error) {
+                  console.error('Failed to process inline image:', error);
+                }
+              }
+            }
+          }
 
           console.log('✅ Driver: Email processing complete', {
             hasBody: !!bodyData,
-            decodedBodyLength: decodedBody.length,
+            decodedBodyLength: processedBody.length,
           });
 
           const parsedData = parse(message);
 
           const attachments = await Promise.all(
             message.payload?.parts
-              ?.filter((part) => part.filename && part.filename.length > 0)
+              ?.filter((part) => {
+                if (!part.filename || part.filename.length === 0) return false;
+                
+                const contentDisposition = part.headers?.find(h => h.name?.toLowerCase() === 'content-disposition')?.value || '';
+                const isInline = contentDisposition.toLowerCase().includes('inline');
+                
+                const hasContentId = part.headers?.some(h => h.name?.toLowerCase() === 'content-id');
+                
+                return !isInline || (isInline && !hasContentId);
+              })
               ?.map(async (part) => {
                 console.log('Processing attachment:', part.filename);
                 const attachmentId = part.body?.attachmentId;
@@ -385,9 +426,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             ...parsedData,
             body: '',
             processedHtml: '',
-            // blobUrl: `data:text/html;charset=utf-8,${encodeURIComponent(decodedBody)}`,
             blobUrl: '',
-            decodedBody,
+            decodedBody: processedBody,
             attachments,
           };
 
