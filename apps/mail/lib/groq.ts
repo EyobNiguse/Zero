@@ -1,4 +1,3 @@
-import { betterFetch } from "@better-fetch/fetch";
 import { z } from "zod";
 
 export const groqChatCompletionSchema = z.object({
@@ -79,24 +78,62 @@ export async function createEmbedding(text: string, model: string = GROQ_MODELS.
     throw new Error('Empty text cannot be embedded');
   }
 
-  const { data, error } = await betterFetch('https://api.groq.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
-    },
-    output: groqEmbeddingSchema,
-    body: {
-      model,
-      input: text
+  try {
+    // Make the API request
+    const response = await fetch('https://api.groq.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model,
+        input: text
+      })
+    });
+
+    // Handle HTTP errors
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Groq Embedding API HTTP Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`Embedding API HTTP error: ${response.status} ${response.statusText} - ${errorText}`);
     }
-  });
 
-  if (error) {
-    throw new Error(`Embedding API error: ${error.message || 'Unknown error'}`);
+    // Parse the JSON response
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('Failed to parse JSON response:', jsonError);
+      throw new Error(`Failed to parse embedding API response: ${jsonError}`);
+    }
+
+    // Validate the response against our schema
+    try {
+      const validatedData = groqEmbeddingSchema.parse(data);
+      
+      // Check if we have embedding data
+      if (!validatedData.data || validatedData.data.length === 0) {
+        console.error('No embedding data returned:', validatedData);
+        throw new Error('No embedding data returned from API');
+      }
+      
+      // Return the embedding
+      return validatedData.data[0]?.embedding || [];
+    } catch (validationError) {
+      console.error('Embedding response validation error:', validationError);
+      console.error('Raw response data:', data);
+      
+      throw new Error(`Invalid embedding API response: ${validationError}`);
+    }
+  } catch (error) {
+    console.error('Embedding API error:', error);
+    throw error;
   }
-
-  return data.data[0]?.embedding || [];
 }
 
 /**
@@ -245,11 +282,8 @@ export async function generateCompletions({
       // Clean up the response to remove any remaining template-like content
       let content = validatedData.choices[0]?.message.content || '';
       
-      // Remove any "Subject:" lines
-      content = cleanupEmailContent(content)
-      
-      // Trim whitespace
-      content = content.trim();
+      // Clean up the content
+      content = cleanupEmailContent(content);
       
       return { completion: content };
     } catch (validationError) {
@@ -258,7 +292,7 @@ export async function generateCompletions({
       let content = data.choices[0]?.message.content || '';
       
       // Apply the same cleanup to the raw response
-      content = cleanupEmailContent(content)
+      content = cleanupEmailContent(content);
       
       return { completion: content };
     }
@@ -323,4 +357,3 @@ export function cleanupEmailContent(content: string): string {
   
   return cleanedContent;
 }
-
