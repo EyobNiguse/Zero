@@ -87,10 +87,11 @@ type Props = {
   isMuted: boolean;
   isLoading: boolean;
   index: number;
+  totalEmails?: number;
   demo?: boolean;
 };
 
-const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
+const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const [unsubscribed, setUnsubscribed] = useState(false);
   const [isUnsubscribing, setIsUnsubscribing] = useState(false);
@@ -113,10 +114,16 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
     : useSummary(emailData.id);
 
   useEffect(() => {
-    if (index === 0) {
+    if (totalEmails && index === totalEmails - 1) {
       setIsCollapsed(false);
+      if (totalEmails > 5) {
+        setTimeout(() => {
+          const element = document.getElementById(`mail-${emailData.id}`);
+          element?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
     }
-  }, [index]);
+  }, [index, emailData.id, totalEmails]);
 
   const listUnsubscribeAction = useMemo(
     () =>
@@ -144,7 +151,7 @@ const MailDisplay = ({ emailData, isMuted, index, demo }: Props) => {
   };
 
   return (
-    <div className={cn('relative flex-1 overflow-hidden')}>
+    <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}>
       <div className="relative h-full overflow-y-auto">
         <div className="flex flex-col gap-4 p-4 pb-2 transition-all duration-200">
           <div className="flex items-start justify-between gap-4">
