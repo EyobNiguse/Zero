@@ -11,16 +11,8 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import {
-  type ComponentProps,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
+import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -33,16 +25,15 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
-import { MailQuickActions } from './mail-quick-actions';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
+import { useQueryState } from 'nuqs';
 import items from './demo.json';
 import { toast } from 'sonner';
-import Link from 'next/link';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -68,15 +59,13 @@ const Thread = memo(
     const t = useTranslations();
     const searchParams = useSearchParams();
     const threadIdParam = searchParams.get('threadId');
-    const { folder } = useParams<{ folder: string }>();
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
-    const [isHovered, setIsHovered] = useState(false);
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
-      return threadId === threadIdParam;
-    }, [message.id, message.threadId, threadIdParam]);
+      return threadId === threadIdParam || threadId === mail.selected;
+    }, [message.id, message.threadId, threadIdParam, mail.selected]);
 
     const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 
@@ -87,7 +76,6 @@ const Thread = memo(
     const handleMouseEnter = () => {
       if (demo) return;
       isHovering.current = true;
-      setIsHovered(true);
 
       // Prefetch only in single select mode
       if (selectMode === 'single' && sessionData?.userId && !hasPrefetched.current) {
@@ -113,7 +101,6 @@ const Thread = memo(
 
     const handleMouseLeave = () => {
       isHovering.current = false;
-      setIsHovered(false);
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
@@ -245,7 +232,10 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8">
-                <AvatarImage className="bg-muted-foreground/50 dark:bg-muted/50 p-2" src={getEmailLogo(message.sender.email)} />
+                <AvatarImage
+                  className="bg-muted-foreground/50 dark:bg-muted/50 p-2"
+                  src={getEmailLogo(message.sender.email)}
+                />
                 <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50">
                   {message?.sender?.name[0]?.toUpperCase()}
                 </AvatarFallback>
@@ -340,9 +330,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [mail, setMail] = useMail();
   const { data: session } = useSession();
   const t = useTranslations();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const threadIdParam = searchParams.get('threadId');
+  const router = useRouter();
+  const [threadId, setThreadId] = useQueryState('threadId');
 
   const sessionData = useMemo(
     () => ({
@@ -510,52 +500,22 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const handleMailClick = useCallback(
     (message: InitialThread) => () => {
       handleMouseEnter(message.id);
-      const selectMode = getSelectMode();
 
-      if (selectMode === 'mass') {
-        const updatedBulkSelected = mail.bulkSelected.includes(message.id)
-          ? mail.bulkSelected.filter((id) => id !== message.id)
-          : [...mail.bulkSelected, message.id];
+      const messageThreadId = message.threadId ?? message.id;
 
-        setMail({ ...mail, bulkSelected: updatedBulkSelected });
-        return;
-      }
+      // Update local state immediately for optimistic UI
+      setMail((prev) => ({ ...prev, selected: messageThreadId }));
 
-      // TODO: Look into making this more performant
-      if (selectMode === 'range') {
-        const lastSelectedItem =
-          mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadIdParam ?? message.id;
+      // Update URL param without navigation
+      void setThreadId(messageThreadId);
 
-        const mailsIndex = items.map((m) => m.id);
-        const startIdx = mailsIndex.indexOf(lastSelectedItem);
-        const endIdx = mailsIndex.indexOf(message.id);
-
-        if (startIdx !== -1 && endIdx !== -1) {
-          const selectedRange = mailsIndex.slice(
-            Math.min(startIdx, endIdx),
-            Math.max(startIdx, endIdx) + 1,
-          );
-
-          setMail({ ...mail, bulkSelected: selectedRange });
-        }
-        return;
-      }
-
-      if (selectMode === 'selectAllBelow') {
-        const mailsIndex = items.map((m) => m.id);
-        const startIdx = mailsIndex.indexOf(message.id);
-
-        if (startIdx !== -1) {
-          const selectedRange = mailsIndex.slice(startIdx);
-
-          setMail({ ...mail, bulkSelected: selectedRange });
-        }
-        return;
-      }
-
-      router.push(`/mail/inbox?threadId=${message.threadId ?? message.id}`);
+      // Mark as read in background
+      markAsRead({ ids: [messageThreadId] }).catch((error) => {
+        console.error('Failed to mark email as read:', error);
+        toast.error(t('common.mail.failedToMarkAsRead'));
+      });
     },
-    [getSelectMode, folder, searchParams, items, handleMouseEnter],
+    [getSelectMode, setThreadId, items, handleMouseEnter, t, setMail],
   );
 
   const isEmpty = items.length === 0;

@@ -123,7 +123,7 @@ export function DemoMailLayout() {
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
-                  'compose-gradient h-0.5 w-full transition-opacity',
+                  'compose-loading h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-50' : 'opacity-0',
                 )}
               />
@@ -207,7 +207,7 @@ export function DemoMailLayout() {
   );
 }
 
-export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
+export function MailLayout() {
   const { folder } = useParams<{ folder: string }>();
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
@@ -280,7 +280,7 @@ export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
         // This ensures we don't keep the email content in the URL
         navigator.registerProtocolHandler(
           'mailto',
-          `${window.location.origin}/mail/compose/handle-mailto?mailto=%s`
+          `${window.location.origin}/mail/compose/handle-mailto?mailto=%s`,
         );
       } catch (error) {
         console.error('Failed to register protocol handler:', error);
@@ -304,7 +304,7 @@ export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
-                  'compose-gradient h-0.5 w-full transition-opacity',
+                  'compose-loading h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-50' : 'opacity-0',
                 )}
               />
@@ -396,19 +396,22 @@ export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
             </div>
           </ResizablePanel>
 
-          {isDesktop && threadIdParam && (
+          {isDesktop ? (
             <>
               <ResizablePanel
-                className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
+                className={cn(
+                  'bg-offsetLight dark:bg-offsetDark shadow-sm md:rounded-2xl md:border md:shadow-sm',
+                  threadIdParam ? 'md:flex' : 'hidden',
+                )}
                 defaultSize={75}
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDisplay onClose={handleClose} messages={messages} />
+                  <ThreadDisplay onClose={handleClose} id={threadIdParam ?? undefined} />
                 </div>
               </ResizablePanel>
             </>
-          )}
+          ) : null}
         </ResizablePanelGroup>
 
         {/* Mobile Drawer */}
@@ -425,7 +428,9 @@ export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
               </DrawerHeader>
               <div className="flex h-full flex-col overflow-hidden">
                 <div className="flex-1 overflow-hidden">
-                  <ThreadDisplay onClose={handleClose} isMobile={true} messages={messages} />
+                  {threadIdParam ? (
+                    <ThreadDisplay onClose={handleClose} isMobile={true} id={threadIdParam} />
+                  ) : null}
                 </div>
               </div>
             </DrawerContent>
