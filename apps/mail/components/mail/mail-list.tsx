@@ -33,6 +33,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import items from './demo.json';
 import { toast } from 'sonner';
+import { useQueryState } from 'nuqs';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -63,8 +64,8 @@ const Thread = memo(
     const hasPrefetched = useRef<boolean>(false);
     const isMailSelected = useMemo(() => {
       const threadId = message.threadId ?? message.id;
-      return threadId === threadIdParam;
-    }, [message.id, message.threadId, threadIdParam]);
+      return threadId === threadIdParam || threadId === mail.selected;
+    }, [message.id, message.threadId, threadIdParam, mail.selected]);
 
     const isMailBulkSelected = mail.bulkSelected.includes(message.id);
 
@@ -329,9 +330,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [mail, setMail] = useMail();
   const { data: session } = useSession();
   const t = useTranslations();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const threadIdParam = searchParams.get('threadId');
+  const router = useRouter();
+  const [threadId, setThreadId] = useQueryState('threadId');
 
   const sessionData = useMemo(
     () => ({
@@ -510,10 +511,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         return;
       }
 
-      // TODO: Look into making this more performant
       if (selectMode === 'range') {
         const lastSelectedItem =
-          mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadIdParam ?? message.id;
+          mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadId ?? message.id;
 
         const mailsIndex = items.map((m) => m.id);
         const startIdx = mailsIndex.indexOf(lastSelectedItem);
@@ -542,11 +542,21 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         return;
       }
 
-      void markAsRead({ ids: [message.threadId ?? message.id] });
+      const messageThreadId = message.threadId ?? message.id;
+      
+      // Update local state immediately for optimistic UI
+      setMail(prev => ({ ...prev, selected: messageThreadId }));
+      
+      // Update URL param without navigation
+      void setThreadId(messageThreadId);
 
-      router.push(`/mail/inbox?threadId=${message.threadId ?? message.id}`);
+      // Mark as read in background
+      markAsRead({ ids: [messageThreadId] }).catch((error) => {
+        console.error('Failed to mark email as read:', error);
+        toast.error(t('common.mail.failedToMarkAsRead'));
+      });
     },
-    [getSelectMode, folder, searchParams, items, handleMouseEnter],
+    [getSelectMode, setThreadId, items, handleMouseEnter, t, setMail],
   );
 
   const isEmpty = items.length === 0;
