@@ -2,59 +2,7 @@
 
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { generateCompletions } from '@/lib/groq';
-
-// Function to truncate email thread content to fit within token limits
-function truncateThreadContent(threadContent: string, maxTokens: number = 4000): string {
-  // Estimate current token count (roughly 4 characters per token)
-  const estimatedTokens = threadContent.length / 4;
-  
-  // If already under limit, return as is
-  if (estimatedTokens <= maxTokens) {
-    return threadContent;
-  }
-  
-  // Split the thread into individual emails
-  const emails = threadContent.split('\n---\n');
-  
-  // Start with just the most recent email (last in the array)
-  let truncatedContent = emails[emails.length - 1] || '';
-  
-  // Estimate tokens for the most recent email
-  let currentTokens = truncatedContent.length / 4;
-  
-  // If even the most recent email is too large, truncate it
-  if (currentTokens > maxTokens) {
-    // Get the first part of the email up to the maxTokens limit
-    // Multiply by 4 to convert tokens to characters, and reduce by 20% for safety
-    const safeCharLimit = Math.floor(maxTokens * 4 * 0.8);
-    truncatedContent = truncatedContent.substring(0, safeCharLimit);
-    truncatedContent += "\n\n[Email content truncated due to length]";
-    return truncatedContent;
-  }
-  
-  // Try to include previous emails, starting from the second most recent
-  for (let i = emails.length - 2; i >= 0; i--) {
-    // Calculate tokens for the next email
-    const nextEmailTokens = (emails[i]?.length || 0) / 4;
-    
-    // If adding this email would exceed the limit, stop here
-    if (currentTokens + nextEmailTokens > maxTokens * 0.9) { // 90% of limit for safety
-      break;
-    }
-    
-    // Add this email to the content
-    truncatedContent = `${emails[i]}\n---\n${truncatedContent}`;
-    currentTokens += nextEmailTokens;
-  }
-  
-  // Add a note if we had to truncate
-  if (emails.length > 1 && currentTokens < estimatedTokens) {
-    truncatedContent = `[Earlier parts of the conversation were omitted]\n\n${truncatedContent}`;
-  }
-  
-  return truncatedContent;
-}
+import { generateCompletions, truncateThreadContent } from '@/lib/groq';
 
 // Extracts the most important parts of an email thread to fit within token limits
 function extractEmailSummary(threadContent: string, maxTokens: number = 4000): string {
