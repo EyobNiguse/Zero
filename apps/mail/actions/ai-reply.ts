@@ -105,7 +105,7 @@ export async function generateAIResponse(
     // Use direct fetch to the Groq API
     const { completion } = await generateCompletions({
       model: 'llama3-8b-8192',
-      systemPrompt,
+      systemPrompt: process.env.SYSTEM_PROMPT || systemPrompt,
       prompt ,
       temperature: 0.7,
       max_tokens: 500
