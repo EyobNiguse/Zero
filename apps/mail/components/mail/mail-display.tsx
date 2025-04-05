@@ -153,7 +153,10 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
   return (
     <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}>
       <div className="relative h-full overflow-y-auto">
-        <div className="flex flex-col gap-4 p-4 pb-2 transition-all duration-200">
+        <div 
+          className="flex flex-col gap-4 p-4 pb-2 transition-all duration-200 cursor-pointer" 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start justify-center gap-4">
               <Avatar className="h-8 w-8">
@@ -225,7 +228,10 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                         variant="ghost"
                         size="sm"
                         className="h-auto p-0 text-xs underline hover:bg-transparent"
-                        onClick={() => setOpenDetailsPopover(true)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDetailsPopover(true);
+                        }}
                       >
                         {t('common.mailDisplay.details')}
                       </Button>
@@ -304,16 +310,6 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                       </div>
                     </PopoverContent>
                   </Popover>
-                  <p onClick={() => setIsCollapsed(!isCollapsed)} className="cursor-pointer">
-                    <span
-                      className={cn(
-                        'relative top-0.5 inline-block transition-transform duration-300',
-                        !isCollapsed && 'rotate-180',
-                      )}
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </span>
-                  </p>
                 </div>
               </div>
             </div>
