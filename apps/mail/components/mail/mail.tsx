@@ -253,9 +253,15 @@ export function MailLayout() {
   // No need to track threadIdParam with a separate state
 
   const handleClose = useCallback(() => {
-    // Update URL to remove threadId parameter
+    // Update URL to remove threadId parameter while preserving category
     const currentParams = new URLSearchParams(searchParams.toString());
+    const category = currentParams.get('category');
     currentParams.delete('threadId');
+    // If there was a category, make sure to keep it
+    if (category) {
+      currentParams.set('category', category);
+    }
+    
     router.push(`/mail/${folder}?${currentParams.toString()}`);
   }, [router, folder, searchParams]);
 
@@ -632,27 +638,15 @@ const Categories = () => {
 function CategorySelect() {
   const [, setSearchValue] = useSearchValue();
   const categories = Categories();
-  const [defaultCategory, setDefaultCategory] = useState('Primary');
-
-  // Safely access localStorage on the client side only
-  useEffect(() => {
-    // Check if we're in the browser environment
-    if (typeof window !== 'undefined') {
-      const savedCategory = localStorage.getItem('mailActiveCategory');
-      if (savedCategory) {
-        setDefaultCategory(savedCategory);
-      }
-    }
-  }, []);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentCategory = searchParams.get('category') || 'Primary';
 
   return (
     <Select
       onValueChange={(value: string) => {
         // Find the category and trigger its selection
         const category = categories.find((cat) => cat.id === value);
-
-        // Always update the state to match the selected value
-        setDefaultCategory(value);
 
         if (category) {
           // Update search value based on category
@@ -663,13 +657,13 @@ function CategorySelect() {
           };
           setSearchValue(searchValueState);
 
-          // Save to localStorage (safely on client-side)
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('mailActiveCategory', value);
-          }
+          // Update URL with new category while preserving other params
+          const newParams = new URLSearchParams(searchParams.toString());
+          newParams.set('category', value);
+          router.push(`?${newParams.toString()}`);
         }
       }}
-      defaultValue={defaultCategory}
+      value={currentCategory}
     >
       <SelectTrigger className="bg-popover h-9 w-36">
         <SelectValue placeholder="Select category" />
