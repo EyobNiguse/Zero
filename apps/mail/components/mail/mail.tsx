@@ -575,7 +575,7 @@ const Categories = () => {
     {
       id: 'Primary',
       name: t('common.mailCategories.primary'),
-      searchValue: '',
+      searchValue: 'in:inbox category:primary',
       icon: <Inbox className="h-4 w-4" />,
       colors:
         'border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70',
