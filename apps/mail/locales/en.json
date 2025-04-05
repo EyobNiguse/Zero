@@ -319,7 +319,12 @@
         "signatureContentPlaceholder": "Create your signature with formatting, links, and images.",
         "signaturePreview": "Signature Preview",
         "signatureSaved": "Signature saved successfully",
-        "signaturePreviewDescription": "This is how your signature will appear in emails."
+        "signaturePreviewDescription": "This is how your signature will appear in emails.",
+        "editorType": "Editor Type",
+        "editorTypeDescription": "Choose between plain text/HTML input or a rich text editor for your signature.",
+        "plainText": "Plain Text / HTML",
+        "richText": "Rich Text Editor",
+        "richTextDescription": "Use the rich text editor to format your signature."
       },
       "shortcuts": {
         "title": "Keyboard Shortcuts",
