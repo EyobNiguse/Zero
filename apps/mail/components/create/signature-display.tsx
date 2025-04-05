@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
 
 interface SignatureDisplayProps {
   html: string;
@@ -18,6 +19,11 @@ export default function SignatureDisplay({ html, className = '' }: SignatureDisp
     try {
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (!doc) return;
+      
+      const sanitizedHtml = DOMPurify.sanitize(html, {
+        ADD_ATTR: ['target'],
+        FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
+      });
       
       doc.open();
       doc.write(`
@@ -38,7 +44,7 @@ export default function SignatureDisplay({ html, className = '' }: SignatureDisp
             }
           </style>
         </head>
-        <body>${html}</body>
+        <body>${sanitizedHtml}</body>
         </html>
       `);
       doc.close();

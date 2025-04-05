@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
+import DOMPurify from 'dompurify';
 
 const formSchema = z.object({
   signature: z.object({
@@ -56,7 +57,8 @@ export default function SignaturesPage() {
       });
       
       // Set the raw HTML in the textarea
-      setSignatureHtml(settings.signature.content || '');
+      const signatureHtml = settings.signature.content || '';
+      setSignatureHtml(signatureHtml);
     }
   }, [form, settings]);
 
@@ -71,6 +73,10 @@ export default function SignaturesPage() {
       
       // Use a simplified template
       doc.open();
+      const sanitizedHtml = DOMPurify.sanitize(signatureHtml, {
+        ADD_ATTR: ['target'],
+        FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
+      });
       doc.write(`
         <!DOCTYPE html>
         <html>
@@ -88,7 +94,7 @@ export default function SignaturesPage() {
             }
           </style>
         </head>
-        <body>${signatureHtml}</body>
+        <body>${sanitizedHtml}</body>
         </html>
       `);
       doc.close();
@@ -136,12 +142,18 @@ export default function SignaturesPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
 
-    // Use the raw HTML from the textarea instead of the form value
+    // Sanitize HTML before saving
+    const sanitizedHtml = DOMPurify.sanitize(signatureHtml, {
+      ADD_ATTR: ['target'],
+      FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
+    });
+
+    // Use the sanitized HTML from the textarea instead of the form value
     const formData = {
       ...values,
       signature: {
         ...values.signature,
-        content: signatureHtml
+        content: sanitizedHtml
       }
     };
 

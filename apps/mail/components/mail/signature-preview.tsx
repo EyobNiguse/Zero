@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import DOMPurify from 'dompurify';
 
 interface SignaturePreviewProps {
   html: string;
@@ -24,6 +25,10 @@ export function SignaturePreview({ html, className, style }: SignaturePreviewPro
         
         // Create and inject the content
         iframeDoc.open();
+        const sanitizedHtml = DOMPurify.sanitize(html, {
+          ADD_ATTR: ['target'],
+          FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
+        });
         iframeDoc.write(`
           <!DOCTYPE html>
           <html>
@@ -47,7 +52,7 @@ export function SignaturePreview({ html, className, style }: SignaturePreviewPro
               }
             </style>
           </head>
-          <body>${html}</body>
+          <body>${sanitizedHtml}</body>
           </html>
         `);
         iframeDoc.close();
