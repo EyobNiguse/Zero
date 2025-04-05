@@ -196,7 +196,7 @@ function ThreadActionButton({
 }
 
 export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProps) {
-  const { data: emailData, isLoading } = useThread(id);
+  const { data: emailData, isLoading } = useThread(id ?? null);
   const { mutate: mutateThreads } = useThreads();
   const searchParams = useSearchParams();
   const [isMuted, setIsMuted] = useState(false);

@@ -396,19 +396,22 @@ export function MailLayout() {
             </div>
           </ResizablePanel>
 
-          {isDesktop && threadIdParam && (
+          {isDesktop ? (
             <>
               <ResizablePanel
-                className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
+                className={cn(
+                  'bg-offsetLight dark:bg-offsetDark shadow-sm md:rounded-2xl md:border md:shadow-sm',
+                  threadIdParam ? 'md:flex' : 'hidden',
+                )}
                 defaultSize={75}
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDisplay onClose={handleClose} id={threadIdParam} />
+                  <ThreadDisplay onClose={handleClose} id={threadIdParam ?? undefined} />
                 </div>
               </ResizablePanel>
             </>
-          )}
+          ) : null}
         </ResizablePanelGroup>
 
         {/* Mobile Drawer */}
