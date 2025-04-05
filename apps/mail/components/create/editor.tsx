@@ -361,7 +361,7 @@ const MenuBar = ({
                 <button
                   onClick={() => onSignatureToggle(!includeSignature)}
                   className={`hover:bg-muted flex items-center space-x-1 rounded border ${includeSignature ? 'border-primary bg-primary/10 text-primary' : 'border-muted-foreground/30 text-muted-foreground'} px-2 py-1 text-xs transition-colors`}
-                  title={includeSignature ? t('pages.createEmail.signature.disableSignature') : t('pages.createEmail.signature.enableSignature')}
+                  title={includeSignature ? t('pages.createEmail.signature.disable') : t('pages.createEmail.signature.enable')}
                 >
                   {includeSignature ? (
                     <>
@@ -398,7 +398,7 @@ const MenuBar = ({
                         <path d="M15 16l3 3 3-3" />
                         <path d="M2 10h20" />
                       </svg>
-                      <span>{t('pages.createEmail.signature.addSignature')}</span>
+                      <span>{t('pages.createEmail.signature.add')}</span>
                     </>
                   )}
                 </button>
@@ -671,12 +671,12 @@ export default function Editor({
                       className="text-xs italic pb-1"
                       style={{ userSelect: 'none' }}
                     >
-                      Signature
+                      {t('pages.createEmail.signature.title') || "Signature"}
                     </div>
                     <button
                       onClick={() => onSignatureToggle?.(false)}
                       className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 pb-1"
-                      title="Disable Signature"
+                      title={t('pages.createEmail.signature.disable') || "Disable signature"}
                     >
                       <svg 
                         className="h-3 w-3" 

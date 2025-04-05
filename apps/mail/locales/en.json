@@ -325,6 +325,7 @@
         "plainText": "Plain Text / HTML",
         "richText": "Rich Text Editor",
         "richTextDescription": "Use the rich text editor to format your signature.",
+        "richTextPlaceholder": "Format your signature with the rich text editor...",
         "signatureContentHelp": "You can use HTML to add formatting, links, and images to your signature."
       },
       "shortcuts": {
@@ -364,11 +365,12 @@
       "emailSentSuccessfully": "Email sent successfully",
       "failedToSendEmail": "Failed to send email. Please try again.",
       "signature": {
+        "title": "Signature",
         "include": "Include signature",
-        "remove": "Remove",
-        "enableSignature": "Enable Signature",
-        "disableSignature": "Disable Signature",
-        "addSignature": "Add Signature"
+        "remove": "Remove signature",
+        "enable": "Enable signature",
+        "disable": "Disable signature",
+        "add": "Add signature"
       }
     }
   }

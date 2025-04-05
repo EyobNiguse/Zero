@@ -30,7 +30,7 @@ import { JSONContent } from 'novel';
 const formSchema = z.object({
   signature: z.object({
     enabled: z.boolean(),
-    content: z.string(),
+    content: z.string().min(1).max(10000),
     includeByDefault: z.boolean(),
     editorType: z.enum(['plain', 'rich']).default('plain'),
   }),
@@ -40,7 +40,8 @@ export default function SignaturesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [signatureHtml, setSignatureHtml] = useState('');
   const [editorContent, setEditorContent] = useState<JSONContent | undefined>(undefined);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Using autofocus instead of a ref for better user experience
+  const [autoFocus, setAutoFocus] = useState(false);
   const t = useTranslations();
   const { settings, mutate } = useSettings();
 
@@ -63,23 +64,47 @@ export default function SignaturesPage() {
       const div = document.createElement('div');
       div.innerHTML = html;
       
-      // Get the text content without HTML tags
-      const plainText = div.textContent || '';
+      // Return as a document with proper structure preserving paragraphs
+      // This is a basic implementation - for more complex conversions, consider using a 
+      // dedicated HTML-to-ProseMirror conversion library
+      const content: any[] = [];
       
-      // Return as a simple document with text
+      // Process each child element to create proper paragraph nodes
+      Array.from(div.childNodes).forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          // Plain text nodes
+          if (node.textContent?.trim()) {
+            content.push({
+              type: 'paragraph',
+              content: [{ type: 'text', text: node.textContent }]
+            });
+          }
+        } else if (node.nodeName === 'BR') {
+          // Line breaks - add an empty paragraph
+          content.push({ type: 'paragraph' });
+        } else if (node.nodeName === 'P' || node.nodeName === 'DIV') {
+          // Paragraph or div elements
+          content.push({
+            type: 'paragraph',
+            content: [{ type: 'text', text: node.textContent || '' }]
+          });
+        } else {
+          // Other elements - try to preserve their content
+          content.push({
+            type: 'paragraph',
+            content: [{ type: 'text', text: node.textContent || '' }]
+          });
+        }
+      });
+      
+      // If no content was created, create a default empty paragraph
+      if (content.length === 0) {
+        content.push({ type: 'paragraph' });
+      }
+      
       return {
         type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: plainText
-              }
-            ]
-          }
-        ]
+        content
       };
     } catch (error) {
       console.error('Error parsing HTML to content:', error);
@@ -191,10 +216,12 @@ export default function SignaturesPage() {
       const cleanHtml = decodeHtmlEntities(signatureHtml);
       setSignatureHtml(cleanHtml);
       setEditorContent(tryParseHtmlToContent(cleanHtml));
+      setAutoFocus(false);
     } else {
       // When switching to plain mode, make sure we're seeing actual HTML, not escaped entities
       const cleanHtml = decodeHtmlEntities(signatureHtml);
       setSignatureHtml(cleanHtml);
+      setAutoFocus(true);
     }
   }, [watchEditorType]);
 
@@ -298,23 +325,31 @@ export default function SignaturesPage() {
                   {watchEditorType === 'plain' ? (
                     <div className="mt-1">
                       <Textarea
-                        ref={textareaRef}
+                        autoFocus={autoFocus}
                         className="font-mono text-xs h-[200px]"
                         value={signatureHtml}
                         onChange={handleTextareaChange}
                         placeholder={t('pages.settings.signatures.signatureContentPlaceholder')}
                       />
                       <p className="text-muted-foreground text-sm mt-2">
-                        {t('pages.settings.signatures.signatureContentHelp')}
+                        {t('pages.settings.signatures.signatureContentHelp') || "You can use HTML to add formatting, links, and images to your signature."}
                       </p>
+                      <div className="text-xs bg-muted/50 p-2 mt-1 rounded border">
+                        <strong>Note:</strong> HTML tags are supported for formatting. 
+                        For security reasons, script tags are not allowed. Common useful tags: 
+                        <code className="mx-1 px-1 bg-muted rounded">&lt;a&gt;</code> for links, 
+                        <code className="mx-1 px-1 bg-muted rounded">&lt;br&gt;</code> for line breaks, 
+                        <code className="mx-1 px-1 bg-muted rounded">&lt;b&gt;</code> for bold text.
+                      </div>
                     </div>
                   ) : (
                     <div className="mt-1 border rounded-md p-2">
                       <Editor
                         initialValue={editorContent}
                         onChange={handleEditorChange}
-                        placeholder={t('pages.settings.signatures.signatureContentPlaceholder')}
+                        placeholder={t('pages.settings.signatures.richTextPlaceholder') || "Format your signature with the rich text editor..."}
                         className="w-full"
+                        autoFocus
                       />
                       <p className="text-muted-foreground text-sm mt-2">
                         {t('pages.settings.signatures.richTextDescription')}

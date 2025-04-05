@@ -223,7 +223,7 @@ export function CreateEmail({
         subject: subjectInput,
         message: messageContent,
         attachments: attachments,
-        includeSignature: includeSignature && settings?.signature?.enabled,
+        includeSignature: includeSignature && Boolean(settings?.signature?.enabled),
       });
 
       setIsLoading(false);
@@ -437,8 +437,8 @@ export function CreateEmail({
                       onCommandEnter={handleSendEmail}
                       includeSignature={includeSignature}
                       onSignatureToggle={setIncludeSignature}
-                      signature={settings?.signature?.content}
-                      hasSignature={settings?.signature?.enabled}
+                      signature={settings?.signature?.content || ''}
+                      hasSignature={Boolean(settings?.signature?.enabled)}
                     />
                   )}
                 </div>
