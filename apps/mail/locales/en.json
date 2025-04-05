@@ -324,7 +324,8 @@
         "editorTypeDescription": "Choose between plain text/HTML input or a rich text editor for your signature.",
         "plainText": "Plain Text / HTML",
         "richText": "Rich Text Editor",
-        "richTextDescription": "Use the rich text editor to format your signature."
+        "richTextDescription": "Use the rich text editor to format your signature.",
+        "signatureContentHelp": "You can use HTML to add formatting, links, and images to your signature."
       },
       "shortcuts": {
         "title": "Keyboard Shortcuts",

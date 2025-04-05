@@ -20,7 +20,6 @@ import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
 import { useSettings } from '@/hooks/use-settings';
-import { Switch } from '@/components/ui/switch';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 

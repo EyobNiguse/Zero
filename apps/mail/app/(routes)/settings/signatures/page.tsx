@@ -49,18 +49,24 @@ export default function SignaturesPage() {
     defaultValues: {
       signature: {
         enabled: false,
-        content: '-- <br>Sent via <a href="https://0.email" target="_blank" style="color: #016FFE; text-decoration: none;">0.email</a>',
+        content: '--<br><br>Sent via <a href="https://0.email" target="_blank" style="color: #016FFE; text-decoration: none;">0.email</a>',
         includeByDefault: true,
         editorType: 'plain',
       },
     },
   });
 
-  // Helper function to try parsing HTML to JSONContent
+  // Helper function to convert HTML to JSONContent more accurately
   const tryParseHtmlToContent = (html: string): JSONContent | undefined => {
     try {
-      // A very basic conversion to support the editor
-      // This is a placeholder - in production you'd want a more robust HTML to ProseMirror conversion
+      // Create a temporary div to parse the HTML
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      
+      // Get the text content without HTML tags
+      const plainText = div.textContent || '';
+      
+      // Return as a simple document with text
       return {
         type: 'doc',
         content: [
@@ -69,7 +75,7 @@ export default function SignaturesPage() {
             content: [
               {
                 type: 'text',
-                text: html
+                text: plainText
               }
             ]
           }
@@ -93,7 +99,7 @@ export default function SignaturesPage() {
       });
       
       // Set the raw HTML in the state
-      const signatureHtml = settings.signature.content || '-- <br>Sent via <a href="https://0.email" target="_blank" style="color: #016FFE; text-decoration: none;">0.email</a>';
+      const signatureHtml = settings.signature.content || '--<br><br>Sent via <a href="https://0.email" target="_blank" style="color: #016FFE; text-decoration: none;">0.email</a>';
       setSignatureHtml(signatureHtml);
       
       // Attempt to parse HTML to JSONContent for the rich editor
@@ -101,7 +107,7 @@ export default function SignaturesPage() {
       setEditorContent(tryParseHtmlToContent(signatureHtml));
     } else {
       // For new users with no signature settings yet, set the default content
-      const defaultSignature = '-- <br>Sent via <a href="https://0.email" target="_blank" style="color: #016FFE; text-decoration: none;">0.email</a>';
+      const defaultSignature = '--<br><br>Sent via <a href="https://0.email" target="_blank" style="color: #016FFE; text-decoration: none;">0.email</a>';
       setSignatureHtml(defaultSignature);
       setEditorContent(tryParseHtmlToContent(defaultSignature));
     }
@@ -151,13 +157,16 @@ export default function SignaturesPage() {
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    setSignatureHtml(newValue);
+    // Try to clean any malformed HTML
+    const cleanedValue = decodeHtmlEntities(newValue);
+    setSignatureHtml(cleanedValue);
     
     // Update the form state
-    form.setValue('signature.content', newValue);
+    form.setValue('signature.content', cleanedValue);
   };
 
   const handleEditorChange = (html: string) => {
+    // Process the HTML coming from the rich editor
     setSignatureHtml(html);
     
     // Update the form state
@@ -167,13 +176,27 @@ export default function SignaturesPage() {
   const watchSignatureEnabled = form.watch('signature.enabled');
   const watchEditorType = form.watch('signature.editorType');
   
+  // Function to decode HTML entities
+  const decodeHtmlEntities = (html: string): string => {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = html;
+    return textarea.value;
+  };
+  
   // Handle switching between editor types
   useEffect(() => {
-    // When switching to rich editor, initialize with the current HTML content
+    // When switching editor modes
     if (watchEditorType === 'rich') {
-      setEditorContent(tryParseHtmlToContent(signatureHtml));
+      // Clean any double-escaped HTML before loading into rich editor
+      const cleanHtml = decodeHtmlEntities(signatureHtml);
+      setSignatureHtml(cleanHtml);
+      setEditorContent(tryParseHtmlToContent(cleanHtml));
+    } else {
+      // When switching to plain mode, make sure we're seeing actual HTML, not escaped entities
+      const cleanHtml = decodeHtmlEntities(signatureHtml);
+      setSignatureHtml(cleanHtml);
     }
-  }, [watchEditorType, signatureHtml]);
+  }, [watchEditorType]);
 
   return (
     <div className="grid gap-6">
