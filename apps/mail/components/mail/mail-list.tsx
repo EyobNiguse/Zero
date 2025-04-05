@@ -10,6 +10,7 @@ import {
   Tag,
   User,
   Users,
+  StarOff,
 } from 'lucide-react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -20,7 +21,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
-import { cn, formatDate, getEmailLogo } from '@/lib/utils';
+import { cn, FOLDERS, formatDate, getEmailLogo } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,7 +35,39 @@ import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import items from './demo.json';
 import { toast } from 'sonner';
+import { ThreadContextMenu } from '@/components/context/thread-context';
 const HOVER_DELAY = 1000; // ms before prefetching
+
+const ThreadWrapper = ({
+  children,
+  emailId,
+  threadId,
+  isFolderInbox,
+  isFolderSpam,
+  isFolderSent,
+  refreshCallback,
+}: {
+  children: React.ReactNode;
+  emailId: string;
+  threadId: string;
+  isFolderInbox: boolean;
+  isFolderSpam: boolean;
+  isFolderSent: boolean;
+  refreshCallback: () => void;
+}) => {
+  return (
+    <ThreadContextMenu
+      emailId={emailId}
+      threadId={threadId}
+      isInbox={isFolderInbox}
+      isSpam={isFolderSpam}
+      isSent={isFolderSent}
+      refreshCallback={refreshCallback}
+    >
+      {children}
+    </ThreadContextMenu>
+  );
+};
 
 const Thread = memo(
   ({
@@ -58,6 +91,8 @@ const Thread = memo(
     const [searchValue] = useSearchValue();
     const t = useTranslations();
     const searchParams = useSearchParams();
+    const { folder } = useParams<{ folder: string }>();
+    const { mutate } = useThreads();
     const threadIdParam = searchParams.get('threadId');
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
@@ -72,6 +107,10 @@ const Thread = memo(
     const threadLabels = useMemo(() => {
       return [...(message.tags || [])];
     }, [message.tags]);
+
+    const isFolderInbox = folder === FOLDERS.INBOX || !folder;
+    const isFolderSpam = folder === FOLDERS.SPAM;
+    const isFolderSent = folder === FOLDERS.SENT;
 
     const handleMouseEnter = () => {
       if (demo) return;
@@ -120,7 +159,7 @@ const Thread = memo(
       };
     }, []);
 
-    return (
+    const content = (
       <div className="p-1" onClick={onClick ? onClick(message) : undefined}>
         {demo ? (
           <div
@@ -291,6 +330,19 @@ const Thread = memo(
           </div>
         )}
       </div>
+    );
+
+    return (
+      <ThreadWrapper
+        emailId={message.id}
+        threadId={message.threadId ?? message.id}
+        isFolderInbox={isFolderInbox}
+        isFolderSpam={isFolderSpam}
+        isFolderSent={isFolderSent}
+        refreshCallback={() => mutate()}
+      >
+        {content}
+      </ThreadWrapper>
     );
   },
 );

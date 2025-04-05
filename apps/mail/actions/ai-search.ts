@@ -1,12 +1,8 @@
 'use server'
 
-import OpenAI from 'openai';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { generateCompletions } from '@/lib/groq';
 
 export async function enhanceSearchQuery(query: string) {
   try {
@@ -28,10 +24,10 @@ export async function enhanceSearchQuery(query: string) {
       };
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       return {
         enhancedQuery: query,
-        error: 'OpenAI API key is not configured'
+        error: 'GROQ API key is not configured'
       };
     }
 
@@ -54,18 +50,15 @@ Examples:
 Convert this query into a precise email search query: "${query}"`;
 
     console.log('Enhancing search query:', query);
-    
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{
-        role: "system",
-        content: systemPrompt
-      }],
-      temperature: 0.2,
-      max_tokens: 100,
-    });
+   
+    const { completion } = await generateCompletions({
+        max_tokens: 100,
+        temperature: 0.2,
+        systemPrompt,
+        model: "gpt-3.5-turbo"
+      })
 
-    const aiResponse = completion.choices[0]?.message?.content;
+    const aiResponse = completion
     console.log('AI Response:', aiResponse);
     
     const enhancedQuery = aiResponse?.trim() || query;
