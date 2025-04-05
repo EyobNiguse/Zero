@@ -438,7 +438,8 @@ export function CreateEmail({
                       onCommandEnter={handleSendEmail}
                       includeSignature={includeSignature}
                       onSignatureToggle={setIncludeSignature}
-                      signature={settings?.signature?.enabled && settings?.signature?.content ? settings.signature.content : undefined}
+                      signature={settings?.signature?.content}
+                      hasSignature={settings?.signature?.enabled}
                     />
                   )}
                 </div>
@@ -511,6 +512,7 @@ export function CreateEmail({
                 }}
               />
             </div>
+            
           </div>
           <div className="flex justify-end gap-3">
             <Button

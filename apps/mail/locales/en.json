@@ -361,7 +361,14 @@
       "dropFilesToAttach": "Drop files to attach",
       "writeYourMessageHere": "Write your message here...",
       "emailSentSuccessfully": "Email sent successfully",
-      "failedToSendEmail": "Failed to send email. Please try again."
+      "failedToSendEmail": "Failed to send email. Please try again.",
+      "signature": {
+        "include": "Include signature",
+        "remove": "Remove",
+        "enableSignature": "Enable Signature",
+        "disableSignature": "Disable Signature",
+        "addSignature": "Add Signature"
+      }
     }
   }
 }
