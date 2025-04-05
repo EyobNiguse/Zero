@@ -121,23 +121,23 @@ export const toggleStar = async ({ ids }: { ids: string[] }) => {
       return { success: false, error: 'No thread IDs provided' };
     }
 
+    const threadResults = await Promise.allSettled(
+      threadIds.map(id => driver.get(id))
+    );
+
     let allStarred = true;
     let anyValid = false;
 
-    for (const id of threadIds) {
-      try {
-        const thread = await driver.get(id);
-        if (thread?.[0]) {
-          anyValid = true;
-          if (!thread[0].tags?.includes('STARRED')) {
-            allStarred = false;
-            break;
-          }
+    for (const result of threadResults) {
+      if (result.status === 'fulfilled' && result.value?.[0]) {
+        anyValid = true;
+        if (!result.value[0].tags?.includes('STARRED')) {
+          allStarred = false;
+          break;
         }
-      } catch (error) {
-        continue;
       }
     }
+
     const shouldStar = !anyValid || !allStarred;
 
     await driver.modifyLabels(threadIds, {
