@@ -542,6 +542,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         return;
       }
 
+      void markAsRead({ ids: [message.threadId ?? message.id] }).then(() => mutate());
+
       router.push(`/mail/inbox?threadId=${message.threadId ?? message.id}`);
     },
     [getSelectMode, folder, searchParams, items, handleMouseEnter],
