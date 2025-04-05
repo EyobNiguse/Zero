@@ -141,6 +141,7 @@ export const useThreads = () => {
   };
 };
 
+// Deprecated, we move this to be prefetched on the server
 export const useThread = (threadId?: string) => {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
