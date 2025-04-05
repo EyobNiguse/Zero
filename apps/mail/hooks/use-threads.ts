@@ -128,7 +128,7 @@ export const useThreads = () => {
   };
 };
 
-export const useThread = (threadId?: string) => {
+export const useThread = (threadId: string | null) => {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const id = threadId ? threadId : searchParams.get('threadId');

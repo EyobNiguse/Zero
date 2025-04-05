@@ -9,7 +9,7 @@ const ratelimit = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(30, '1m'),
   analytics: true,
-  prefix: 'ratelimit:list-threads',
+  prefix: 'ratelimit:get-thread',
 });
 
 export const GET = async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

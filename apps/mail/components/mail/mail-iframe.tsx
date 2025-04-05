@@ -10,7 +10,7 @@ export function MailIframe({ html }: { html: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(300);
   const { resolvedTheme } = useTheme();
-  const [loaded, setLoaded] = useState(false);
+  // const [loaded, setLoaded] = useState(false);
 
   const iframeDoc = useMemo(() => template(html), [html]);
 
@@ -36,7 +36,7 @@ export function MailIframe({ html }: { html: string }) {
         calculateAndSetHeight();
         fixNonReadableColors(iframeRef.current.contentWindow.document.body);
       }
-      setLoaded(true);
+      // setLoaded(true);
       // Recalculate after a slight delay to catch any late-loading content
       setTimeout(calculateAndSetHeight, 500);
     };
@@ -60,7 +60,7 @@ export function MailIframe({ html }: { html: string }) {
 
   return (
     <>
-      {!loaded && (
+      {/* {!loaded && (
         <div className="flex h-full w-full items-center justify-center gap-4 p-4">
           <div className="w-full space-y-4">
             <div className="flex flex-col space-y-2">
@@ -75,15 +75,12 @@ export function MailIframe({ html }: { html: string }) {
             </div>
           </div>
         </div>
-      )}
+      )} */}
       <iframe
         onClick={calculateAndSetHeight}
         height={height}
         ref={iframeRef}
-        className={cn(
-          'w-full flex-1 overflow-hidden transition-opacity duration-200',
-          loaded ? 'opacity-100' : 'opacity-0',
-        )}
+        className={cn('w-full flex-1 overflow-hidden transition-opacity duration-200')}
         title="Email Content"
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         style={{
