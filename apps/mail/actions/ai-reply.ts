@@ -54,29 +54,6 @@ function extractEmailSummary(threadContent: string, maxTokens: number = 4000): s
   return summary;
 }
 
-// Cleans up AI-generated email content
-function cleanupEmailContent(content: string): string {
-  // Remove any "Subject:" lines
-  let cleanedContent = content.replace(/^Subject:.*?(\n|$)/i, '');
-  
-  // Remove any "Here's a draft..." or similar meta-text
-  cleanedContent = cleanedContent.replace(/^Here's (a|an|the) (draft|template|example).*?(\n|$)/i, '');
-  
-  // Remove any explanatory text at the beginning
-  cleanedContent = cleanedContent.replace(/^I've (created|written|prepared|drafted).*?(\n|$)/i, '');
-  
-  // Remove any trailing instructions or explanations
-  cleanedContent = cleanedContent.replace(/\n\nFeel free to.*$/i, '');
-  cleanedContent = cleanedContent.replace(/\n\nLet me know if.*$/i, '');
-  
-  // Remove placeholder text in brackets
-  cleanedContent = cleanedContent.replace(/\[.*?\]/g, '');
-  
-  // Trim whitespace
-  cleanedContent = cleanedContent.trim();
-  
-  return cleanedContent;
-}
 
 // Generates an AI response for an email reply based on the thread content
 export async function generateAIResponse(
@@ -134,9 +111,7 @@ export async function generateAIResponse(
       max_tokens: 500
     })
 
-    const content = cleanupEmailContent(completion);
-    
-    return content;
+    return completion;
   } catch (error: any) {
     console.error('Error generating AI response:', error);
     throw error;
