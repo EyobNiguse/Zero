@@ -15,6 +15,7 @@ import {
   Archive,
   RotateCw,
   Mail,
+  MailOpen,
 } from 'lucide-react';
 import {
   Dialog,
@@ -54,7 +55,7 @@ import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { getMail } from '@/actions/mail';
+import { getMail, markAsRead } from '@/actions/mail';
 import { SearchBar } from './search-bar';
 import { ParsedMessage } from '@/types';
 import { cn } from '@/lib/utils';
@@ -480,6 +481,20 @@ function BulkSelectActions() {
   const { mutate: mutateThreads } = useThreads();
   const { mutate: mutateStats } = useStats();
 
+  const handleMarkAsRead = useCallback(async () => {
+    const response = await markAsRead({ ids: mail.bulkSelected });
+    if (response.success) {
+      await mutateThreads();
+      await mutateStats();
+      setMail((prev) => ({
+        ...prev,
+        bulkSelected: []
+      }));
+      toast.success(t('common.mail.markedAsRead'));
+    }
+  }, [mail, setMail, mutateThreads, mutateStats, t]);
+  
+
   const onMoveSuccess = useCallback(async () => {
     await mutateThreads();
     await mutateStats();
@@ -547,6 +562,18 @@ function BulkSelectActions() {
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t('common.mail.mute')}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className="md:h-fit md:px-2"
+            onClick={handleMarkAsRead}
+          >
+            <MailOpen />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{t('common.mail.markAsRead')}</TooltipContent>
       </Tooltip>
 
       {availableActions.map((action) => (
