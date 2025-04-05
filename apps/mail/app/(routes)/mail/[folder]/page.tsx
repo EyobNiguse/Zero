@@ -1,7 +1,6 @@
 import { getMail, markAsRead } from '@/actions/mail';
 import { MailLayout } from '@/components/mail/mail';
 import { redirect } from 'next/navigation';
-import { threadId } from 'worker_threads';
 import { ParsedMessage } from '@/types';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
