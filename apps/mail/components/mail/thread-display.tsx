@@ -464,7 +464,7 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <ScrollArea className="h-full flex-1" type="auto">
             <div className="pb-4">
-              {[...(emailData || [])].reverse().map((message, index) => (
+              {(emailData || []).map((message, index) => (
                 <div
                   key={message.id}
                   className={cn(
@@ -478,6 +478,7 @@ export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProp
                     isMuted={isMuted}
                     isLoading={false}
                     index={index}
+                    totalEmails={emailData.length}
                   />
                 </div>
               ))}
