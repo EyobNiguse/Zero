@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import DOMPurify from 'dompurify';
+import { useImageLoading } from '@/hooks/use-image-loading';
 
 const formSchema = z.object({
   signature: z.object({
@@ -111,29 +112,7 @@ export default function SignaturesPage() {
       adjustHeight();
       
       // Listen for image loads that might affect height
-      const images = doc.images;
-      if (images.length > 0) {
-        let loadedCount = 0;
-        
-        for (let i = 0; i < images.length; i++) {
-          const img = images[i];
-          if (img.complete) {
-            loadedCount++;
-          } else {
-            img.onload = img.onerror = () => {
-              loadedCount++;
-              if (loadedCount === images.length) {
-                adjustHeight();
-              }
-            };
-          }
-        }
-        
-        // If all images are already loaded
-        if (loadedCount === images.length) {
-          adjustHeight();
-        }
-      }
+      useImageLoading(doc, adjustHeight);
     } catch (error) {
       console.error('Error updating signature preview:', error);
     }
@@ -258,7 +237,7 @@ export default function SignaturesPage() {
                     />
                   </div>
                   <p className="text-muted-foreground text-sm">
-                    Paste your HTML signature code here. Supports HTML formatting, inline styles, and images.
+                    {t('pages.settings.signatures.signatureContentHelp')}
                   </p>
                 </div>
 

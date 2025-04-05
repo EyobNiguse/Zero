@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import DOMPurify from 'dompurify';
+import { useImageLoading } from '@/hooks/use-image-loading';
 
 interface SignaturePreviewProps {
   html: string;
@@ -18,6 +19,8 @@ export function SignaturePreview({ html, className, style }: SignaturePreviewPro
     if (!iframeRef.current) return;
     
     const iframe = iframeRef.current;
+    let cleanupImageLoading: (() => void) | undefined;
+    
     const updateIframe = () => {
       try {
         const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -67,35 +70,7 @@ export function SignaturePreview({ html, className, style }: SignaturePreviewPro
         };
         
         // Set up image load listeners
-        const images = iframeDoc.querySelectorAll('img');
-        let imagesLoaded = 0;
-        const totalImages = images.length;
-        
-        if (totalImages > 0) {
-          images.forEach(img => {
-            if (img.complete) {
-              imagesLoaded++;
-              if (imagesLoaded === totalImages) {
-                setTimeout(adjustHeight, 50);
-              }
-            } else {
-              img.onload = () => {
-                imagesLoaded++;
-                if (imagesLoaded === totalImages) {
-                  setTimeout(adjustHeight, 50);
-                }
-              };
-              img.onerror = () => {
-                imagesLoaded++;
-                if (imagesLoaded === totalImages) {
-                  setTimeout(adjustHeight, 50);
-                }
-              };
-            }
-          });
-        } else {
-          adjustHeight();
-        }
+        cleanupImageLoading = useImageLoading(iframeDoc, adjustHeight);
         
         // Additional adjustment after everything is loaded
         setTimeout(adjustHeight, 200);
@@ -111,6 +86,11 @@ export function SignaturePreview({ html, className, style }: SignaturePreviewPro
       try {
         const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
         if (iframeDoc) {
+          // Clean up image listeners if they exist
+          if (typeof cleanupImageLoading === 'function') {
+            cleanupImageLoading();
+          }
+          
           iframeDoc.open();
           iframeDoc.write('');
           iframeDoc.close();

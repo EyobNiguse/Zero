@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import DOMPurify from 'dompurify';
+import { useImageLoading } from '@/hooks/use-image-loading';
 
 interface SignatureDisplayProps {
   html: string;
@@ -63,37 +64,13 @@ export default function SignatureDisplay({ html, className = '' }: SignatureDisp
       measureAndSetHeight();
       
       // Set up listeners for images that might change the height
-      const images = doc.getElementsByTagName('img');
-      let loadedImages = 0;
-      
-      if (images.length > 0) {
-        Array.from(images).forEach(img => {
-          if (img.complete) {
-            loadedImages++;
-            if (loadedImages === images.length) {
-              setTimeout(measureAndSetHeight, 0);
-            }
-          } else {
-            img.onload = () => {
-              loadedImages++;
-              if (loadedImages === images.length) {
-                setTimeout(measureAndSetHeight, 0);
-              }
-            };
-            img.onerror = () => {
-              loadedImages++;
-              if (loadedImages === images.length) {
-                setTimeout(measureAndSetHeight, 0);
-              }
-            };
-          }
-        });
-      }
+      const cleanup = useImageLoading(doc, measureAndSetHeight);
       
       // Final height check after a short delay
       const timeoutId = setTimeout(measureAndSetHeight, 100);
       
       return () => {
+        cleanup();
         clearTimeout(timeoutId);
       };
     } catch (error) {
