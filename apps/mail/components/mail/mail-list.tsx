@@ -31,9 +31,9 @@ import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
+import { useQueryState } from 'nuqs';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { useQueryState } from 'nuqs';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const Thread = memo(
@@ -500,96 +500,12 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const handleMailClick = useCallback(
     (message: InitialThread) => () => {
       handleMouseEnter(message.id);
-      const selectMode = getSelectMode();
-
-<<<<<<< HEAD
-      // if (selectMode === 'mass') {
-      //   const updatedBulkSelected = mail.bulkSelected.includes(message.id)
-      //     ? mail.bulkSelected.filter((id) => id !== message.id)
-      //     : [...mail.bulkSelected, message.id];
-
-      //   setMail({ ...mail, bulkSelected: updatedBulkSelected });
-      //   return;
-      // }
-
-      // // TODO: Look into making this more performant
-      // if (selectMode === 'range') {
-      //   const lastSelectedItem =
-      //     mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadIdParam ?? message.id;
-
-      //   const mailsIndex = items.map((m) => m.id);
-      //   const startIdx = mailsIndex.indexOf(lastSelectedItem);
-      //   const endIdx = mailsIndex.indexOf(message.id);
-
-      //   if (startIdx !== -1 && endIdx !== -1) {
-      //     const selectedRange = mailsIndex.slice(
-      //       Math.min(startIdx, endIdx),
-      //       Math.max(startIdx, endIdx) + 1,
-      //     );
-
-      //     setMail({ ...mail, bulkSelected: selectedRange });
-      //   }
-      //   return;
-      // }
-
-      // if (selectMode === 'selectAllBelow') {
-      //   const mailsIndex = items.map((m) => m.id);
-      //   const startIdx = mailsIndex.indexOf(message.id);
-
-      //   if (startIdx !== -1) {
-      //     const selectedRange = mailsIndex.slice(startIdx);
-
-      //     setMail({ ...mail, bulkSelected: selectedRange });
-      //   }
-      //   return;
-      // }
-=======
-      if (selectMode === 'mass') {
-        const updatedBulkSelected = mail.bulkSelected.includes(message.id)
-          ? mail.bulkSelected.filter((id) => id !== message.id)
-          : [...mail.bulkSelected, message.id];
-
-        setMail({ ...mail, bulkSelected: updatedBulkSelected });
-        return;
-      }
-
-      if (selectMode === 'range') {
-        const lastSelectedItem =
-          mail.bulkSelected[mail.bulkSelected.length - 1] ?? threadId ?? message.id;
-
-        const mailsIndex = items.map((m) => m.id);
-        const startIdx = mailsIndex.indexOf(lastSelectedItem);
-        const endIdx = mailsIndex.indexOf(message.id);
-
-        if (startIdx !== -1 && endIdx !== -1) {
-          const selectedRange = mailsIndex.slice(
-            Math.min(startIdx, endIdx),
-            Math.max(startIdx, endIdx) + 1,
-          );
-
-          setMail({ ...mail, bulkSelected: selectedRange });
-        }
-        return;
-      }
-
-      if (selectMode === 'selectAllBelow') {
-        const mailsIndex = items.map((m) => m.id);
-        const startIdx = mailsIndex.indexOf(message.id);
-
-        if (startIdx !== -1) {
-          const selectedRange = mailsIndex.slice(startIdx);
-
-          setMail({ ...mail, bulkSelected: selectedRange });
-        }
-        return;
-      }
->>>>>>> 1f356ca22d310e395c44987df78024b7f6ebb05f
 
       const messageThreadId = message.threadId ?? message.id;
-      
+
       // Update local state immediately for optimistic UI
-      setMail(prev => ({ ...prev, selected: messageThreadId }));
-      
+      setMail((prev) => ({ ...prev, selected: messageThreadId }));
+
       // Update URL param without navigation
       void setThreadId(messageThreadId);
 
