@@ -1,7 +1,5 @@
-import { getMail, markAsRead } from '@/actions/mail';
 import { MailLayout } from '@/components/mail/mail';
 import { redirect } from 'next/navigation';
-import { ParsedMessage } from '@/types';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 
@@ -30,10 +28,5 @@ export default async function MailPage({ params, searchParams }: MailPageProps) 
     return <div>Invalid folder</div>;
   }
 
-  const { threadId } = await searchParams;
-  let threadMessages: ParsedMessage[] = [];
-  if (threadId) threadMessages = (await getMail({ id: threadId })) ?? [];
-  if (threadMessages && threadMessages.some((e) => e.unread)) void markAsRead({ ids: [threadId] });
-
-  return <MailLayout messages={threadMessages} />;
+  return <MailLayout />;
 }

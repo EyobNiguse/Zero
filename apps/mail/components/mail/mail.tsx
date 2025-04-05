@@ -207,7 +207,7 @@ export function DemoMailLayout() {
   );
 }
 
-export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
+export function MailLayout() {
   const { folder } = useParams<{ folder: string }>();
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
@@ -280,7 +280,7 @@ export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
         // This ensures we don't keep the email content in the URL
         navigator.registerProtocolHandler(
           'mailto',
-          `${window.location.origin}/mail/compose/handle-mailto?mailto=%s`
+          `${window.location.origin}/mail/compose/handle-mailto?mailto=%s`,
         );
       } catch (error) {
         console.error('Failed to register protocol handler:', error);
@@ -404,7 +404,7 @@ export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDisplay onClose={handleClose} messages={messages} />
+                  <ThreadDisplay onClose={handleClose} id={threadIdParam} />
                 </div>
               </ResizablePanel>
             </>
@@ -425,7 +425,9 @@ export function MailLayout({ messages }: { messages: ParsedMessage[] }) {
               </DrawerHeader>
               <div className="flex h-full flex-col overflow-hidden">
                 <div className="flex-1 overflow-hidden">
-                  <ThreadDisplay onClose={handleClose} isMobile={true} messages={messages} />
+                  {threadIdParam ? (
+                    <ThreadDisplay onClose={handleClose} isMobile={true} id={threadIdParam} />
+                  ) : null}
                 </div>
               </div>
             </DrawerContent>

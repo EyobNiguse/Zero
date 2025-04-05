@@ -32,7 +32,8 @@ interface ThreadDisplayProps {
   mail?: any;
   onClose?: () => void;
   isMobile?: boolean;
-  messages: ParsedMessage[];
+  messages?: ParsedMessage[];
+  id?: string;
 }
 
 export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
@@ -181,12 +182,8 @@ function ThreadActionButton({
   );
 }
 
-export function ThreadDisplay({
-  mail,
-  onClose,
-  isMobile,
-  messages: emailData,
-}: ThreadDisplayProps) {
+export function ThreadDisplay({ mail, onClose, isMobile, id }: ThreadDisplayProps) {
+  const { data: emailData } = useThread(id);
   const { mutate: mutateThreads } = useThreads();
   const searchParams = useSearchParams();
   const [isMuted, setIsMuted] = useState(false);
@@ -266,6 +263,8 @@ export function ThreadDisplay({
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [handleClose]);
+
+  if (!emailData) return null;
 
   return (
     <div
