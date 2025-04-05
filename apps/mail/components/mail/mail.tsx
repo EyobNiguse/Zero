@@ -123,7 +123,7 @@ export function DemoMailLayout() {
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
-                  'compose-gradient h-0.5 w-full transition-opacity',
+                  'compose-loading h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-50' : 'opacity-0',
                 )}
               />
@@ -304,7 +304,7 @@ export function MailLayout() {
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
-                  'compose-gradient h-0.5 w-full transition-opacity',
+                  'compose-loading h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-50' : 'opacity-0',
                 )}
               />
