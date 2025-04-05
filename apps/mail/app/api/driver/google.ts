@@ -310,9 +310,19 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       return { ...res.data, threads } as any;
     },
     get: async (id: string): Promise<ParsedMessage[]> => {
-      console.log(id);
+      console.log('Fetching thread:', id);
       const res = await gmail.users.threads.get({ userId: 'me', id, format: 'full' });
       if (!res.data.messages) return [];
+
+      // const allLabels = [...new Set(res.data.messages.flatMap(msg => msg.labelIds || []))];
+      // console.log('Thread Labels:', JSON.stringify({
+      //   threadId: id,
+      //   allLabels,
+      //   messageLabels: res.data.messages.map(msg => ({
+      //     messageId: msg.id,
+      //     labels: msg.labelIds || []
+      //   }))
+      // }, null, 2));
 
       const messages = await Promise.all(
         res.data.messages.map(async (message) => {
@@ -459,15 +469,27 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
       return { threadIds };
     },
-    async modifyLabels(id: string[], options: { addLabels: string[]; removeLabels: string[] }) {
-      await gmail.users.messages.batchModify({
-        userId: 'me',
-        requestBody: {
-          ids: id,
-          addLabelIds: options.addLabels,
-          removeLabelIds: options.removeLabels,
-        },
-      });
+    async modifyLabels(threadIds: string[], options: { addLabels: string[]; removeLabels: string[] }) {
+      for (const threadId of threadIds) {
+        const thread = await gmail.users.threads.get({
+          userId: 'me',
+          id: threadId,
+          format: 'minimal'
+        });
+        
+        const messageIds = thread.data.messages?.map(msg => msg.id).filter((id): id is string => !!id) || [];
+        
+        if (messageIds.length > 0) {
+          await gmail.users.messages.batchModify({
+            userId: 'me',
+            requestBody: {
+              ids: messageIds,
+              addLabelIds: options.addLabels,
+              removeLabelIds: options.removeLabels,
+            },
+          });
+        }
+      }
     },
     getDraft: async (draftId: string) => {
       try {

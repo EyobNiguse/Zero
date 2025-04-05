@@ -116,24 +116,36 @@ export const toggleStar = async ({ ids }: { ids: string[] }) => {
   try {
     const driver = await getActiveDriver();
     const { threadIds } = driver.normalizeIds(ids);
-
-    if (threadIds.length && threadIds[0]) {
-      const thread = await driver.get(threadIds[0]);
-      if (!thread?.[0]) {
-        return { success: false, error: 'Thread not found' };
-      }
-
-      const isStarred = thread[0].tags?.includes('STARRED') ?? false;
-
-      await driver.modifyLabels(threadIds, {
-        addLabels: isStarred ? [] : ['STARRED'],
-        removeLabels: isStarred ? ['STARRED'] : [],
-      });
-
-      return { success: true };
+    
+    if (!threadIds.length) {
+      return { success: false, error: 'No thread IDs provided' };
     }
 
-    return { success: false, error: 'No thread IDs provided' };
+    let allStarred = true;
+    let anyValid = false;
+
+    for (const id of threadIds) {
+      try {
+        const thread = await driver.get(id);
+        if (thread?.[0]) {
+          anyValid = true;
+          if (!thread[0].tags?.includes('STARRED')) {
+            allStarred = false;
+            break;
+          }
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+    const shouldStar = !anyValid || !allStarred;
+
+    await driver.modifyLabels(threadIds, {
+      addLabels: shouldStar ? ['STARRED'] : [],
+      removeLabels: shouldStar ? [] : ['STARRED'],
+    });
+
+    return { success: true };
   } catch (error) {
     if (FatalErrors.includes((error as Error).message)) await deleteActiveConnection();
     console.error('Error toggling star:', error);
