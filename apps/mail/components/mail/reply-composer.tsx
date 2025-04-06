@@ -881,14 +881,17 @@ ${email.decodedBody || 'No content'}
 }
 
 // Extract smaller components
-const DragOverlay = () => (
-  <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
-    <div className="text-muted-foreground flex flex-col items-center gap-2">
-      <Paperclip className="text-muted-foreground h-12 w-12" />
-      <p className="text-lg font-medium">{t('common.replyCompose.dropFiles')}</p>
+const DragOverlay = () => {
+  const t = useTranslations();
+  return (
+    <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
+      <div className="text-muted-foreground flex flex-col items-center gap-2">
+        <Paperclip className="text-muted-foreground h-12 w-12" />
+        <p className="text-lg font-medium">{t('common.replyCompose.dropFiles')}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const CloseButton = ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
   <Button
