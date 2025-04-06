@@ -154,7 +154,7 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
               ))}
             </div>
           </ScrollArea>
-          <div className="relative flex-shrink-0 md:top-2">
+          <div className="relative flex-shrink-0 md:top-1">
             {messages ? (
               <ReplyCompose emailData={messages} isOpen={false} setIsOpen={() => {}} />
             ) : null}
@@ -531,7 +531,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               ))}
             </div>
           </ScrollArea>
-          <div className={`relative ${isFullscreen ? '' : 'top-1'} flex-shrink-0`}>
+          <div className={`relative ${isFullscreen ? '' : 'top-2'} flex-shrink-0`}>
             <ReplyCompose
               emailData={emailData}
               isOpen={isReplyOpen || isForwardOpen}
