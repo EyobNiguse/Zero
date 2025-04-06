@@ -53,6 +53,7 @@ interface ThreadDisplayProps {
 
 export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
   const isFullscreen = false;
+  const [mail, setMail] = useMail();
 
   return (
     <div
@@ -69,69 +70,6 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
           isFullscreen ? 'fixed inset-0 z-50' : '',
         )}
       >
-        <div className="flex flex-shrink-0 items-center border-b p-2">
-          <div className="flex flex-1 items-center gap-2">
-            <Button variant="ghost" className="md:h-fit md:px-2" disabled={!messages}>
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-
-            <ThreadSubject subject={'Join the Email Revolution with Zero!'} />
-          </div>
-          <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" className="md:h-fit md:px-2" disabled={!messages}>
-                  {isFullscreen ? (
-                    <ExpandIcon className="h-4 w-4" />
-                  ) : (
-                    <ExpandIcon className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">
-                    {isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" className="md:h-fit md:px-2" disabled={!messages}>
-                  <ArchiveIcon className="relative top-0.5 h-4 w-4" />
-                  <span className="sr-only">Archive</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Archive</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" className="md:h-fit md:px-2" disabled={!messages}>
-                  <ReplyIcon className="h-4 w-4" />
-                  <span className="sr-only">Reply</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Reply</TooltipContent>
-            </Tooltip>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="md:h-fit md:px-2" disabled={!messages}>
-                  <MoreVerticalIcon className="h-4 w-4" />
-                  <span className="sr-only">More</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <ArchiveX className="mr-2 h-4 w-4" /> Move to spam
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Forward className="mr-2 h-4 w-4" /> Forward
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <ScrollArea className="flex-1" type="scroll">
             <div className="pb-4">
@@ -157,7 +95,10 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
           </ScrollArea>
           <div className="relative flex-shrink-0 md:top-1">
             {messages ? (
-              <ReplyCompose emailData={messages} isOpen={false} setIsOpen={() => {}} />
+              <ReplyCompose 
+                emailData={messages} 
+                mode={mail.forwardComposerOpen ? 'forward' : 'reply'} 
+              />
             ) : null}
           </div>
         </div>
@@ -211,15 +152,13 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
   const { mutate: mutateThreads } = useThreads();
   const searchParams = useSearchParams();
   const [isMuted, setIsMuted] = useState(false);
-  const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isForwardOpen, setIsForwardOpen] = useState(false);
+  const [mail, setMail] = useMail();
   const t = useTranslations();
   const { mutate: mutateStats } = useStats();
   const { folder } = useParams<{ folder: string }>();
   const threadIdParam = searchParams.get('threadId');
   const threadId = threadParam ?? threadIdParam ?? '';
-  const [, setMailState] = useMail();
 
   const moreVerticalIconRef = useRef<any>(null);
 
@@ -228,8 +167,14 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
   const isInSpam = folder === FOLDERS.SPAM;
 
   const handleClose = useCallback(() => {
+    // Reset reply composer state when closing thread display
+    setMail((prev) => ({
+      ...prev,
+      replyComposerOpen: false,
+      forwardComposerOpen: false
+    }));
     onClose?.();
-  }, [onClose]);
+  }, [onClose, setMail]);
 
   const moveThreadTo = useCallback(
     async (destination: ThreadDestination) => {
@@ -264,7 +209,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
       const result = await markAsUnread({ ids: [threadId] });
       if (!result.success) throw new Error('Failed to mark as unread');
 
-      setMailState((prev) => ({ ...prev, bulkSelected: [] }));
+      setMail((prev) => ({ ...prev, bulkSelected: [] }));
       await Promise.all([mutateStats(), mutateThreads()]);
       handleClose();
     };
@@ -274,7 +219,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
       success: t('common.mail.markedAsUnread'),
       error: t('common.mail.failedToMarkAsUnread'),
     });
-  }, [emailData, threadId, mutateStats, mutateThreads, t, handleClose, setMailState]);
+  }, [emailData, threadId, mutateStats, mutateThreads, t, handleClose, setMail]);
 
   const handleFavourites = async () => {
     if (!emailData || !threadId) return;
@@ -298,10 +243,6 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
         },
       );
     }
-  };
-
-  const handleForward = () => {
-    setIsForwardOpen(true);
   };
 
   useEffect(() => {
@@ -411,12 +352,21 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               icon={Reply}
               label={t('common.threadDisplay.reply')}
               disabled={!emailData}
+              className={cn(mail.replyComposerOpen && "bg-primary/10")}
               onClick={() => {
-                if (isForwardOpen) {
-                  setIsForwardOpen(false);
-                  setIsReplyOpen(true);
+                if (mail.forwardComposerOpen) {
+                  // If forward is open, close it and open reply
+                  setMail((prev) => ({ 
+                    ...prev, 
+                    forwardComposerOpen: false,
+                    replyComposerOpen: true 
+                  }));
                 } else {
-                  setIsReplyOpen(!isReplyOpen);
+                  // Toggle reply
+                  setMail((prev) => ({ 
+                    ...prev, 
+                    replyComposerOpen: !prev.replyComposerOpen 
+                  }));
                 }
               }}
             />
@@ -424,12 +374,21 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               icon={Forward}
               label={t('common.threadDisplay.forward')}
               disabled={!emailData}
+              className={cn(mail.forwardComposerOpen && "bg-primary/10")}
               onClick={() => {
-                if (isReplyOpen) {
-                  setIsReplyOpen(false);
-                  setIsForwardOpen(true);
+                if (mail.replyComposerOpen) {
+                  // If reply is open, close it and open forward
+                  setMail((prev) => ({ 
+                    ...prev, 
+                    replyComposerOpen: false,
+                    forwardComposerOpen: true 
+                  }));
                 } else {
-                  setIsForwardOpen(!isForwardOpen);
+                  // Toggle forward
+                  setMail((prev) => ({ 
+                    ...prev, 
+                    forwardComposerOpen: !prev.forwardComposerOpen 
+                  }));
                 }
               }}
             />
@@ -458,18 +417,13 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               ))}
             </div>
           </ScrollArea>
-          <div className={isFullscreen ? 'mb-2' : ''}>
+          <div className={cn(
+            'relative z-10 bg-offsetLight dark:bg-offsetDark',
+            isFullscreen ? 'mb-2' : ''
+          )}>
             <ReplyCompose
               emailData={emailData}
-              isOpen={isReplyOpen || isForwardOpen}
-              setIsOpen={(open) => {
-                if (isForwardOpen) {
-                  setIsForwardOpen(open);
-                } else {
-                  setIsReplyOpen(open);
-                }
-              }}
-              mode={isForwardOpen ? 'forward' : 'reply'}
+              mode={mail.forwardComposerOpen ? 'forward' : 'reply'}
             />
           </div>
         </div>
