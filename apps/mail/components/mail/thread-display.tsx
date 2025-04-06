@@ -11,14 +11,13 @@ import {
   StarOff,
   X,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSearchParams, useParams } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
-import { markAsUnread } from '@/actions/mail';
 import { MoreVerticalIcon } from '../icons/animated/more-vertical';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useThread, useThreads } from '@/hooks/use-threads';
@@ -27,12 +26,14 @@ import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
+import { markAsUnread } from '@/actions/mail';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
 import { XIcon } from '../icons/animated/x';
 import ReplyCompose from './reply-composer';
 import { useTranslations } from 'next-intl';
+import { useMail } from '../mail/use-mail';
 import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
@@ -40,7 +41,6 @@ import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useMail } from '../mail/use-mail';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -184,17 +184,24 @@ function ThreadActionButton({
   const iconRef = useRef<any>(null);
 
   return (
-    <Button
-      disabled={disabled}
-      onClick={onClick}
-      variant="ghost"
-      className={cn('md:h-fit md:px-2', className)}
-      onMouseEnter={() => iconRef.current?.startAnimation?.()}
-      onMouseLeave={() => iconRef.current?.stopAnimation?.()}
-    >
-      <Icon ref={iconRef} className="h-4 w-4" />
-      <span className="sr-only">{label}</span>
-    </Button>
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+        <Button
+          disabled={disabled}
+          onClick={onClick}
+          variant="ghost"
+          className={cn('md:h-fit md:px-2', className)}
+          onMouseEnter={() => iconRef.current?.startAnimation?.()}
+          onMouseLeave={() => iconRef.current?.stopAnimation?.()}
+        >
+            <Icon ref={iconRef} className="h-4 w-4" />
+            <span className="sr-only">{label}</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -237,11 +244,12 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
 
       toast.promise(promise(), {
         loading: t('common.actions.moving'),
-        success: destination === 'inbox' 
-          ? t('common.actions.movedToInbox') 
-          : destination === 'spam'
-          ? t('common.actions.movedToSpam')
-          : t('common.actions.archived'),
+        success:
+          destination === 'inbox'
+            ? t('common.actions.movedToInbox')
+            : destination === 'spam'
+              ? t('common.actions.movedToSpam')
+              : t('common.actions.archived'),
         error: t('common.actions.failedToMove'),
       });
     },
@@ -250,12 +258,12 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
 
   const handleMarkAsUnread = useCallback(async () => {
     if (!emailData || !threadId) return;
-    
+
     const promise = async () => {
       const result = await markAsUnread({ ids: [threadId] });
       if (!result.success) throw new Error('Failed to mark as unread');
-      
-      setMailState(prev => ({ ...prev, bulkSelected: [] }));
+
+      setMailState((prev) => ({ ...prev, bulkSelected: [] }));
       await Promise.all([mutateStats(), mutateThreads()]);
       handleClose();
     };
@@ -327,6 +335,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
                 icon={XIcon}
                 label={t('common.actions.close')}
                 onClick={handleClose}
+                
               />
             </div>
             <div className="flex items-center gap-1 sm:gap-2 md:gap-6">
@@ -429,7 +438,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               disabled={!emailData}
               onClick={() => setIsFullscreen(!isFullscreen)}
             />
-            {(isInSpam || isInArchive) ? (
+            {isInSpam || isInArchive ? (
               <ThreadActionButton
                 icon={Inbox}
                 label={t('common.mail.moveToInbox')}
@@ -531,7 +540,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               ))}
             </div>
           </ScrollArea>
-          <div className={`relative ${isFullscreen ? '' : 'top-3  lg:top-3.5'} flex-shrink-0`}>
+          <div className={`relative ${isFullscreen ? '' : 'top-3 lg:top-3.5'} flex-shrink-0`}>
             <ReplyCompose
               emailData={emailData}
               isOpen={isReplyOpen || isForwardOpen}
