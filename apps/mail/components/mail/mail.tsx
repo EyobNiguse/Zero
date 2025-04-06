@@ -482,18 +482,23 @@ function BulkSelectActions() {
   const { mutate: mutateStats } = useStats();
 
   const handleMarkAsRead = useCallback(async () => {
-    const response = await markAsRead({ ids: mail.bulkSelected });
-    if (response.success) {
-      await mutateThreads();
-      await mutateStats();
-      setMail((prev) => ({
-        ...prev,
-        bulkSelected: []
-      }));
-      toast.success(t('common.mail.markedAsRead'));
+    try {
+      const response = await markAsRead({ ids: mail.bulkSelected });
+      if (response.success) {
+        await mutateThreads();
+        await mutateStats();
+        setMail((prev) => ({
+          ...prev,
+          bulkSelected: []
+        }));
+        toast.success(t('common.mail.markedAsRead'));
+      }
+    } catch (error) {
+      console.error("Error marking as read", error);
+      toast.error("common.errors.generic");
     }
   }, [mail, setMail, mutateThreads, mutateStats, t]);
-  
+
 
   const onMoveSuccess = useCallback(async () => {
     await mutateThreads();
