@@ -283,18 +283,18 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
       toast.promise(
         modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }).then(() => done),
         {
-          success: 'Removed from favourites.',
-          loading: 'Removing from favourites',
-          error: 'Failed to remove from favourites.',
+          success: t('common.actions.removedFromFavorites'),
+          loading: t('common.actions.removingFromFavorites'),
+          error: t('common.actions.failedToRemoveFromFavorites'),
         },
       );
     } else {
       toast.promise(
         modifyLabels({ threadId: [threadId], addLabels: ['STARRED'] }).then(() => done),
         {
-          success: 'Added to favourites.',
-          loading: 'Adding to favourites.',
-          error: 'Failed to add to favourites.',
+          success: t('common.actions.addedToFavorites'),
+          loading: t('common.actions.addingToFavorites'),
+          error: t('common.actions.failedToAddToFavorites'),
         },
       );
     }
