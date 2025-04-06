@@ -31,7 +31,6 @@ import { markAsUnread } from '@/actions/mail';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
-import { XIcon } from '../icons/animated/x';
 import ReplyCompose from './reply-composer';
 import { useTranslations } from 'next-intl';
 import { useMail } from '../mail/use-mail';
@@ -300,7 +299,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
         <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[10px]">
           <div className="flex flex-1 items-center gap-2">
             <ThreadActionButton
-              icon={XIcon}
+              icon={X}
               label={t('common.actions.close')}
               onClick={handleClose}
             />
