@@ -350,7 +350,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
     >
       <div
         className={cn(
-          'bg-offsetLight dark:bg-offsetDark relative flex flex-col overflow-hidden transition-all duration-300',
+          'bg-offsetLight dark:bg-offsetDark relative flex flex-col transition-all duration-300',
           isMobile ? 'h-full' : 'h-full',
           !isMobile && !isFullscreen && 'rounded-r-lg',
           isFullscreen ? 'fixed inset-0 z-50' : '',
@@ -435,7 +435,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             />
           </div>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col">
           <ScrollArea className="h-full flex-1" type="auto">
             <div className="pb-4">
               {(emailData || []).map((message, index) => (

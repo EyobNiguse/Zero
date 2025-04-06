@@ -655,7 +655,7 @@ ${email.decodedBody || 'No content'}
   }
 
   return (
-    <div className="bg-offsetLight dark:bg-offsetDark w-full p-2">
+    <div className="bg-offsetLight dark:bg-offsetDark w-full px-2">
       <form
         ref={composerRef}
         className={cn(
