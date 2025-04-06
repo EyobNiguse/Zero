@@ -31,6 +31,9 @@
       "failedToModifyFavorites": "Failed to modify favorites",
       "markingAsRead": "Marking as read...",
       "markingAsUnread": "Marking as unread...",
+      "hiddenImagesWarning": "Images are hidden by default for security reasons.",
+      "showImages": "Show Images",
+      "disableImages": "Hide Images",
       "cancel": "Cancel",
       "save": "Save"
     },
@@ -153,7 +156,9 @@
       "markAsRead": "Mark as Read",
       "addLabel": "Add label",
       "muteThread": "Mute thread",
-      "favourites": "Favourites"
+      "favourites": "Favourites",
+      "disableImages": "Hide Images",
+      "enableImages": "Show Images"
     },
     "notes": {
       "title": "Notes",
@@ -324,7 +329,9 @@
         "twoFactorAuthDescription": "Add an extra layer of security to your account",
         "loginNotifications": "Login Notifications",
         "loginNotificationsDescription": "Get notified about new login attempts",
-        "deleteAccount": "Delete Account"
+        "deleteAccount": "Delete Account",
+        "loadImagesDefault": "Load Images by Default",
+        "loadImagesDefaultDescription": "Images are not loaded by default for security reasons."
       },
       "appearance": {
         "title": "Appearance",
