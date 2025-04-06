@@ -636,7 +636,7 @@ ${email.decodedBody || 'No content'}
   if (!composerIsOpen) {
     if (mode === 'reply') {
       return (
-        <div className="bg-offsetLight dark:bg-offsetDark w-full p-2">
+        <div className="bg-offsetLight dark:bg-offsetDark w-full px-2">
           <Button
             onClick={toggleComposer}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-md"

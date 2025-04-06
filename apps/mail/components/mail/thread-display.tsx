@@ -187,14 +187,14 @@ function ThreadActionButton({
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-        <Button
-          disabled={disabled}
-          onClick={onClick}
-          variant="ghost"
-          className={cn('md:h-fit md:px-2', className)}
-          onMouseEnter={() => iconRef.current?.startAnimation?.()}
-          onMouseLeave={() => iconRef.current?.stopAnimation?.()}
-        >
+          <Button
+            disabled={disabled}
+            onClick={onClick}
+            variant="ghost"
+            className={cn('md:h-fit md:px-2', className)}
+            onMouseEnter={() => iconRef.current?.startAnimation?.()}
+            onMouseLeave={() => iconRef.current?.stopAnimation?.()}
+          >
             <Icon ref={iconRef} className="h-4 w-4" />
             <span className="sr-only">{label}</span>
           </Button>
@@ -335,7 +335,6 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
                 icon={XIcon}
                 label={t('common.actions.close')}
                 onClick={handleClose}
-                
               />
             </div>
             <div className="flex items-center gap-1 sm:gap-2 md:gap-6">
@@ -427,7 +426,8 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             <ThreadSubject subject={emailData[0]?.subject} />
           </div>
           <div className="flex items-center md:gap-2">
-            <NotesPanel threadId={threadId} />
+            {/* disable notes for now, it's still a bit buggy and not ready for prod. */}
+            {/* <NotesPanel threadId={threadId} /> */}
             <ThreadActionButton
               icon={Expand}
               label={
@@ -540,7 +540,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               ))}
             </div>
           </ScrollArea>
-          <div className={`relative ${isFullscreen ? '' : 'top-3 lg:top-3.5'} flex-shrink-0`}>
+          <div className={isFullscreen ? 'mb-2' : ''}>
             <ReplyCompose
               emailData={emailData}
               isOpen={isReplyOpen || isForwardOpen}
