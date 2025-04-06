@@ -10,7 +10,6 @@ import {
   Tag,
   User,
   Users,
-  StarOff,
 } from 'lucide-react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -74,7 +73,7 @@ const Thread = memo(
     message,
     selectMode,
     demo,
-    onClick,
+    onMouseDown,
     sessionData,
     isKeyboardFocused,
     isInQuickActionMode,
@@ -160,7 +159,7 @@ const Thread = memo(
     }, []);
 
     const content = (
-      <div className="p-1 px-3" onClick={onClick ? onClick(message) : undefined}>
+      <div className="p-1 px-3" onMouseDown={onMouseDown ? onMouseDown(message) : undefined}>
         {demo ? (
           <div
             data-thread-id={message.threadId ?? message.id}
@@ -367,7 +366,7 @@ export function MailListDemo({
                 key={item.id}
                 message={item}
                 selectMode={'single'}
-                onClick={(message) => () => onSelectMail && onSelectMail(message)}
+                onMouseDown={(message) => () => onSelectMail && onSelectMail(message)}
               />
             ) : null;
           })}
@@ -549,7 +548,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     return 'single';
   }, [isKeyPressed]);
 
-  const handleMailClick = useCallback(
+  const handleMailMouseDown = useCallback(
     (message: InitialThread) => () => {
       handleMouseEnter(message.id);
 
@@ -572,7 +571,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         toast.error(t('common.mail.failedToMarkAsRead'));
       });
     },
-    [getSelectMode, setThreadId, items, handleMouseEnter, t, setMail],
+    [handleMouseEnter, setThreadId, t, setMail],
   );
 
   const isEmpty = items.length === 0;
@@ -621,7 +620,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           {items.map((data, index) => {
             return (
               <Thread
-                onClick={handleMailClick}
+                onMouseDown={handleMailMouseDown}
                 selectMode={getSelectMode()}
                 isCompact={isCompact}
                 sessionData={sessionData}
@@ -638,7 +637,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             <Button
               variant={'ghost'}
               className="w-full rounded-none"
-              onClick={handleScroll}
+              onMouseDown={handleScroll}
               disabled={isLoading || isValidating}
             >
               {isLoading || isValidating ? (
