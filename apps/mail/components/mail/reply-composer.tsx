@@ -40,7 +40,7 @@ import { sendEmail } from '@/actions/send';
 import { useForm } from 'react-hook-form';
 import type { JSONContent } from 'novel';
 import { toast } from 'sonner';
-import type { z } from 'zod';
+import { useMail } from '@/components/mail/use-mail';
 
 // Define state interfaces
 interface ComposerState {
@@ -114,8 +114,6 @@ const aiReducer = (state: AIState, action: AIAction): AIState => {
 
 interface ReplyComposeProps {
   emailData: ParsedMessage[];
-  isOpen?: boolean;
-  setIsOpen?: Dispatch<SetStateAction<boolean>>;
   mode?: 'reply' | 'forward';
 }
 
@@ -124,9 +122,20 @@ type FormData = {
   to: string;
 };
 
-export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode = 'reply' }: ReplyComposeProps) {
+export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyComposeProps) {
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
+  const [mail, setMail] = useMail();
+
+  // Use global state instead of local state
+  const composerIsOpen = mode === 'reply' ? mail.replyComposerOpen : mail.forwardComposerOpen;
+  const setComposerIsOpen = (value: boolean) => {
+    setMail((prev: typeof mail) => ({
+      ...prev,
+      replyComposerOpen: mode === 'reply' ? value : prev.replyComposerOpen,
+      forwardComposerOpen: mode === 'forward' ? value : prev.forwardComposerOpen,
+    }));
+  };
 
   // Use reducers instead of multiple useState
   const [composerState, composerDispatch] = useReducer(composerReducer, {
@@ -147,16 +156,6 @@ export default function ReplyCompose({ emailData, isOpen, setIsOpen, mode = 'rep
 
   const composerRef = useRef<HTMLFormElement>(null);
   const t = useTranslations();
-
-  // Use external state if provided, otherwise use internal state
-  const composerIsOpen = isOpen !== undefined ? isOpen : composerState.isComposerOpen;
-  const setComposerIsOpen = (value: boolean) => {
-    if (setIsOpen) {
-      setIsOpen(value);
-    } else {
-      composerDispatch({ type: 'SET_COMPOSER_OPEN', payload: value });
-    }
-  };
 
   // Handle keyboard shortcuts for sending email
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -632,6 +631,25 @@ ${email.decodedBody || 'No content'}
     }
   };
 
+  // Add this effect near other useEffects
+  useEffect(() => {
+    if (!composerIsOpen) {
+      // Reset form state
+      form.reset();
+      // Reset attachments
+      setAttachments([]);
+      // Reset AI state
+      aiDispatch({ type: 'RESET' });
+      // Reset to emails if in forward mode
+      if (mode === 'forward') {
+        setToEmails([]);
+        setToInput('');
+      }
+      // Reset editor key to force a fresh instance
+      composerDispatch({ type: 'INCREMENT_EDITOR_KEY' });
+    }
+  }, [composerIsOpen, form, mode]);
+
   // Simplified composer visibility check
   if (!composerIsOpen) {
     if (mode === 'reply') {
@@ -659,7 +677,7 @@ ${email.decodedBody || 'No content'}
       <form
         ref={composerRef}
         className={cn(
-          'border-border ring-offset-background flex flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
+          'border-border ring-offset-background relative z-20 flex flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
           composerState.isEditorFocused ? 'ring-2 ring-[#3D3D3D] ring-offset-1' : '',
         )}
         style={{
