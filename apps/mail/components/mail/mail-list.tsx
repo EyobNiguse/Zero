@@ -160,7 +160,7 @@ const Thread = memo(
     }, []);
 
     const content = (
-      <div className="p-1" onClick={onClick ? onClick(message) : undefined}>
+      <div className="p-1 px-3" onClick={onClick ? onClick(message) : undefined}>
         {demo ? (
           <div
             data-thread-id={message.threadId ?? message.id}
@@ -168,7 +168,7 @@ const Thread = memo(
             onMouseLeave={handleMouseLeave}
             key={message.threadId ?? message.id}
             className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent  px-4 py-3 text-left text-sm transition-all hover:opacity-100',
               isMailSelected || (!message.unread && 'opacity-50'),
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',

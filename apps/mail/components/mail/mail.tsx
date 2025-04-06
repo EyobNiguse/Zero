@@ -296,17 +296,13 @@ export function MailLayout() {
             minSize={isMobile ? 100 : 25}
           >
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
-              <div
-                className={cn(
-                  'compose-loading h-0.5 w-full transition-opacity',
-                  isValidating ? 'opacity-50' : 'opacity-0',
-                )}
-              />
+              
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors',
                 )}
               >
+                
                 <div className="flex items-center gap-2">
                   <SidebarToggle className="h-fit px-2" />
                   <Tooltip>
@@ -363,6 +359,12 @@ export function MailLayout() {
                   </>
                 )}
               </div>
+              <div
+                className={cn(
+                  'compose-loading h-0.5 w-full transition-opacity relative bottom-0.5 z-20',
+                  isValidating ? 'opacity-100' : 'opacity-0',
+                )}
+              />
               <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
                 {isLoading ? (
                   <div className="flex flex-col">
