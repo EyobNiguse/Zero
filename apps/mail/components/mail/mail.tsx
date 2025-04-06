@@ -495,7 +495,7 @@ function BulkSelectActions() {
       }
     } catch (error) {
       console.error("Error marking as read", error);
-      toast.error("common.errors.generic");
+      toast.error(t("common.mail.failedToMarkAsRead"));
     }
   }, [mail, setMail, mutateThreads, mutateStats, t]);
 
