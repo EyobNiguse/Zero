@@ -1,4 +1,5 @@
-import { generateCompletions } from '@/lib/groq';
+import { extractTextFromHTML } from "@/actions/extractText";
+import { createEmbeddings, generateCompletions } from "./groq";
 
 interface AIResponse {
   id: string;
@@ -76,13 +77,44 @@ export async function generateEmailContent(
       .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join('\n\n');
     
+    // Create embeddings for relevant context
+    const embeddingTexts: Record<string, string> = {};
+    
+    if (currentContent) {
+      embeddingTexts.currentEmail = currentContent;
+    }
+    
+    if (prompt) {
+      embeddingTexts.userPrompt = prompt;
+    }
+    
+    // Add previous messages for context
+    const previousMessages = conversationHistories[convId]
+      .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+      .slice(-4); // Get last 4 messages
+      
+    if (previousMessages.length > 0) {
+      embeddingTexts.conversationHistory = previousMessages
+        .map(msg => `${msg.role}: ${msg.content}`)
+        .join('\n\n');
+    }
+    
+    // Generate embeddings
+    let embeddings = {};
+    try {
+      embeddings = await createEmbeddings(embeddingTexts);
+    } catch (embeddingError) {
+      console.error(embeddingError)
+    }
+    
     // Make API call using the ai function
     const { completion } = await generateCompletions({
       model: 'gpt-4o-mini', // Using Groq's model
       systemPrompt,
       prompt: userMessages + '\n\nUser: ' + prompt,
       temperature: 0.7,
-      max_tokens: isQuestion ? 150 : 1000
+      max_tokens: isQuestion ? 150 : 1000,
+      embeddings // Pass the embeddings to the API call
     });
     
     const generatedContent = completion;
@@ -99,12 +131,9 @@ export async function generateEmailContent(
         position: "replace"
       }];
     } else {
-      // Format email content
-      const formattedContent = formatEmailContent(generatedContent, prompt, recipients);
-      
       return [{
         id: "email-" + Date.now(),
-        content: formattedContent,
+        content: generatedContent,
         type: "email",
         position: "replace"
       }];
@@ -113,22 +142,6 @@ export async function generateEmailContent(
     console.error("Error generating email content:", error);
     throw error;
   }
-}
-
-function formatEmailContent(content: string, prompt: string, recipients?: string[]): string {
-  // Remove any "Subject:" line at the beginning
-  let formattedContent = content
-    .replace(/^Subject:.*?(\n|$)/i, '')
-    .replace(/^\*\*Subject:.*?\*\*(\n|$)/i, '');
-  
-  // Clean up the content
-  formattedContent = formattedContent.trimStart()
-    .replace(/\r\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .split('\n').map(line => line.trimRight()).join('\n')
-    .trim();
-  
-  return formattedContent;
 }
 
 function checkIfQuestion(prompt: string): boolean {

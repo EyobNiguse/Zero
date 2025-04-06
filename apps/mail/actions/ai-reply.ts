@@ -3,9 +3,13 @@
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { generateCompletions, truncateThreadContent } from '@/lib/groq';
+import { extractTextFromHTML } from './extractText';
 
 // Extracts the most important parts of an email thread to fit within token limits
-function extractEmailSummary(threadContent: string, maxTokens: number = 4000): string {
+async function extractEmailSummary(threadContent: string, maxTokens: number = 4000): Promise<string> {
+  // First, strip HTML from the thread content
+  threadContent = await extractTextFromHTML(threadContent);
+  
   // Split the thread into individual emails
   const emails = threadContent.split('\n---\n');
   
@@ -39,6 +43,7 @@ function extractEmailSummary(threadContent: string, maxTokens: number = 4000): s
   
   // If we still have token budget, add parts of the previous email
   const estimatedSummaryTokens = summary.length / 4;
+  
   if (estimatedSummaryTokens < maxTokens * 0.8 && emails.length > 1) {
     const previousEmail = emails[emails.length - 2] || '';
     const remainingTokens = maxTokens - estimatedSummaryTokens;
@@ -106,10 +111,10 @@ export async function generateAIResponse(
     const { completion } = await generateCompletions({
       model: 'llama3-8b-8192',
       systemPrompt: process.env.SYSTEM_PROMPT || systemPrompt,
-      prompt ,
+      prompt,
       temperature: 0.7,
       max_tokens: 500
-    })
+    });
 
     return completion;
   } catch (error: any) {
