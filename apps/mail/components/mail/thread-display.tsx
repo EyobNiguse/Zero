@@ -3,6 +3,7 @@ import {
   ArchiveX,
   Expand,
   Forward,
+  ForwardIcon,
   Mail,
   MoreVertical,
   Reply,
@@ -329,67 +330,6 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             isFullscreen ? 'fixed inset-0 z-50' : '',
           )}
         >
-          <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[10px]">
-            <div className="flex flex-1 items-center">
-              <ThreadActionButton
-                icon={XIcon}
-                label={t('common.actions.close')}
-                onClick={handleClose}
-              />
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-6">
-              <ThreadActionButton
-                icon={isFullscreen ? ExpandIcon : ExpandIcon}
-                label={
-                  isFullscreen
-                    ? t('common.threadDisplay.exitFullscreen')
-                    : t('common.threadDisplay.enterFullscreen')
-                }
-                onClick={() => setIsFullscreen(!isFullscreen)}
-              />
-
-              <ThreadActionButton
-                icon={ArchiveIcon}
-                label={t('common.threadDisplay.archive')}
-                disabled={true}
-                className="relative top-0.5"
-              />
-
-              <ThreadActionButton
-                icon={!emailData || emailData[0]?.tags?.includes('STARRED') ? StarOff : Star}
-                label={t('common.threadDisplay.favourites')}
-                onClick={handleFavourites}
-                className="relative top-0.5"
-              />
-
-              <ThreadActionButton
-                icon={ReplyIcon}
-                label={t('common.threadDisplay.reply')}
-                disabled={true}
-              />
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-8 w-8 p-0 md:h-fit md:w-auto md:px-2"
-                    disabled={true}
-                  >
-                    <MoreVerticalIcon className="h-4 w-4" />
-                    <span className="sr-only">{t('common.threadDisplay.moreOptions')}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <ArchiveX className="mr-2 h-4 w-4" /> {t('common.threadDisplay.moveToSpam')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <ReplyAll className="mr-2 h-4 w-4" /> {t('common.threadDisplay.replyAll')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <ScrollArea className="h-full flex-1" type="auto">
               <div className="pb-4">
@@ -471,50 +411,28 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               icon={Reply}
               label={t('common.threadDisplay.reply')}
               disabled={!emailData}
-              onClick={() => setIsReplyOpen(true)}
+              onClick={() => {
+                if (isForwardOpen) {
+                  setIsForwardOpen(false);
+                  setIsReplyOpen(true);
+                } else {
+                  setIsReplyOpen(!isReplyOpen);
+                }
+              }}
             />
-            {/* <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="md:h-fit md:px-2"
-                  disabled={!emailData}
-                  onMouseEnter={() => moreVerticalIconRef.current?.startAnimation?.()}
-                  onMouseLeave={() => moreVerticalIconRef.current?.stopAnimation?.()}
-                >
-                  <MoreVertical ref={moreVerticalIconRef} className="h-4 w-4" />
-                  <span className="sr-only">{t('common.threadDisplay.moreOptions')}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isInInbox && (
-                  <DropdownMenuItem onClick={() => moveThreadTo('spam')}>
-                    <ArchiveX className="mr-2 h-4 w-4" /> {t('common.threadDisplay.moveToSpam')}
-                  </DropdownMenuItem>
-                )}
-                {isInSpam && (
-                  <DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
-                    <Inbox className="mr-2 h-4 w-4" /> {t('common.mail.moveToInbox')}
-                  </DropdownMenuItem>
-                )}
-                {isInArchive && (
-                  <DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
-                    <Inbox className="mr-2 h-4 w-4" /> {t('common.mail.moveToInbox')}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem>
-                  <ReplyAll className="mr-2 h-4 w-4" /> {t('common.threadDisplay.replyAll')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleForward}>
-                  <Forward className="mr-2 h-4 w-4" /> {t('common.threadDisplay.forward')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMarkAsUnread}>
-                  <Mail className="mr-2 h-4 w-4" /> {t('common.mail.markAsUnread')}
-                </DropdownMenuItem>
-                <DropdownMenuItem>{t('common.threadDisplay.addLabel')}</DropdownMenuItem>
-                <DropdownMenuItem>{t('common.threadDisplay.muteThread')}</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu> */}
+            <ThreadActionButton
+              icon={Forward}
+              label={t('common.threadDisplay.forward')}
+              disabled={!emailData}
+              onClick={() => {
+                if (isReplyOpen) {
+                  setIsReplyOpen(false);
+                  setIsForwardOpen(true);
+                } else {
+                  setIsForwardOpen(!isForwardOpen);
+                }
+              }}
+            />
           </div>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
