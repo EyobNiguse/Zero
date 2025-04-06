@@ -23,6 +23,7 @@ import {
   Star,
   StarOff,
   Trash,
+  MailOpen,
 } from 'lucide-react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -277,7 +278,7 @@ export function ThreadContextMenu({
     {
       id: 'toggle-read',
       label: isUnread ? t('common.mail.markAsRead') : t('common.mail.markAsUnread'),
-      icon: <Mail className="mr-2.5 h-4 w-4" />,
+      icon: isUnread ? <MailOpen className="mr-2.5 h-4 w-4" /> : <Mail className="mr-2.5 h-4 w-4" />,
       shortcut: 'U',
       action: handleReadUnread,
       disabled: false,
