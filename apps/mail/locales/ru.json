@@ -11,8 +11,26 @@
       "signingOut": "Выход...",
       "signedOutSuccess": "Выход успешен",
       "signOutError": "Ошибка при выходе",
-      "refresh": "Refresh",
-      "loading": "Loading..."
+      "refresh": "Обновить",
+      "loading": "Загрузка...",
+      "featureNotImplemented": "This feature is not implemented yet",
+      "moving": "Moving...",
+      "movedToInbox": "Moved to inbox",
+      "movingToInbox": "Moving to inbox...",
+      "movedToSpam": "Moved to spam",
+      "movingToSpam": "Moving to spam...",
+      "archiving": "Archiving...",
+      "archived": "Archived",
+      "failedToMove": "Failed to move message",
+      "addingToFavorites": "Adding to favorites...",
+      "removingFromFavorites": "Removing from favorites...",
+      "addedToFavorites": "Added to favorites",
+      "removedFromFavorites": "Removed from favorites",
+      "failedToAddToFavorites": "Failed to add to favorites",
+      "failedToRemoveFromFavorites": "Failed to remove from favorites",
+      "failedToModifyFavorites": "Failed to modify favorites",
+      "markingAsRead": "Marking as read...",
+      "markingAsUnread": "Marking as unread..."
     },
     "themes": {
       "dark": "Тёмный",
@@ -21,7 +39,7 @@
     },
     "commandPalette": {
       "title": "Команда",
-      "description": "Быстрый переход и действия для Mail-0",
+      "description": "Выход выполнен успешно",
       "placeholder": "Введите команду или поиск...",
       "noResults": "Нет результатов",
       "groups": {
@@ -64,15 +82,15 @@
       "allMail": "Все Письма",
       "unread": "Непрочитанные",
       "hasAttachment": "Есть вложения",
-      "starred": "Звездочечка",
+      "starred": "Отмеченные",
       "applyFilters": "Применить фильтры",
       "reset": "Сбросить",
-      "searching": "Searching...",
-      "aiSuggestions": "AI Suggestions",
-      "aiSearching": "AI is searching...",
-      "aiSearchError": "AI search failed. Please try again.",
-      "aiNoResults": "No AI suggestions found",
-      "aiEnhancedQuery": "Enhanced search query"
+      "searching": "Поиск...",
+      "aiSuggestions": "Предложения ИИ",
+      "aiSearching": "ИИ ищет...",
+      "aiSearchError": "Поиск ИИ не удался. Пожалуйста, попробуйте снова.",
+      "aiNoResults": "ИИ предложения не найдены",
+      "aiEnhancedQuery": "Расширенный поиск"
     },
     "navUser": {
       "customerSupport": "Поддержка",
@@ -83,8 +101,9 @@
     },
     "mailCategories": {
       "primary": "Основные",
+      "allMail": "All Mail",
       "important": "Важные",
-      "personal": "Персональные",
+      "personal": "Личные",
       "updates": "Обновления",
       "promotions": "Промо",
       "social": "Социальные"
@@ -94,11 +113,11 @@
       "thisEmail": "это письмо",
       "dropFiles": "Поместите файлы, чтобы прикрепить",
       "attachments": "Приложения",
-      "attachmentCount": "{count, plural, =0 {attachments} one {attachment} other {attachments}}",
-      "fileCount": "{count, plural, =0 {files} one {file} other {files}}",
+      "attachmentCount": "{count, plural, =0 {вложений} one {вложение} few {вложения} many {вложений} other {вложений}}",
+      "fileCount": "{count, plural, =0 {файлов} one {файл} few {файла} many {файлов} other {файла}}",
       "saveDraft": "Сохранить черновик",
       "send": "Отправить",
-      "forward": "Forward"
+      "forward": "Переслать"
     },
     "mailDisplay": {
       "details": "Подробнее",
@@ -125,14 +144,14 @@
       "archive": "Архив",
       "reply": "Ответить",
       "moreOptions": "Больше опций",
-      "moveToSpam": "Move to Spam",
+      "moveToSpam": "Переместить в Спам",
       "replyAll": "Ответить всем",
       "forward": "Переслать",
-      "markAsUnread": "Mark as Unread",
-      "markAsRead": "Mark as Read",
+      "markAsUnread": "Отметить как непрочитанное",
+      "markAsRead": "Отметить как прочитанное",
       "addLabel": "Добавить метку",
       "muteThread": "Выключить поток",
-      "favourites": "Favourites"
+      "favourites": "Избранное"
     },
     "notes": {
       "title": "Заметки",
@@ -195,10 +214,10 @@
       }
     },
     "settings": {
-      "notFound": "Settings not found",
-      "saved": "Settings saved",
-      "failedToSave": "Failed to save settings",
-      "languageChanged": "Language changed to {locale}"
+      "notFound": "Настройки не найдены",
+      "saved": "Настройки сохранены",
+      "failedToSave": "Не удалось сохранить настройки",
+      "languageChanged": "Язык изменен на {locale}"
     },
     "mail": {
       "replies": "{count, plural, =0 {ответы} one {# ответ} few {# ответа} many {# ответов} other {# ответы}}",
@@ -218,19 +237,20 @@
       "archive": "Архивировать",
       "moveToTrash": "Переместить в Корзину",
       "markAsUnread": "Отметить как непрочитанное",
-      "markAsRead": "Mark as Read",
-      "addStar": "В избранное",
+      "markAsRead": "Отметить как прочитанное",
+      "addFavorite": "Favorite",
+      "removeFavorite": "Unfavorite",
       "muteThread": "Заглушить цепочку",
       "moving": "Перемещение...",
       "moved": "Перемещено",
       "errorMoving": "Ошибка при перемещении",
-      "reply": "Reply",
-      "replyAll": "Reply All",
-      "forward": "Forward",
-      "labels": "Labels",
-      "createNewLabel": "Create New Label",
-      "noLabelsAvailable": "No labels available",
-      "loadMore": "Load more"
+      "reply": "Ответить",
+      "replyAll": "Ответить всем",
+      "forward": "Переслать",
+      "labels": "Ярлыки",
+      "createNewLabel": "Создать новый ярлык",
+      "noLabelsAvailable": "Нет доступных ярлыков",
+      "loadMore": "Загрузить ещё"
     }
   },
   "navigation": {
@@ -242,7 +262,6 @@
       "archive": "Архив",
       "bin": "Корзина",
       "feedback": "Отзывы",
-      "contact": "Контакты",
       "settings": "Настройки"
     },
     "settings": {
@@ -267,17 +286,17 @@
         "title": "Общие",
         "description": "Управление настройками языка и отображения электронной почты.",
         "language": "Язык",
-        "selectLanguage": "Select a language",
+        "selectLanguage": "Выберите язык",
         "timezone": "Часовой пояс",
-        "selectTimezone": "Select a timezone",
+        "selectTimezone": "Выбрать часовой пояс",
         "dynamicContent": "Динамический контент",
         "dynamicContentDescription": "Позволяет электронной почте отображать динамический контент.",
         "externalImages": "Отображать внешние изображения",
         "externalImagesDescription": "Позволяет электронной почте отображать изображения из внешних источников.",
-        "languageChangedTo": "Language changed to {locale}",
-        "customPrompt": "Custom AI Prompt",
-        "customPromptPlaceholder": "Enter your custom prompt for the AI...",
-        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
+        "languageChangedTo": "Язык изменен на {locale}",
+        "customPrompt": "Пользовательский ИИ Запрос",
+        "customPromptPlaceholder": "Введите ваш запрос для ИИ...",
+        "customPromptDescription": "Настройте, как ИИ будет писать ваши ответы на письма. Этот текст будет добавлен к основному запросу."
       },
       "connections": {
         "title": "Подключения",
