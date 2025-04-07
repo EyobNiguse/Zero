@@ -203,6 +203,7 @@ const MenuBar = ({
                     size="icon"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
                     className={`h-auto w-auto rounded p-1.5 ${editor.isActive('heading', { level: 1 }) ? 'bg-muted' : 'bg-background'}`}
+                    tabIndex={-1}
                   >
                     <Heading1 className="h-4 w-4" />
                   </Button>
@@ -216,6 +217,7 @@ const MenuBar = ({
                     size="icon"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                     className={`h-auto w-auto rounded p-1.5 ${editor.isActive('heading', { level: 2 }) ? 'bg-muted' : 'bg-background'}`}
+                    tabIndex={-1}
                   >
                     <Heading2 className="h-4 w-4" />
                   </Button>
@@ -229,6 +231,7 @@ const MenuBar = ({
                     size="icon"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                     className={`h-auto w-auto rounded p-1.5 ${editor.isActive('heading', { level: 3 }) ? 'bg-muted' : 'bg-background'}`}
+                    tabIndex={-1}
                   >
                     <Heading3 className="h-4 w-4" />
                   </Button>
@@ -242,6 +245,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    tabIndex={-1}
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleBold().run()}
@@ -257,6 +261,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    tabIndex={-1}
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -271,6 +276,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    tabIndex={-1}
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -287,6 +293,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    tabIndex={-1}
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleUnderline().run()}
@@ -300,6 +307,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    tabIndex={-1}
                     variant="ghost"
                     size="icon"
                     onClick={handleLinkDialogOpen}
@@ -318,6 +326,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    tabIndex={-1}
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -331,6 +340,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    tabIndex={-1}
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -348,6 +358,7 @@ const MenuBar = ({
                     <TooltipTrigger asChild>
                       <PopoverTrigger asChild>
                         <Button
+                          tabIndex={-1}
                           variant="ghost"
                           size="icon"
                           className="bg-background relative h-auto w-auto rounded p-1.5"
@@ -412,6 +423,7 @@ const MenuBar = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      tabIndex={-1}
                       variant="ghost"
                       size="icon"
                       onClick={handleAttachmentClick}
