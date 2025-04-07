@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { fixNonReadableColors, template } from '@/lib/email-utils';
+import { useSettings } from '@/hooks/use-settings';
 import { useTranslations } from 'next-intl';
-import { Skeleton } from '../ui/skeleton';
-import { Loader2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import DOMPurify from 'dompurify';
 
 export function MailIframe({ html }: { html: string }) {
+  const { settings } = useSettings();
+  const [imagesEnabled, setImagesEnabled] = useState(settings?.externalImages || false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(300);
   const { resolvedTheme } = useTheme();
-  // const [loaded, setLoaded] = useState(false);
 
-  const iframeDoc = useMemo(() => template(html), [html]);
+  const iframeDoc = useMemo(() => template(html, imagesEnabled), [html, imagesEnabled]);
 
   const t = useTranslations();
 
@@ -61,6 +61,17 @@ export function MailIframe({ html }: { html: string }) {
 
   return (
     <>
+      {!imagesEnabled && !settings?.externalImages && (
+        <div className="flex items-center justify-start bg-amber-500 p-2 text-sm text-amber-900">
+          <p>{t('common.actions.hiddenImagesWarning')}</p>
+          <p
+            onClick={() => setImagesEnabled(!imagesEnabled)}
+            className="ml-2 cursor-pointer underline"
+          >
+            {imagesEnabled ? t('common.actions.disableImages') : t('common.actions.showImages')}
+          </p>
+        </div>
+      )}
       {/* {!loaded && (
         <div className="flex h-full w-full items-center justify-center gap-4 p-4">
           <div className="w-full space-y-4">

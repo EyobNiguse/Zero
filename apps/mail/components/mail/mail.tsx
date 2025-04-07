@@ -46,6 +46,7 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
+import { getMail, markAsRead } from '@/actions/mail';
 import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
@@ -55,7 +56,6 @@ import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { getMail, markAsRead } from '@/actions/mail';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
@@ -171,7 +171,7 @@ export function DemoMailLayout() {
               </div>
             </div>
           </ResizablePanel>
-
+          
           {isDesktop && mail.selected && (
             <>
               <ResizableHandle className="opacity-0" />
@@ -288,7 +288,7 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-1.5 overflow-hidden"
+          className="rounded-inherit gap-0.5 overflow-hidden"
         >
           <ResizablePanel
             className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}
@@ -296,12 +296,6 @@ export function MailLayout() {
             minSize={isMobile ? 100 : 25}
           >
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
-              <div
-                className={cn(
-                  'compose-loading h-0.5 w-full transition-opacity',
-                  isValidating ? 'opacity-50' : 'opacity-0',
-                )}
-              />
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors',
@@ -363,6 +357,12 @@ export function MailLayout() {
                   </>
                 )}
               </div>
+              <div
+                className={cn(
+                  'compose-loading relative bottom-0.5 z-20 h-0.5 w-full transition-opacity',
+                  isValidating ? 'opacity-100' : 'opacity-0',
+                )}
+              />
               <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
                 {isLoading ? (
                   <div className="flex flex-col">
@@ -389,6 +389,8 @@ export function MailLayout() {
               </div>
             </div>
           </ResizablePanel>
+
+          <ResizableHandle className='opacity-0'/>
 
           {isDesktop ? (
             <>
@@ -481,16 +483,15 @@ function BulkSelectActions() {
         await mutateStats();
         setMail((prev) => ({
           ...prev,
-          bulkSelected: []
+          bulkSelected: [],
         }));
         toast.success(t('common.mail.markedAsRead'));
       }
     } catch (error) {
-      console.error("Error marking as read", error);
-      toast.error(t("common.mail.failedToMarkAsRead"));
+      console.error('Error marking as read', error);
+      toast.error(t('common.mail.failedToMarkAsRead'));
     }
   }, [mail, setMail, mutateThreads, mutateStats, t]);
-
 
   const onMoveSuccess = useCallback(async () => {
     await mutateThreads();
@@ -562,11 +563,7 @@ function BulkSelectActions() {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="md:h-fit md:px-2"
-            onClick={handleMarkAsRead}
-          >
+          <Button variant="ghost" className="md:h-fit md:px-2" onClick={handleMarkAsRead}>
             <MailOpen />
           </Button>
         </TooltipTrigger>
@@ -658,7 +655,7 @@ function CategorySelect() {
   const categories = Categories();
   const router = useRouter();
   const [category, setCategory] = useQueryState('category', {
-    defaultValue: 'Primary'
+    defaultValue: 'Primary',
   });
 
   return (
@@ -676,8 +673,8 @@ function CategorySelect() {
           };
           setSearchValue(searchValueState);
 
-        // Update category in URL - nuqs will preserve other params automatically
-        setCategory(value);
+          // Update category in URL - nuqs will preserve other params automatically
+          setCategory(value);
         }
       }}
       value={category}
