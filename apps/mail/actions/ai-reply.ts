@@ -5,60 +5,31 @@ import { auth } from '@/lib/auth';
 import { generateCompletions, truncateThreadContent } from '@/lib/groq';
 import { extractTextFromHTML } from './extractText';
 
-// Extracts the most important parts of an email thread to fit within token limits
-async function extractEmailSummary(threadContent: string, maxTokens: number = 4000): Promise<string> {
+// Hard cap the context to prevent token limit errors
+async function extractEmailSummary(threadContent: string, maxTokens: number = 2000): Promise<string> {
   // First, strip HTML from the thread content
   threadContent = await extractTextFromHTML(threadContent);
   
-  // Split the thread into individual emails
-  const emails = threadContent.split('\n---\n');
+  // Hard character limit (roughly 3 chars per token to be safe)
+  const MAX_CHARS = 4000;
   
-  // If there's only one email or it's already small enough, just truncate it
-  if (emails.length <= 1 || threadContent.length / 4 <= maxTokens) {
-    return truncateThreadContent(threadContent, maxTokens);
+  // If content is already small enough, return as is
+  if (threadContent.length <= MAX_CHARS) {
+    return threadContent;
   }
   
-  // Get the most recent email
+  // Split into emails and get the latest one
+  const emails = threadContent.split('\n---\n');
   const latestEmail = emails[emails.length - 1] || '';
   
-  // Extract subject lines and senders from all emails
-  const emailMetadata = emails.map(email => {
-    const subjectMatch = email.match(/Subject: (.*?)(\n|$)/i);
-    const fromMatch = email.match(/From: (.*?)(\n|$)/i);
-    return {
-      subject: subjectMatch ? subjectMatch[1] : 'No subject',
-      from: fromMatch ? fromMatch[1] : 'Unknown sender'
-    };
-  });
-  
-  // Create a summary of the thread
-  let summary = "Email Thread Summary:\n\n";
-  emailMetadata.forEach((meta, index) => {
-    summary += `Email ${index + 1}: From ${meta.from}, Subject: ${meta.subject}\n`;
-  });
-  
-  // Add the full content of the most recent email
-  summary += "\n\nMost recent email (full content):\n\n";
-  summary += latestEmail;
-  
-  // If we still have token budget, add parts of the previous email
-  const estimatedSummaryTokens = summary.length / 4;
-  
-  if (estimatedSummaryTokens < maxTokens * 0.8 && emails.length > 1) {
-    const previousEmail = emails[emails.length - 2] || '';
-    const remainingTokens = maxTokens - estimatedSummaryTokens;
-    const safeCharLimit = Math.floor(remainingTokens * 4 * 0.8);
-    
-    if (previousEmail.length <= safeCharLimit) {
-      summary += "\n\nPrevious email:\n\n" + previousEmail;
-    } else {
-      summary += "\n\nPrevious email (truncated):\n\n" + previousEmail.substring(0, safeCharLimit) + "...";
-    }
+  // If the latest email is within limits, return just that
+  if (latestEmail.length <= MAX_CHARS) {
+    return "Most recent email:\n" + latestEmail;
   }
   
-  return summary;
+  // Otherwise, take the last MAX_CHARS characters of the latest email
+  return "Most recent email (truncated):\n" + latestEmail.slice(-MAX_CHARS);
 }
-
 
 // Generates an AI response for an email reply based on the thread content
 export async function generateAIResponse(
@@ -77,7 +48,7 @@ export async function generateAIResponse(
   }
 
   // Use a more aggressive content reduction approach
-  const processedContent = extractEmailSummary(threadContent, 3000); // Reduced to 3000 tokens max
+  const processedContent = await extractEmailSummary(threadContent, 2000); // Reduced to 2000 tokens maximum
 
   // Create the system message
   const systemPrompt = `You are an email assistant helping ${session.user.name} write professional and concise email replies.
