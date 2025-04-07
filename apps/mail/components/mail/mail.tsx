@@ -14,6 +14,8 @@ import {
   Loader2,
   Archive,
   RotateCw,
+  Mail,
+  MailOpen,
 } from 'lucide-react';
 import {
   Dialog,
@@ -25,12 +27,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  moveThreadsTo,
-  ThreadDestination,
-  isActionAvailable,
-  getAvailableActions,
-} from '@/lib/thread-actions';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -39,8 +35,8 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { moveThreadsTo, ThreadDestination, getAvailableActions } from '@/lib/thread-actions';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
@@ -48,24 +44,21 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { RefreshIcon } from '../icons/animated/refresh';
-import { SearchIcon } from '../icons/animated/search';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
+import { getMail, markAsRead } from '@/actions/mail';
 import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
-import { cn, defaultPageSize } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
-import { MessageKey } from '@/config/navigation';
 import { Button } from '@/components/ui/button';
 import { useHotKey } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
-import { XIcon } from '../icons/animated/x';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { getMail } from '@/actions/mail';
 import { SearchBar } from './search-bar';
+import { useQueryState } from 'nuqs';
+import { cn } from '@/lib/utils';
 import items from './demo.json';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
@@ -80,8 +73,7 @@ export function DemoMailLayout() {
   const isValidating = false;
   const isLoading = false;
   const isDesktop = true;
-  const searchParams = useSearchParams();
-  const threadIdParam = searchParams?.get('threadId');
+  const threadIdParam = useQueryState('threadId');
   const [activeCategory, setActiveCategory] = useState('Primary');
   const [filteredItems, setFilteredItems] = useState(items);
 
@@ -132,7 +124,7 @@ export function DemoMailLayout() {
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
-                  'compose-gradient h-0.5 w-full transition-opacity',
+                  'compose-loading h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-50' : 'opacity-0',
                 )}
               />
@@ -179,7 +171,7 @@ export function DemoMailLayout() {
               </div>
             </div>
           </ResizablePanel>
-
+          
           {isDesktop && mail.selected && (
             <>
               <ResizableHandle className="opacity-0" />
@@ -189,7 +181,7 @@ export function DemoMailLayout() {
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] max-h-[800px] flex-1 md:block">
-                  <ThreadDemo mail={selectedMail ? [selectedMail] : [filteredItems[0]]} />
+                  <ThreadDemo messages={selectedMail ? [selectedMail] : []} />
                 </div>
               </ResizablePanel>
             </>
@@ -205,7 +197,7 @@ export function DemoMailLayout() {
               </DrawerHeader>
               <div className="flex h-full flex-col overflow-hidden">
                 <div className="flex-1 overflow-hidden">
-                  <ThreadDisplay isMobile={true} mail={filteredItems[0]} />
+                  <ThreadDisplay isMobile={true} messages={selectedMail ? [selectedMail] : []} />
                 </div>
               </div>
             </DrawerContent>
@@ -255,17 +247,12 @@ export function MailLayout() {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  const searchParams = useSearchParams();
-  const threadIdParam = searchParams.get('threadId');
-
-  // No need to track threadIdParam with a separate state
+  const [threadId, setThreadId] = useQueryState('threadId');
 
   const handleClose = useCallback(() => {
-    // Update URL to remove threadId parameter
-    const currentParams = new URLSearchParams(searchParams.toString());
-    currentParams.delete('threadId');
-    router.push(`/mail/${folder}?${currentParams.toString()}`);
-  }, [router, folder, searchParams]);
+    setThreadId(null);
+    router.push(`/mail/${folder}`);
+  }, [router, folder, setThreadId]);
 
   // Search bar is always visible now, no need for keyboard shortcuts to toggle it
   useHotKey('Esc', (event) => {
@@ -273,7 +260,27 @@ export function MailLayout() {
     // Handle other Esc key functionality if needed
   });
 
-  const searchIconRef = useRef<any>(null);
+  // Add mailto protocol handler registration
+  useEffect(() => {
+    // Register as a mailto protocol handler if browser supports it
+    if (typeof window !== 'undefined' && 'registerProtocolHandler' in navigator) {
+      try {
+        // Register the mailto protocol handler
+        // When a user clicks a mailto: link, it will be passed to our dedicated handler
+        // which will:
+        // 1. Parse the mailto URL to extract email, subject and body
+        // 2. Create a draft with these values
+        // 3. Redirect to the compose page with just the draft ID
+        // This ensures we don't keep the email content in the URL
+        navigator.registerProtocolHandler(
+          'mailto',
+          `${window.location.origin}/mail/compose/handle-mailto?mailto=%s`,
+        );
+      } catch (error) {
+        console.error('Failed to register protocol handler:', error);
+      }
+    }
+  }, []);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -281,20 +288,14 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-1.5 overflow-hidden"
+          className="rounded-inherit gap-0.5 overflow-hidden"
         >
           <ResizablePanel
-            className={cn('border-none !bg-transparent', threadIdParam ? 'md:hidden lg:block' : '')}
+            className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}
             defaultSize={isMobile ? 100 : 25}
             minSize={isMobile ? 100 : 25}
           >
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
-              <div
-                className={cn(
-                  'compose-gradient h-0.5 w-full transition-opacity',
-                  isValidating ? 'opacity-50' : 'opacity-0',
-                )}
-              />
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors',
@@ -348,7 +349,7 @@ export function MailLayout() {
                     <div className="flex flex-1 justify-center">
                       <SearchBar />
                     </div>
-                    {!threadIdParam && (
+                    {!threadId && (
                       <div className="flex items-center">
                         <CategorySelect />
                       </div>
@@ -356,6 +357,12 @@ export function MailLayout() {
                   </>
                 )}
               </div>
+              <div
+                className={cn(
+                  'compose-loading relative bottom-0.5 z-20 h-0.5 w-full transition-opacity',
+                  isValidating ? 'opacity-100' : 'opacity-0',
+                )}
+              />
               <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
                 {isLoading ? (
                   <div className="flex flex-col">
@@ -383,25 +390,30 @@ export function MailLayout() {
             </div>
           </ResizablePanel>
 
-          {isDesktop && threadIdParam && (
+          <ResizableHandle className='opacity-0'/>
+
+          {isDesktop ? (
             <>
               <ResizablePanel
-                className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
+                className={cn(
+                  'bg-offsetLight dark:bg-offsetDark shadow-sm md:rounded-2xl md:border md:shadow-sm',
+                  threadId ? 'md:flex' : 'hidden',
+                )}
                 defaultSize={75}
                 minSize={25}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDisplay onClose={handleClose} mail={threadIdParam} />
+                  <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
                 </div>
               </ResizablePanel>
             </>
-          )}
+          ) : null}
         </ResizablePanelGroup>
 
         {/* Mobile Drawer */}
         {isMobile && (
           <Drawer
-            open={!!threadIdParam}
+            open={!!threadId}
             onOpenChange={(isOpen) => {
               if (!isOpen) handleClose();
             }}
@@ -412,7 +424,9 @@ export function MailLayout() {
               </DrawerHeader>
               <div className="flex h-full flex-col overflow-hidden">
                 <div className="flex-1 overflow-hidden">
-                  <ThreadDisplay onClose={handleClose} isMobile={true} mail={threadIdParam} />
+                  {threadId ? (
+                    <ThreadDisplay onClose={handleClose} isMobile={true} id={threadId} />
+                  ) : null}
                 </div>
               </div>
             </DrawerContent>
@@ -460,6 +474,24 @@ function BulkSelectActions() {
   const { folder } = useParams<{ folder: string }>();
   const { mutate: mutateThreads } = useThreads();
   const { mutate: mutateStats } = useStats();
+
+  const handleMarkAsRead = useCallback(async () => {
+    try {
+      const response = await markAsRead({ ids: mail.bulkSelected });
+      if (response.success) {
+        await mutateThreads();
+        await mutateStats();
+        setMail((prev) => ({
+          ...prev,
+          bulkSelected: [],
+        }));
+        toast.success(t('common.mail.markedAsRead'));
+      }
+    } catch (error) {
+      console.error('Error marking as read', error);
+      toast.error(t('common.mail.failedToMarkAsRead'));
+    }
+  }, [mail, setMail, mutateThreads, mutateStats, t]);
 
   const onMoveSuccess = useCallback(async () => {
     await mutateThreads();
@@ -529,6 +561,14 @@ function BulkSelectActions() {
         </TooltipTrigger>
         <TooltipContent>{t('common.mail.mute')}</TooltipContent>
       </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" className="md:h-fit md:px-2" onClick={handleMarkAsRead}>
+            <MailOpen />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{t('common.mail.markAsRead')}</TooltipContent>
+      </Tooltip>
 
       {availableActions.map((action) => (
         <Tooltip key={action}>
@@ -562,10 +602,18 @@ const Categories = () => {
     {
       id: 'Primary',
       name: t('common.mailCategories.primary'),
-      searchValue: '',
+      searchValue: 'in:inbox category:primary',
       icon: <Inbox className="h-4 w-4" />,
       colors:
         'border-0 bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800/70',
+    },
+    {
+      id: 'All Mail',
+      name: t('common.mailCategories.allMail') || 'All Mail',
+      searchValue: '',
+      icon: <Mail className="h-4 w-4" />,
+      colors:
+        'border-0 bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30',
     },
     {
       id: 'Important',
@@ -605,27 +653,16 @@ const Categories = () => {
 function CategorySelect() {
   const [, setSearchValue] = useSearchValue();
   const categories = Categories();
-  const [defaultCategory, setDefaultCategory] = useState('Primary');
-
-  // Safely access localStorage on the client side only
-  useEffect(() => {
-    // Check if we're in the browser environment
-    if (typeof window !== 'undefined') {
-      const savedCategory = localStorage.getItem('mailActiveCategory');
-      if (savedCategory) {
-        setDefaultCategory(savedCategory);
-      }
-    }
-  }, []);
+  const router = useRouter();
+  const [category, setCategory] = useQueryState('category', {
+    defaultValue: 'Primary',
+  });
 
   return (
     <Select
       onValueChange={(value: string) => {
         // Find the category and trigger its selection
         const category = categories.find((cat) => cat.id === value);
-
-        // Always update the state to match the selected value
-        setDefaultCategory(value);
 
         if (category) {
           // Update search value based on category
@@ -636,13 +673,11 @@ function CategorySelect() {
           };
           setSearchValue(searchValueState);
 
-          // Save to localStorage (safely on client-side)
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('mailActiveCategory', value);
-          }
+          // Update category in URL - nuqs will preserve other params automatically
+          setCategory(value);
         }
       }}
-      defaultValue={defaultCategory}
+      value={category}
     >
       <SelectTrigger className="bg-popover h-9 w-36">
         <SelectValue placeholder="Select category" />

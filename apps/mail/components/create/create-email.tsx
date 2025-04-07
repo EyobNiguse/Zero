@@ -19,21 +19,58 @@ import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
+import { useSettings } from '@/hooks/use-settings';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
-export function CreateEmail() {
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const createEmptyDocContent = (): JSONContent => ({
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+      content: [],
+    },
+  ],
+});
+
+export function CreateEmail({
+  initialTo = '',
+  initialSubject = '',
+  initialBody = '',
+}: {
+  initialTo?: string;
+  initialSubject?: string;
+  initialBody?: string;
+}) {
   const [toInput, setToInput] = React.useState('');
-  const [toEmails, setToEmails] = React.useState<string[]>([]);
-  const [subjectInput, setSubjectInput] = React.useState('');
+  const [toEmails, setToEmails] = React.useState<string[]>(initialTo ? [initialTo] : []);
+  const [subjectInput, setSubjectInput] = React.useState(initialSubject);
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const [resetEditorKey, setResetEditorKey] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [messageContent, setMessageContent] = React.useState('');
+  const [messageContent, setMessageContent] = React.useState(initialBody);
   const [draftId, setDraftId] = useQueryState('draftId');
-  const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(null);
+  const [includeSignature, setIncludeSignature] = React.useState(true);
+  const { settings } = useSettings();
+  
+  const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(() => {
+    if (initialBody) {
+      try {
+        return generateJSON(initialBody, [Document, Paragraph, Text, Bold]);
+      } catch (error) {
+        console.error('Error parsing initial body:', error);
+        return createEmptyDocContent();
+      }
+    }
+    return null;
+  });
 
   const { data: session } = useSession();
   const { data: connections } = useConnections();
@@ -50,31 +87,14 @@ export function CreateEmail() {
 
   React.useEffect(() => {
     if (!draftId && !defaultValue) {
-      // Set initial empty content
-      setDefaultValue({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [],
-          },
-        ],
-      });
+      setDefaultValue(createEmptyDocContent());
     }
   }, [draftId, defaultValue]);
 
   React.useEffect(() => {
     const loadDraft = async () => {
       if (!draftId) {
-        setDefaultValue({
-          type: 'doc',
-          content: [
-            {
-              type: 'paragraph',
-              content: [],
-            },
-          ],
-        });
+        setDefaultValue(createEmptyDocContent());
         return;
       }
 
@@ -116,11 +136,6 @@ export function CreateEmail() {
   }, [draftId]);
 
   const t = useTranslations();
-
-  const isValidEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
 
   const handleAddEmail = (email: string) => {
     const trimmedEmail = email.trim().replace(/,$/, '');
@@ -208,6 +223,7 @@ export function CreateEmail() {
         subject: subjectInput,
         message: messageContent,
         attachments: attachments,
+        includeSignature: includeSignature && Boolean(settings?.signature?.enabled),
       });
 
       setIsLoading(false);
@@ -219,16 +235,7 @@ export function CreateEmail() {
       setAttachments([]);
       setMessageContent('');
 
-      setDefaultValue({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [],
-          },
-        ],
-      });
-
+      setDefaultValue(createEmptyDocContent());
       setResetEditorKey((prev) => prev + 1);
 
       setHasUnsavedChanges(false);
@@ -277,6 +284,47 @@ export function CreateEmail() {
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, []);
+
+  // Initialize signature toggle from settings
+  React.useEffect(() => {
+    if (settings?.signature) {
+      setIncludeSignature(settings.signature.includeByDefault);
+    }
+  }, [settings]);
+
+  React.useEffect(() => {
+    if (initialTo) {
+      const emails = initialTo.split(',').map(email => email.trim());
+      const validEmails = emails.filter(email => isValidEmail(email));
+      if (validEmails.length > 0) {
+        setToEmails(validEmails);
+      } else {
+        setToInput(initialTo);
+      }
+    }
+    
+    if (initialSubject) {
+      setSubjectInput(initialSubject);
+    }
+    
+    if (initialBody && !defaultValue) {
+      setDefaultValue({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: initialBody
+              }
+            ]
+          }
+        ]
+      });
+      setMessageContent(initialBody);
+    }
+  }, [initialTo, initialSubject, initialBody, defaultValue]);
 
   return (
     <div
@@ -387,6 +435,10 @@ export function CreateEmail() {
                       placeholder={t('pages.createEmail.writeYourMessageHere')}
                       onAttachmentsChange={setAttachments}
                       onCommandEnter={handleSendEmail}
+                      includeSignature={includeSignature}
+                      onSignatureToggle={setIncludeSignature}
+                      signature={settings?.signature?.content || ''}
+                      hasSignature={Boolean(settings?.signature?.enabled)}
                     />
                   )}
                 </div>
@@ -396,7 +448,7 @@ export function CreateEmail() {
         </div>
 
         <div className="bg-offsetLight dark:bg-offsetDark sticky bottom-0 left-0 right-0 flex items-center justify-between p-4 pb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <div className="mr-1 pb-2 pt-2">
               <AIAssistant
                 currentContent={messageContent}
@@ -459,6 +511,7 @@ export function CreateEmail() {
                 }}
               />
             </div>
+            
           </div>
           <div className="flex justify-end gap-3">
             <Button

@@ -162,7 +162,7 @@ export default function Hero() {
                 <div>
                   <Button
                     type="submit"
-                    className="compose-gradient-animated w-full px-4"
+                    className="compose-gradient-animated w-full px-4 text-gray-900"
                     disabled={isSubmitting}
                   >
                     Join waitlist
