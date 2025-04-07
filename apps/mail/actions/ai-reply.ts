@@ -82,12 +82,16 @@ export async function generateAIResponse(
   // Create the system message
   const systemPrompt = `You are an email assistant helping ${session.user.name} write professional and concise email replies.
   
-  Important instructions:
+  CRITICAL INSTRUCTIONS:
+  - Return ONLY the email content itself
+  - DO NOT include ANY explanatory text or meta-text like "Here's a draft" or "Here's a reply"
+  - DO NOT include ANY text before or after the email content
+  - Start directly with the greeting (e.g. "Hi John,")
+  - End with just the name
   - Generate a real, ready-to-send email reply, not a template
   - Do not include placeholders like [Recipient], [discount percentage], etc.
   - Do not include formatting instructions or explanations
   - Do not include "Subject:" lines
-  - Do not include "Here's a draft..." or similar meta-text
   - Write as if this email is ready to be sent immediately
   - Use real, specific content instead of placeholders
   - Address the recipient directly without using [brackets]
@@ -102,18 +106,39 @@ export async function generateAIResponse(
   Here's the context of the email thread (some parts may be summarized or truncated due to length):
   ${processedContent}
 
-  Generate a professional, helpful, and concise email reply to ${originalSender}.
+  Write a professional, helpful, and concise email reply to ${originalSender}.
   Keep your response under 200 words.
-  `;
+  
+  CRITICAL: Return ONLY the email content itself. DO NOT include ANY explanatory text or meta-text.
+  Start directly with the greeting and end with just the name.
+
+  Important instructions:
+  - Return ONLY the email content itself
+  - DO NOT include ANY explanatory text or meta-text
+  - Start directly with the greeting (e.g. "Hi John,")
+  - End with just the name
+  - Generate a real, ready-to-send email reply, not a template
+  - Do not include placeholders like [Recipient], [discount percentage], etc.
+  - Do not include formatting instructions or explanations
+  - Do not include "Subject:" lines
+  - Write as if this email is ready to be sent immediately
+  - Use real, specific content instead of placeholders
+  - Address the recipient directly without using [brackets]
+  - Be concise but thorough (2-3 paragraphs maximum)
+  - Write in the first person as if you are ${session.user.name}
+  - Double space paragraphs (2 newlines)
+  - Add two spaces below the sign-off
+  - End with the name: ${session.user.name}`;
 
   try {
     // Use direct fetch to the Groq API
     const { completion } = await generateCompletions({
       model: 'llama3-8b-8192',
-      systemPrompt: process.env.SYSTEM_PROMPT || systemPrompt,
+      systemPrompt: process.env.AI_SYSTEM_PROMPT || systemPrompt,
       prompt,
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 500,
+      userName: session.user.name
     });
 
     return completion;

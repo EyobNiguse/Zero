@@ -171,12 +171,14 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     };
   };
   const normalizeSearch = (folder: string, q: string) => {
+    // Handle special folders
     if (folder === 'trash') {
       return { folder: undefined, q: `in:trash ${q}` };
     }
     if (folder === 'archive') {
       return { folder: undefined, q: `in:archive ${q}` };
     }
+    // Return the query as-is to preserve Gmail's native search syntax
     return { folder, q };
   };
   const gmail = google.gmail({ version: 'v1', auth });

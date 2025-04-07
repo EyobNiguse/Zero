@@ -176,12 +176,13 @@ export async function createEmbeddingsBatch(texts: string[], model: string = DEF
 
 // Define model type to allow any string (developer's choice)
 type CompletionsParams = {
-  model: string, // Allow any model string the developer wants to use
+  model: string,
   prompt?: string,
   systemPrompt?: string,
   temperature: number,
   max_tokens: number,
-  embeddings?: Record<string, number[]>
+  embeddings?: Record<string, number[]>,
+  userName?: string
 };
 
 // Define the request body type with proper TypeScript interface
@@ -203,7 +204,8 @@ export async function generateCompletions({
   systemPrompt, 
   temperature, 
   max_tokens,
-  embeddings // We'll incorporate embeddings into the prompt
+  embeddings,
+  userName
 }: CompletionsParams) {
   if (!process.env.GROQ_API_KEY) 
     throw new Error('Groq API Key is missing');
@@ -233,41 +235,50 @@ export async function generateCompletions({
   
   // Enhance the system prompt for email generation to improve formatting
   if (enhancedSystemPrompt.toLowerCase().includes('email')) {
-    enhancedSystemPrompt = process.env.EMAI_SYSTEM_PROMPT || `${enhancedSystemPrompt}
+    enhancedSystemPrompt = process.env.AI_SYSTEM_PROMPT || `You are an email assistant helping ${userName} write professional and concise email replies.
+  
+  Important instructions:
+  - Generate a real, ready-to-send email reply, not a template
+  - Do not include placeholders like [Recipient], [discount percentage], etc.
+  - Do not include formatting instructions or explanations
+  - Do not include "Subject:" lines
+  - Do not include "Here's a draft..." or similar meta-text
+  - Write as if this email is ready to be sent immediately
+  - Use real, specific content instead of placeholders
+  - Address the recipient directly without using [brackets]
+  - Be concise but thorough (2-3 paragraphs maximum)
+  - Write in the first person as if you are ${userName}
+  - Double space paragraphs (2 newlines)
+  - Add two spaces below the sign-off
+  - End with the name: ${userName}`;
 
-CRITICAL FORMATTING INSTRUCTIONS - YOU MUST FOLLOW THESE EXACTLY:
+    // Update the prompt to match ai-reply.ts format
+    if (prompt) {
+      prompt = `
+  Here's the context of the email thread (some parts may be summarized or truncated due to length):
+  ${prompt}
 
-1. You MUST use proper paragraph spacing with a blank line between paragraphs
-2. You MUST NOT output literal "\\n" characters - use actual line breaks in your response
-3. You MUST format the email with this EXACT structure:
-   - Greeting (e.g., "Dear John,")
-   - BLANK LINE
-   - First paragraph
-   - BLANK LINE
-   - Second paragraph
-   - BLANK LINE
-   - (any additional paragraphs with blank lines between them)
-   - BLANK LINE
-   - Closing (e.g., "Best regards,")
-   - Line break
-   - Name/signature
+  Generate a professional, helpful, and concise email reply.
+  Keep your response under 200 words.
 
-4. EXAMPLE OF REQUIRED FORMAT:
-Dear John,
-
-I hope this email finds you well. I wanted to discuss the project timeline.
-
-We need to schedule a meeting next week to review the progress. Would Tuesday at 2pm work for you?
-
-Best regards,
-Jane
-
-5. IMPORTANT: Every paragraph MUST be separated by a blank line
-6. IMPORTANT: There MUST be a blank line after the greeting and before the closing
-7. IMPORTANT: Do NOT include any explanatory text like "Here is the email:" - just write the email directly
-8. IMPORTANT: For sensitive topics like termination, maintain a professional, respectful tone
-
-YOUR RESPONSE MUST HAVE PROPER SPACING OR IT WILL BE REJECTED.`;
+  You are an email assistant helping ${userName} write professional and concise email replies.
+  
+  Important instructions:
+  - Generate a real, ready-to-send email reply, not a template
+  - Do not include placeholders like [Recipient], [discount percentage], etc.
+  - Do not include formatting instructions or explanations
+  - Do not include "Subject:" lines
+  - Do not include "Here's a draft..." or similar meta-text
+  - Write as if this email is ready to be sent immediately
+  - Use real, specific content instead of placeholders
+  - Address the recipient directly without using [brackets]
+  - Be concise but thorough (2-3 paragraphs maximum)
+  - Write in the first person as if you are ${userName}
+  - Double space paragraphs (2 newlines)
+  - Add two spaces below the sign-off
+  - End with the name: ${userName}
+  `;
+    }
   }
   
   // Ensure we have valid messages
