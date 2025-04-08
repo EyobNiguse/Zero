@@ -41,6 +41,11 @@ const formSchema = z.object({
   dynamicContent: z.boolean(),
   externalImages: z.boolean(),
   customPrompt: z.string(),
+  signature: z.object({
+    enabled: z.boolean(),
+    content: z.string(),
+    includeByDefault: z.boolean(),
+  }),
 });
 
 const TimezoneSelect = memo(
@@ -135,6 +140,11 @@ export default function GeneralPage() {
       dynamicContent: false,
       externalImages: true,
       customPrompt: '',
+      signature: {
+        enabled: false,
+        content: '',
+        includeByDefault: true,
+      },
     },
   });
 
