@@ -641,16 +641,17 @@ ${email.decodedBody || 'No content'}
 
   // Add saveDraft function
   const saveDraft = useCallback(async () => {
-    if (!composerState.hasUnsavedChanges) return;
+    if (!emailData || !emailData[0]) return;
     if (!form.getValues('messageContent')) return;
 
     try {
       composerDispatch({ type: 'SET_LOADING', payload: true });
+      const originalEmail = emailData[0];
       const draftData = {
-        to: mode === 'forward' ? toEmails.join(', ') : emailData[0]?.sender?.email,
-        subject: emailData[0]?.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
-          ? emailData[0].subject
-          : `${mode === 'forward' ? 'Fwd: ' : 'Re: '}${emailData[0]?.subject || ''}`,
+        to: mode === 'forward' ? toEmails.join(', ') : originalEmail.sender.email,
+        subject: originalEmail.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
+          ? originalEmail.subject
+          : `${mode === 'forward' ? 'Fwd: ' : 'Re: '}${originalEmail.subject || ''}`,
         message: form.getValues('messageContent'),
         attachments: attachments,
         id: draftId,
@@ -662,7 +663,6 @@ ${email.decodedBody || 'No content'}
         setDraftId(response.id);
       }
 
-      composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: false });
       toast.success('Draft saved');
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -670,32 +670,11 @@ ${email.decodedBody || 'No content'}
     } finally {
       composerDispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [
-    composerState.hasUnsavedChanges,
-    form,
-    mode,
-    toEmails,
-    emailData,
-    attachments,
-    draftId,
-    setDraftId,
-  ]);
-
-  // Add auto-save effect
-  useEffect(() => {
-    if (!composerState.hasUnsavedChanges) return;
-
-    const autoSaveTimer = setTimeout(() => {
-      saveDraft();
-    }, 3000);
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [composerState.hasUnsavedChanges, saveDraft]);
+  }, [mode, toEmails, emailData, form, attachments, draftId, setDraftId]);
 
   // Update onChange handler in Editor component
   const handleEditorChange = (content: string) => {
     form.setValue('messageContent', content);
-    composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: true });
     
     // Update content height when content changes
     const editorElement = document.querySelector('.ProseMirror');
