@@ -1,11 +1,12 @@
 'use client';
 
 import { SettingsCard } from '@/components/settings/settings-card';
-import { keyboardShortcuts } from '@/config/shortcuts'; //import the shortcuts
+import { keyboardShortcuts } from '@/config/shortcuts';
 import type { MessageKey } from '@/config/navigation';
+import { HotkeyRecorder } from './hotkey-recorder';
+import { useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
-import type { ReactNode } from 'react';
 
 export default function ShortcutsPage() {
   const shortcuts = keyboardShortcuts; //now gets shortcuts from the config file
@@ -36,19 +37,39 @@ export default function ShortcutsPage() {
 }
 
 function Shortcut({ children, keys }: { children: ReactNode; keys: string[] }) {
+  const [isRecording, setIsRecording] = useState(false);
+
+  const handleHotkeyRecorded = (newKeys: string[]) => {
+    // TODO: Implement saving the new hotkey
+    console.log('New hotkey recorded:', newKeys);
+  };
+
   return (
-    <div className="bg-popover text-muted-foreground flex items-center justify-between gap-2 rounded-lg border p-2 text-sm">
-      <span className="font-medium">{children}</span>
-      <div className="flex select-none gap-1">
-        {keys.map((key) => (
-          <kbd
-            key={key}
-            className="border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6"
-          >
-            {key}
-          </kbd>
-        ))}
+    <>
+      <div
+        className="bg-popover text-muted-foreground hover:bg-accent/50 flex cursor-pointer items-center justify-between gap-2 rounded-lg border p-2 text-sm"
+        onClick={() => setIsRecording(true)}
+        role="button"
+        tabIndex={0}
+      >
+        <span className="font-medium">{children}</span>
+        <div className="flex select-none gap-1">
+          {keys.map((key) => (
+            <kbd
+              key={key}
+              className="border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6"
+            >
+              {key}
+            </kbd>
+          ))}
+        </div>
       </div>
-    </div>
+      <HotkeyRecorder
+        isOpen={isRecording}
+        onClose={() => setIsRecording(false)}
+        onHotkeyRecorded={handleHotkeyRecorded}
+        currentKeys={keys}
+      />
+    </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { navigationConfig } from '@/config/navigation';
-import { useHotKey } from '@/hooks/use-hot-key';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
 
 export const KeyboardShortcuts = () => {
@@ -12,7 +12,7 @@ export const KeyboardShortcuts = () => {
     const items = navigationConfig.mail.sections[0]?.items || [];
     items.map((item, index) => {
       if (item?.url && !item.disabled) {
-        useHotKey(`g+${index + 1}`, () => {
+        useHotkeys(`g+${index + 1}`, () => {
           router.push(item.url);
         });
       }

@@ -11,7 +11,7 @@ import { ArchiveX, BellOff, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn, defaultPageSize } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useHotKey } from '@/hooks/use-hot-key';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { SearchBar } from '../mail/search-bar';
 import { useDrafts } from '@/hooks/use-drafts';
 import { useSession } from '@/lib/auth-client';
@@ -35,11 +35,11 @@ export function DraftsLayout() {
 
   const { isLoading, isValidating } = useDrafts(searchValue.value, defaultPageSize);
 
-  useHotKey('Meta+F', () => {
+  useHotkeys('Meta+F', () => {
     setSearchMode(true);
   });
 
-  useHotKey('Esc', (event) => {
+  useHotkeys('Esc', (event) => {
     // @ts-expect-error
     event.preventDefault();
     if (searchMode) {

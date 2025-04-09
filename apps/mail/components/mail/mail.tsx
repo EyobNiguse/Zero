@@ -51,7 +51,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
-import { useHotKey } from '@/hooks/use-hot-key';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useRouter } from 'next/navigation';
@@ -255,7 +255,7 @@ export function MailLayout() {
   }, [router, folder, setThreadId]);
 
   // Search bar is always visible now, no need for keyboard shortcuts to toggle it
-  useHotKey('Esc', (event) => {
+  useHotkeys('Esc', (event) => {
     event?.preventDefault();
     // Handle other Esc key functionality if needed
   });

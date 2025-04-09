@@ -13,7 +13,7 @@ interface AISidebarProps {
 
 // Create a context to manage the AI sidebar state globally
 import { createContext, useContext } from 'react';
-import { useHotKey } from '@/hooks/use-hot-key';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 type AISidebarContextType = {
   open: boolean;
@@ -47,11 +47,11 @@ export function AISidebarProvider({ children }: { children: React.ReactNode }) {
 export function AISidebar({ className }: AISidebarProps) {
   const { open, setOpen } = useAISidebar();
 
-  useHotKey('Meta+0', () => {
+  useHotkeys('Meta+0', () => {
     setOpen(!open);
   });
 
-  useHotKey('Control+0', () => {
+  useHotkeys('Control+0', () => {
     setOpen(!open);
   });
 

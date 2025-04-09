@@ -17,27 +17,28 @@ import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMo
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
+import { ThreadContextMenu } from '@/components/context/thread-context';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { cn, FOLDERS, formatDate, getEmailLogo } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
-import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
-import { cn, FOLDERS, formatDate, getEmailLogo } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
+import { useKeyState } from '@/hooks/use-hot-key';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
+import { Categories } from './mail';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { ThreadContextMenu } from '@/components/context/thread-context';
-import { Categories } from './mail';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const ThreadWrapper = ({
@@ -161,7 +162,7 @@ const Thread = memo(
             onMouseLeave={handleMouseLeave}
             key={message.threadId ?? message.id}
             className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent  px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
               isMailSelected || (!message.unread && 'opacity-50'),
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
@@ -282,7 +283,9 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                          <span className={cn('truncate', threadIdParam ? 'max-w-[5ch] truncate' : '')}>
+                        <span
+                          className={cn('truncate', threadIdParam ? 'max-w-[5ch] truncate' : '')}
+                        >
                           {highlightText(message.sender.name, searchValue.highlight)}
                         </span>{' '}
                         {message.unread && !isMailSelected ? (
@@ -393,9 +396,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   // Set initial category search value
   useEffect(() => {
-    const currentCategory = category ? allCategories.find(cat => cat.id === category) :
-                                     allCategories.find(cat => cat.id === 'Important');
-    
+    const currentCategory = category
+      ? allCategories.find((cat) => cat.id === category)
+      : allCategories.find((cat) => cat.id === 'Important');
+
     if (currentCategory && searchValue.value === '') {
       setSearchValue({
         value: currentCategory.searchValue || '',
@@ -477,7 +481,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     }
   }, [items, setMail, mail.bulkSelected, t]);
 
-  useHotKey('Meta+Shift+u', () => {
+  useHotkeys('Meta+Shift+u', () => {
     markAsUnread({ ids: mail.bulkSelected }).then((result) => {
       if (result.success) {
         toast.success(t('common.mail.markedAsUnread'));
@@ -489,7 +493,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     });
   });
 
-  useHotKey('Control+Shift+u', () => {
+  useHotkeys('Control+Shift+u', () => {
     markAsUnread({ ids: mail.bulkSelected }).then((response) => {
       if (response.success) {
         toast.success(t('common.mail.markedAsUnread'));
@@ -501,7 +505,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     });
   });
 
-  useHotKey('Meta+Shift+i', () => {
+  useHotkeys('Meta+Shift+i', () => {
     markAsRead({ ids: mail.bulkSelected }).then((data) => {
       if (data.success) {
         toast.success(t('common.mail.markedAsRead'));
@@ -513,7 +517,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     });
   });
 
-  useHotKey('Control+Shift+i', () => {
+  useHotkeys('Control+Shift+i', () => {
     markAsRead({ ids: mail.bulkSelected }).then((response) => {
       if (response.success) {
         toast.success(t('common.mail.markedAsRead'));
@@ -525,22 +529,22 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     });
   });
 
-  useHotKey('Meta+a', (event) => {
+  useHotkeys('Meta+a', (event) => {
     event?.preventDefault();
     selectAll();
   });
 
-  useHotKey('Control+a', (event) => {
+  useHotkeys('Control+a', (event) => {
     event?.preventDefault();
     selectAll();
   });
 
-  useHotKey('Meta+n', (event) => {
+  useHotkeys('Meta+n', (event) => {
     event?.preventDefault();
     selectAll();
   });
 
-  useHotKey('Control+n', (event) => {
+  useHotkeys('Control+n', (event) => {
     event?.preventDefault();
     selectAll();
   });
@@ -565,10 +569,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       const messageThreadId = message.threadId ?? message.id;
 
       // Update local state immediately for optimistic UI
-      setMail((prev) => ({ 
-        ...prev, 
+      setMail((prev) => ({
+        ...prev,
         replyComposerOpen: false,
-        forwardComposerOpen: false
+        forwardComposerOpen: false,
       }));
 
       // Update URL param without navigation
