@@ -58,7 +58,6 @@ interface ComposerState {
   isEditorFocused: boolean;
   editorKey: number;
   editorInitialValue?: JSONContent;
-  contentHeight: number;
   hasUnsavedChanges: boolean;
   isLoading: boolean;
 }
@@ -77,7 +76,6 @@ type ComposerAction =
   | { type: 'SET_EDITOR_FOCUSED'; payload: boolean }
   | { type: 'INCREMENT_EDITOR_KEY' }
   | { type: 'SET_EDITOR_INITIAL_VALUE'; payload: JSONContent | undefined }
-  | { type: 'SET_CONTENT_HEIGHT'; payload: number }
   | { type: 'SET_UNSAVED_CHANGES'; payload: boolean }
   | { type: 'SET_LOADING'; payload: boolean };
 
@@ -102,8 +100,6 @@ const composerReducer = (state: ComposerState, action: ComposerAction): Composer
       return { ...state, editorKey: state.editorKey + 1 };
     case 'SET_EDITOR_INITIAL_VALUE':
       return { ...state, editorInitialValue: action.payload };
-    case 'SET_CONTENT_HEIGHT':
-      return { ...state, contentHeight: action.payload };
     case 'SET_UNSAVED_CHANGES':
       return { ...state, hasUnsavedChanges: action.payload };
     case 'SET_LOADING':
@@ -167,7 +163,6 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     isEditorFocused: false,
     editorKey: 0,
     editorInitialValue: undefined,
-    contentHeight: 150,
     hasUnsavedChanges: false,
     isLoading: false,
   });
@@ -410,30 +405,6 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     resizeStartY.current = e.clientY;
     startHeight.current = editorHeight;
   };
-
-  // Auto-grow effect when typing
-  useEffect(() => {
-    if (composerIsOpen) {
-      const editorElement = document.querySelector('.ProseMirror');
-      if (editorElement instanceof HTMLElement) {
-        // Observer to watch for content changes and adjust height
-        const resizeObserver = new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            const contentHeight = entry.contentRect.height;
-
-            // If content exceeds current height but is less than max, grow the container
-            if (contentHeight > editorHeight - 20 && editorHeight < 500) {
-              const newHeight = Math.min(500, contentHeight + 20);
-              setEditorHeight(newHeight);
-            }
-          }
-        });
-
-        resizeObserver.observe(editorElement);
-        return () => resizeObserver.disconnect();
-      }
-    }
-  }, [composerIsOpen, editorHeight]);
 
   // Check if the message is empty
   const isMessageEmpty =
@@ -679,13 +650,6 @@ ${email.decodedBody || 'No content'}
   // Update onChange handler in Editor component
   const handleEditorChange = (content: string) => {
     form.setValue('messageContent', content);
-    
-    // Update content height when content changes
-    const editorElement = document.querySelector('.ProseMirror');
-    if (editorElement instanceof HTMLElement) {
-      const newHeight = Math.min(600, Math.max(150, editorElement.scrollHeight + 50));
-      composerDispatch({ type: 'SET_CONTENT_HEIGHT', payload: newHeight });
-    }
   };
 
   // Simplified composer visibility check
@@ -741,14 +705,7 @@ ${email.decodedBody || 'No content'}
 
         {/* Editor container with fixed menu and growing content */}
         <div className="flex flex-grow flex-col">
-          <div
-            className="w-full overflow-y-auto"
-            style={{
-              height: `${composerState.contentHeight}px`,
-              minHeight: '150px',
-              maxHeight: '600px',
-            }}
-          >
+          <div className="w-full">
             <Editor
               key={composerState.editorKey}
               onChange={handleEditorChange}
@@ -756,7 +713,7 @@ ${email.decodedBody || 'No content'}
               onCommandEnter={handleCommandEnter}
               onTab={handleTabAccept}
               className={cn(
-                'max-w-[600px] md:max-w-[100vw] overflow-hidden',
+                'max-w-[600px] md:max-w-[100vw]',
                 aiState.showOptions
                   ? 'rounded-md border border-dotted border-blue-200 bg-blue-50/30 p-1 dark:border-blue-800 dark:bg-blue-950/30'
                   : 'border border-transparent p-1',
