@@ -31,8 +31,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { generateAIResponse } from '@/actions/ai-reply';
 import { Separator } from '@/components/ui/separator';
+import { useMail } from '@/components/mail/use-mail';
+import { useSettings } from '@/hooks/use-settings';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { useSession } from '@/lib/auth-client';
 import type { ParsedMessage } from '@/types';
 import { useTranslations } from 'next-intl';
@@ -41,10 +44,6 @@ import { useForm } from 'react-hook-form';
 import type { JSONContent } from 'novel';
 import { toast } from 'sonner';
 import type { z } from 'zod';
-import { useSettings } from '@/hooks/use-settings';
-import { Switch } from '@/components/ui/switch';
-import { useMail } from '@/components/mail/use-mail';
-
 
 // Define state interfaces
 interface ComposerState {
@@ -418,7 +417,7 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
         setEditorHeight(newHeight);
       }
     },
-    [isResizing]
+    [isResizing],
   );
 
   // Add a function to handle starting the resize
@@ -437,7 +436,7 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
         const resizeObserver = new ResizeObserver((entries) => {
           for (const entry of entries) {
             const contentHeight = entry.contentRect.height;
-            
+
             // If content exceeds current height but is less than max, grow the container
             if (contentHeight > editorHeight - 20 && editorHeight < 500) {
               const newHeight = Math.min(500, contentHeight + 20);
@@ -445,7 +444,7 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
             }
           }
         });
-        
+
         resizeObserver.observe(editorElement);
         return () => resizeObserver.disconnect();
       }
@@ -574,10 +573,7 @@ ${email.decodedBody || 'No content'}
     return (
       <div className="flex items-center gap-2">
         <Reply className="h-4 w-4" />
-        <p className="truncate">
-          {emailData[emailData.length - 1]?.sender?.name} (
-          {emailData[emailData.length - 1]?.sender?.email})
-        </p>
+        <p className="truncate"> ({emailData[emailData.length - 1]?.sender?.email})</p>
       </div>
     );
   };
@@ -590,13 +586,13 @@ ${email.decodedBody || 'No content'}
       </div>
       <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
         {toEmails.map((email, index) => (
-          <EmailTag 
-            key={index} 
-            email={email} 
+          <EmailTag
+            key={index}
+            email={email}
             onRemove={() => {
               setToEmails((emails) => emails.filter((_, i) => i !== index));
               form.setValue('to', toEmails.join(', '));
-            }} 
+            }}
           />
         ))}
         <input
@@ -615,9 +611,7 @@ ${email.decodedBody || 'No content'}
   // Extract email tag component
   const EmailTag = ({ email, onRemove }: { email: string; onRemove: () => void }) => (
     <div className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium">
-      <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
-        {email}
-      </span>
+      <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">{email}</span>
       <button
         type="button"
         className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
@@ -717,13 +711,13 @@ ${email.decodedBody || 'No content'}
         {mode === 'forward' && <RecipientInput />}
 
         {/* Editor container with fixed menu and growing content */}
-        <div className="flex flex-col flex-grow">
-          <div 
+        <div className="flex flex-grow flex-col">
+          <div
             className="w-full overflow-y-auto"
-            style={{ 
+            style={{
               height: `${composerState.contentHeight}px`,
               minHeight: '150px',
-              maxHeight: '600px'
+              maxHeight: '600px',
             }}
           >
             <Editor
@@ -768,7 +762,11 @@ ${email.decodedBody || 'No content'}
               }}
               includeSignature={includeSignature}
               onSignatureToggle={setIncludeSignature}
-              signature={settings?.signature?.enabled && settings?.signature?.content ? settings.signature.content : undefined}
+              signature={
+                settings?.signature?.enabled && settings?.signature?.content
+                  ? settings.signature.content
+                  : undefined
+              }
             />
             <div
               className="h-2 w-full cursor-ns-resize hover:bg-gray-200 dark:hover:bg-gray-700"

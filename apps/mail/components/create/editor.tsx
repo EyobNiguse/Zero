@@ -205,7 +205,7 @@ const MenuBar = ({
 
   return (
     <>
-      <TooltipProvider delayDuration={0}>
+      <TooltipProvider>
         <div className="control-group mb-2 overflow-x-auto">
           <div className="button-group ml-2 mt-1 flex flex-wrap gap-1 border-b pb-2">
             <div className="mr-2 flex items-center gap-1">

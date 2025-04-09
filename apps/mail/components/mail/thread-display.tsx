@@ -3,30 +3,18 @@ import {
   ArchiveX,
   Expand,
   Forward,
-  ForwardIcon,
-  Mail,
   MailOpen,
-  MoreVertical,
   Reply,
-  ReplyAll,
-  Star,
-  StarOff,
   X,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useSearchParams, useParams } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
-import { MoreVerticalIcon } from '../icons/animated/more-vertical';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useThread, useThreads } from '@/hooks/use-threads';
-import { ArchiveIcon } from '../icons/animated/archive';
-import { ExpandIcon } from '../icons/animated/expand';
 import { MailDisplaySkeleton } from './mail-skeleton';
-import { ReplyIcon } from '../icons/animated/reply';
 import { Button } from '@/components/ui/button';
 import { markAsUnread } from '@/actions/mail';
 import { modifyLabels } from '@/actions/mail';
@@ -35,13 +23,12 @@ import ThreadSubject from './thread-subject';
 import ReplyCompose from './reply-composer';
 import { useTranslations } from 'next-intl';
 import { useMail } from '../mail/use-mail';
-import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
 import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { toast } from 'sonner';
-import Link from 'next/link';
+
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -160,9 +147,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
   const threadIdParam = searchParams.get('threadId');
   const threadId = threadParam ?? threadIdParam ?? '';
 
-  const moreVerticalIconRef = useRef<any>(null);
 
-  const isInInbox = folder === FOLDERS.INBOX || !folder;
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
 
@@ -418,7 +403,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             </div>
           </ScrollArea>
           <div className={cn(
-            'relative z-10 bg-offsetLight dark:bg-offsetDark',
+            'relative z-10 mt-3 ',
             isFullscreen ? 'mb-2' : ''
           )}>
             <ReplyCompose
