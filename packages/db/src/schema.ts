@@ -94,6 +94,7 @@ export const summary = createTable("summary", {
   suggestedReply: text("suggested_reply")
 });
 
+// Testing
 export const note = createTable("note", {
   id: text("id").primaryKey(),
   userId: text("user_id")
