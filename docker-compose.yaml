@@ -29,7 +29,7 @@ services:
     image: hiett/serverless-redis-http:latest
     environment:
       SRH_MODE: env
-      SRH_TOKEN: upstash-local-token
+      SRH_TOKEN: ${REDIS_TOKEN}
       SRH_CONNECTION_STRING: "redis://valkey:6379"
     ports:
       - 8079:80
@@ -48,8 +48,8 @@ services:
     environment:
       NODE_ENV: production
       NODE_OPTIONS: --no-experimental-fetch
-      DATABASE_URL: postgres://postgres:postgres@db:5432/zerodotemail
-      REDIS_URL: redis://valkey:6379
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
 
 volumes:
   valkey-data:
