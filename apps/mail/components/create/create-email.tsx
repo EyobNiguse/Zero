@@ -271,7 +271,36 @@ export function CreateEmail({
 
   // Add ref for to input
   const toInputRef = React.useRef<HTMLInputElement>(null);
+  // Add refs for subject and editor
+  const subjectInputRef = React.useRef<HTMLInputElement>(null);
+  const editorRef = React.useRef<any>(null);
 
+  // Add a mount ref to ensure we only auto-focus once
+  const isFirstMount = React.useRef(true);
+
+  // Auto-focus logic
+  React.useEffect(() => {
+    if (!isFirstMount.current) return;
+    isFirstMount.current = false;
+
+    requestAnimationFrame(() => {
+      if (toEmails.length === 0 && !toInput) {
+        toInputRef.current?.focus();
+        console.log('Focusing to input');
+      } else if (!subjectInput.trim()) {
+        subjectInputRef.current?.focus();
+        console.log('Focusing subject input');
+      } else {
+        const editorElement = document.querySelector('.ProseMirror');
+        if (editorElement instanceof HTMLElement) {
+          editorElement.focus();
+          console.log('Focusing editor');
+        }
+      }
+    });
+  }, []); // Empty dependency array since we only want this on mount
+
+  // Keyboard shortcut handler
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Only trigger if "/" is pressed and no input/textarea is focused
@@ -376,6 +405,7 @@ export function CreateEmail({
                     </div>
                   ))}
                   <input
+                    ref={toInputRef}
                     disabled={isLoading}
                     type="email"
                     className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
@@ -405,6 +435,7 @@ export function CreateEmail({
                   {t('common.searchBar.subject')}
                 </div>
                 <input
+                  ref={subjectInputRef}
                   disabled={isLoading}
                   type="text"
                   className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
@@ -447,7 +478,7 @@ export function CreateEmail({
           </div>
         </div>
 
-        <div className="bg-offsetLight dark:bg-offsetDark sticky bottom-0 left-0 right-0 flex items-center justify-between p-4 pb-3">
+        <div className="bg-offsetLight dark:bg-offsetDark sticky bottom-0 left-0 right-0 flex items-center justify-between p-4 pb-3 md:mb-0 mb-16">
           <div className="flex items-center gap-4">
             <div className="mr-1 pb-2 pt-2">
               <AIAssistant
