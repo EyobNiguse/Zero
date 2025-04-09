@@ -55,6 +55,7 @@ import { useReducer, useRef } from 'react';
 import { useState } from 'react';
 import React from 'react';
 import SignatureDisplay from './signature-display';
+import { TextSelection } from 'prosemirror-state';
 
 export const defaultEditorContent = {
   type: 'doc',
@@ -706,8 +707,21 @@ export default function Editor({
           editorProps={{
             handleDOMEvents: {
               mousedown: (view, event) => {
-                // Focus the editor on any click within the editor area
-                setTimeout(() => view.focus(), 0);
+                const coords = view.posAtCoords({
+                  left: event.clientX,
+                  top: event.clientY,
+                });
+
+                if (coords) {
+                  const pos = coords.pos;
+                  const tr = view.state.tr;
+                  const selection = TextSelection.create(view.state.doc, pos);
+                  tr.setSelection(selection);
+                  view.dispatch(tr);
+                  view.focus();
+                }
+                
+                // Let the default handler also run
                 return false;
               },
               keydown: (view, event) => {
