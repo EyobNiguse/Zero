@@ -400,7 +400,7 @@ export function MailLayout() {
                   threadId ? 'md:flex' : 'hidden',
                 )}
                 defaultSize={75}
-                minSize={25}
+                minSize={35}
               >
                 <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
                   <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
