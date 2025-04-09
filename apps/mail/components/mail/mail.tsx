@@ -284,7 +284,7 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit flex">
+      <div className="rounded-inherit flex p-0 ">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
@@ -295,7 +295,7 @@ export function MailLayout() {
             defaultSize={isMobile ? 100 : 25}
             minSize={isMobile ? 100 : 25}
           >
-            <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
+            <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm h-[calc(97.2vh)]">
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors',

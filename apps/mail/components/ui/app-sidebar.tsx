@@ -96,7 +96,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
 
         <div className="mb-4 mt-auto flex w-full items-center px-4">
-          <Link href="/" className="relative h-6 w-6">
+          <Link href="" className="relative h-6 w-6">
             <Image
               src="/black-icon.svg"
               alt="0.email Logo"
