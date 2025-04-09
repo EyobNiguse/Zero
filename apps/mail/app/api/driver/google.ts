@@ -2,8 +2,9 @@ import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
 import { type IConfig, type MailManager } from './types';
 import { type gmail_v1, google } from 'googleapis';
 import { EnableBrain } from '@/actions/brain';
-import { type ParsedMessage } from '@/types';
+import { IOutgoingMessage, Sender, type ParsedMessage } from '@/types';
 import * as he from 'he';
+import { createMimeMessage } from 'mimetext';
 
 function fromBase64Url(str: string) {
   return str.replace(/-/g, '+').replace(/_/g, '/');
@@ -141,7 +142,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         ?.filter((h) => h.name?.toLowerCase() === 'cc')
         .map((h) => h.value)
         .filter((v) => typeof v === 'string') || [];
-    const cc = ccHeaders.flatMap((to) => parseAddressList(to));
+
+    const cc = ccHeaders.length > 0
+      ? ccHeaders
+        .filter(header => header.trim().length > 0)
+        .flatMap(header => parseAddressList(header))
+      : null;
 
     const receivedHeaders =
       payload?.headers
@@ -170,6 +176,62 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       messageId,
     };
   };
+  const parseOutgoing = async ({ to, subject, message, attachments, headers, cc, bcc }: IOutgoingMessage) => {
+    const msg = createMimeMessage();
+
+    const fromEmail = config.auth?.email || 'nobody@example.com';
+    msg.setSender(fromEmail);
+
+    to.forEach(recipient => {
+      msg.setRecipient(({
+        addr: recipient.email,
+        name: recipient.name
+      }));
+    });
+
+    if (cc) msg.setCc(cc.map(recipient => ({
+      addr: recipient.email,
+      name: recipient.name
+    })));
+    if (bcc) msg.setBcc(bcc.map(recipient => ({
+      addr: recipient.email,
+      name: recipient.name
+    })));
+
+    msg.setSubject(subject);
+
+    msg.addMessage({
+      contentType: 'text/html',
+      data: message.trim()
+    });
+
+    if (headers) {
+      Object.keys(headers).forEach(key => {
+        if (headers[key]) msg.setHeader(key, headers[key]);
+      });
+    }
+
+    if (attachments?.length > 0) {
+      for (const file of attachments) {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64Content = buffer.toString("base64");
+
+        msg.addAttachment({
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+          data: base64Content
+        });
+      }
+    }
+
+    const emailContent = msg.asRaw();
+    const encodedMessage = Buffer.from(emailContent).toString("base64");
+
+    return {
+      raw: encodedMessage,
+    }
+  }
   const normalizeSearch = (folder: string, q: string) => {
     // Handle special folders
     if (folder === 'trash') {
@@ -449,8 +511,15 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
       return messages;
     },
-    create: async (data: any) => {
-      const res = await gmail.users.messages.send({ userId: 'me', requestBody: data });
+    create: async (data) => {
+      const { raw } = await parseOutgoing(data)
+      const res = await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw,
+          threadId: data.threadId
+        }
+      });
       return res.data;
     },
     delete: async (id: string) => {

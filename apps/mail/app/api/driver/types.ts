@@ -1,8 +1,8 @@
-import { type InitialThread, type ParsedMessage } from '@/types';
+import { type IOutgoingMessage, type InitialThread, type ParsedMessage } from '@/types';
 
 export interface MailManager {
   get(id: string): Promise<ParsedMessage[] | undefined>;
-  create(data: any): Promise<any>;
+  create(data: IOutgoingMessage): Promise<any>;
   createDraft(data: any): Promise<any>;
   getDraft: (id: string) => Promise<any>;
   listDrafts: (q?: string, maxResults?: number, pageToken?: string) => Promise<any>;

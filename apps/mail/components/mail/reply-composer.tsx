@@ -19,6 +19,7 @@ import {
   Check,
   X as XIcon,
   Forward,
+  ReplyAll,
 } from 'lucide-react';
 import {
   cleanEmailAddress,
@@ -26,24 +27,27 @@ import {
   cn,
   convertJSONToHTML,
   createAIJsonContent,
+  constructReplyBody,
 } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { generateAIResponse } from '@/actions/ai-reply';
 import { Separator } from '@/components/ui/separator';
-import { useMail } from '@/components/mail/use-mail';
-import { useSettings } from '@/hooks/use-settings';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { useSession } from '@/lib/auth-client';
-import type { ParsedMessage } from '@/types';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
 import { useForm } from 'react-hook-form';
 import type { JSONContent } from 'novel';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { useSettings } from '@/hooks/use-settings';
+import { useMail } from '@/components/mail/use-mail';
+import { useThread } from '@/hooks/use-threads';
+import { useQueryState } from 'nuqs';
+import { Sender } from '@/types';
+
 
 // Define state interfaces
 interface ComposerState {
@@ -116,7 +120,6 @@ const aiReducer = (state: AIState, action: AIAction): AIState => {
 };
 
 interface ReplyComposeProps {
-  emailData: ParsedMessage[];
   mode?: 'reply' | 'forward';
 }
 
@@ -125,10 +128,16 @@ type FormData = {
   to: string;
 };
 
-export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyComposeProps) {
+export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
+  const [threadId] = useQueryState('threadId');
+  const { data: emailData } = useThread(threadId);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
   const [mail, setMail] = useMail();
+  const [toInput, setToInput] = useState('');
+  const [toEmails, setToEmails] = useState<string[]>([]);
+  const [includeSignature, setIncludeSignature] = useState(true);
+  const { settings } = useSettings();
 
   // Use global state instead of local state
   const composerIsOpen = mode === 'reply' ? mail.replyComposerOpen : mail.forwardComposerOpen;
@@ -219,35 +228,6 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
     }
   };
 
-  const constructReplyBody = (
-    formattedMessage: string,
-    originalDate: string,
-    originalSender: { name?: string; email?: string } | undefined,
-    cleanedToEmail: string,
-    quotedMessage?: string,
-  ) => {
-    return `
-      <div style="font-family: Arial, sans-serif;">
-        <div style="margin-bottom: 20px;">
-          ${formattedMessage}
-        </div>
-        <div style="padding-left: 1em; margin-top: 1em; border-left: 2px solid #ccc; color: #666;">
-          <div style="margin-bottom: 1em;">
-            On ${originalDate}, ${originalSender?.name ? `${originalSender.name} ` : ''}${originalSender?.email ? `&lt;${cleanedToEmail}&gt;` : ''} wrote:
-          </div>
-          <div style="white-space: pre-wrap;">
-            ${quotedMessage}
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
-  const [toInput, setToInput] = useState('');
-  const [toEmails, setToEmails] = useState<string[]>([]);
-  const [includeSignature, setIncludeSignature] = useState(true);
-  const { settings } = useSettings();
-
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -285,6 +265,7 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
 
   const handleSendEmail = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    if (!emailData) return;
     setIsSubmitting(true);
     try {
       const originalEmail = emailData[0];
@@ -294,61 +275,61 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
         throw new Error('Active connection email not found');
       }
 
+      if (!originalEmail) {
+        throw new Error('Original email not found');
+      }
+
       // Handle subject based on mode
       const subject =
         mode === 'forward'
-          ? `Fwd: ${originalEmail?.subject || ''}`
-          : originalEmail?.subject?.startsWith('Re:')
+          ? `Fwd: ${originalEmail.subject || ''}`
+          : originalEmail.subject?.startsWith('Re:')
             ? originalEmail.subject
             : `Re: ${originalEmail?.subject || ''}`;
 
-      // For forwarding, use the entered email addresses
-      const recipients =
+      const recipients: Sender[] =
         mode === 'forward'
-          ? toEmails.join(', ')
+          ? toEmails.map((email) => ({ email, name: 'User' }))
           : [
-              // Original sender
-              ...(originalEmail?.sender?.email
-                ? [cleanEmailAddress(originalEmail.sender.email)]
-                : []),
-              // All TO recipients
-              ...(originalEmail?.to?.map((to) => cleanEmailAddress(to.email)) || []),
-              // All CC recipients
-              ...(originalEmail?.cc?.map((cc) => cleanEmailAddress(cc.email)) || []),
-            ]
-              .filter(Boolean)
-              .filter(
-                (email, index, self) =>
-                  self.indexOf(email) === index && email.toLowerCase() !== userEmail,
-              )
-              .join(', ');
+            {
+              email: cleanEmailAddress(originalEmail.sender.email),
+              name: originalEmail.sender.name ? originalEmail.sender.name : ''
+            }
+          ]
+
+
+      const cc: Sender[] | null = originalEmail.cc ? originalEmail.cc.map((to) => ({
+        email: cleanEmailAddress(to.email),
+        name: to.name ? to.name : ''
+      })) : null
 
       if (!recipients) {
         throw new Error('No valid recipients found');
       }
 
-      const messageId = originalEmail?.messageId;
-      const threadId = originalEmail?.threadId;
+      const messageId = originalEmail.messageId;
+      const threadId = originalEmail.threadId;
       const formattedMessage = form.getValues('messageContent');
-      const originalDate = new Date(originalEmail?.receivedOn || '').toLocaleString();
-      const quotedMessage = originalEmail?.decodedBody;
+      const originalDate = new Date(originalEmail.receivedOn || '').toLocaleString();
+      const quotedMessage = originalEmail.decodedBody;
 
       const replyBody = constructReplyBody(
         formattedMessage,
         originalDate,
-        originalEmail?.sender,
+        originalEmail.sender,
         recipients,
         quotedMessage,
       );
 
       const inReplyTo = messageId;
-      const existingRefs = originalEmail?.references?.split(' ') || [];
+      const existingRefs = originalEmail.references?.split(' ') || [];
       const references = [...existingRefs, originalEmail?.inReplyTo, cleanEmailAddress(messageId)]
         .filter(Boolean)
         .join(' ');
 
       await sendEmail({
         to: recipients,
+        cc: cc ?? undefined,
         subject,
         message: replyBody,
         attachments,
@@ -357,7 +338,6 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
           References: references,
           'Thread-Id': threadId ?? '',
         },
-        includeSignature: includeSignature && settings?.signature?.enabled,
       });
 
       form.reset();
@@ -377,14 +357,6 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
       // Focus will be handled by the useEffect below
     }
   };
-
-  // Add a useEffect to focus the editor when the composer opens
-  // Initialize signature toggle from settings
-  useEffect(() => {
-    if (settings?.signature) {
-      setIncludeSignature(settings.signature.includeByDefault);
-    }
-  }, [settings]);
 
   useEffect(() => {
     if (composerIsOpen) {
@@ -455,20 +427,21 @@ export default function ReplyCompose({ emailData, mode = 'reply' }: ReplyCompose
   const isMessageEmpty =
     !form.getValues('messageContent') ||
     form.getValues('messageContent') ===
-      JSON.stringify({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [],
-          },
-        ],
-      });
+    JSON.stringify({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [],
+        },
+      ],
+    });
 
   // Check if form is valid for submission
   const isFormValid = !isMessageEmpty || attachments.length > 0;
 
   const handleAIButtonClick = async () => {
+    if (!emailData) return;
     aiDispatch({ type: 'SET_LOADING', payload: true });
     try {
       // Extract relevant information from the email thread for context
@@ -561,6 +534,7 @@ ${email.decodedBody || 'No content'}
 
   // Helper function to render the header content based on mode
   const renderHeaderContent = () => {
+    if (!emailData) return;
     if (mode === 'forward') {
       return (
         <div className="flex items-center gap-2">
@@ -599,10 +573,6 @@ ${email.decodedBody || 'No content'}
           type="email"
           className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
           placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
-          value={toInput}
-          onChange={(e) => setToInput(e.target.value)}
-          onKeyDown={handleEmailInputKeyDown}
-          onBlur={handleEmailInputBlur}
         />
       </div>
     </div>
@@ -629,7 +599,6 @@ ${email.decodedBody || 'No content'}
       handleAddEmail(toInput);
     } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
       setToEmails((emails) => emails.slice(0, -1));
-      form.setValue('to', toEmails.join(', '));
     }
   };
 
@@ -668,10 +637,9 @@ ${email.decodedBody || 'No content'}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-md"
             variant="outline"
           >
-            <Reply className="h-4 w-4" />
+            <ReplyAll className="h-4 w-4" />
             <span>
-              {t('common.replyCompose.replyTo')}{' '}
-              {emailData[emailData.length - 1]?.sender?.name || t('common.replyCompose.thisEmail')}
+              {t('common.replyCompose.replyTo')} All
             </span>
           </Button>
         </div>
@@ -679,7 +647,7 @@ ${email.decodedBody || 'No content'}
     }
     return null;
   }
-
+  if (!emailData) return;
   return (
     <div className="bg-offsetLight dark:bg-offsetDark w-full px-2">
       <form
@@ -735,7 +703,7 @@ ${email.decodedBody || 'No content'}
               onCommandEnter={handleCommandEnter}
               onTab={handleTabAccept}
               className={cn(
-                'sm:max-w-[600px] md:max-w-[2050px]',
+                'max-w-[600px] md:max-w-[100vw] overflow-hidden',
                 aiState.showOptions
                   ? 'rounded-md border border-dotted border-blue-200 bg-blue-50/30 p-1 dark:border-blue-800 dark:bg-blue-950/30'
                   : 'border border-transparent p-1',
@@ -760,13 +728,6 @@ ${email.decodedBody || 'No content'}
                 name: emailData[0]?.sender?.name,
                 email: emailData[0]?.sender?.email,
               }}
-              includeSignature={includeSignature}
-              onSignatureToggle={setIncludeSignature}
-              signature={
-                settings?.signature?.enabled && settings?.signature?.content
-                  ? settings.signature.content
-                  : undefined
-              }
             />
             <div
               className="h-2 w-full cursor-ns-resize hover:bg-gray-200 dark:hover:bg-gray-700"

@@ -16,7 +16,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { Button } from '@/components/ui/button';
-import { markAsUnread } from '@/actions/mail';
+import { markAsRead, markAsUnread } from '@/actions/mail';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
@@ -81,12 +81,9 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
             </div>
           </ScrollArea>
           <div className="relative flex-shrink-0 md:top-1">
-            {messages ? (
-              <ReplyCompose 
-                emailData={messages} 
+            <ReplyCompose 
                 mode={mail.forwardComposerOpen ? 'forward' : 'reply'} 
-              />
-            ) : null}
+            />
           </div>
         </div>
       </div>
@@ -135,7 +132,7 @@ function ThreadActionButton({
 }
 
 export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisplayProps) {
-  const { data: emailData, isLoading } = useThread(id ?? null);
+  const { data: emailData, isLoading, mutate: mutateThread } = useThread(id ?? null);
   const { mutate: mutateThreads } = useThreads();
   const searchParams = useSearchParams();
   const [isMuted, setIsMuted] = useState(false);
@@ -147,6 +144,25 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
   const threadIdParam = searchParams.get('threadId');
   const threadId = threadParam ?? threadIdParam ?? '';
 
+  /**
+   * Mark email as read if it's unread, if there are no unread emails, mark the current thread as read
+   */
+  useEffect(() => {
+    if (!emailData || !id) return;
+    const unreadEmails = emailData.filter(e => e.unread);
+    if (unreadEmails.length === 0) {
+      markAsRead({ ids: [id] }).catch((error) => {
+        console.error('Failed to mark email as read:', error);
+        toast.error(t('common.mail.failedToMarkAsRead'));
+      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+    } else {
+      const ids = [id, ...unreadEmails.map(e => e.id)]
+      markAsRead({ ids }).catch((error) => {
+        console.error('Failed to mark email as read:', error);
+        toast.error(t('common.mail.failedToMarkAsRead'));
+      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+    }
+  }, [emailData, id])
 
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
@@ -407,7 +423,6 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             isFullscreen ? 'mb-2' : ''
           )}>
             <ReplyCompose
-              emailData={emailData}
               mode={mail.forwardComposerOpen ? 'forward' : 'reply'}
             />
           </div>
