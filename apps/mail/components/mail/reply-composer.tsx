@@ -48,6 +48,7 @@ import { useThread } from '@/hooks/use-threads';
 import { useQueryState } from 'nuqs';
 import { Sender } from '@/types';
 
+import { createDraft } from '@/actions/drafts';
 
 // Define state interfaces
 interface ComposerState {
@@ -58,6 +59,8 @@ interface ComposerState {
   editorKey: number;
   editorInitialValue?: JSONContent;
   contentHeight: number;
+  hasUnsavedChanges: boolean;
+  isLoading: boolean;
 }
 
 interface AIState {
@@ -74,7 +77,9 @@ type ComposerAction =
   | { type: 'SET_EDITOR_FOCUSED'; payload: boolean }
   | { type: 'INCREMENT_EDITOR_KEY' }
   | { type: 'SET_EDITOR_INITIAL_VALUE'; payload: JSONContent | undefined }
-  | { type: 'SET_CONTENT_HEIGHT'; payload: number };
+  | { type: 'SET_CONTENT_HEIGHT'; payload: number }
+  | { type: 'SET_UNSAVED_CHANGES'; payload: boolean }
+  | { type: 'SET_LOADING'; payload: boolean };
 
 type AIAction =
   | { type: 'SET_LOADING'; payload: boolean }
@@ -99,6 +104,10 @@ const composerReducer = (state: ComposerState, action: ComposerAction): Composer
       return { ...state, editorInitialValue: action.payload };
     case 'SET_CONTENT_HEIGHT':
       return { ...state, contentHeight: action.payload };
+    case 'SET_UNSAVED_CHANGES':
+      return { ...state, hasUnsavedChanges: action.payload };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
     default:
       return state;
   }
@@ -138,6 +147,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const [toEmails, setToEmails] = useState<string[]>([]);
   const [includeSignature, setIncludeSignature] = useState(true);
   const { settings } = useSettings();
+  const [draftId, setDraftId] = useQueryState('draftId');
 
   // Use global state instead of local state
   const composerIsOpen = mode === 'reply' ? mail.replyComposerOpen : mail.forwardComposerOpen;
@@ -158,6 +168,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     editorKey: 0,
     editorInitialValue: undefined,
     contentHeight: 150,
+    hasUnsavedChanges: false,
+    isLoading: false,
   });
 
   const [aiState, aiDispatch] = useReducer(aiReducer, {
@@ -627,6 +639,72 @@ ${email.decodedBody || 'No content'}
     }
   }, [composerIsOpen, form, mode]);
 
+  // Add saveDraft function
+  const saveDraft = useCallback(async () => {
+    if (!composerState.hasUnsavedChanges) return;
+    if (!form.getValues('messageContent')) return;
+
+    try {
+      composerDispatch({ type: 'SET_LOADING', payload: true });
+      const draftData = {
+        to: mode === 'forward' ? toEmails.join(', ') : emailData[0]?.sender?.email,
+        subject: emailData[0]?.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
+          ? emailData[0].subject
+          : `${mode === 'forward' ? 'Fwd: ' : 'Re: '}${emailData[0]?.subject || ''}`,
+        message: form.getValues('messageContent'),
+        attachments: attachments,
+        id: draftId,
+      };
+
+      const response = await createDraft(draftData);
+
+      if (response?.id && response.id !== draftId) {
+        setDraftId(response.id);
+      }
+
+      composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: false });
+      toast.success('Draft saved');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft');
+    } finally {
+      composerDispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, [
+    composerState.hasUnsavedChanges,
+    form,
+    mode,
+    toEmails,
+    emailData,
+    attachments,
+    draftId,
+    setDraftId,
+  ]);
+
+  // Add auto-save effect
+  useEffect(() => {
+    if (!composerState.hasUnsavedChanges) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      saveDraft();
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [composerState.hasUnsavedChanges, saveDraft]);
+
+  // Update onChange handler in Editor component
+  const handleEditorChange = (content: string) => {
+    form.setValue('messageContent', content);
+    composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: true });
+    
+    // Update content height when content changes
+    const editorElement = document.querySelector('.ProseMirror');
+    if (editorElement instanceof HTMLElement) {
+      const newHeight = Math.min(600, Math.max(150, editorElement.scrollHeight + 50));
+      composerDispatch({ type: 'SET_CONTENT_HEIGHT', payload: newHeight });
+    }
+  };
+
   // Simplified composer visibility check
   if (!composerIsOpen) {
     if (mode === 'reply') {
@@ -690,15 +768,7 @@ ${email.decodedBody || 'No content'}
           >
             <Editor
               key={composerState.editorKey}
-              onChange={(content) => {
-                form.setValue('messageContent', content);
-                // Update content height when content changes
-                const editorElement = document.querySelector('.ProseMirror');
-                if (editorElement instanceof HTMLElement) {
-                  const newHeight = Math.min(600, Math.max(150, editorElement.scrollHeight + 50));
-                  composerDispatch({ type: 'SET_CONTENT_HEIGHT', payload: newHeight });
-                }
-              }}
+              onChange={handleEditorChange}
               initialValue={composerState.editorInitialValue}
               onCommandEnter={handleCommandEnter}
               onTab={handleTabAccept}
@@ -707,7 +777,7 @@ ${email.decodedBody || 'No content'}
                 aiState.showOptions
                   ? 'rounded-md border border-dotted border-blue-200 bg-blue-50/30 p-1 dark:border-blue-800 dark:bg-blue-950/30'
                   : 'border border-transparent p-1',
-                isSubmitting ? 'cursor-not-allowed opacity-50' : '',
+                composerState.isLoading ? 'cursor-not-allowed opacity-50' : '',
               )}
               placeholder={
                 aiState.showOptions
@@ -851,18 +921,27 @@ ${email.decodedBody || 'No content'}
             />
           </div>
           <div className="mr-2 flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="h-8" disabled={isSubmitting}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8" 
+              disabled={composerState.isLoading || !form.getValues('messageContent')}
+              onClick={(e) => {
+                e.preventDefault();
+                void saveDraft();
+              }}
+            >
               {t('common.replyCompose.saveDraft')}
             </Button>
             <Button
               ref={sendButtonRef}
               size="sm"
-              className={cn('relative h-8 w-8 rounded-full', isSubmitting && 'cursor-not-allowed')}
+              className={cn('relative h-8 w-8 rounded-full', composerState.isLoading && 'cursor-not-allowed')}
               onClick={async (e) => {
                 e.preventDefault();
                 await handleSendEmail(e);
               }}
-              disabled={isSubmitting}
+              disabled={composerState.isLoading}
               type="button"
             >
               <ArrowUp className="h-4 w-4" />

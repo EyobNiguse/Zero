@@ -584,34 +584,62 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       }
     },
     listDrafts: async (q?: string, maxResults = 20, pageToken?: string) => {
+      console.log('Fetching drafts with params:', { q, maxResults, pageToken });
       const { q: normalizedQ } = normalizeSearch('', q ?? '');
-      const res = await gmail.users.drafts.list({
-        userId: 'me',
-        q: normalizedQ ? normalizedQ : undefined,
-        maxResults,
-        pageToken: pageToken ? pageToken : undefined,
-      });
+      try {
+        const res = await gmail.users.drafts.list({
+          userId: 'me',
+          q: normalizedQ ? normalizedQ : undefined,
+          maxResults,
+          pageToken: pageToken ? pageToken : undefined,
+        });
 
-      const drafts = await Promise.all(
-        (res.data.drafts || [])
-          .map(async (draft) => {
-            if (!draft.id) return null;
-            const msg = await gmail.users.drafts.get({
-              userId: 'me',
-              id: draft.id,
-            });
-            const message = msg.data.message;
-            const parsed = parse(message as any);
-            return {
-              ...parsed,
-              id: draft.id,
-              threadId: draft.message?.id,
-            };
-          })
-          .filter((msg): msg is NonNullable<typeof msg> => msg !== null),
-      );
+        console.log('Draft list response:', res.data);
 
-      return { ...res.data, drafts } as any;
+        const drafts = await Promise.all(
+          (res.data.drafts || [])
+            .map(async (draft) => {
+              if (!draft.id) return null;
+              try {
+                const msg = await gmail.users.drafts.get({
+                  userId: 'me',
+                  id: draft.id,
+                  format: 'full',
+                });
+                console.log(`Fetched draft ${draft.id}:`, msg.data);
+                const message = msg.data.message;
+                if (!message) return null;
+                
+                const parsed = parse(message as any);
+                const headers = message.payload?.headers || [];
+                const date = headers.find(h => h.name?.toLowerCase() === 'date')?.value;
+                
+                return {
+                  ...parsed,
+                  id: draft.id,
+                  threadId: draft.message?.id,
+                  receivedOn: date || new Date().toISOString(),
+                };
+              } catch (error) {
+                console.error(`Error fetching draft ${draft.id}:`, error);
+                return null;
+              }
+            })
+            .filter((msg): msg is NonNullable<typeof msg> => msg !== null),
+        );
+
+        // Sort drafts by date, newest first
+        const sortedDrafts = [...drafts].sort((a, b) => {
+          const dateA = new Date(a.receivedOn || new Date()).getTime();
+          const dateB = new Date(b.receivedOn || new Date()).getTime();
+          return dateB - dateA;
+        });
+
+        return { ...res.data, drafts: sortedDrafts } as any;
+      } catch (error) {
+        console.error('Error listing drafts:', error);
+        throw error;
+      }
     },
     createDraft: async (data: any) => {
       const mimeMessage = [
