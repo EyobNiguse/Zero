@@ -10,6 +10,8 @@ import {
   Tag,
   User,
   Users,
+  Inbox,
+  Mail,
 } from 'lucide-react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -35,6 +37,7 @@ import { useQueryState } from 'nuqs';
 import items from './demo.json';
 import { toast } from 'sonner';
 import { ThreadContextMenu } from '@/components/context/thread-context';
+import { Categories } from './mail';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const ThreadWrapper = ({
@@ -384,6 +387,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [threadId, setThreadId] = useQueryState('threadId');
+  const [category, setCategory] = useQueryState('category');
+  const [searchValue, setSearchValue] = useSearchValue();
+
+  const allCategories = Categories();
 
   const sessionData = useMemo(
     () => ({
@@ -393,7 +400,19 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [session],
   );
 
-  const [searchValue, setSearchValue] = useSearchValue();
+  // Set initial category search value
+  useEffect(() => {
+    const currentCategory = category ? allCategories.find(cat => cat.id === category) :
+                                     allCategories.find(cat => cat.id === 'Important');
+    
+    if (currentCategory && searchValue.value === '') {
+      setSearchValue({
+        value: currentCategory.searchValue || '',
+        highlight: '',
+        folder: '',
+      });
+    }
+  }, []); // Run only once on mount
 
   const {
     data: { threads: items, nextPageToken },
