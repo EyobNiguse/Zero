@@ -412,12 +412,23 @@ export function CreateEmail({
                     placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
                     value={toInput}
                     onChange={(e) => setToInput(e.target.value)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text');
+                      const emails = pastedText.split(/[,\n]/).map(email => email.trim());
+                      emails.forEach(email => {
+                        if (email && !toEmails.includes(email) && isValidEmail(email)) {
+                          setToEmails(prev => [...prev, email]);
+                          setHasUnsavedChanges(true);
+                        }
+                      });
+                    }}
                     onKeyDown={(e) => {
                       if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
                         e.preventDefault();
                         handleAddEmail(toInput);
                       } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-                        setToEmails((emails) => emails.slice(0, -1));
+                        setToEmails((emails) => emails.filter((_, i) => i !== emails.length - 1));
                         setHasUnsavedChanges(true);
                       }
                     }}

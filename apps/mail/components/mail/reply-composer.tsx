@@ -585,6 +585,26 @@ ${email.decodedBody || 'No content'}
           type="email"
           className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
           placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+          value={toInput}
+          onChange={(e) => setToInput(e.target.value)}
+          onPaste={(e) => {
+            e.preventDefault();
+            const pastedText = e.clipboardData.getData('text');
+            const emails = pastedText.split(/[,\n]/).map(email => email.trim());
+            emails.forEach(email => {
+              if (email && !toEmails.includes(email) && isValidEmail(email)) {
+                setToEmails(prev => [...prev, email]);
+              }
+            });
+          }}
+          onKeyDown={(e) => {
+            if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
+              e.preventDefault();
+              handleAddEmail(toInput);
+            } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
+              setToEmails((emails) => emails.filter((_, i) => i !== emails.length - 1));
+            }
+          }}
         />
       </div>
     </div>
@@ -603,22 +623,6 @@ ${email.decodedBody || 'No content'}
       </button>
     </div>
   );
-
-  // Extract email input handlers
-  const handleEmailInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
-      e.preventDefault();
-      handleAddEmail(toInput);
-    } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-      setToEmails((emails) => emails.slice(0, -1));
-    }
-  };
-
-  const handleEmailInputBlur = () => {
-    if (toInput.trim()) {
-      handleAddEmail(toInput);
-    }
-  };
 
   // Add this effect near other useEffects
   useEffect(() => {
