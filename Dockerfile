@@ -31,4 +31,4 @@ ENV NODE_OPTIONS=--no-experimental-fetch
 
 EXPOSE 3000
 
-CMD ["bun", "run", "start"]
+CMD ["bun", "run", "start", "--host", "0.0.0.0"]
