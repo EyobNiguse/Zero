@@ -384,7 +384,7 @@ const MenuBar = ({
                       </PopoverTrigger>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {t('pages.createEmail.editor.menuBar.viewAttachments')}
+                      {t('pages.createEmail.attachments', { count: attachments.length })}
                     </TooltipContent>
                   </Tooltip>
                   <PopoverContent className="w-80 touch-auto" align="end">
@@ -574,7 +574,7 @@ export default function Editor({
 
   // Function to focus the editor
   const focusEditor = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === containerRef.current && editorRef.current?.commands) {
+    if (editorRef.current?.commands) {
       editorRef.current.commands.focus('end');
     }
   };
@@ -702,9 +702,14 @@ export default function Editor({
             }),
           ]}
           ref={containerRef}
-          className="min-h-52 cursor-text"
+          className="min-h-52 cursor-text relative"
           editorProps={{
             handleDOMEvents: {
+              mousedown: (view, event) => {
+                // Focus the editor on any click within the editor area
+                setTimeout(() => view.focus(), 0);
+                return false;
+              },
               keydown: (view, event) => {
                 // Handle tab key
                 if (event.key === 'Tab' && !event.shiftKey) {
@@ -735,8 +740,7 @@ export default function Editor({
             handleDrop: (view, event, _slice, moved) =>
               handleImageDrop(view, event, moved, uploadFn),
             attributes: {
-              class:
-                'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full',
+              class: 'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full min-h-[200px] px-4 py-2',
               'data-placeholder': placeholder,
             },
           }}
