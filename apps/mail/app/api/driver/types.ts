@@ -28,6 +28,7 @@ export interface MailManager {
     id: string[],
     options: { addLabels: string[]; removeLabels: string[] },
   ): Promise<void>;
+  getAttachment(messageId: string, attachmentId: string): Promise<string | undefined>;
 }
 
 export interface IConfig {

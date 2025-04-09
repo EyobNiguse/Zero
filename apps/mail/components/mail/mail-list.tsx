@@ -566,10 +566,12 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       void setThreadId(messageThreadId);
 
       // Mark as read in background
-      markAsRead({ ids: [messageThreadId] }).catch((error) => {
-        console.error('Failed to mark email as read:', error);
-        toast.error(t('common.mail.failedToMarkAsRead'));
-      });
+      if (message.unread) {
+        markAsRead({ ids: [messageThreadId] }).catch((error) => {
+          console.error('Failed to mark email as read:', error);
+          toast.error(t('common.mail.failedToMarkAsRead'));
+        }).then(mutate);
+      }
     },
     [handleMouseEnter, setThreadId, t, setMail],
   );

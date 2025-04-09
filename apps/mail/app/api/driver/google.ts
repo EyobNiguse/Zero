@@ -182,7 +182,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     return { folder, q };
   };
   const gmail = google.gmail({ version: 'v1', auth });
-  const manager = {
+  const manager: MailManager = {
     getAttachment: async (messageId: string, attachmentId: string) => {
       try {
         const response = await gmail.users.messages.attachments.get({
@@ -220,7 +220,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       });
     },
     getScope,
-    getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
+    getUserInfo: (tokens: IConfig['auth']) => {
       auth.setCredentials({ ...tokens, scope: getScope() });
       return google
         .people({ version: 'v1', auth })
@@ -417,7 +417,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
                     size: Number(part.body?.size || 0),
                     attachmentId: attachmentId,
                     headers: part.headers || [],
-                    body: attachmentData,
+                    body: attachmentData ?? '',
                   };
                 } catch (error) {
                   console.error('Failed to fetch attachment:', part.filename, error);
@@ -427,8 +427,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           ).then((attachments) =>
             attachments.filter((a): a is NonNullable<typeof a> => a !== null),
           );
-
-          console.log('ATTACHMENTS:', attachments);
 
           const fullEmailData = {
             ...parsedData,
