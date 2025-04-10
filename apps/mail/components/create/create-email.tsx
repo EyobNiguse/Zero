@@ -469,8 +469,6 @@ export function CreateEmail({
                       placeholder={t('pages.createEmail.writeYourMessageHere')}
                       onAttachmentsChange={setAttachments}
                       onCommandEnter={handleSendEmail}
-                      includeSignature={includeSignature}
-                      onSignatureToggle={setIncludeSignature}
                     />
                   )}
                 </div>
