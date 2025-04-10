@@ -16,6 +16,7 @@ import {
   RotateCw,
   Mail,
   MailOpen,
+  Trash,
 } from 'lucide-react';
 import {
   Dialog,
@@ -83,7 +84,7 @@ export function DemoMailLayout() {
   }, []);
 
   useEffect(() => {
-    if (activeCategory === 'Primary') {
+    if (activeCategory === 'Primary' || activeCategory === 'All Mail') {
       setFilteredItems(items);
     } else {
       const categoryMap = {
@@ -515,6 +516,10 @@ function BulkSelectActions() {
     inbox: {
       icon: <Inbox />,
       tooltip: t('common.mail.moveToInbox'),
+    },
+    bin: {
+      icon: <Trash />,
+      tooltip: t('common.mail.moveToBin'),
     },
   };
 

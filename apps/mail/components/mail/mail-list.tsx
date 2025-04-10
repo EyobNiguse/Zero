@@ -48,6 +48,7 @@ const ThreadWrapper = ({
   isFolderInbox,
   isFolderSpam,
   isFolderSent,
+  isFolderBin,
   refreshCallback,
 }: {
   children: React.ReactNode;
@@ -56,6 +57,7 @@ const ThreadWrapper = ({
   isFolderInbox: boolean;
   isFolderSpam: boolean;
   isFolderSent: boolean;
+  isFolderBin: boolean;
   refreshCallback: () => void;
 }) => {
   return (
@@ -65,6 +67,7 @@ const ThreadWrapper = ({
       isInbox={isFolderInbox}
       isSpam={isFolderSpam}
       isSent={isFolderSent}
+      isBin={isFolderBin}
       refreshCallback={refreshCallback}
     >
       {children}
@@ -105,6 +108,7 @@ const Thread = memo(
     const isFolderInbox = folder === FOLDERS.INBOX || !folder;
     const isFolderSpam = folder === FOLDERS.SPAM;
     const isFolderSent = folder === FOLDERS.SENT;
+    const isFolderBin = folder === FOLDERS.BIN;
 
     const handleMouseEnter = () => {
       if (demo) return;
@@ -335,6 +339,7 @@ const Thread = memo(
         isFolderInbox={isFolderInbox}
         isFolderSpam={isFolderSpam}
         isFolderSent={isFolderSent}
+        isFolderBin={isFolderBin}
         refreshCallback={() => mutate()}
       >
         {content}
