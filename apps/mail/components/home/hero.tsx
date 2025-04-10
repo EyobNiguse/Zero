@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import axios from 'axios';
 import { z } from 'zod';
-import { useConnections } from '@/hooks/use-connections';
 import { useSession } from '@/lib/auth-client';
 
 const betaSignupSchema = z.object({
@@ -27,13 +26,6 @@ export default function Hero() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [signupCount, setSignupCount] = useState<number>(0);
   const { data: session } = useSession();
-  const { data: connections } = useConnections();
-
-  const hasActiveAccount = Boolean(
-    session?.user &&
-    session?.connectionId &&
-    (connections ?? []).length > 0
-  );
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -122,7 +114,7 @@ export default function Hero() {
                 className="dark:hover:bg-accent flex h-[40px] w-[170px] items-center justify-center rounded-md bg-white text-gray-900 hover:bg-gray-100 hover:text-gray-900 dark:bg-black dark:text-white dark:hover:text-white"
                 asChild
               >
-                <Link href={hasActiveAccount ? "/mail" : "/login"}>
+                <Link href={session ? "/mail" : "/login"}>
                   {' '}
                   <Image
                     src="/white-icon.svg"
