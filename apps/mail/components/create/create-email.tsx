@@ -219,11 +219,10 @@ export function CreateEmail({
     try {
       setIsLoading(true);
       await sendEmail({
-        to: toEmails.join(','),
+        to: toEmails.map((email) => ({ email, name: email })),
         subject: subjectInput,
         message: messageContent,
         attachments: attachments,
-        includeSignature: includeSignature && Boolean(settings?.signature?.enabled),
       });
 
       setIsLoading(false);
@@ -313,13 +312,6 @@ export function CreateEmail({
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, []);
-
-  // Initialize signature toggle from settings
-  React.useEffect(() => {
-    if (settings?.signature) {
-      setIncludeSignature(settings.signature.includeByDefault);
-    }
-  }, [settings]);
 
   React.useEffect(() => {
     if (initialTo) {
@@ -479,8 +471,6 @@ export function CreateEmail({
                       onCommandEnter={handleSendEmail}
                       includeSignature={includeSignature}
                       onSignatureToggle={setIncludeSignature}
-                      signature={settings?.signature?.content || ''}
-                      hasSignature={Boolean(settings?.signature?.enabled)}
                     />
                   )}
                 </div>
