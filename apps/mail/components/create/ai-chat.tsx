@@ -9,6 +9,9 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { nanoid } from 'nanoid';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useSession } from '@/lib/auth-client';
+import { useConnections } from '@/hooks/use-connections';
 
 interface Message {
   id: string;
@@ -32,6 +35,10 @@ export function AIChat({ editor }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const { data: connections } = useConnections();
+
+  const activeAccount = connections?.find((connection) => connection.id === session?.connectionId);
 
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -170,23 +177,52 @@ export function AIChat({ editor }: AIChatProps) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
       <div className="w-full">
-        <div className="relative rounded-2xl border bg-background">
+        <div className="relative">
+         
+
           {/* Messages */}
-          <div className="max-h-[300px] overflow-y-auto px-4 py-4">
+          <div className="max-h-[500px] overflow-y-auto space-y-4">
             {messages.map((message, index) => (
               <div
                 key={message.id}
                 className={cn(
                   "flex flex-col gap-2 rounded-lg p-4",
                   message.role === 'user' 
-                    ? "bg-background border border-border ml-8" 
-                    : "bg-muted mr-8"
+                    ? "bg-background border border-border" 
+                    : "bg-muted"
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">
-                    {message.role === 'user' ? 'You' : 'AI'}
-                  </span>
+                  {message.role === 'user' ? (
+                    <>
+                      <Avatar className="size-6 rounded-lg">
+                        <AvatarImage
+                          className="rounded-lg"
+                          src={(activeAccount?.picture ?? undefined) || (session?.user.image ?? undefined)}
+                          alt={activeAccount?.name || session?.user.name || 'User'}
+                        />
+                        <AvatarFallback className="text-xs rounded-lg">
+                          {(activeAccount?.name || session?.user.name || 'User')
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">
+                        {activeAccount?.name || session?.user.name || 'You'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Avatar className="size-5">
+                        <AvatarImage src="/white-icon.svg" alt="Zero" />
+                        <AvatarFallback className="text-xs rounded-lg">Zero</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">Zero</span>
+                    </>
+                  )}
                   <span className="text-muted-foreground text-sm">
                     {formatTimestamp(message.timestamp)}
                   </span>
@@ -233,8 +269,8 @@ export function AIChat({ editor }: AIChatProps) {
           </div>
 
           {/* Input */}
-          <div className="border-t">
-            <div className="relative">
+          <div className="relative bg-background rounded-2xl mt-4 mx-1">
+        
               <AITextarea
                 ref={textareaRef}
                 value={value}
@@ -244,8 +280,8 @@ export function AIChat({ editor }: AIChatProps) {
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Message Zero..."
-                className="min-h-[60px] w-full resize-none border-none bg-transparent px-4 py-4 text-sm focus:outline-none"
-                style={{ overflow: 'hidden' }}
+                className="min-h-[0px] w-full resize-none border bg-transparenttext-sm focus:outline-none focus:ring-0 focus:ring-offset-0"
+               
               />
               <div className="absolute bottom-3 right-3">
                 <Button 
@@ -261,7 +297,7 @@ export function AIChat({ editor }: AIChatProps) {
                     <ArrowUpIcon className="h-4 w-4" />
                   )}
                 </Button>
-              </div>
+            
             </div>
           </div>
         </div>
