@@ -237,7 +237,7 @@ export function ThreadContextMenu({
       return [
         {
           id: 'restore-from-bin',
-          label: t('common.mail.restoreFromBin' as any),
+          label: t('common.mail.restoreFromBin'),
           icon: <Inbox className="mr-2.5 h-4 w-4" />,
           action: handleMove(LABELS.TRASH, LABELS.INBOX),
           disabled: false,
