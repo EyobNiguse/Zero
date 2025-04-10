@@ -58,7 +58,7 @@ import { useEditor as useEditorContext } from '@/components/providers/editor-pro
 import { EditorView } from 'prosemirror-view';
 import { Slice } from 'prosemirror-model';
 import { Editor as CoreEditor } from '@tiptap/core';
-import SignatureDisplay from './signature-display';
+import { TextSelection } from 'prosemirror-state';
 
 export const defaultEditorContent = {
   type: 'doc',
@@ -133,9 +133,6 @@ interface MenuBarProps {
 
 const MenuBar = ({
   onAttachmentsChange,
-  includeSignature,
-  onSignatureToggle,
-  hasSignature = false,
 }: MenuBarProps) => {
   const { editor } = useCurrentEditor();
   const t = useTranslations();
@@ -210,10 +207,10 @@ const MenuBar = ({
 
   return (
     <>
-      <TooltipProvider delayDuration={0}>
+      <TooltipProvider>
         <div className="control-group mb-2 overflow-x-auto">
-          <div className="button-group ml-2 mt-1 flex flex-wrap gap-1 border-b pb-2">
-            <div className="mr-2 flex items-center gap-1">
+          <div className="button-group ml-0 mt-1 flex flex-wrap gap-1 border-b pb-2">
+            {/* <div className="mr-2 flex items-center gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -258,7 +255,7 @@ const MenuBar = ({
               </Tooltip>
             </div>
 
-            <Separator orientation="vertical" className="relative right-1 top-0.5 h-6" />
+            <Separator orientation="vertical" className="relative right-1 top-0.5 h-6" /> */}
             <div className="mr-2 flex items-center gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -455,56 +452,6 @@ const MenuBar = ({
                   </TooltipContent>
                 </Tooltip>
               )}
-
-              {hasSignature && onSignatureToggle && (
-                <>
-                  <Separator orientation="vertical" className="relative top-0.5 h-6 mx-1.5" />
-                  <button
-                    onClick={() => onSignatureToggle(!includeSignature)}
-                    className={`hover:bg-muted flex items-center space-x-1 rounded border ${includeSignature ? 'border-primary bg-primary/10 text-primary' : 'border-muted-foreground/30 text-muted-foreground'} px-2 py-1 text-xs transition-colors`}
-                    title={includeSignature ? t('pages.createEmail.signature.disable') : t('pages.createEmail.signature.enable')}
-                  >
-                    {includeSignature ? (
-                      <>
-                        <svg
-                          className="mr-1 h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M22 13V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9" />
-                          <path d="M18 14v4" />
-                          <path d="M15 16l3 3 3-3" />
-                          <path d="M2 10h20" />
-                          <path d="M9 16l2 2 4-4" />
-                        </svg>
-                        <span>{t('pages.createEmail.signature.include')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="mr-1 h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M22 13V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9" />
-                          <path d="M18 14v4" />
-                          <path d="M15 16l3 3 3-3" />
-                          <path d="M2 10h20" />
-                        </svg>
-                        <span>{t('pages.createEmail.signature.add')}</span>
-                      </>
-                    )}
-                  </button>
-                </>
-              )}
             </div>
           </div>
         </div>
@@ -559,7 +506,6 @@ export default function Editor({
   includeSignature,
   onSignatureToggle,
   signature,
-  hasSignature,
 }: EditorProps) {
   const [state, dispatch] = useReducer(editorReducer, {
     openNode: false,
@@ -579,7 +525,7 @@ export default function Editor({
 
   // Function to focus the editor
   const focusEditor = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === containerRef.current && editorRef.current?.commands) {
+    if (editorRef.current?.commands) {
       editorRef.current.commands.focus('end');
     }
   };
@@ -741,24 +687,34 @@ export default function Editor({
             }),
           ]}
           ref={containerRef}
-          className="min-h-52 cursor-text"
+          className="cursor-text relative"
           editorProps={{
             handleDOMEvents: {
+              mousedown: (view, event) => {
+                const coords = view.posAtCoords({
+                  left: event.clientX,
+                  top: event.clientY,
+                });
+
+                if (coords) {
+                  const pos = coords.pos;
+                  const tr = view.state.tr;
+                  const selection = TextSelection.create(view.state.doc, pos);
+                  tr.setSelection(selection);
+                  view.dispatch(tr);
+                  view.focus();
+                }
+
+                // Let the default handler also run
+                return false;
+              },
               keydown: (view, event) => {
-                // Handle tab key
                 if (event.key === 'Tab' && !event.shiftKey) {
                   if (onTab && onTab()) {
                     event.preventDefault();
                     return true;
                   }
                 }
-
-                // Handle Command+Enter (Mac) or Ctrl+Enter (Windows/Linux)
-                // if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-                //   event.preventDefault();
-                //   handleCommandEnter();
-                //   return true;
-                // }
                 return handleCommandNavigation(event);
               },
               focus: () => {
@@ -774,8 +730,7 @@ export default function Editor({
             handleDrop: (view, event, _slice, moved) =>
               handleImageDrop(view, event, moved, uploadFn),
             attributes: {
-              class:
-                'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full',
+              class: 'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full min-h-[200px] px-4 py-2',
               'data-placeholder': placeholder,
             },
           }}
@@ -792,48 +747,11 @@ export default function Editor({
           slotBefore={
             <MenuBar
               onAttachmentsChange={onAttachmentsChange}
-              includeSignature={includeSignature}
-              onSignatureToggle={onSignatureToggle}
-              hasSignature={!!signature}
             />
           }
           slotAfter={
             <>
               <ImageResizer />
-              {signature && includeSignature && (
-                <div className="border-t mt-4 pt-2 text-muted-foreground">
-                  <div className="flex items-center justify-between">
-                    <div
-                      className="text-xs italic pb-1"
-                      style={{ userSelect: 'none' }}
-                    >
-                      {t('pages.createEmail.signature.title') || 'Signature'}
-                    </div>
-                    <button
-                      onClick={() => onSignatureToggle?.(false)}
-                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 pb-1"
-                      title={t('pages.createEmail.signature.disable') || 'Disable signature'}
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                      <span>{t('pages.createEmail.signature.remove')}</span>
-                    </button>
-                  </div>
-                  <div className="signature-preview rounded-md border border-dashed border-muted-foreground/20 px-3 py-2 text-sm">
-                    <SignatureDisplay html={signature} className="w-full" />
-                  </div>
-                </div>
-              )}
             </>
           }
         >
