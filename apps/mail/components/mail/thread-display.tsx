@@ -6,6 +6,7 @@ import {
   MailOpen,
   Reply,
   X,
+  Trash,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSearchParams, useParams } from 'next/navigation';
@@ -166,7 +167,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
 
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
-
+  const isInBin = folder === FOLDERS.BIN;
   const handleClose = useCallback(() => {
     // Reset reply composer state when closing thread display
     setMail((prev) => ({
@@ -196,7 +197,9 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             ? t('common.actions.movedToInbox')
             : destination === 'spam'
               ? t('common.actions.movedToSpam')
-              : t('common.actions.archived'),
+              : destination === 'bin'
+                ? t('common.actions.movedToBin')
+                : t('common.actions.archived'),
         error: t('common.actions.failedToMove'),
       });
     },
@@ -320,7 +323,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               disabled={!emailData}
               onClick={() => setIsFullscreen(!isFullscreen)}
             />
-            {isInSpam || isInArchive ? (
+            {isInSpam || isInArchive || isInBin ? (
               <ThreadActionButton
                 icon={Inbox}
                 label={t('common.mail.moveToInbox')}
@@ -340,6 +343,12 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
                   label={t('common.threadDisplay.moveToSpam')}
                   disabled={!emailData}
                   onClick={() => moveThreadTo('spam')}
+                />
+                <ThreadActionButton
+                  icon={Trash}
+                  label={t('common.mail.moveToBin')}
+                  disabled={!emailData}
+                  onClick={() => moveThreadTo('bin')}
                 />
               </>
             )}

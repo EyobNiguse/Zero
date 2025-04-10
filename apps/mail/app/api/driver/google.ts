@@ -234,7 +234,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
   }
   const normalizeSearch = (folder: string, q: string) => {
     // Handle special folders
-    if (folder === 'trash') {
+    if (folder === 'bin') {
       return { folder: undefined, q: `in:trash ${q}` };
     }
     if (folder === 'archive') {
@@ -630,8 +630,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
         // Sort drafts by date, newest first
         const sortedDrafts = [...drafts].sort((a, b) => {
-          const dateA = new Date(a.receivedOn || new Date()).getTime();
-          const dateB = new Date(b.receivedOn || new Date()).getTime();
+          const dateA = new Date(a?.receivedOn || new Date()).getTime();
+          const dateB = new Date(b?.receivedOn || new Date()).getTime();
           return dateB - dateA;
         });
 
