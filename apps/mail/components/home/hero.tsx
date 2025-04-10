@@ -16,6 +16,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { z } from 'zod';
 import { useConnections } from '@/hooks/use-connections';
+import { useSession } from '@/lib/auth-client';
 
 const betaSignupSchema = z.object({
   email: z.string().email().min(9),
@@ -25,9 +26,14 @@ export default function Hero() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [signupCount, setSignupCount] = useState<number>(0);
+  const { data: session } = useSession();
   const { data: connections } = useConnections();
 
-  const hasActiveAccount = (connections ?? []).length > 0;
+  const hasActiveAccount = Boolean(
+    session?.user &&
+    session?.connectionId &&
+    (connections ?? []).length > 0
+  );
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
