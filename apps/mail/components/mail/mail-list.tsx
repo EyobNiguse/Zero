@@ -388,6 +388,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const allCategories = Categories();
 
+  // Skip category filtering for drafts, spam, sent, archive, and bin pages
+  const shouldFilter = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
+
   const sessionData = useMemo(
     () => ({
       userId: session?.user?.id ?? '',
@@ -396,8 +399,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [session],
   );
 
-  // Set initial category search value
+  // Set initial category search value only if not in special folders
   useEffect(() => {
+    if (!shouldFilter) return;
+    
     const currentCategory = category ? allCategories.find(cat => cat.id === category) :
                                      allCategories.find(cat => cat.id === 'Important');
     

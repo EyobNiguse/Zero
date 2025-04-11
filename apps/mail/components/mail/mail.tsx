@@ -659,9 +659,15 @@ function CategorySelect() {
   const [, setSearchValue] = useSearchValue();
   const categories = Categories();
   const router = useRouter();
+  const { folder } = useParams<{ folder: string }>();
   const [category, setCategory] = useQueryState('category', {
     defaultValue: 'Important',
   });
+
+  // Skip category selection for drafts, spam, sent, archive, and bin pages
+  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
+
+  if (!shouldShowCategorySelect) return null;
 
   return (
     <Select
