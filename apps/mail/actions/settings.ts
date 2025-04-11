@@ -114,20 +114,16 @@ export async function handleGoldenTicket(email: string) {
     }
 
     await db.transaction(async (tx) => {
-      try {
-        await tx.insert(earlyAccess).values({
-          id: crypto.randomUUID(),
-          email,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isEarlyAccess: true,
-          hasUsedTicket: '',
-        });
-      } catch (error: any) {
-        if (error.code !== '23505') {
-          throw error;
-        }
-      }
+      await tx.insert(earlyAccess).values({
+        id: crypto.randomUUID(),
+        email,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isEarlyAccess: true,
+        hasUsedTicket: '',
+      }).catch(() => {
+        console.log('Failed to insert early access record, updating user still');
+      });
       await tx.update(earlyAccess)
         .set({
           hasUsedTicket: email,
