@@ -219,11 +219,10 @@ export function CreateEmail({
     try {
       setIsLoading(true);
       await sendEmail({
-        to: toEmails.join(','),
+        to: toEmails.map((email) => ({ email, name: email })),
         subject: subjectInput,
         message: messageContent,
         attachments: attachments,
-        includeSignature: includeSignature && Boolean(settings?.signature?.enabled),
       });
 
       setIsLoading(false);
@@ -313,13 +312,6 @@ export function CreateEmail({
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, []);
-
-  // Initialize signature toggle from settings
-  React.useEffect(() => {
-    if (settings?.signature) {
-      setIncludeSignature(settings.signature.includeByDefault);
-    }
-  }, [settings]);
 
   React.useEffect(() => {
     if (initialTo) {
@@ -412,12 +404,23 @@ export function CreateEmail({
                     placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
                     value={toInput}
                     onChange={(e) => setToInput(e.target.value)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text');
+                      const emails = pastedText.split(/[,\n]/).map(email => email.trim());
+                      emails.forEach(email => {
+                        if (email && !toEmails.includes(email) && isValidEmail(email)) {
+                          setToEmails(prev => [...prev, email]);
+                          setHasUnsavedChanges(true);
+                        }
+                      });
+                    }}
                     onKeyDown={(e) => {
                       if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
                         e.preventDefault();
                         handleAddEmail(toInput);
                       } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-                        setToEmails((emails) => emails.slice(0, -1));
+                        setToEmails((emails) => emails.filter((_, i) => i !== emails.length - 1));
                         setHasUnsavedChanges(true);
                       }
                     }}
@@ -466,10 +469,6 @@ export function CreateEmail({
                       placeholder={t('pages.createEmail.writeYourMessageHere')}
                       onAttachmentsChange={setAttachments}
                       onCommandEnter={handleSendEmail}
-                      includeSignature={includeSignature}
-                      onSignatureToggle={setIncludeSignature}
-                      signature={settings?.signature?.content || ''}
-                      hasSignature={Boolean(settings?.signature?.enabled)}
                     />
                   )}
                 </div>

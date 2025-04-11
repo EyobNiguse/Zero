@@ -47,6 +47,7 @@ const ThreadWrapper = ({
   isFolderInbox,
   isFolderSpam,
   isFolderSent,
+  isFolderBin,
   refreshCallback,
 }: {
   children: React.ReactNode;
@@ -55,6 +56,7 @@ const ThreadWrapper = ({
   isFolderInbox: boolean;
   isFolderSpam: boolean;
   isFolderSent: boolean;
+  isFolderBin: boolean;
   refreshCallback: () => void;
 }) => {
   return (
@@ -64,6 +66,7 @@ const ThreadWrapper = ({
       isInbox={isFolderInbox}
       isSpam={isFolderSpam}
       isSent={isFolderSent}
+      isBin={isFolderBin}
       refreshCallback={refreshCallback}
     >
       {children}
@@ -95,7 +98,7 @@ const Thread = memo(
       return threadId === threadIdParam || threadId === mail.selected;
     }, [message.id, message.threadId, threadIdParam, mail.selected]);
 
-    const isMailBulkSelected = mail.bulkSelected.includes(message.id);
+    const isMailBulkSelected = mail.bulkSelected.includes(message.threadId ?? message.id);
 
     const threadLabels = useMemo(() => {
       return [...(message.tags || [])];
@@ -104,6 +107,7 @@ const Thread = memo(
     const isFolderInbox = folder === FOLDERS.INBOX || !folder;
     const isFolderSpam = folder === FOLDERS.SPAM;
     const isFolderSent = folder === FOLDERS.SENT;
+    const isFolderBin = folder === FOLDERS.BIN;
 
     const handleMouseEnter = () => {
       if (demo) return;
@@ -332,6 +336,7 @@ const Thread = memo(
         isFolderInbox={isFolderInbox}
         isFolderSpam={isFolderSpam}
         isFolderSent={isFolderSent}
+        isFolderBin={isFolderBin}
         refreshCallback={() => mutate()}
       >
         {content}
@@ -467,7 +472,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     }
     // Otherwise select all items
     else if (items.length > 0) {
-      const allIds = items.map((item) => item.id);
+      const allIds = items.map((item) => item.threadId ?? item.id);
       setMail((prev) => ({
         ...prev,
         bulkSelected: allIds,

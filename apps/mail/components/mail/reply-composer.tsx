@@ -49,6 +49,7 @@ import { useQueryState } from 'nuqs';
 import { Sender } from '@/types';
 
 import { createDraft } from '@/actions/drafts';
+import { extractTextFromHTML } from '@/actions/extractText';
 
 // Define state interfaces
 interface ComposerState {
@@ -58,7 +59,6 @@ interface ComposerState {
   isEditorFocused: boolean;
   editorKey: number;
   editorInitialValue?: JSONContent;
-  contentHeight: number;
   hasUnsavedChanges: boolean;
   isLoading: boolean;
 }
@@ -77,7 +77,6 @@ type ComposerAction =
   | { type: 'SET_EDITOR_FOCUSED'; payload: boolean }
   | { type: 'INCREMENT_EDITOR_KEY' }
   | { type: 'SET_EDITOR_INITIAL_VALUE'; payload: JSONContent | undefined }
-  | { type: 'SET_CONTENT_HEIGHT'; payload: number }
   | { type: 'SET_UNSAVED_CHANGES'; payload: boolean }
   | { type: 'SET_LOADING'; payload: boolean };
 
@@ -102,8 +101,6 @@ const composerReducer = (state: ComposerState, action: ComposerAction): Composer
       return { ...state, editorKey: state.editorKey + 1 };
     case 'SET_EDITOR_INITIAL_VALUE':
       return { ...state, editorInitialValue: action.payload };
-    case 'SET_CONTENT_HEIGHT':
-      return { ...state, contentHeight: action.payload };
     case 'SET_UNSAVED_CHANGES':
       return { ...state, hasUnsavedChanges: action.payload };
     case 'SET_LOADING':
@@ -167,7 +164,6 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     isEditorFocused: false,
     editorKey: 0,
     editorInitialValue: undefined,
-    contentHeight: 150,
     hasUnsavedChanges: false,
     isLoading: false,
   });
@@ -411,30 +407,6 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     startHeight.current = editorHeight;
   };
 
-  // Auto-grow effect when typing
-  useEffect(() => {
-    if (composerIsOpen) {
-      const editorElement = document.querySelector('.ProseMirror');
-      if (editorElement instanceof HTMLElement) {
-        // Observer to watch for content changes and adjust height
-        const resizeObserver = new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            const contentHeight = entry.contentRect.height;
-
-            // If content exceeds current height but is less than max, grow the container
-            if (contentHeight > editorHeight - 20 && editorHeight < 500) {
-              const newHeight = Math.min(500, contentHeight + 20);
-              setEditorHeight(newHeight);
-            }
-          }
-        });
-
-        resizeObserver.observe(editorElement);
-        return () => resizeObserver.disconnect();
-      }
-    }
-  }, [composerIsOpen, editorHeight]);
-
   // Check if the message is empty
   const isMessageEmpty =
     !form.getValues('messageContent') ||
@@ -461,17 +433,16 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       const originalSender = latestEmail?.sender?.name || 'the recipient';
 
       // Create a summary of the thread content for context
-      const threadContent = emailData
-        .map((email) => {
-          return `
-From: ${email.sender?.name || 'Unknown'} <${email.sender?.email || 'unknown@email.com'}>
-Subject: ${email.subject || 'No Subject'}
-Date: ${new Date(email.receivedOn || '').toLocaleString()}
-
-${email.decodedBody || 'No content'}
-          `;
-        })
-        .join('\n---\n');
+      const threadContent = (await Promise.all(emailData.map(async (email) => {
+        const body = await extractTextFromHTML(email.decodedBody || 'No content');
+        return `
+            <email>
+              <from>${email.sender?.name || 'Unknown'} &lt;${email.sender?.email || 'unknown@email.com'}&gt;</from>
+              <subject>${email.subject || 'No Subject'}</subject>
+              <date>${new Date(email.receivedOn || '').toLocaleString()}</date>
+              <body>${body}</body>
+            </email>`;
+      }))).join('\n\n');
 
       const suggestion = await generateAIResponse(threadContent, originalSender);
       aiDispatch({ type: 'SET_SUGGESTION', payload: suggestion });
@@ -585,6 +556,26 @@ ${email.decodedBody || 'No content'}
           type="email"
           className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
           placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+          value={toInput}
+          onChange={(e) => setToInput(e.target.value)}
+          onPaste={(e) => {
+            e.preventDefault();
+            const pastedText = e.clipboardData.getData('text');
+            const emails = pastedText.split(/[,\n]/).map(email => email.trim());
+            emails.forEach(email => {
+              if (email && !toEmails.includes(email) && isValidEmail(email)) {
+                setToEmails(prev => [...prev, email]);
+              }
+            });
+          }}
+          onKeyDown={(e) => {
+            if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
+              e.preventDefault();
+              handleAddEmail(toInput);
+            } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
+              setToEmails((emails) => emails.filter((_, i) => i !== emails.length - 1));
+            }
+          }}
         />
       </div>
     </div>
@@ -603,22 +594,6 @@ ${email.decodedBody || 'No content'}
       </button>
     </div>
   );
-
-  // Extract email input handlers
-  const handleEmailInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
-      e.preventDefault();
-      handleAddEmail(toInput);
-    } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-      setToEmails((emails) => emails.slice(0, -1));
-    }
-  };
-
-  const handleEmailInputBlur = () => {
-    if (toInput.trim()) {
-      handleAddEmail(toInput);
-    }
-  };
 
   // Add this effect near other useEffects
   useEffect(() => {
@@ -641,16 +616,17 @@ ${email.decodedBody || 'No content'}
 
   // Add saveDraft function
   const saveDraft = useCallback(async () => {
-    if (!composerState.hasUnsavedChanges) return;
+    if (!emailData || !emailData[0]) return;
     if (!form.getValues('messageContent')) return;
 
     try {
       composerDispatch({ type: 'SET_LOADING', payload: true });
+      const originalEmail = emailData[0];
       const draftData = {
-        to: mode === 'forward' ? toEmails.join(', ') : emailData[0]?.sender?.email,
-        subject: emailData[0]?.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
-          ? emailData[0].subject
-          : `${mode === 'forward' ? 'Fwd: ' : 'Re: '}${emailData[0]?.subject || ''}`,
+        to: mode === 'forward' ? toEmails.join(', ') : originalEmail.sender.email,
+        subject: originalEmail.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
+          ? originalEmail.subject
+          : `${mode === 'forward' ? 'Fwd: ' : 'Re: '}${originalEmail.subject || ''}`,
         message: form.getValues('messageContent'),
         attachments: attachments,
         id: draftId,
@@ -662,7 +638,6 @@ ${email.decodedBody || 'No content'}
         setDraftId(response.id);
       }
 
-      composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: false });
       toast.success('Draft saved');
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -670,39 +645,11 @@ ${email.decodedBody || 'No content'}
     } finally {
       composerDispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [
-    composerState.hasUnsavedChanges,
-    form,
-    mode,
-    toEmails,
-    emailData,
-    attachments,
-    draftId,
-    setDraftId,
-  ]);
-
-  // Add auto-save effect
-  useEffect(() => {
-    if (!composerState.hasUnsavedChanges) return;
-
-    const autoSaveTimer = setTimeout(() => {
-      saveDraft();
-    }, 3000);
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [composerState.hasUnsavedChanges, saveDraft]);
+  }, [mode, toEmails, emailData, form, attachments, draftId, setDraftId]);
 
   // Update onChange handler in Editor component
   const handleEditorChange = (content: string) => {
     form.setValue('messageContent', content);
-    composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: true });
-    
-    // Update content height when content changes
-    const editorElement = document.querySelector('.ProseMirror');
-    if (editorElement instanceof HTMLElement) {
-      const newHeight = Math.min(600, Math.max(150, editorElement.scrollHeight + 50));
-      composerDispatch({ type: 'SET_CONTENT_HEIGHT', payload: newHeight });
-    }
   };
 
   // Simplified composer visibility check
@@ -758,14 +705,7 @@ ${email.decodedBody || 'No content'}
 
         {/* Editor container with fixed menu and growing content */}
         <div className="flex flex-grow flex-col">
-          <div
-            className="w-full overflow-y-auto"
-            style={{
-              height: `${composerState.contentHeight}px`,
-              minHeight: '150px',
-              maxHeight: '600px',
-            }}
-          >
+          <div className="w-full">
             <Editor
               key={composerState.editorKey}
               onChange={handleEditorChange}
@@ -773,7 +713,7 @@ ${email.decodedBody || 'No content'}
               onCommandEnter={handleCommandEnter}
               onTab={handleTabAccept}
               className={cn(
-                'max-w-[600px] md:max-w-[100vw] overflow-hidden',
+                'max-w-[600px] md:max-w-[100vw]',
                 aiState.showOptions
                   ? 'rounded-md border border-dotted border-blue-200 bg-blue-50/30 p-1 dark:border-blue-800 dark:bg-blue-950/30'
                   : 'border border-transparent p-1',
