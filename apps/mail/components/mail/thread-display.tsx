@@ -5,6 +5,7 @@ import {
   Forward,
   MailOpen,
   Reply,
+  ReplyAll,
   X,
   Trash,
 } from 'lucide-react';
@@ -364,20 +365,26 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               disabled={!emailData}
               className={cn(mail.replyComposerOpen && "bg-primary/10")}
               onClick={() => {
-                if (mail.forwardComposerOpen) {
-                  // If forward is open, close it and open reply
-                  setMail((prev) => ({ 
-                    ...prev, 
-                    forwardComposerOpen: false,
-                    replyComposerOpen: true 
-                  }));
-                } else {
-                  // Toggle reply
-                  setMail((prev) => ({ 
-                    ...prev, 
-                    replyComposerOpen: !prev.replyComposerOpen 
-                  }));
-                }
+                setMail((prev) => ({ 
+                  ...prev, 
+                  replyComposerOpen: true,
+                  replyAllComposerOpen: false,
+                  forwardComposerOpen: false 
+                }));
+              }}
+            />
+            <ThreadActionButton
+              icon={ReplyAll}
+              label={t('common.threadDisplay.replyAll')}
+              disabled={!emailData}
+              className={cn(mail.replyAllComposerOpen && "bg-primary/10")}
+              onClick={() => {
+                setMail((prev) => ({ 
+                  ...prev, 
+                  replyComposerOpen: false,
+                  replyAllComposerOpen: true,
+                  forwardComposerOpen: false 
+                }));
               }}
             />
             <ThreadActionButton
@@ -386,20 +393,12 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               disabled={!emailData}
               className={cn(mail.forwardComposerOpen && "bg-primary/10")}
               onClick={() => {
-                if (mail.replyComposerOpen) {
-                  // If reply is open, close it and open forward
-                  setMail((prev) => ({ 
-                    ...prev, 
-                    replyComposerOpen: false,
-                    forwardComposerOpen: true 
-                  }));
-                } else {
-                  // Toggle forward
-                  setMail((prev) => ({ 
-                    ...prev, 
-                    forwardComposerOpen: !prev.forwardComposerOpen 
-                  }));
-                }
+                setMail((prev) => ({ 
+                  ...prev, 
+                  replyComposerOpen: false,
+                  replyAllComposerOpen: false,
+                  forwardComposerOpen: true 
+                }));
               }}
             />
           </div>
@@ -432,7 +431,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             isFullscreen ? 'mb-2' : ''
           )}>
             <ReplyCompose
-              mode={mail.forwardComposerOpen ? 'forward' : 'reply'}
+              mode={mail.forwardComposerOpen ? 'forward' : mail.replyAllComposerOpen ? 'replyAll' : 'reply'}
             />
           </div>
         </div>
