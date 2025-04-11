@@ -970,12 +970,13 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       <form
         ref={composerRef}
         className={cn(
-          'border-border ring-offset-background relative z-20 flex flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
+          'border-border ring-offset-background relative z-20 flex flex-col rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
           composerState.isEditorFocused ? 'ring-2 ring-[#3D3D3D] ring-offset-1' : '',
         )}
         style={{
           minHeight: '150px',
           maxHeight: '800px',
+          overflow: 'hidden',
         }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -987,7 +988,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         {composerState.isDragging && <DragOverlay />}
 
         {/* Header */}
-        <div className="text-muted-foreground flex items-start justify-between text-sm">
+        <div className="text-muted-foreground flex-shrink-0 flex items-start justify-between text-sm">
           {renderHeaderContent()}
           <div className="flex items-center gap-2">
             <Button
@@ -1023,8 +1024,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         </div>
 
         {/* Editor container with fixed menu and growing content */}
-        <div className="flex flex-grow flex-col">
-          <div className="w-full">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="w-full overflow-auto">
             <Editor
               key={composerState.editorKey}
               onChange={handleEditorChange}
@@ -1058,20 +1059,16 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 email: emailData[0]?.sender?.email,
               }}
             />
-            <div
-              className="h-2 w-full cursor-ns-resize hover:bg-gray-200 dark:hover:bg-gray-700"
-              onMouseDown={handleResizeStart}
-            />
           </div>
         </div>
 
         {aiState.showOptions && (
-          <div className="text-muted-foreground ml-2 mt-1 text-xs">
+          <div className="text-muted-foreground flex-shrink-0 ml-2 mt-1 text-xs">
             Press <kbd className="bg-muted rounded px-1 py-0.5">Tab</kbd> to accept
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between">
+        <div className="flex-shrink-0 mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             {!aiState.showOptions ? (
               <Button
