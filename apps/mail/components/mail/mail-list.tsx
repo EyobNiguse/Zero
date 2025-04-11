@@ -99,7 +99,7 @@ const Thread = memo(
       return threadId === threadIdParam || threadId === mail.selected;
     }, [message.id, message.threadId, threadIdParam, mail.selected]);
 
-    const isMailBulkSelected = mail.bulkSelected.includes(message.id);
+    const isMailBulkSelected = mail.bulkSelected.includes(message.threadId ?? message.id);
 
     const threadLabels = useMemo(() => {
       return [...(message.tags || [])];
@@ -476,7 +476,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     }
     // Otherwise select all items
     else if (items.length > 0) {
-      const allIds = items.map((item) => item.id);
+      const allIds = items.map((item) => item.threadId ?? item.id);
       setMail((prev) => ({
         ...prev,
         bulkSelected: allIds,

@@ -21,19 +21,19 @@ export function isActionAvailable(folder: FolderLocation, action: ThreadDestinat
       return true;
     case `${FOLDERS.INBOX}_to_archive`:
       return true;
-    case `${FOLDERS.INBOX}_to_trash`:
+    case `${FOLDERS.INBOX}_to_bin`:
       return true;
 
     // From archive rules
     case `${FOLDERS.ARCHIVE}_to_inbox`:
       return true;
-    case `${FOLDERS.ARCHIVE}_to_trash`:
+    case `${FOLDERS.ARCHIVE}_to_bin`:
       return true;
 
     // From spam rules
     case `${FOLDERS.SPAM}_to_inbox`:
       return true;
-    case `${FOLDERS.SPAM}_to_trash`:
+    case `${FOLDERS.SPAM}_to_bin`:
       return true;
 
     default:
