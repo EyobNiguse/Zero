@@ -404,7 +404,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     if (!shouldFilter) return;
     
     const currentCategory = category ? allCategories.find(cat => cat.id === category) :
-                                     allCategories.find(cat => cat.id === 'Important');
+                                     allCategories.find(cat => cat.id === 'Primary');
     
     if (currentCategory && searchValue.value === '') {
       setSearchValue({
