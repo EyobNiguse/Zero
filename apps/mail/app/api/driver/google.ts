@@ -2,8 +2,9 @@ import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
 import { type IConfig, type MailManager } from './types';
 import { type gmail_v1, google } from 'googleapis';
 import { EnableBrain } from '@/actions/brain';
-import { type ParsedMessage } from '@/types';
+import { IOutgoingMessage, Sender, type ParsedMessage } from '@/types';
 import * as he from 'he';
+import { createMimeMessage } from 'mimetext';
 
 function fromBase64Url(str: string) {
   return str.replace(/-/g, '+').replace(/_/g, '/');
@@ -78,6 +79,9 @@ const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
   };
 };
 
+// Helper function for delays
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const driver = async (config: IConfig): Promise<MailManager> => {
   const auth = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID as string,
@@ -141,7 +145,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         ?.filter((h) => h.name?.toLowerCase() === 'cc')
         .map((h) => h.value)
         .filter((v) => typeof v === 'string') || [];
-    const cc = ccHeaders.flatMap((to) => parseAddressList(to));
+
+    const cc = ccHeaders.length > 0
+      ? ccHeaders
+        .filter(header => header.trim().length > 0)
+        .flatMap(header => parseAddressList(header))
+      : null;
 
     const receivedHeaders =
       payload?.headers
@@ -170,9 +179,65 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       messageId,
     };
   };
+  const parseOutgoing = async ({ to, subject, message, attachments, headers, cc, bcc }: IOutgoingMessage) => {
+    const msg = createMimeMessage();
+
+    const fromEmail = config.auth?.email || 'nobody@example.com';
+    msg.setSender(fromEmail);
+
+    to.forEach(recipient => {
+      msg.setRecipient(({
+        addr: recipient.email,
+        name: recipient.name
+      }));
+    });
+
+    if (cc) msg.setCc(cc.map(recipient => ({
+      addr: recipient.email,
+      name: recipient.name
+    })));
+    if (bcc) msg.setBcc(bcc.map(recipient => ({
+      addr: recipient.email,
+      name: recipient.name
+    })));
+
+    msg.setSubject(subject);
+
+    msg.addMessage({
+      contentType: 'text/html',
+      data: message.trim()
+    });
+
+    if (headers) {
+      Object.keys(headers).forEach(key => {
+        if (headers[key]) msg.setHeader(key, headers[key]);
+      });
+    }
+
+    if (attachments?.length > 0) {
+      for (const file of attachments) {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64Content = buffer.toString("base64");
+
+        msg.addAttachment({
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+          data: base64Content
+        });
+      }
+    }
+
+    const emailContent = msg.asRaw();
+    const encodedMessage = Buffer.from(emailContent).toString("base64");
+
+    return {
+      raw: encodedMessage,
+    }
+  }
   const normalizeSearch = (folder: string, q: string) => {
     // Handle special folders
-    if (folder === 'trash') {
+    if (folder === 'bin') {
       return { folder: undefined, q: `in:trash ${q}` };
     }
     if (folder === 'archive') {
@@ -182,7 +247,53 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     return { folder, q };
   };
   const gmail = google.gmail({ version: 'v1', auth });
-  const manager = {
+
+  const modifyThreadLabels = async (
+    threadIds: string[], 
+    requestBody: gmail_v1.Schema$ModifyThreadRequest
+  ) => {
+    if (threadIds.length === 0) { 
+      return; 
+    }
+
+    const chunkSize = 15; 
+    const delayBetweenChunks = 100;
+    const allResults = [];
+
+    for (let i = 0; i < threadIds.length; i += chunkSize) {
+      const chunk = threadIds.slice(i, i + chunkSize);
+      
+      const promises = chunk.map(async (threadId) => {
+        try {
+          const response = await gmail.users.threads.modify({
+            userId: 'me',
+            id: threadId,
+            requestBody: requestBody,
+          });
+          return { threadId, status: 'fulfilled' as const, value: response.data };
+        } catch (error: any) { 
+          const errorMessage = error?.errors?.[0]?.message || error.message || error;
+          console.error(`Failed bulk modify operation for thread ${threadId}:`, errorMessage);
+          return { threadId, status: 'rejected' as const, reason: { error: errorMessage } };
+        }
+      });
+
+      const chunkResults = await Promise.all(promises);
+      allResults.push(...chunkResults);
+
+      if (i + chunkSize < threadIds.length) {
+        await delay(delayBetweenChunks);
+      }
+    }
+
+    const failures = allResults.filter(result => result.status === 'rejected');
+    if (failures.length > 0) {
+      const failureReasons = failures.map(f => ({ threadId: f.threadId, reason: f.reason }));
+      console.error(`Failed bulk modify operation for ${failures.length}/${threadIds.length} threads:`, failureReasons);
+    }
+  };
+
+  const manager: MailManager = {
     getAttachment: async (messageId: string, attachmentId: string) => {
       try {
         const response = await gmail.users.messages.attachments.get({
@@ -201,26 +312,14 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         throw error;
       }
     },
-    markAsRead: async (id: string[]) => {
-      await gmail.users.messages.batchModify({
-        userId: 'me',
-        requestBody: {
-          ids: id,
-          removeLabelIds: ['UNREAD'],
-        },
-      });
+    markAsRead: async (threadIds: string[]) => {
+      await modifyThreadLabels(threadIds, { removeLabelIds: ['UNREAD'] });
     },
-    markAsUnread: async (id: string[]) => {
-      await gmail.users.messages.batchModify({
-        userId: 'me',
-        requestBody: {
-          ids: id,
-          addLabelIds: ['UNREAD'],
-        },
-      });
+    markAsUnread: async (threadIds: string[]) => {
+      await modifyThreadLabels(threadIds, { addLabelIds: ['UNREAD'] });
     },
     getScope,
-    getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
+    getUserInfo: (tokens: IConfig['auth']) => {
       auth.setCredentials({ ...tokens, scope: getScope() });
       return google
         .people({ version: 'v1', auth })
@@ -417,7 +516,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
                     size: Number(part.body?.size || 0),
                     attachmentId: attachmentId,
                     headers: part.headers || [],
-                    body: attachmentData,
+                    body: attachmentData ?? '',
                   };
                 } catch (error) {
                   console.error('Failed to fetch attachment:', part.filename, error);
@@ -427,8 +526,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           ).then((attachments) =>
             attachments.filter((a): a is NonNullable<typeof a> => a !== null),
           );
-
-          console.log('ATTACHMENTS:', attachments);
 
           const fullEmailData = {
             ...parsedData,
@@ -444,6 +541,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             hasBody: !!fullEmailData.body,
             hasBlobUrl: !!fullEmailData.blobUrl,
             blobUrlLength: fullEmailData.blobUrl.length,
+            labels: fullEmailData.tags,
           });
 
           return fullEmailData;
@@ -451,8 +549,15 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
       return messages;
     },
-    create: async (data: any) => {
-      const res = await gmail.users.messages.send({ userId: 'me', requestBody: data });
+    create: async (data) => {
+      const { raw } = await parseOutgoing(data)
+      const res = await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw,
+          threadId: data.threadId
+        }
+      });
       return res.data;
     },
     delete: async (id: string) => {
@@ -465,33 +570,11 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
       return { threadIds };
     },
-    async modifyLabels(threadIds: string[], options: { addLabels: string[]; removeLabels: string[] }) {
-      const threadResults = await Promise.allSettled(
-        threadIds.map(threadId =>
-          gmail.users.threads.get({
-            userId: 'me',
-            id: threadId,
-            format: 'minimal'
-          })
-        )
-      );
-
-      const messageIds = threadResults
-        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-        .flatMap(result => result.value.data.messages || [])
-        .map(msg => msg.id)
-        .filter((id): id is string => !!id);
-
-      if (messageIds.length > 0) {
-        await gmail.users.messages.batchModify({
-          userId: 'me',
-          requestBody: {
-            ids: messageIds,
-            addLabelIds: options.addLabels,
-            removeLabelIds: options.removeLabels,
-          },
-        });
-      }
+    modifyLabels: async (threadIds: string[], options: { addLabels: string[]; removeLabels: string[] }) => {
+      await modifyThreadLabels(threadIds, {
+        addLabelIds: options.addLabels,
+        removeLabelIds: options.removeLabels,
+      });
     },
     getDraft: async (draftId: string) => {
       try {
@@ -517,34 +600,62 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       }
     },
     listDrafts: async (q?: string, maxResults = 20, pageToken?: string) => {
+      console.log('Fetching drafts with params:', { q, maxResults, pageToken });
       const { q: normalizedQ } = normalizeSearch('', q ?? '');
-      const res = await gmail.users.drafts.list({
-        userId: 'me',
-        q: normalizedQ ? normalizedQ : undefined,
-        maxResults,
-        pageToken: pageToken ? pageToken : undefined,
-      });
+      try {
+        const res = await gmail.users.drafts.list({
+          userId: 'me',
+          q: normalizedQ ? normalizedQ : undefined,
+          maxResults,
+          pageToken: pageToken ? pageToken : undefined,
+        });
 
-      const drafts = await Promise.all(
-        (res.data.drafts || [])
-          .map(async (draft) => {
-            if (!draft.id) return null;
-            const msg = await gmail.users.drafts.get({
-              userId: 'me',
-              id: draft.id,
-            });
-            const message = msg.data.message;
-            const parsed = parse(message as any);
-            return {
-              ...parsed,
-              id: draft.id,
-              threadId: draft.message?.id,
-            };
-          })
-          .filter((msg): msg is NonNullable<typeof msg> => msg !== null),
-      );
+        console.log('Draft list response:', res.data);
 
-      return { ...res.data, drafts } as any;
+        const drafts = await Promise.all(
+          (res.data.drafts || [])
+            .map(async (draft) => {
+              if (!draft.id) return null;
+              try {
+                const msg = await gmail.users.drafts.get({
+                  userId: 'me',
+                  id: draft.id,
+                  format: 'full',
+                });
+                console.log(`Fetched draft ${draft.id}:`, msg.data);
+                const message = msg.data.message;
+                if (!message) return null;
+                
+                const parsed = parse(message as any);
+                const headers = message.payload?.headers || [];
+                const date = headers.find(h => h.name?.toLowerCase() === 'date')?.value;
+                
+                return {
+                  ...parsed,
+                  id: draft.id,
+                  threadId: draft.message?.id,
+                  receivedOn: date || new Date().toISOString(),
+                };
+              } catch (error) {
+                console.error(`Error fetching draft ${draft.id}:`, error);
+                return null;
+              }
+            })
+            .filter((msg): msg is NonNullable<typeof msg> => msg !== null),
+        );
+
+        // Sort drafts by date, newest first
+        const sortedDrafts = [...drafts].sort((a, b) => {
+          const dateA = new Date(a?.receivedOn || new Date()).getTime();
+          const dateB = new Date(b?.receivedOn || new Date()).getTime();
+          return dateB - dateA;
+        });
+
+        return { ...res.data, drafts: sortedDrafts } as any;
+      } catch (error) {
+        console.error('Error listing drafts:', error);
+        throw error;
+      }
     },
     createDraft: async (data: any) => {
       const mimeMessage = [
