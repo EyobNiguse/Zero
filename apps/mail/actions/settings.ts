@@ -130,7 +130,7 @@ export async function handleGoldenTicket(email: string) {
             hasUsedTicket: '',
             updatedAt: new Date(),
             isEarlyAccess: true
-          })
+          }).where(eq(earlyAccess.email, email))
         } else {
           console.error('Error registering early access', error);
           throw error;
