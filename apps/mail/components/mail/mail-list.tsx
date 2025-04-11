@@ -530,25 +530,25 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     });
   });
 
-  useHotKey('Meta+a', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
+  // useHotKey('Meta+a', (event) => {
+  //   event?.preventDefault();
+  //   selectAll();
+  // });
 
   useHotKey('Control+a', (event) => {
     event?.preventDefault();
     selectAll();
   });
 
-  useHotKey('Meta+n', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
+  // useHotKey('Meta+n', (event) => {
+  //   event?.preventDefault();
+  //   selectAll();
+  // });
 
-  useHotKey('Control+n', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
+  // useHotKey('Control+n', (event) => {
+  //   event?.preventDefault();
+  //   selectAll();
+  // });
 
   const getSelectMode = useCallback((): MailSelectMode => {
     if (isKeyPressed('Control') || isKeyPressed('Meta')) {
