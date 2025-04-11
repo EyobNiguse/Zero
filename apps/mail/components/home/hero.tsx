@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import axios from 'axios';
 import { z } from 'zod';
+import { useSession } from '@/lib/auth-client';
 import { GithubIcon } from 'lucide-react';
 
 const betaSignupSchema = z.object({
@@ -26,6 +27,7 @@ export default function Hero() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [signupCount, setSignupCount] = useState<number>(0);
+  const { data: session } = useSession();
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -114,7 +116,7 @@ export default function Hero() {
                 className="dark:hover:bg-accent flex h-[40px] w-[170px] items-center justify-center rounded-md bg-white text-gray-900 hover:bg-gray-100 hover:text-gray-900 dark:bg-black dark:text-white dark:hover:text-white"
                 asChild
               >
-                <Link href="/login">
+                <Link href={session ? "/mail" : "/login"}>
                   {' '}
                   <Image
                     src="/white-icon.svg"
