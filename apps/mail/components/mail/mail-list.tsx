@@ -10,8 +10,6 @@ import {
   Tag,
   User,
   Users,
-  Inbox,
-  Mail,
 } from 'lucide-react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -27,6 +25,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { useKeyState } from '@/hooks/use-hot-key';
@@ -38,7 +37,6 @@ import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { useHotkeysContext } from 'react-hotkeys-hook';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const ThreadWrapper = ({
@@ -289,7 +287,7 @@ const Thread = memo(
                         )}
                       >
                         <span
-                          className={cn('truncate', threadIdParam ? 'max-w-[5ch] truncate' : '')}
+                          className={cn('truncate', threadIdParam ? 'max-w-[20ch] truncate' : '')}
                         >
                           {highlightText(message.sender.name, searchValue.highlight)}
                         </span>{' '}
@@ -297,7 +295,6 @@ const Thread = memo(
                           <span className="size-2 rounded bg-[#006FFE]" />
                         ) : null}
                       </p>
-                      <MailLabels labels={threadLabels} />
                       {message.totalReplies > 1 ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -322,9 +319,12 @@ const Thread = memo(
                       </p>
                     ) : null}
                   </div>
-                  <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
-                    {highlightText(message.subject, searchValue.highlight)}
-                  </p>
+                  <div className="flex justify-between">
+                    <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
+                      {highlightText(message.subject, searchValue.highlight)}
+                    </p>
+                    <MailLabels labels={threadLabels} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -390,8 +390,18 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
   const { enableScope, disableScope } = useHotkeysContext();
+  const {
+    data: { threads: items, nextPageToken },
+    isValidating,
+    isLoading,
+    loadMore,
+    mutate,
+  } = useThreads();
 
   const allCategories = Categories();
+
+  // Skip category filtering for drafts, spam, sent, archive, and bin pages
+  const shouldFilter = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
 
   const sessionData = useMemo(
     () => ({
@@ -401,11 +411,13 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [session],
   );
 
-  // Set initial category search value
+  // Set initial category search value only if not in special folders
   useEffect(() => {
+    if (!shouldFilter) return;
+
     const currentCategory = category
       ? allCategories.find((cat) => cat.id === category)
-      : allCategories.find((cat) => cat.id === 'Important');
+      : allCategories.find((cat) => cat.id === 'Primary');
 
     if (currentCategory && searchValue.value === '') {
       setSearchValue({
@@ -414,15 +426,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         folder: '',
       });
     }
-  }, []); // Run only once on mount
-
-  const {
-    data: { threads: items, nextPageToken },
-    isValidating,
-    isLoading,
-    loadMore,
-    mutate,
-  } = useThreads();
+  }, [allCategories]); // Run only once on mount
 
   // Add event listener for refresh
   useEffect(() => {
@@ -645,7 +649,7 @@ const MailLabels = memo(
                     {getLabelIcon(label)}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent className="px-1 py-0 text-xs">
+                <TooltipContent className="hidden px-1 py-0 text-xs">
                   {t('common.notes.title')}
                 </TooltipContent>
               </Tooltip>
@@ -691,7 +695,7 @@ const MailLabels = memo(
                   {getLabelIcon(label)}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="px-1 py-0 text-xs" variant={style}>
+              <TooltipContent className="hidden px-1 py-0 text-xs" variant={style}>
                 {labelContent}
               </TooltipContent>
             </Tooltip>

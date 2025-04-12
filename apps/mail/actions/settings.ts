@@ -122,10 +122,15 @@ export async function handleGoldenTicket(email: string) {
         updatedAt: new Date(),
         isEarlyAccess: true,
         hasUsedTicket: '',
-      }).catch((error) => {
+      }).catch(async (error) => {
         console.log('Error registering early access', error);
         if (error.code === '23505') {
           console.log('Email already registered for early access, granted access');
+          await db.update(earlyAccess).set({
+            hasUsedTicket: '',
+            updatedAt: new Date(),
+            isEarlyAccess: true
+          }).where(eq(earlyAccess.email, email))
         } else {
           console.error('Error registering early access', error);
           throw error;
@@ -135,7 +140,7 @@ export async function handleGoldenTicket(email: string) {
     await db.update(earlyAccess).set({
       hasUsedTicket: email,
       updatedAt: new Date()
-    }).where(eq(earlyAccess.email, foundUser?.email))
+    }).where(eq(earlyAccess.email, foundUser.email))
 
     return { success: true };
   } catch (error) {

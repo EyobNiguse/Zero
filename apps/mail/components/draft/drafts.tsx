@@ -19,7 +19,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'use-intl';
 
 export function DraftsLayout() {
-  const [searchMode, setSearchMode] = useState(false);
   const [searchValue] = useSearchValue();
   const [mail, setMail] = useMail();
   const router = useRouter();
@@ -52,59 +51,32 @@ export function DraftsLayout() {
             )}
           >
             <SidebarToggle className="h-fit px-2" />
-            {searchMode && (
-              <div className="flex flex-1 items-center justify-center gap-3">
-                <SearchBar />
-                <Button
-                  variant="ghost"
-                  className="md:h-fit md:px-2"
-                  onClick={() => setSearchMode(false)}
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
-            {!searchMode && (
+            {mail.bulkSelected.length > 0 ? (
               <>
-                {mail.bulkSelected.length > 0 ? (
-                  <>
-                    <div className="flex flex-1 items-center justify-center">
-                      <span className="text-sm font-medium tabular-nums">
-                        {t('common.mail.selected', { count: mail.bulkSelected.length })}
-                      </span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground ml-1.5 h-8 w-fit px-2"
-                            onClick={() => setMail({ ...mail, bulkSelected: [] })}
-                          >
-                            <X />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t('common.mail.clearSelection')}</TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <BulkSelectActions />
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-1.5">
+                <div className="flex flex-1 items-center justify-center">
+                  <span className="text-sm font-medium tabular-nums">
+                    {t('common.mail.selected', { count: mail.bulkSelected.length })}
+                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="md:h-fit md:px-2"
-                        onClick={() => setSearchMode(true)}
-                        onMouseEnter={() => searchIconRef.current?.startAnimation?.()}
-                        onMouseLeave={() => searchIconRef.current?.stopAnimation?.()}
+                        size="sm"
+                        className="text-muted-foreground ml-1.5 h-8 w-fit px-2"
+                        onClick={() => setMail({ ...mail, bulkSelected: [] })}
                       >
-                        <SearchIcon ref={searchIconRef} className="h-4 w-4" />
+                        <X />
                       </Button>
-                    </div>
-                  </>
-                )}
+                    </TooltipTrigger>
+                    <TooltipContent>{t('common.mail.clearSelection')}</TooltipContent>
+                  </Tooltip>
+                </div>
+                <BulkSelectActions />
               </>
+            ) : (
+              <div className="flex flex-1 justify-center">
+                <SearchBar />
+              </div>
             )}
           </div>
           <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
