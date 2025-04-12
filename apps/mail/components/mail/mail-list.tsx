@@ -387,6 +387,13 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [threadId, setThreadId] = useQueryState('threadId');
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
+  const {
+    data: { threads: items, nextPageToken },
+    isValidating,
+    isLoading,
+    loadMore,
+    mutate,
+  } = useThreads();
 
   const allCategories = Categories();
 
@@ -416,15 +423,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         folder: '',
       });
     }
-  }, []); // Run only once on mount
-
-  const {
-    data: { threads: items, nextPageToken },
-    isValidating,
-    isLoading,
-    loadMore,
-    mutate,
-  } = useThreads();
+  }, [allCategories]); // Run only once on mount
 
   // Add event listener for refresh
   useEffect(() => {

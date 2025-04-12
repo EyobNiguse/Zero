@@ -166,11 +166,13 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
     if (!emailData || !id) return;
     const unreadEmails = emailData.filter(e => e.unread);
     if (unreadEmails.length === 0) {
+      console.log('Marking email as read:', id);
       markAsRead({ ids: [id] }).catch((error) => {
         console.error('Failed to mark email as read:', error);
         toast.error(t('common.mail.failedToMarkAsRead'));
       }).then(() => Promise.all([mutateThread(), mutateThreads()]))
     } else {
+      console.log('Marking email as read:', id, ...unreadEmails.map(e => e.id));
       const ids = [id, ...unreadEmails.map(e => e.id)]
       markAsRead({ ids }).catch((error) => {
         console.error('Failed to mark email as read:', error);
