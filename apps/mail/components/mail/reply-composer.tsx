@@ -168,6 +168,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const [isEditingRecipients, setIsEditingRecipients] = useState(false);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
+  const ccInputRef = useRef<HTMLInputElement | null>(null);
+  const bccInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use global state instead of local state
   const composerIsOpen =
@@ -707,6 +709,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 setValue('cc', newEmails);
               }}
               placeholder="Add Cc recipients"
+              inputRef={ccInputRef}
             />
           )}
           
@@ -719,6 +722,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 setValue('bcc', newEmails);
               }}
               placeholder="Add Bcc recipients"
+              inputRef={bccInputRef}
             />
           )}
         </div>
@@ -755,64 +759,76 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     value,
     onRemove,
     placeholder,
+    inputRef,
   }: {
     type: 'to' | 'cc' | 'bcc';
     value: string[];
     onRemove: (index: number) => void;
     placeholder: string;
-  }) => (
-    <div className="flex items-center gap-2">
-      <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] opacity-50">
-        {type}:
-      </div>
-      <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-        {value.map((email, index) => (
-          <EmailTag key={index} email={email} onRemove={() => onRemove(index)} />
-        ))}
-        <input
-          type="email"
-          className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-          placeholder={value.length ? '' : placeholder}
-          {...register(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', {
-            validate: (value: string) => {
-              if (value && !isValidEmail(value)) {
-                return 'Invalid email format';
+    inputRef?: React.RefObject<HTMLInputElement | null>;
+  }) => {
+    const { ref, ...rest } = register(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', {
+      validate: (value: string) => {
+        if (value && !isValidEmail(value)) {
+          return 'Invalid email format';
+        }
+        return true;
+      },
+    });
+
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] opacity-50">
+          {type}:
+        </div>
+        <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+          {value.map((email, index) => (
+            <EmailTag key={index} email={email} onRemove={() => onRemove(index)} />
+          ))}
+          <input
+            ref={(e) => {
+              ref(e);
+              if (inputRef) {
+                (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = e;
               }
-              return true;
-            },
-          })}
-          onKeyDown={(e) => {
-            const currentValue = e.currentTarget.value;
-            if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && currentValue) {
-              e.preventDefault();
-              if (isValidEmail(currentValue)) {
-                const newEmails = [...value];
-                newEmails.push(currentValue);
+            }}
+            type="email"
+            className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+            placeholder={value.length ? '' : placeholder}
+            {...rest}
+            onKeyDown={(e) => {
+              const currentValue = e.currentTarget.value;
+              if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && currentValue) {
+                e.preventDefault();
+                if (isValidEmail(currentValue)) {
+                  const newEmails = [...value];
+                  newEmails.push(currentValue);
+                  setValue(type as 'to' | 'cc' | 'bcc', newEmails);
+                  setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
+                }
+              } else if (e.key === 'Backspace' && !currentValue && value.length > 0) {
+                e.preventDefault();
+                const newEmails = value.filter((_, i) => i !== value.length - 1);
                 setValue(type as 'to' | 'cc' | 'bcc', newEmails);
+              }
+            }}
+            onPaste={(e) => {
+              e.preventDefault();
+              const pastedText = e.clipboardData.getData('text');
+              const emails = pastedText.split(/[,\n]/).map((email) => email.trim());
+              const validEmails = emails.filter(
+                (email) => email && !value.includes(email) && isValidEmail(email),
+              );
+              if (validEmails.length > 0) {
+                setValue(type as 'to' | 'cc' | 'bcc', [...value, ...validEmails]);
                 setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
               }
-            } else if (e.key === 'Backspace' && !currentValue && value.length > 0) {
-              e.preventDefault();
-              const newEmails = value.filter((_, i) => i !== value.length - 1);
-              setValue(type as 'to' | 'cc' | 'bcc', newEmails);
-            }
-          }}
-          onPaste={(e) => {
-            e.preventDefault();
-            const pastedText = e.clipboardData.getData('text');
-            const emails = pastedText.split(/[,\n]/).map((email) => email.trim());
-            const validEmails = emails.filter(
-              (email) => email && !value.includes(email) && isValidEmail(email),
-            );
-            if (validEmails.length > 0) {
-              setValue(type as 'to' | 'cc' | 'bcc', [...value, ...validEmails]);
-              setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
-            }
-          }}
-        />
+            }}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Extract email tag component
   const EmailTag = ({ email, onRemove }: { email: string; onRemove: () => void }) => (
@@ -1000,6 +1016,9 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 e.stopPropagation();
                 setShowCc(true);
                 setIsEditingRecipients(true);
+                setTimeout(() => {
+                  ccInputRef.current?.focus();
+                }, 0);
               }}
               className="text-xs"
             >
@@ -1014,6 +1033,9 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 e.stopPropagation();
                 setShowBcc(true);
                 setIsEditingRecipients(true);
+                setTimeout(() => {
+                  bccInputRef.current?.focus();
+                }, 0);
               }}
               className="text-xs"
             >
