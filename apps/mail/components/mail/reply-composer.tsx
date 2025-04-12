@@ -50,6 +50,7 @@ import type { z } from 'zod';
 
 import { createDraft } from '@/actions/drafts';
 import { extractTextFromHTML } from '@/actions/extractText';
+import { Input } from '../ui/input';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -335,7 +336,6 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     if (e.target.files) {
       composerDispatch({ type: 'SET_UPLOADING', payload: true });
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
         setAttachments([...attachments, ...Array.from(e.target.files)]);
       } finally {
         composerDispatch({ type: 'SET_UPLOADING', payload: false });
@@ -1115,66 +1115,68 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 </Button>
               </div>
             )}
-
-            {attachments.length > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Paperclip className="h-4 w-4" />
-                    <span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  <span>
+                    {attachments.length || 'no'}{' '}
+                    {t('common.replyCompose.attachmentCount', { count: attachments.length })}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 touch-auto" align="start">
+                <div className="space-y-2">
+                  <div className="px-1">
+                    <h4 className="font-medium leading-none">
+                      {t('common.replyCompose.attachments')}
+                    </h4>
+                    <p className="text-muted-foreground text-sm">
                       {attachments.length}{' '}
-                      {t('common.replyCompose.attachmentCount', { count: attachments.length })}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 touch-auto" align="start">
-                  <div className="space-y-2">
-                    <div className="px-1">
-                      <h4 className="font-medium leading-none">
-                        {t('common.replyCompose.attachments')}
-                      </h4>
-                      <p className="text-muted-foreground text-sm">
-                        {attachments.length}{' '}
-                        {t('common.replyCompose.fileCount', { count: attachments.length })}
-                      </p>
-                    </div>
-                    <Separator />
-                    <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
-                      <div className="grid grid-cols-2 gap-2">
-                        {attachments.map((file, index) => (
-                          <div
-                            key={index}
-                            className="group relative overflow-hidden rounded-md border"
-                          >
-                            <UploadedFileIcon
-                              removeAttachment={removeAttachment}
-                              index={index}
-                              file={file}
-                            />
-                            <div className="bg-muted/10 p-2">
-                              <p className="text-xs font-medium">
-                                {truncateFileName(file.name, 20)}
-                              </p>
-                              <p className="text-muted-foreground text-xs">
-                                {(file.size / (1024 * 1024)).toFixed(2)} MB
-                              </p>
-                            </div>
+                      {t('common.replyCompose.fileCount', { count: attachments.length })}
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      {attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="group relative overflow-hidden rounded-md border"
+                        >
+                          <UploadedFileIcon
+                            removeAttachment={removeAttachment}
+                            index={index}
+                            file={file}
+                          />
+                          <div className="bg-muted/10 p-2">
+                            <p className="text-xs font-medium">
+                              {truncateFileName(file.name, 20)}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {(file.size / (1024 * 1024)).toFixed(2)} MB
+                            </p>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-            )}
-            <input
+                </div>
+              </PopoverContent>
+            </Popover>
+            <div className='-left-5 relative group'>
+              <Input
               type="file"
               id="attachment-input"
-              className="hidden"
+                className='w-10 opacity-0'
               onChange={handleAttachment}
               multiple
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
             />
+              <Button variant={'outline'} size={'icon'} type='button' className='transition-transform group-hover:scale-90 scale-75 absolute top-0 left-0 rounded-full pointer-events-none'>
+                <Plus />
+              </Button>
+            </div>
           </div>
           <div className="mr-2 flex items-center gap-2">
             <Button
