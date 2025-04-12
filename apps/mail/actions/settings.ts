@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@zero/db";
+import { Resend } from "resend";
 
 async function getAuthenticatedUserId(): Promise<string> {
   const headersList = await headers();
@@ -141,6 +142,17 @@ export async function handleGoldenTicket(email: string) {
       hasUsedTicket: email,
       updatedAt: new Date()
     }).where(eq(earlyAccess.email, foundUser.email))
+
+    const resend = process.env.RESEND_API_KEY
+      ? new Resend(process.env.RESEND_API_KEY)
+      : { emails: { send: async (...args: any[]) => console.log(args) } };
+
+    await resend.emails.send({
+      from: '0.email <onboarding@0.email>',
+      to: email,
+      subject: 'You <> Zero',
+      text: `Congrats on joining Zero (beta)! Your friend gave you direct access to the beta while skipping the waitlist! You are able to log in now with your email. If you have any questions or need help, please don't hesitate to reach out to us on Discord https://discord.gg/0email.`,
+    });
 
     return { success: true };
   } catch (error) {

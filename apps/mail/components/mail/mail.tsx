@@ -605,7 +605,7 @@ export const Categories = () => {
 
   return [
     {
-      id: 'Important',
+      id: 'Primary',
       name: t('common.mailCategories.important'),
       searchValue: 'is:important',
       icon: <AlertTriangle className="h-4 w-4" />,
