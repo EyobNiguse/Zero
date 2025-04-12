@@ -1,4 +1,4 @@
-import { Shortcut } from '@/config/shortcuts';
+import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
 
 const DB_NAME = 'hotkeysDB';
 const STORE_NAME = 'hotkeys';
@@ -14,6 +14,7 @@ class HotkeysDB {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
+        this.initializeDefaultShortcuts().catch(console.error);
         resolve();
       };
 
@@ -24,6 +25,19 @@ class HotkeysDB {
         }
       };
     });
+  }
+
+  private async initializeDefaultShortcuts(): Promise<void> {
+    // Get all existing shortcuts from IndexedDB
+    const existingShortcuts = await this.getAllHotkeys();
+    const existingActions = new Set(existingShortcuts.map(s => s.action));
+
+    // Save any default shortcuts that don't exist in IndexedDB
+    const savePromises = keyboardShortcuts
+      .filter(shortcut => !existingActions.has(shortcut.action))
+      .map(shortcut => this.saveHotkey(shortcut));
+
+    await Promise.all(savePromises);
   }
 
   async saveHotkey(shortcut: Shortcut): Promise<void> {
