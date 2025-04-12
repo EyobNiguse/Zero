@@ -20,6 +20,12 @@ import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Plus } from 'lucide-react';
+import { truncateFileName } from '@/lib/utils';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -300,30 +306,49 @@ export function CreateEmail({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
 
-    if (e.dataTransfer.files) {
-      setAttachments((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
-      setHasUnsavedChanges(true);
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        setAttachments((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
+        setHasUnsavedChanges(true);
+      }
     }
   };
 
   // Add a mount ref to ensure we only auto-focus once
   const isFirstMount = React.useRef(true);
+
+  const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setAttachments((prev) => [...prev, ...Array.from(files)]);
+      setHasUnsavedChanges(true);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true);
+  };
 
   React.useEffect(() => {
     if (initialTo) {
@@ -657,6 +682,68 @@ export function CreateEmail({
                   }
                 }}
               />
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  <span>
+                    {attachments.length || 'no'}{' '}
+                    {t('common.replyCompose.attachmentCount', { count: attachments.length })}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 touch-auto" align="start">
+                <div className="space-y-2">
+                  <div className="px-1">
+                    <h4 className="font-medium leading-none">
+                      {t('common.replyCompose.attachments')}
+                    </h4>
+                    <p className="text-muted-foreground text-sm">
+                      {attachments.length}{' '}
+                      {t('common.replyCompose.fileCount', { count: attachments.length })}
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      {attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="group relative overflow-hidden rounded-md border"
+                        >
+                          <UploadedFileIcon
+                            removeAttachment={removeAttachment}
+                            index={index}
+                            file={file}
+                          />
+                          <div className="bg-muted/10 p-2">
+                            <p className="text-xs font-medium">
+                              {truncateFileName(file.name, 20)}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {(file.size / (1024 * 1024)).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <div className='-left-5 relative group'>
+              <Input
+                type="file"
+                id="attachment-input"
+                className='w-10 opacity-0'
+                onChange={handleAttachment}
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              />
+              <Button variant={'outline'} size={'icon'} type='button' className='transition-transform group-hover:scale-90 scale-75 absolute top-0 left-0 rounded-full pointer-events-none'>
+                <Plus />
+              </Button>
             </div>
           </div>
           <div className="flex justify-end gap-3">
