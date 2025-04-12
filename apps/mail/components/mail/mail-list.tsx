@@ -30,7 +30,6 @@ import { highlightText } from '@/lib/email-utils.client';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { useKeyState } from '@/hooks/use-hot-key';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
@@ -39,6 +38,7 @@ import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
 import { toast } from 'sonner';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const ThreadWrapper = ({
@@ -141,6 +141,7 @@ const Thread = memo(
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
+      window.dispatchEvent(new CustomEvent('emailHover', { detail: { id: null } }));
     };
 
     // Reset prefetch flag when message changes
@@ -388,6 +389,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [threadId, setThreadId] = useQueryState('threadId');
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
+  const { enableScope, disableScope } = useHotkeysContext();
 
   const allCategories = Categories();
 
@@ -486,74 +488,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     }
   }, [items, setMail, mail.bulkSelected, t]);
 
-  useHotkeys('Meta+Shift+u', () => {
-    markAsUnread({ ids: mail.bulkSelected }).then((result) => {
-      if (result.success) {
-        toast.success(t('common.mail.markedAsUnread'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsUnread'));
-    });
-  });
-
-  useHotkeys('Control+Shift+u', () => {
-    markAsUnread({ ids: mail.bulkSelected }).then((response) => {
-      if (response.success) {
-        toast.success(t('common.mail.markedAsUnread'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsUnread'));
-    });
-  });
-
-  useHotkeys('Meta+Shift+i', () => {
-    markAsRead({ ids: mail.bulkSelected }).then((data) => {
-      if (data.success) {
-        toast.success(t('common.mail.markedAsRead'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsRead'));
-    });
-  });
-
-  useHotkeys('Control+Shift+i', () => {
-    markAsRead({ ids: mail.bulkSelected }).then((response) => {
-      if (response.success) {
-        toast.success(t('common.mail.markedAsRead'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsRead'));
-    });
-  });
-
-  useHotkeys('Meta+a', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
-
-  useHotkeys('Control+a', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
-
-  useHotkeys('Meta+n', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
-
-  useHotkeys('Control+n', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
-
   const getSelectMode = useCallback((): MailSelectMode => {
     if (isKeyPressed('Control') || isKeyPressed('Meta')) {
       return 'mass';
@@ -627,6 +561,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       <div
         ref={parentRef}
         className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
+        onMouseEnter={() => {
+          console.log('[MailList] Mouse Enter - Enabling scope: mail-list');
+          enableScope('mail-list');
+        }}
+        onMouseLeave={() => {
+          console.log('[MailList] Mouse Leave - Disabling scope: mail-list');
+          disableScope('mail-list');
+        }}
       >
         <ScrollArea className="hide-scrollbar h-full overflow-auto">
           {items.map((data, index) => {

@@ -47,6 +47,7 @@ import { useMail } from '@/components/mail/use-mail';
 import { useThread } from '@/hooks/use-threads';
 import { useQueryState } from 'nuqs';
 import { Sender } from '@/types';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 
 import { createDraft } from '@/actions/drafts';
 import { extractTextFromHTML } from '@/actions/extractText';
@@ -145,6 +146,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const [includeSignature, setIncludeSignature] = useState(true);
   const { settings } = useSettings();
   const [draftId, setDraftId] = useQueryState('draftId');
+  const { enableScope, disableScope } = useHotkeysContext();
 
   // Use global state instead of local state
   const composerIsOpen = mode === 'reply' ? mail.replyComposerOpen : mail.forwardComposerOpen;
@@ -652,6 +654,21 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     form.setValue('messageContent', content);
   };
 
+  useEffect(() => {
+    if (composerIsOpen) {
+      console.log('Enabling compose scope (ReplyCompose)');
+      enableScope('compose');
+    } else {
+      console.log('Disabling compose scope (ReplyCompose)');
+      disableScope('compose');
+    }
+
+    return () => {
+      console.log('Cleaning up compose scope (ReplyCompose)');
+      disableScope('compose');
+    };
+  }, [composerIsOpen, enableScope, disableScope]);
+
   // Simplified composer visibility check
   if (!composerIsOpen) {
     if (mode === 'reply') {
@@ -672,7 +689,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     }
     return null;
   }
-  if (!emailData) return;
+  if (!emailData) return null;
   return (
     <div className="bg-offsetLight dark:bg-offsetDark w-full px-2">
       <form

@@ -20,6 +20,8 @@ import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
 import { useSettings } from '@/hooks/use-settings';
+import { useHotkeysContext } from 'react-hotkeys-hook';
+import { useEffect } from 'react';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -59,6 +61,7 @@ export function CreateEmail({
   const [draftId, setDraftId] = useQueryState('draftId');
   const [includeSignature, setIncludeSignature] = React.useState(true);
   const { settings } = useSettings();
+  const { enableScope, disableScope } = useHotkeysContext();
   
   const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(() => {
     if (initialBody) {
@@ -346,6 +349,16 @@ export function CreateEmail({
       setMessageContent(initialBody);
     }
   }, [initialTo, initialSubject, initialBody, defaultValue]);
+
+  useEffect(() => {
+    console.log('Enabling compose scope (CreateEmail)');
+    enableScope('compose');
+
+    return () => {
+      console.log('Disabling compose scope (CreateEmail)');
+      disableScope('compose');
+    };
+  }, [enableScope, disableScope]);
 
   return (
     <div

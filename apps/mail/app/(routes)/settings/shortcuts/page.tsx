@@ -7,6 +7,7 @@ import { HotkeyRecorder } from './hotkey-recorder';
 import { useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import { formatDisplayKeys } from '@/lib/hotkeys/use-hotkey-utils';
 
 export default function ShortcutsPage() {
   const shortcuts = keyboardShortcuts; //now gets shortcuts from the config file
@@ -38,6 +39,7 @@ export default function ShortcutsPage() {
 
 function Shortcut({ children, keys }: { children: ReactNode; keys: string[] }) {
   const [isRecording, setIsRecording] = useState(false);
+  const displayKeys = formatDisplayKeys(keys);
 
   const handleHotkeyRecorded = (newKeys: string[]) => {
     // TODO: Implement saving the new hotkey
@@ -54,7 +56,7 @@ function Shortcut({ children, keys }: { children: ReactNode; keys: string[] }) {
       >
         <span className="font-medium">{children}</span>
         <div className="flex select-none gap-1">
-          {keys.map((key) => (
+          {displayKeys.map((key) => (
             <kbd
               key={key}
               className="border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6"

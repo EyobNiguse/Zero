@@ -6,14 +6,12 @@ import { X, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
+import { createContext, useContext } from 'react';
 
 interface AISidebarProps {
   className?: string;
 }
-
-// Create a context to manage the AI sidebar state globally
-import { createContext, useContext } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
 
 type AISidebarContextType = {
   open: boolean;
@@ -46,14 +44,6 @@ export function AISidebarProvider({ children }: { children: React.ReactNode }) {
 
 export function AISidebar({ className }: AISidebarProps) {
   const { open, setOpen } = useAISidebar();
-
-  useHotkeys('Meta+0', () => {
-    setOpen(!open);
-  });
-
-  useHotkeys('Control+0', () => {
-    setOpen(!open);
-  });
 
   return (
     <>

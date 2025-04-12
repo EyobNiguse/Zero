@@ -11,7 +11,6 @@ import { ArchiveX, BellOff, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn, defaultPageSize } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { SearchBar } from '../mail/search-bar';
 import { useDrafts } from '@/hooks/use-drafts';
 import { useSession } from '@/lib/auth-client';
@@ -34,18 +33,6 @@ export function DraftsLayout() {
   }, [session?.user, isPending]);
 
   const { isLoading, isValidating } = useDrafts(searchValue.value, defaultPageSize);
-
-  useHotkeys('Meta+F', () => {
-    setSearchMode(true);
-  });
-
-  useHotkeys('Esc', (event) => {
-    // @ts-expect-error
-    event.preventDefault();
-    if (searchMode) {
-      setSearchMode(false);
-    }
-  });
 
   const searchIconRef = useRef<any>(null);
 
