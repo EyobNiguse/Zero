@@ -35,5 +35,6 @@ export const processIP = (req: NextRequest) => {
         console.log('No IP detected');
         throw new Error('No IP detected');
     }
-    return cfIP ?? ip!;
+    const cleanIp = ip?.split(',')[0]?.trim() ?? null;
+    return cfIP ?? cleanIp ?? '127.0.0.1';
 }
