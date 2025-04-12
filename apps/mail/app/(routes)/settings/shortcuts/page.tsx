@@ -1,17 +1,34 @@
 'use client';
 
 import { SettingsCard } from '@/components/settings/settings-card';
-import { keyboardShortcuts } from '@/config/shortcuts';
+import { keyboardShortcuts, type Shortcut } from '@/config/shortcuts';
 import type { MessageKey } from '@/config/navigation';
 import { HotkeyRecorder } from './hotkey-recorder';
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { formatDisplayKeys } from '@/lib/hotkeys/use-hotkey-utils';
+import { hotkeysDB } from '@/lib/hotkeys/hotkeys-db';
+import { toast } from 'sonner';
 
 export default function ShortcutsPage() {
-  const shortcuts = keyboardShortcuts; //now gets shortcuts from the config file
+  const [shortcuts, setShortcuts] = useState<Shortcut[]>(keyboardShortcuts);
   const t = useTranslations();
+
+  useEffect(() => {
+    // Load any custom shortcuts from IndexedDB
+    hotkeysDB.getAllHotkeys()
+      .then(savedShortcuts => {
+        if (savedShortcuts.length > 0) {
+          const updatedShortcuts = keyboardShortcuts.map(defaultShortcut => {
+            const savedShortcut = savedShortcuts.find(s => s.action === defaultShortcut.action);
+            return savedShortcut || defaultShortcut;
+          });
+          setShortcuts(updatedShortcuts);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   return (
     <div className="grid gap-6">
@@ -20,14 +37,32 @@ export default function ShortcutsPage() {
         description={t('pages.settings.shortcuts.description')}
         footer={
           <div className="flex gap-4">
-            <Button variant="outline">{t('common.actions.resetToDefaults')}</Button>
-            <Button>{t('common.actions.saveChanges')}</Button>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                try {
+                  // Save all default shortcuts to IndexedDB
+                  await Promise.all(keyboardShortcuts.map(shortcut => hotkeysDB.saveHotkey(shortcut)));
+                  setShortcuts(keyboardShortcuts);
+                  toast.success('Shortcuts reset to defaults');
+                } catch (error) {
+                  console.error('Failed to reset shortcuts:', error);
+                  toast.error('Failed to reset shortcuts');
+                }
+              }}
+            >
+              {t('common.actions.resetToDefaults')}
+            </Button>
           </div>
         }
       >
         <div className="grid gap-2 md:grid-cols-2">
           {shortcuts.map((shortcut, index) => (
-            <Shortcut key={index} keys={shortcut.keys}>
+            <Shortcut 
+              key={index} 
+              keys={shortcut.keys} 
+              action={shortcut.action}
+            >
               {t(`pages.settings.shortcuts.actions.${shortcut.action}` as MessageKey)}
             </Shortcut>
           ))}
@@ -37,13 +72,29 @@ export default function ShortcutsPage() {
   );
 }
 
-function Shortcut({ children, keys }: { children: ReactNode; keys: string[] }) {
+function Shortcut({ children, keys, action }: { children: ReactNode; keys: string[]; action: string }) {
   const [isRecording, setIsRecording] = useState(false);
   const displayKeys = formatDisplayKeys(keys);
 
-  const handleHotkeyRecorded = (newKeys: string[]) => {
-    // TODO: Implement saving the new hotkey
-    console.log('New hotkey recorded:', newKeys);
+  const handleHotkeyRecorded = async (newKeys: string[]) => {
+    try {
+      // Find the original shortcut to preserve its type and description
+      const originalShortcut = keyboardShortcuts.find(s => s.action === action);
+      if (!originalShortcut) {
+        throw new Error('Original shortcut not found');
+      }
+
+      const updatedShortcut: Shortcut = {
+        ...originalShortcut,
+        keys: newKeys,
+      };
+      
+      await hotkeysDB.saveHotkey(updatedShortcut);
+      toast.success('Shortcut saved successfully');
+    } catch (error) {
+      console.error('Failed to save shortcut:', error);
+      toast.error('Failed to save shortcut');
+    }
   };
 
   return (

@@ -1,8 +1,16 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
+import { hotkeysDB } from './hotkeys-db';
 
-export const findShortcut = (action: string) => keyboardShortcuts.find(sc => sc.action === action);
+export const findShortcut = async (action: string): Promise<Shortcut | undefined> => {
+  // Try to get from IndexedDB first
+  const savedShortcut = await hotkeysDB.getHotkey(action);
+  if (savedShortcut) return savedShortcut;
+  
+  // Fall back to default shortcuts
+  return keyboardShortcuts.find(sc => sc.action === action);
+};
 
 const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
@@ -81,24 +89,40 @@ export function useShortcut(
   callback: () => void,
   options: Partial<HotkeyOptions> = {}
 ) {
+  const [currentShortcut, setCurrentShortcut] = useState<Shortcut>(shortcut);
+
+  useEffect(() => {
+    // Save the shortcut to IndexedDB
+    hotkeysDB.saveHotkey(shortcut).catch(console.error);
+
+    // Load any custom shortcut from IndexedDB
+    hotkeysDB.getHotkey(shortcut.action)
+      .then(saved => {
+        if (saved && saved.keys !== shortcut.keys) {
+          setCurrentShortcut(saved);
+        }
+      })
+      .catch(console.error);
+  }, [shortcut]);
+
   const { scope, preventDefault, ...restOptions } = {
     ...defaultHotkeyOptions,
     ...options,
-    ...shortcut,
+    ...currentShortcut,
   };
 
   const handleKey = useCallback(
     (event: KeyboardEvent) => {
-      if (shortcut.preventDefault || preventDefault) {
+      if (currentShortcut.preventDefault || preventDefault) {
         event.preventDefault();
       }
       callback();
     },
-    [callback, preventDefault]
+    [callback, preventDefault, currentShortcut]
   );
 
   useHotkeys(
-    formatKeys(shortcut.keys),
+    formatKeys(currentShortcut.keys),
     handleKey,
     {
       ...restOptions,
