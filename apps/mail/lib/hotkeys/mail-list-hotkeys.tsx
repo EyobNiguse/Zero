@@ -1,19 +1,22 @@
 'use client';
 
+import { markAsUnread as markAsUnreadAction } from '@/actions/mail';
+import { keyboardShortcuts } from '@/config/shortcuts';
+import { useCallback, useEffect, useRef } from 'react';
 import { useMail } from '@/components/mail/use-mail';
+import { useShortcuts } from './use-hotkey-utils';
 import { useThreads } from '@/hooks/use-threads';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
-import { markAsUnread as markAsUnreadAction } from '@/actions/mail';
 import { toast } from 'sonner';
-import { useCallback, useEffect, useRef } from 'react';
-import { keyboardShortcuts } from '@/config/shortcuts';
-import { useShortcuts } from './use-hotkey-utils';
 
 export function MailListHotkeys() {
   const scope = 'mail-list';
   const [mail, setMail] = useMail();
-  const { data: { threads: items }, mutate } = useThreads();
+  const {
+    data: { threads: items },
+    mutate,
+  } = useThreads();
   const { mutate: mutateStats } = useStats();
   const t = useTranslations();
   const hoveredEmailId = useRef<string | null>(null);
@@ -77,18 +80,10 @@ export function MailListHotkeys() {
 
   const handlers = {
     markAsUnread,
-    delete: () => console.log('Delete Selected'),
-    muteThread: () => console.log('Mute Thread'),
-    archiveEmail: () => console.log('Archive Email'),
-    markAsSpam: () => console.log('Mark as Spam'),
-    moveToFolder: () => console.log('Move to Folder'),
-    expandEmailView: () => console.log('Expand Email View'),
     selectAll,
   };
 
-  const mailListShortcuts = keyboardShortcuts.filter(
-    shortcut => shortcut.scope === scope
-  );
+  const mailListShortcuts = keyboardShortcuts.filter((shortcut) => shortcut.scope === scope);
 
   useShortcuts(mailListShortcuts, handlers, { scope });
 
