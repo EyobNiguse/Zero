@@ -14,8 +14,9 @@ export const template = (html: string, imagesEnabled: boolean = false) => {
     template.head.appendChild(child);
   });
 
-  const nonce = btoa(Math.random().toString(36).substring(2, 15));
-
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  const nonce = btoa(String.fromCharCode(...array));
   // Add CSP meta tag based on imagesEnabled state
   const cspMeta = template.createElement('meta');
   cspMeta.httpEquiv = 'Content-Security-Policy';
