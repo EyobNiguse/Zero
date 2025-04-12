@@ -397,7 +397,8 @@
           "helpWithShortcuts": "Help with shortcuts",
           "recordHotkey": "Record Hotkey",
           "pressKeys": "Press keys",
-          "releaseKeys": "Release keys"
+          "releaseKeys": "Release keys",
+          "selectAll": "Select All"
         }
       }
     },
