@@ -40,7 +40,6 @@ import { TextButtons } from '@/components/create/selectors/text-buttons';
 import { suggestionItems } from '@/components/create/slash-command';
 import { defaultExtensions } from '@/components/create/extensions';
 import { ImageResizer, handleCommandNavigation } from 'novel';
-import { uploadFn } from '@/components/create/image-upload';
 import { handleImageDrop, handleImagePaste } from 'novel';
 import EditorMenu from '@/components/create/editor-menu';
 import { UploadedFileIcon } from './uploaded-file-icon';
@@ -528,9 +527,10 @@ export default function Editor({
                 return false;
               },
             },
-            handlePaste: (view, event) => handleImagePaste(view, event, uploadFn),
             handleDrop: (view, event, _slice, moved) =>
-              handleImageDrop(view, event, moved, uploadFn),
+              handleImageDrop(view, event, moved, (file) => {
+                onAttachmentsChange?.([file]);
+              }),
             attributes: {
               class: 'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full min-h-[200px] px-4 py-2',
               'data-placeholder': placeholder,

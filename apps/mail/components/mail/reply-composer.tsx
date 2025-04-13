@@ -334,7 +334,18 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     await handleSendEmail();
   };
 
-  const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachment = (files: File[]) => {
+    if (files) {
+      composerDispatch({ type: 'SET_UPLOADING', payload: true });
+      try {
+        setAttachments([...attachments, ...files]);
+      } finally {
+        composerDispatch({ type: 'SET_UPLOADING', payload: false });
+      }
+    }
+  };
+
+  const handleAttachmentEvent = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       composerDispatch({ type: 'SET_UPLOADING', payload: true });
       try {
@@ -1049,6 +1060,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="w-full overflow-auto">
             <Editor
+              onAttachmentsChange={handleAttachment}
               key={composerState.editorKey}
               onChange={handleEditorChange}
               initialValue={composerState.editorInitialValue}
@@ -1191,7 +1203,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               type="file"
               id="attachment-input"
                 className='w-10 opacity-0'
-              onChange={handleAttachment}
+                onChange={handleAttachmentEvent}
               multiple
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
             />
