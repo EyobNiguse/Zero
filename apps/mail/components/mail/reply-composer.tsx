@@ -234,14 +234,14 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const ccEmails = watch('cc');
   const bccEmails = watch('bcc');
 
-  const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
-    const trimmedEmail = value.trim().replace(/,$/, '');
-    const currentEmails = getValues(type);
-    if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
-      setValue(type, [...currentEmails, trimmedEmail]);
-      setValue(`${type}Input`, '');
-    }
-  };
+  // const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
+  //   const trimmedEmail = value.trim().replace(/,$/, '');
+  //   const currentEmails = getValues(type);
+  //   if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
+  //     setValue(type, [...currentEmails, trimmedEmail]);
+  //     setValue(`${type}Input`, '');
+  //   }
+  // };
 
   const handleSendEmail = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (e) {
@@ -275,16 +275,16 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
       const ccRecipients: Sender[] | undefined = showCc
         ? ccEmails.map((email) => ({
-            email,
-            name: email.split('@')[0] || 'User',
-          }))
+          email,
+          name: email.split('@')[0] || 'User',
+        }))
         : undefined;
 
       const bccRecipients: Sender[] | undefined = showBcc
         ? bccEmails.map((email) => ({
-            email,
-            name: email.split('@')[0] || 'User',
-          }))
+          email,
+          name: email.split('@')[0] || 'User',
+        }))
         : undefined;
 
       const messageId = originalEmail.messageId;
@@ -497,15 +497,15 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const isMessageEmpty =
     !getValues('messageContent') ||
     getValues('messageContent') ===
-      JSON.stringify({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [],
-          },
-        ],
-      });
+    JSON.stringify({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [],
+        },
+      ],
+    });
 
   // Check if form is valid for submission
   const isFormValid = !isMessageEmpty || attachments.length > 0;
@@ -701,7 +701,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               </span>
             </div>
           </div>
-          
+
           <RecipientInput
             type="to"
             value={toEmails}
@@ -711,7 +711,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
             }}
             placeholder={t('pages.createEmail.example')}
           />
-          
+
           {showCc && (
             <RecipientInput
               type="cc"
@@ -724,7 +724,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               inputRef={ccInputRef}
             />
           )}
-          
+
           {showBcc && (
             <RecipientInput
               type="bcc"
@@ -1026,7 +1026,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setShowCc(true);
+                setShowCc(!showCc);
+                if (showCc) {
+                  setValue('cc', []);
+                }
                 setIsEditingRecipients(true);
                 setTimeout(() => {
                   ccInputRef.current?.focus();
@@ -1034,7 +1037,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               }}
               className="text-xs"
             >
-              Add Cc
+              {showCc ? 'Remove Cc' : 'Add Cc'}
             </Button>
             <Button
               type="button"
@@ -1043,7 +1046,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setShowBcc(true);
+                setShowBcc(!showBcc);
+                if (showCc) {
+                  setValue('bcc', []);
+                }
                 setIsEditingRecipients(true);
                 setTimeout(() => {
                   bccInputRef.current?.focus();
@@ -1051,7 +1057,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               }}
               className="text-xs"
             >
-              Add Bcc
+              {showBcc ? 'Remove Bcc' : 'Add Bcc'}
             </Button>
             <CloseButton onClick={toggleComposer} />
           </div>
@@ -1201,13 +1207,13 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
             </Popover>
             <div className='-left-5 relative group'>
               <Input
-              type="file"
-              id="attachment-input"
+                type="file"
+                id="attachment-input"
                 className='w-10 opacity-0'
                 onChange={handleAttachmentEvent}
-              multiple
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-            />
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              />
               <Button variant={'outline'} size={'icon'} type='button' className='transition-transform group-hover:scale-90 scale-75 absolute top-0 left-0 rounded-full pointer-events-none'>
                 <Plus />
               </Button>
