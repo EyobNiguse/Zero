@@ -423,7 +423,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         folder: '',
       });
     }
-  }, [allCategories]); // Run only once on mount
+  }, [allCategories, category, shouldFilter, searchValue.value, setSearchValue]);
 
   // Add event listener for refresh
   useEffect(() => {
