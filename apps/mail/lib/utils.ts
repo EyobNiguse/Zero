@@ -388,14 +388,14 @@ export const constructReplyBody = (
 
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-      <div style="margin-bottom: 20px; line-height: 1.5;">
+      <div style="">
         ${formattedMessage}
       </div>
-      <div style="padding-left: 16px; margin-top: 20px; border-left: 3px solid #e2e8f0; color: #64748b;">
-        <div style="margin-bottom: 12px; font-size: 14px;">
+      <div style="padding-left: 16px; border-left: 3px solid #e2e8f0; color: #64748b;">
+        <div style="font-size: 12px;">
           On ${originalDate}, ${senderName} ${recipientEmails ? `&lt;${recipientEmails}&gt;` : ''} wrote:
         </div>
-        <div style="white-space: pre-wrap; line-height: 1.5;">
+        <div style="">
           ${quotedMessage || ''}
         </div>
       </div>

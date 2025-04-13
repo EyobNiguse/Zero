@@ -50,6 +50,7 @@ import type { z } from 'zod';
 
 import { createDraft } from '@/actions/drafts';
 import { extractTextFromHTML } from '@/actions/extractText';
+import { Input } from '../ui/input';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -158,7 +159,7 @@ type FormData = {
 
 export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const [threadId] = useQueryState('threadId');
-  const { data: emailData } = useThread(threadId);
+  const { data: emailData, mutate } = useThread(threadId);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
   const [mail, setMail] = useMail();
@@ -167,6 +168,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const [isEditingRecipients, setIsEditingRecipients] = useState(false);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
+  const ccInputRef = useRef<HTMLInputElement | null>(null);
+  const bccInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use global state instead of local state
   const composerIsOpen =
@@ -298,7 +301,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         quotedMessage,
       );
 
-      const inReplyTo = messageId;
+      const inReplyTo = messageId
       const existingRefs = originalEmail.references?.split(' ') || [];
       const references = [...existingRefs, originalEmail?.inReplyTo, cleanEmailAddress(messageId)]
         .filter(Boolean)
@@ -316,7 +319,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
           References: references,
           'Thread-Id': threadId ?? '',
         },
-      });
+        threadId
+      }).then(() => mutate());
 
       reset();
       setComposerIsOpen(false);
@@ -331,11 +335,21 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     await handleSendEmail();
   };
 
-  const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachment = (files: File[]) => {
+    if (files) {
+      composerDispatch({ type: 'SET_UPLOADING', payload: true });
+      try {
+        setAttachments([...attachments, ...files]);
+      } finally {
+        composerDispatch({ type: 'SET_UPLOADING', payload: false });
+      }
+    }
+  };
+
+  const handleAttachmentEvent = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       composerDispatch({ type: 'SET_UPLOADING', payload: true });
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
         setAttachments([...attachments, ...Array.from(e.target.files)]);
       } finally {
         composerDispatch({ type: 'SET_UPLOADING', payload: false });
@@ -707,6 +721,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 setValue('cc', newEmails);
               }}
               placeholder="Add Cc recipients"
+              inputRef={ccInputRef}
             />
           )}
           
@@ -719,6 +734,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 setValue('bcc', newEmails);
               }}
               placeholder="Add Bcc recipients"
+              inputRef={bccInputRef}
             />
           )}
         </div>
@@ -755,64 +771,76 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     value,
     onRemove,
     placeholder,
+    inputRef,
   }: {
     type: 'to' | 'cc' | 'bcc';
     value: string[];
     onRemove: (index: number) => void;
     placeholder: string;
-  }) => (
-    <div className="flex items-center gap-2">
-      <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] opacity-50">
-        {type}:
-      </div>
-      <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-        {value.map((email, index) => (
-          <EmailTag key={index} email={email} onRemove={() => onRemove(index)} />
-        ))}
-        <input
-          type="email"
-          className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-          placeholder={value.length ? '' : placeholder}
-          {...register(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', {
-            validate: (value: string) => {
-              if (value && !isValidEmail(value)) {
-                return 'Invalid email format';
+    inputRef?: React.RefObject<HTMLInputElement | null>;
+  }) => {
+    const { ref, ...rest } = register(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', {
+      validate: (value: string) => {
+        if (value && !isValidEmail(value)) {
+          return 'Invalid email format';
+        }
+        return true;
+      },
+    });
+
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] opacity-50">
+          {type}:
+        </div>
+        <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+          {value.map((email, index) => (
+            <EmailTag key={index} email={email} onRemove={() => onRemove(index)} />
+          ))}
+          <input
+            ref={(e) => {
+              ref(e);
+              if (inputRef) {
+                (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = e;
               }
-              return true;
-            },
-          })}
-          onKeyDown={(e) => {
-            const currentValue = e.currentTarget.value;
-            if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && currentValue) {
-              e.preventDefault();
-              if (isValidEmail(currentValue)) {
-                const newEmails = [...value];
-                newEmails.push(currentValue);
+            }}
+            type="email"
+            className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+            placeholder={value.length ? '' : placeholder}
+            {...rest}
+            onKeyDown={(e) => {
+              const currentValue = e.currentTarget.value;
+              if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && currentValue) {
+                e.preventDefault();
+                if (isValidEmail(currentValue)) {
+                  const newEmails = [...value];
+                  newEmails.push(currentValue);
+                  setValue(type as 'to' | 'cc' | 'bcc', newEmails);
+                  setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
+                }
+              } else if (e.key === 'Backspace' && !currentValue && value.length > 0) {
+                e.preventDefault();
+                const newEmails = value.filter((_, i) => i !== value.length - 1);
                 setValue(type as 'to' | 'cc' | 'bcc', newEmails);
+              }
+            }}
+            onPaste={(e) => {
+              e.preventDefault();
+              const pastedText = e.clipboardData.getData('text');
+              const emails = pastedText.split(/[,\n]/).map((email) => email.trim());
+              const validEmails = emails.filter(
+                (email) => email && !value.includes(email) && isValidEmail(email),
+              );
+              if (validEmails.length > 0) {
+                setValue(type as 'to' | 'cc' | 'bcc', [...value, ...validEmails]);
                 setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
               }
-            } else if (e.key === 'Backspace' && !currentValue && value.length > 0) {
-              e.preventDefault();
-              const newEmails = value.filter((_, i) => i !== value.length - 1);
-              setValue(type as 'to' | 'cc' | 'bcc', newEmails);
-            }
-          }}
-          onPaste={(e) => {
-            e.preventDefault();
-            const pastedText = e.clipboardData.getData('text');
-            const emails = pastedText.split(/[,\n]/).map((email) => email.trim());
-            const validEmails = emails.filter(
-              (email) => email && !value.includes(email) && isValidEmail(email),
-            );
-            if (validEmails.length > 0) {
-              setValue(type as 'to' | 'cc' | 'bcc', [...value, ...validEmails]);
-              setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
-            }
-          }}
-        />
+            }}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Extract email tag component
   const EmailTag = ({ email, onRemove }: { email: string; onRemove: () => void }) => (
@@ -970,12 +998,13 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       <form
         ref={composerRef}
         className={cn(
-          'border-border ring-offset-background relative z-20 flex flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
+          'border-border ring-offset-background relative z-20 flex flex-col rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
           composerState.isEditorFocused ? 'ring-2 ring-[#3D3D3D] ring-offset-1' : '',
         )}
         style={{
           minHeight: '150px',
           maxHeight: '800px',
+          overflow: 'hidden',
         }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -987,7 +1016,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         {composerState.isDragging && <DragOverlay />}
 
         {/* Header */}
-        <div className="text-muted-foreground flex items-start justify-between text-sm">
+        <div className="text-muted-foreground flex-shrink-0 flex items-start justify-between text-sm">
           {renderHeaderContent()}
           <div className="flex items-center gap-2">
             <Button
@@ -999,6 +1028,9 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 e.stopPropagation();
                 setShowCc(true);
                 setIsEditingRecipients(true);
+                setTimeout(() => {
+                  ccInputRef.current?.focus();
+                }, 0);
               }}
               className="text-xs"
             >
@@ -1013,6 +1045,9 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 e.stopPropagation();
                 setShowBcc(true);
                 setIsEditingRecipients(true);
+                setTimeout(() => {
+                  bccInputRef.current?.focus();
+                }, 0);
               }}
               className="text-xs"
             >
@@ -1023,9 +1058,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         </div>
 
         {/* Editor container with fixed menu and growing content */}
-        <div className="flex flex-grow flex-col">
-          <div className="w-full">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="w-full overflow-auto">
             <Editor
+              onAttachmentsChange={handleAttachment}
               key={composerState.editorKey}
               onChange={handleEditorChange}
               initialValue={composerState.editorInitialValue}
@@ -1058,20 +1094,16 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 email: emailData[0]?.sender?.email,
               }}
             />
-            <div
-              className="h-2 w-full cursor-ns-resize hover:bg-gray-200 dark:hover:bg-gray-700"
-              onMouseDown={handleResizeStart}
-            />
           </div>
         </div>
 
         {aiState.showOptions && (
-          <div className="text-muted-foreground ml-2 mt-1 text-xs">
+          <div className="text-muted-foreground flex-shrink-0 ml-2 mt-1 text-xs">
             Press <kbd className="bg-muted rounded px-1 py-0.5">Tab</kbd> to accept
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between">
+        <div className="flex-shrink-0 mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             {!aiState.showOptions ? (
               <Button
@@ -1118,66 +1150,68 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 </Button>
               </div>
             )}
-
-            {attachments.length > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Paperclip className="h-4 w-4" />
-                    <span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  <span>
+                    {attachments.length || 'no'}{' '}
+                    {t('common.replyCompose.attachmentCount', { count: attachments.length })}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 touch-auto" align="start">
+                <div className="space-y-2">
+                  <div className="px-1">
+                    <h4 className="font-medium leading-none">
+                      {t('common.replyCompose.attachments')}
+                    </h4>
+                    <p className="text-muted-foreground text-sm">
                       {attachments.length}{' '}
-                      {t('common.replyCompose.attachmentCount', { count: attachments.length })}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 touch-auto" align="start">
-                  <div className="space-y-2">
-                    <div className="px-1">
-                      <h4 className="font-medium leading-none">
-                        {t('common.replyCompose.attachments')}
-                      </h4>
-                      <p className="text-muted-foreground text-sm">
-                        {attachments.length}{' '}
-                        {t('common.replyCompose.fileCount', { count: attachments.length })}
-                      </p>
-                    </div>
-                    <Separator />
-                    <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
-                      <div className="grid grid-cols-2 gap-2">
-                        {attachments.map((file, index) => (
-                          <div
-                            key={index}
-                            className="group relative overflow-hidden rounded-md border"
-                          >
-                            <UploadedFileIcon
-                              removeAttachment={removeAttachment}
-                              index={index}
-                              file={file}
-                            />
-                            <div className="bg-muted/10 p-2">
-                              <p className="text-xs font-medium">
-                                {truncateFileName(file.name, 20)}
-                              </p>
-                              <p className="text-muted-foreground text-xs">
-                                {(file.size / (1024 * 1024)).toFixed(2)} MB
-                              </p>
-                            </div>
+                      {t('common.replyCompose.fileCount', { count: attachments.length })}
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      {attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="group relative overflow-hidden rounded-md border"
+                        >
+                          <UploadedFileIcon
+                            removeAttachment={removeAttachment}
+                            index={index}
+                            file={file}
+                          />
+                          <div className="bg-muted/10 p-2">
+                            <p className="text-xs font-medium">
+                              {truncateFileName(file.name, 20)}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {(file.size / (1024 * 1024)).toFixed(2)} MB
+                            </p>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-            )}
-            <input
+                </div>
+              </PopoverContent>
+            </Popover>
+            <div className='-left-5 relative group'>
+              <Input
               type="file"
               id="attachment-input"
-              className="hidden"
-              onChange={handleAttachment}
+                className='w-10 opacity-0'
+                onChange={handleAttachmentEvent}
               multiple
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
             />
+              <Button variant={'outline'} size={'icon'} type='button' className='transition-transform group-hover:scale-90 scale-75 absolute top-0 left-0 rounded-full pointer-events-none'>
+                <Plus />
+              </Button>
+            </div>
           </div>
           <div className="mr-2 flex items-center gap-2">
             <Button

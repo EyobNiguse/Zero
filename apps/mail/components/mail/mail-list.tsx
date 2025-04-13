@@ -10,19 +10,18 @@ import {
   Tag,
   User,
   Users,
-  Inbox,
-  Mail,
 } from 'lucide-react';
 import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode } from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
+import { ThreadContextMenu } from '@/components/context/thread-context';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { cn, FOLDERS, formatDate, getEmailLogo } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { preloadThread, useThreads } from '@/hooks/use-threads';
 import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
-import { cn, FOLDERS, formatDate, getEmailLogo } from '@/lib/utils';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,11 +33,10 @@ import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
+import { Categories } from './mail';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { ThreadContextMenu } from '@/components/context/thread-context';
-import { Categories } from './mail';
-const HOVER_DELAY = 1000; // ms before prefetching
+const HOVER_DELAY = 1000;
 
 const ThreadWrapper = ({
   children,
@@ -165,7 +163,7 @@ const Thread = memo(
             onMouseLeave={handleMouseLeave}
             key={message.threadId ?? message.id}
             className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent  px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
               isMailSelected || (!message.unread && 'opacity-50'),
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
@@ -286,14 +284,15 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                          <span className={cn('truncate', threadIdParam ? 'max-w-[5ch] truncate' : '')}>
+                        <span
+                          className={cn('truncate', threadIdParam ? 'max-w-[20ch] truncate' : '')}
+                        >
                           {highlightText(message.sender.name, searchValue.highlight)}
                         </span>{' '}
                         {message.unread && !isMailSelected ? (
                           <span className="size-2 rounded bg-[#006FFE]" />
                         ) : null}
                       </p>
-                      <MailLabels labels={threadLabels} />
                       {message.totalReplies > 1 ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -318,9 +317,12 @@ const Thread = memo(
                       </p>
                     ) : null}
                   </div>
-                  <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
-                    {highlightText(message.subject, searchValue.highlight)}
-                  </p>
+                  <div className="flex justify-between">
+                    <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
+                      {highlightText(message.subject, searchValue.highlight)}
+                    </p>
+                    <MailLabels labels={threadLabels} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -385,8 +387,18 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [threadId, setThreadId] = useQueryState('threadId');
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
+  const {
+    data: { threads: items, nextPageToken },
+    isValidating,
+    isLoading,
+    loadMore,
+    mutate,
+  } = useThreads();
 
   const allCategories = Categories();
+
+  // Skip category filtering for drafts, spam, sent, archive, and bin pages
+  const shouldFilter = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
 
   const sessionData = useMemo(
     () => ({
@@ -396,11 +408,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [session],
   );
 
-  // Set initial category search value
+  // Set initial category search value only if not in special folders
   useEffect(() => {
-    const currentCategory = category ? allCategories.find(cat => cat.id === category) :
-                                     allCategories.find(cat => cat.id === 'Important');
-    
+    if (!shouldFilter) return;
+
+    const currentCategory = category
+      ? allCategories.find((cat) => cat.id === category)
+      : allCategories.find((cat) => cat.id === 'Primary');
+
     if (currentCategory && searchValue.value === '') {
       setSearchValue({
         value: currentCategory.searchValue || '',
@@ -408,15 +423,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         folder: '',
       });
     }
-  }, []); // Run only once on mount
-
-  const {
-    data: { threads: items, nextPageToken },
-    isValidating,
-    isLoading,
-    loadMore,
-    mutate,
-  } = useThreads();
+  }, [allCategories]); // Run only once on mount
 
   // Add event listener for refresh
   useEffect(() => {
@@ -570,10 +577,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       const messageThreadId = message.threadId ?? message.id;
 
       // Update local state immediately for optimistic UI
-      setMail((prev) => ({ 
-        ...prev, 
+      setMail((prev) => ({
+        ...prev,
         replyComposerOpen: false,
-        forwardComposerOpen: false
+        forwardComposerOpen: false,
       }));
 
       // Update URL param without navigation
@@ -699,7 +706,7 @@ const MailLabels = memo(
                     {getLabelIcon(label)}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent className="px-1 py-0 text-xs">
+                <TooltipContent className="px-1 py-0 text-xs hidden">
                   {t('common.notes.title')}
                 </TooltipContent>
               </Tooltip>
@@ -745,7 +752,7 @@ const MailLabels = memo(
                   {getLabelIcon(label)}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="px-1 py-0 text-xs" variant={style}>
+              <TooltipContent className="px-1 py-0 text-xs hidden" variant={style}>
                 {labelContent}
               </TooltipContent>
             </Tooltip>

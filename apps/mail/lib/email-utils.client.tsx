@@ -41,7 +41,7 @@ export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessag
 						return true;
 					case 'email':
 						await sendEmail({
-							to: listUnsubscribeAction.emailAddress,
+							to: [{ email: listUnsubscribeAction.emailAddress, name: listUnsubscribeAction.emailAddress }],
 							subject: listUnsubscribeAction.subject,
 							message: 'Zero sent this email to unsubscribe from this mailing list.',
 							attachments: [],

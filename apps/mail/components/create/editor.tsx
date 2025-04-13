@@ -40,7 +40,6 @@ import { TextButtons } from '@/components/create/selectors/text-buttons';
 import { suggestionItems } from '@/components/create/slash-command';
 import { defaultExtensions } from '@/components/create/extensions';
 import { ImageResizer, handleCommandNavigation } from 'novel';
-import { uploadFn } from '@/components/create/image-upload';
 import { handleImageDrop, handleImagePaste } from 'novel';
 import EditorMenu from '@/components/create/editor-menu';
 import { UploadedFileIcon } from './uploaded-file-icon';
@@ -126,14 +125,11 @@ interface MenuBarProps {
   hasSignature?: boolean;
 }
 
-const MenuBar = ({
-  onAttachmentsChange,
-}: MenuBarProps) => {
+const MenuBar = () => {
   const { editor } = useCurrentEditor();
   const t = useTranslations();
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
 
   if (!editor) {
     return null;
@@ -172,89 +168,16 @@ const MenuBar = ({
     setLinkDialogOpen(false);
   };
 
-  const handleAttachment = (files: FileList) => {
-    const newAttachments = [...attachments, ...Array.from(files)];
-    setAttachments(newAttachments);
-    onAttachmentsChange?.(newAttachments);
-  };
-
-  const handleAttachmentClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.accept = '*/*';
-
-    input.onchange = (e) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (files && files.length > 0) {
-        handleAttachment(files);
-      }
-    };
-
-    input.click();
-  };
-
-  const removeAttachment = (index: number) => {
-    const newAttachments = attachments.filter((_, i) => i !== index);
-    setAttachments(newAttachments);
-    onAttachmentsChange?.(newAttachments);
-  };
-
   return (
     <>
       <TooltipProvider>
         <div className="control-group mb-2 overflow-x-auto">
           <div className="button-group ml-0 mt-1 flex flex-wrap gap-1 border-b pb-2">
-            {/* <div className="mr-2 flex items-center gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                    className={`h-auto w-auto rounded p-1.5 ${editor.isActive('heading', { level: 1 }) ? 'bg-muted' : 'bg-background'}`}
-                    tabIndex={-1}
-                  >
-                    <Heading1 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('pages.createEmail.editor.menuBar.heading1')}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                    className={`h-auto w-auto rounded p-1.5 ${editor.isActive('heading', { level: 2 }) ? 'bg-muted' : 'bg-background'}`}
-                    tabIndex={-1}
-                  >
-                    <Heading2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('pages.createEmail.editor.menuBar.heading2')}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                    className={`h-auto w-auto rounded p-1.5 ${editor.isActive('heading', { level: 3 }) ? 'bg-muted' : 'bg-background'}`}
-                    tabIndex={-1}
-                  >
-                    <Heading3 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('pages.createEmail.editor.menuBar.heading3')}</TooltipContent>
-              </Tooltip>
-            </div>
-
-            <Separator orientation="vertical" className="relative right-1 top-0.5 h-6" /> */}
             <div className="mr-2 flex items-center gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type='button'
                     tabIndex={-1}
                     variant="ghost"
                     size="icon"
@@ -271,6 +194,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type='button'
                     tabIndex={-1}
                     variant="ghost"
                     size="icon"
@@ -286,6 +210,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type='button'
                     tabIndex={-1}
                     variant="ghost"
                     size="icon"
@@ -303,6 +228,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type='button'
                     tabIndex={-1}
                     variant="ghost"
                     size="icon"
@@ -317,6 +243,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type='button'
                     tabIndex={-1}
                     variant="ghost"
                     size="icon"
@@ -336,6 +263,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type='button'
                     tabIndex={-1}
                     variant="ghost"
                     size="icon"
@@ -350,6 +278,7 @@ const MenuBar = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type='button'
                     tabIndex={-1}
                     variant="ghost"
                     size="icon"
@@ -361,92 +290,6 @@ const MenuBar = ({
                 </TooltipTrigger>
                 <TooltipContent>{t('pages.createEmail.editor.menuBar.orderedList')}</TooltipContent>
               </Tooltip>
-
-              {attachments.length > 0 ? (
-                <Popover>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <PopoverTrigger asChild>
-                        <Button
-                          tabIndex={-1}
-                          variant="ghost"
-                          size="icon"
-                          className="bg-background relative h-auto w-auto rounded p-1.5"
-                        >
-                          <Paperclip className="h-4 w-4" />
-                          <span className="absolute -right-1 -top-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#016FFE] text-[10px] text-white">
-                            {attachments.length}
-                          </span>
-                        </Button>
-                      </PopoverTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {t('pages.createEmail.attachments', { count: attachments.length })}
-                    </TooltipContent>
-                  </Tooltip>
-                  <PopoverContent className="w-80 touch-auto" align="end">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between px-1">
-                        <h4 className="font-medium leading-none">
-                          {t('pages.createEmail.attachments', { count: attachments.length })}
-                        </h4>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleAttachmentClick}
-                          className="hover:text-muted-foreground text-muted-foreground h-auto rounded px-2 py-1 text-xs font-normal"
-                        >
-                          {t('pages.createEmail.addMore')}
-                        </Button>
-                      </div>
-                      <Separator />
-                      <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
-                        <div className="grid grid-cols-2 gap-2">
-                          {attachments.map((file, index) => (
-                            <div
-                              key={index}
-                              className="group relative overflow-hidden rounded-md border"
-                            >
-                              <UploadedFileIcon
-                                removeAttachment={removeAttachment}
-                                index={index}
-                                file={file}
-                              />
-                              <div className="bg-muted/10 p-2">
-                                <p className="text-xs font-medium">
-                                  {truncateFileName(file.name, 20)}
-                                </p>
-                                <p className="text-muted-foreground text-xs">
-                                  {t('common.units.mb', {
-                                    amount: (file.size / (1024 * 1024)).toFixed(2),
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      tabIndex={-1}
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleAttachmentClick}
-                      className="bg-background h-auto w-auto rounded p-1.5"
-                    >
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t('pages.createEmail.editor.menuBar.attachFiles')}
-                  </TooltipContent>
-                </Tooltip>
-              )}
             </div>
           </div>
         </div>
@@ -684,9 +527,10 @@ export default function Editor({
                 return false;
               },
             },
-            handlePaste: (view, event) => handleImagePaste(view, event, uploadFn),
             handleDrop: (view, event, _slice, moved) =>
-              handleImageDrop(view, event, moved, uploadFn),
+              handleImageDrop(view, event, moved, (file) => {
+                onAttachmentsChange?.([file]);
+              }),
             attributes: {
               class: 'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full min-h-[200px] px-4 py-2',
               'data-placeholder': placeholder,
@@ -701,15 +545,9 @@ export default function Editor({
             onChange(editor.getHTML());
           }}
           slotBefore={
-            <MenuBar
-              onAttachmentsChange={onAttachmentsChange}
-            />
+            <MenuBar />
           }
-          slotAfter={
-            <>
-              <ImageResizer />
-            </>
-          }
+          slotAfter={null}
         >
           {/* Make sure the command palette doesn't cause a refresh */}
           <EditorCommand

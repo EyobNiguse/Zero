@@ -263,7 +263,9 @@
       "labels": "Labels",
       "createNewLabel": "Create New Label",
       "noLabelsAvailable": "No labels available",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "imagesHidden": "Images are hidden for security reasons",
+      "showImages": "Show Images"
     },
     "units": {
       "mb": "{amount} MB"
@@ -315,7 +317,8 @@
         "languageChangedTo": "Language changed to {locale}",
         "customPrompt": "Custom AI Prompt",
         "customPromptPlaceholder": "Enter your custom prompt for the AI...",
-        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt.",
+        "noResultsFound": "No results found"
       },
       "connections": {
         "title": "Email Connections",
