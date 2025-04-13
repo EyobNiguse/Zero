@@ -1047,7 +1047,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 e.preventDefault();
                 e.stopPropagation();
                 setShowBcc(!showBcc);
-                if (showCc) {
+                if (showBcc) {
                   setValue('bcc', []);
                 }
                 setIsEditingRecipients(true);

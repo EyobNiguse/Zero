@@ -285,10 +285,10 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                         {emailData?.bcc && emailData.bcc.length > 0 && (
                           <div className="flex">
                             <span className="w-24 text-end text-gray-500">
-                              {t('common.mailDisplay.cc')}:
+                              {t('common.mailDisplay.bcc')}:
                             </span>
                             <span className="text-muted-foreground ml-3">
-                              {emailData?.cc?.map((t) => t.email).join(', ')}
+                              {emailData?.bcc?.map((t) => t.email).join(', ')}
                             </span>
                           </div>
                         )}
