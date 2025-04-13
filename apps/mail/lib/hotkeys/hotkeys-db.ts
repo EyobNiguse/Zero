@@ -16,6 +16,8 @@ const syncWithServer = async (shortcuts: Shortcut[]) => {
   }
 };
 
+let serverHotkeysLoaded = false;
+
 class HotkeysDB {
   private db: IDBDatabase | null = null;
 
@@ -26,7 +28,6 @@ class HotkeysDB {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
-        this.initializeDefaultShortcuts().catch(console.error);
         resolve();
       };
 
@@ -40,20 +41,26 @@ class HotkeysDB {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
       };
 
-      // Load hotkeys from server
-      fetch('/api/v1/hotkeys')
-        .then((response) => response.json())
-        .then((serverHotkeys: Shortcut[]) => {
-          if (serverHotkeys.length > 0) {
-            // Save server hotkeys to IndexedDB
-            serverHotkeys.forEach((shortcut) => {
-              this.saveHotkey(shortcut).catch(console.error);
-            });
-          }
-        })
-        .catch((error) => {
-          console.error('Failed to load hotkeys from server:', error);
-        });
+      // Load hotkeys from server only once
+      if (!serverHotkeysLoaded) {
+        serverHotkeysLoaded = true;
+        fetch('/api/v1/hotkeys')
+          .then((response) => response.json())
+          .then(async (serverHotkeys: Shortcut[]) => {
+            if (serverHotkeys.length > 0) {
+              // Save server hotkeys to IndexedDB without triggering additional syncs
+              await this.saveAllHotkeys(serverHotkeys);
+            } else {
+              // If no server hotkeys, initialize defaults
+              await this.initializeDefaultShortcuts();
+            }
+          })
+          .catch(async (error) => {
+            console.error('Failed to load hotkeys from server:', error);
+            // If server fetch fails, initialize defaults
+            await this.initializeDefaultShortcuts();
+          });
+      }
     });
   }
 
@@ -72,8 +79,10 @@ class HotkeysDB {
       const allShortcuts = [...existingShortcuts, ...defaultShortcutsToSave];
       await this.saveAllHotkeys(allShortcuts);
 
-      // Sync with server
-      await syncWithServer(allShortcuts);
+      // Only sync with server if we haven't loaded server hotkeys yet
+      if (!serverHotkeysLoaded) {
+        await syncWithServer(allShortcuts);
+      }
     }
   }
 
@@ -86,7 +95,10 @@ class HotkeysDB {
     }
 
     await this.saveAllHotkeys(updatedHotkeys);
-    await syncWithServer(updatedHotkeys);
+    // Only sync if this is a user-initiated change (after initial load)
+    if (serverHotkeysLoaded) {
+      await syncWithServer(updatedHotkeys);
+    }
   }
 
   async getHotkey(action: string): Promise<Shortcut | undefined> {
