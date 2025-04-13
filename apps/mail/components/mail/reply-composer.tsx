@@ -159,7 +159,7 @@ type FormData = {
 
 export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const [threadId] = useQueryState('threadId');
-  const { data: emailData } = useThread(threadId);
+  const { data: emailData, mutate } = useThread(threadId);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
   const [mail, setMail] = useMail();
@@ -301,7 +301,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         quotedMessage,
       );
 
-      const inReplyTo = messageId;
+      const inReplyTo = messageId
       const existingRefs = originalEmail.references?.split(' ') || [];
       const references = [...existingRefs, originalEmail?.inReplyTo, cleanEmailAddress(messageId)]
         .filter(Boolean)
@@ -319,7 +319,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
           References: references,
           'Thread-Id': threadId ?? '',
         },
-      });
+        threadId
+      }).then(() => mutate());
 
       reset();
       setComposerIsOpen(false);
