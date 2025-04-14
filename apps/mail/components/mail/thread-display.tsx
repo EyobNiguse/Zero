@@ -171,16 +171,16 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
       markAsRead({ ids: [id] }).catch((error) => {
         console.error('Failed to mark email as read:', error);
         toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+      }).then(() => Promise.all([mutateThread(), mutateThreads(), mutateStats()]))
     } else {
       console.log('Marking email as read:', id, ...unreadEmails.map(e => e.id));
       const ids = [id, ...unreadEmails.map(e => e.id)]
       markAsRead({ ids }).catch((error) => {
         console.error('Failed to mark email as read:', error);
         toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+      }).then(() => Promise.all([mutateThread(), mutateThreads(), mutateStats()]))
     }
-  }, [emailData, id])
+  }, [emailData, id, mutateThread, mutateThreads, mutateStats])
 
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
