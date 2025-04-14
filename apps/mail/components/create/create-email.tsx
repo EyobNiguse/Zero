@@ -442,7 +442,7 @@ export function CreateEmail({
                     value={toInput}
                     onChange={(e) => handleEmailInputChange('to', e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         handleAddEmail('to', toInput);
                       }
@@ -519,7 +519,7 @@ export function CreateEmail({
                       value={ccInput}
                       onChange={(e) => handleEmailInputChange('cc', e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           handleAddEmail('cc', ccInput);
                         }
@@ -565,7 +565,7 @@ export function CreateEmail({
                       value={bccInput}
                       onChange={(e) => handleEmailInputChange('bcc', e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           handleAddEmail('bcc', bccInput);
                         }
