@@ -20,19 +20,11 @@ import {
   Forward,
   ReplyAll,
 } from 'lucide-react';
-import {
-  type Dispatch,
-  type SetStateAction,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  useReducer,
-} from 'react';
+import { useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
-import { useForm, SubmitHandler, useWatch } from 'react-hook-form';
 import { extractTextFromHTML } from '@/actions/extractText';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { generateAIResponse } from '@/actions/ai-reply';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { Separator } from '@/components/ui/separator';
@@ -47,13 +39,9 @@ import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
 import type { JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
+import { Input } from '../ui/input';
 import { Sender } from '@/types';
 import { toast } from 'sonner';
-import type { z } from 'zod';
-
-import { extractTextFromHTML } from '@/actions/extractText';
-import { createDraft } from '@/actions/drafts';
-import { Input } from '../ui/input';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
