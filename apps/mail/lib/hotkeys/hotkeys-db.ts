@@ -2,17 +2,37 @@ import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
 
 const DB_NAME = 'hotkeysDB';
 const STORE_NAME = 'hotkeys';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
-const syncWithServer = async (shortcuts: Shortcut[]) => {
+const syncWithServer = async (shortcuts: Shortcut[]): Promise<boolean> => {
   try {
-    await fetch('/api/v1/hotkeys', {
+    const response = await fetch('/api/v1/hotkeys', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(shortcuts),
     });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status: ${response.status}`);
+    }
+
+    return true;
   } catch (error) {
     console.error('Failed to sync hotkeys with server:', error);
+    return false;
+  }
+};
+
+const fetchServerHotkeys = async (): Promise<Shortcut[] | null> => {
+  try {
+    const response = await fetch('/api/v1/hotkeys');
+    if (!response.ok) {
+      throw new Error(`Server responded with status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch hotkeys from server:', error);
+    return null;
   }
 };
 
@@ -39,41 +59,39 @@ class HotkeysDB {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
       };
 
-      if (!serverHotkeysLoaded) {
-        serverHotkeysLoaded = true;
-        fetch('/api/v1/hotkeys')
-          .then((response) => response.json())
-          .then(async (serverHotkeys: Shortcut[]) => {
-            if (serverHotkeys.length > 0) {
-              await this.saveAllHotkeys(serverHotkeys);
-            } else {
-              await this.initializeDefaultShortcuts();
-            }
-          })
-          .catch(async (error) => {
-            console.error('Failed to load hotkeys from server:', error);
+      request.onsuccess = async () => {
+        this.db = request.result;
+        if (!serverHotkeysLoaded) {
+          serverHotkeysLoaded = true;
+          const serverHotkeys = await fetchServerHotkeys();
+          if (serverHotkeys?.length) {
+            // Merge server hotkeys with defaults to ensure all shortcuts exist
+            const mergedHotkeys = this.mergeWithDefaults(serverHotkeys);
+            await this.saveAllHotkeys(mergedHotkeys, false);
+          } else {
             await this.initializeDefaultShortcuts();
-          });
-      }
+          }
+        }
+        resolve();
+      };
     });
   }
 
-  private async initializeDefaultShortcuts(): Promise<void> {
-    const existingShortcuts = await this.getAllHotkeys();
-    const existingActions = new Set(existingShortcuts.map((s) => s.action));
+  private mergeWithDefaults(shortcuts: Shortcut[]): Shortcut[] {
+    const shortcutMap = new Map(shortcuts.map((s) => [s.action, s]));
 
-    const defaultShortcutsToSave = keyboardShortcuts.filter(
-      (shortcut) => !existingActions.has(shortcut.action),
-    );
-
-    if (defaultShortcutsToSave.length > 0) {
-      const allShortcuts = [...existingShortcuts, ...defaultShortcutsToSave];
-      await this.saveAllHotkeys(allShortcuts);
-
-      if (!serverHotkeysLoaded) {
-        await syncWithServer(allShortcuts);
+    // Ensure all default shortcuts exist
+    keyboardShortcuts.forEach((defaultShortcut) => {
+      if (!shortcutMap.has(defaultShortcut.action)) {
+        shortcutMap.set(defaultShortcut.action, defaultShortcut);
       }
-    }
+    });
+
+    return Array.from(shortcutMap.values());
+  }
+
+  private async initializeDefaultShortcuts(): Promise<void> {
+    await this.saveAllHotkeys(keyboardShortcuts, true);
   }
 
   async saveHotkey(shortcut: Shortcut): Promise<void> {
@@ -84,10 +102,8 @@ class HotkeysDB {
       updatedHotkeys.push(shortcut);
     }
 
-    await this.saveAllHotkeys(updatedHotkeys);
-    if (serverHotkeysLoaded) {
-      await syncWithServer(updatedHotkeys);
-    }
+    // Always sync when saving individual shortcuts as these are user customizations
+    await this.saveAllHotkeys(updatedHotkeys, true);
   }
 
   async getHotkey(action: string): Promise<Shortcut | undefined> {
@@ -105,20 +121,27 @@ class HotkeysDB {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         const data = request.result;
-        return resolve(data ? data.shortcuts : []);
+        resolve(data?.shortcuts || []);
       };
     });
   }
 
-  private async saveAllHotkeys(shortcuts: Shortcut[]): Promise<void> {
+  private async saveAllHotkeys(shortcuts: Shortcut[], shouldSync: boolean = true): Promise<void> {
     if (!this.db) await this.init();
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.put({ id: 'shortcuts', shortcuts });
 
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.oncomplete = async () => {
+        if (shouldSync && serverHotkeysLoaded) {
+          await syncWithServer(shortcuts);
+        }
+        resolve();
+      };
+
+      store.clear();
+      store.put({ id: 'shortcuts', shortcuts });
     });
   }
 }
