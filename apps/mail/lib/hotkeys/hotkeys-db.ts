@@ -65,7 +65,6 @@ class HotkeysDB {
           serverHotkeysLoaded = true;
           const serverHotkeys = await fetchServerHotkeys();
           if (serverHotkeys?.length) {
-            // Merge server hotkeys with defaults to ensure all shortcuts exist
             const mergedHotkeys = this.mergeWithDefaults(serverHotkeys);
             await this.saveAllHotkeys(mergedHotkeys, false);
           } else {
@@ -80,7 +79,6 @@ class HotkeysDB {
   private mergeWithDefaults(shortcuts: Shortcut[]): Shortcut[] {
     const shortcutMap = new Map(shortcuts.map((s) => [s.action, s]));
 
-    // Ensure all default shortcuts exist
     keyboardShortcuts.forEach((defaultShortcut) => {
       if (!shortcutMap.has(defaultShortcut.action)) {
         shortcutMap.set(defaultShortcut.action, defaultShortcut);
@@ -102,7 +100,6 @@ class HotkeysDB {
       updatedHotkeys.push(shortcut);
     }
 
-    // Always sync when saving individual shortcuts as these are user customizations
     await this.saveAllHotkeys(updatedHotkeys, true);
   }
 

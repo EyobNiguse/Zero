@@ -1,9 +1,9 @@
 import type { Shortcut } from '@/config/shortcuts';
-import { NextResponse } from 'next/server';
 import { userHotkeys } from '@zero/db/schema';
+import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { eq } from 'drizzle-orm';
 import { db } from '@zero/db';
 
 export async function GET() {
@@ -14,10 +14,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const result = await db
-    .select()
-    .from(userHotkeys)
-    .where(eq(userHotkeys.userId, session.user.id));
+  const result = await db.select().from(userHotkeys).where(eq(userHotkeys.userId, session.user.id));
 
   return NextResponse.json(result[0]?.shortcuts || []);
 }
@@ -63,22 +60,17 @@ export async function PUT(request: Request) {
   const shortcut = (await request.json()) as Shortcut;
   const now = new Date();
 
-  // Get existing shortcuts
-  const result = await db
-    .select()
-    .from(userHotkeys)
-    .where(eq(userHotkeys.userId, session.user.id));
+  const result = await db.select().from(userHotkeys).where(eq(userHotkeys.userId, session.user.id));
 
   const existingShortcuts = (result[0]?.shortcuts || []) as Shortcut[];
   const updatedShortcuts = existingShortcuts.map((s: Shortcut) =>
-    s.action === shortcut.action ? shortcut : s
+    s.action === shortcut.action ? shortcut : s,
   );
 
   if (!existingShortcuts.some((s: Shortcut) => s.action === shortcut.action)) {
     updatedShortcuts.push(shortcut);
   }
 
-  // Update or insert all shortcuts
   await db
     .insert(userHotkeys)
     .values({

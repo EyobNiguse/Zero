@@ -1,22 +1,20 @@
+import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
 import { useCallback, useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
 import { hotkeysDB } from './hotkeys-db';
 
 export const findShortcut = async (action: string): Promise<Shortcut | undefined> => {
-  // Try to get from IndexedDB first
   const savedShortcut = await hotkeysDB.getHotkey(action);
   if (savedShortcut) return savedShortcut;
-  
-  // Fall back to default shortcuts
-  return keyboardShortcuts.find(sc => sc.action === action);
+
+  return keyboardShortcuts.find((sc) => sc.action === action);
 };
 
 const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
 export const formatKeys = (keys: string[] | undefined): string => {
   if (!keys || !keys.length) return '';
-  
+
   const mapKey = (key: string) => {
     switch (key) {
       case 'mod':
@@ -35,14 +33,14 @@ export const formatKeys = (keys: string[] | undefined): string => {
   if (keys.length > 1) {
     return keys.map(mapKey).join('+');
   }
-  
+
   const firstKey = keys[0];
   if (!firstKey) return '';
   return mapKey(firstKey);
 };
 
 export const formatDisplayKeys = (keys: string[]): string[] => {
-  return keys.map(key => {
+  return keys.map((key) => {
     switch (key) {
       case 'mod':
         return isMac ? '⌘' : 'Ctrl';
@@ -87,17 +85,16 @@ export const defaultHotkeyOptions: HotkeyOptions = {
 export function useShortcut(
   shortcut: Shortcut,
   callback: () => void,
-  options: Partial<HotkeyOptions> = {}
+  options: Partial<HotkeyOptions> = {},
 ) {
   const [currentShortcut, setCurrentShortcut] = useState<Shortcut>(shortcut);
 
   useEffect(() => {
-    // Save the shortcut to IndexedDB
     hotkeysDB.saveHotkey(shortcut).catch(console.error);
 
-    // Load any custom shortcut from IndexedDB
-    hotkeysDB.getHotkey(shortcut.action)
-      .then(saved => {
+    hotkeysDB
+      .getHotkey(shortcut.action)
+      .then((saved) => {
         if (saved && saved.keys !== shortcut.keys) {
           setCurrentShortcut(saved);
         }
@@ -118,7 +115,7 @@ export function useShortcut(
       }
       callback();
     },
-    [callback, preventDefault, currentShortcut]
+    [callback, preventDefault, currentShortcut],
   );
 
   useHotkeys(
@@ -129,19 +126,19 @@ export function useShortcut(
       scopes: [scope],
       preventDefault: shortcut.preventDefault || preventDefault,
     },
-    [handleKey]
+    [handleKey],
   );
 }
 
 export function useShortcuts(
   shortcuts: Shortcut[],
   handlers: { [key: string]: () => void },
-  options: Partial<HotkeyOptions> = {}
+  options: Partial<HotkeyOptions> = {},
 ) {
-  shortcuts.forEach(shortcut => {
+  shortcuts.forEach((shortcut) => {
     const handler = handlers[shortcut.action];
     if (handler) {
       useShortcut(shortcut, handler, options);
     }
   });
-} 
+}
