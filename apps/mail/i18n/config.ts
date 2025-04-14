@@ -13,6 +13,7 @@ const LANGUAGES = {
   ru: 'Russian',
   tr: 'Turkish',
   lv: 'Latvian',
+  hu: 'Hungarian',
   fa: 'Farsi',
 } as const;
 

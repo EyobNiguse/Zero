@@ -7,7 +7,7 @@ import { InitialThread, ParsedMessage } from '@/types';
 import { useSession } from '@/lib/auth-client';
 import useSWRInfinite from 'swr/infinite';
 import useSWR, { preload } from 'swr';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 export const preloadDraft = (userId: string, draftId: string, connectionId: string) => {
   console.log(`🔄 Prefetching draft ${draftId}...`);
@@ -44,10 +44,10 @@ const getKey = (
   if (previousPageData && !previousPageData.nextPageToken) return null;
 
   if (pageIndex === 0) {
-    return [userId, query, max, undefined, connectionId];
+    return [userId, undefined, max, undefined, connectionId];
   }
 
-  return [userId, query, max, previousPageData?.nextPageToken, connectionId];
+  return [userId, undefined, max, previousPageData?.nextPageToken, connectionId];
 };
 
 export const useDrafts = (query?: string, max?: number) => {
@@ -67,6 +67,12 @@ export const useDrafts = (query?: string, max?: number) => {
             )
           : null,
       fetchDrafts,
+      {
+        revalidateOnMount: true,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        refreshInterval: 30000, // Refresh every 30 seconds
+      }
     );
 
   const drafts = data
@@ -78,7 +84,7 @@ export const useDrafts = (query?: string, max?: number) => {
             threadId: draft.threadId,
             title: draft.title,
             subject: draft.subject,
-            receivedOn: new Date().toISOString(),
+            receivedOn: draft.receivedOn || new Date().toISOString(),
             unread: false,
             totalReplies: 0,
           } as InitialThread;

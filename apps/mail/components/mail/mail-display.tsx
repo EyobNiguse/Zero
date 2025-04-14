@@ -177,7 +177,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                 <div className="flex items-center justify-start gap-2">
                   <span className="font-semibold">{emailData?.sender?.name}</span>
                   <span className="text-muted-foreground flex grow-0 items-center gap-2 text-sm">
-                    <span>{emailData?.sender?.email}</span>
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap min-w-0">{emailData?.sender?.email}</span>
 
                     {listUnsubscribeAction && (
                       <Dialog>
@@ -266,7 +266,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                             {emailData?.to?.map((t) => t.email).join(', ')}
                           </span>
                         </div>
-                        {emailData?.cc?.length > 0 && (
+                        {emailData?.cc && emailData.cc.length > 0 && (
                           <div className="flex">
                             <span className="w-24 text-end text-gray-500">
                               {t('common.mailDisplay.cc')}:
@@ -318,7 +318,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
               </div>
             </div>
             {data ? (
-              <div className="relative top-1">
+              <div className='relative -top-1'>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button size={'icon'} variant="ghost" className="rounded-md">

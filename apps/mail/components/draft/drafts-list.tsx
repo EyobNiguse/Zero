@@ -92,6 +92,7 @@ export function DraftsList({ isCompact }: MailListProps) {
     isValidating,
     isLoading,
     loadMore,
+    error
   } = useDrafts(searchValue.value, defaultPageSize);
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -216,12 +217,12 @@ export function DraftsList({ isCompact }: MailListProps) {
   //   else toast.error("Failed to mark as junk");
   // });
 
-  useHotKey('Meta+a', async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
-    resetSelectMode();
-    selectAll();
-  });
+  // useHotKey('Meta+a', async (event) => {
+  //   // @ts-expect-error
+  //   event.preventDefault();
+  //   resetSelectMode();
+  //   selectAll();
+  // });
 
   useHotKey('Control+a', async (event) => {
     // @ts-expect-error
@@ -230,19 +231,19 @@ export function DraftsList({ isCompact }: MailListProps) {
     selectAll();
   });
 
-  useHotKey('Meta+n', async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
-    resetSelectMode();
-    selectAll();
-  });
+  // useHotKey('Meta+n', async (event) => {
+  //   // @ts-expect-error
+  //   event.preventDefault();
+  //   resetSelectMode();
+  //   selectAll();
+  // });
 
-  useHotKey('Control+n', async (event) => {
-    // @ts-expect-error
-    event.preventDefault();
-    resetSelectMode();
-    selectAll();
-  });
+  // useHotKey('Control+n', async (event) => {
+  //   // @ts-expect-error
+  //   event.preventDefault();
+  //   resetSelectMode();
+  //   selectAll();
+  // });
 
   useEffect(() => {
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -331,6 +332,22 @@ export function DraftsList({ isCompact }: MailListProps) {
 
   const isEmpty = items.length === 0;
   const isFiltering = searchValue.value.trim().length > 0;
+
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching drafts:', error);
+      toast.error('Failed to load drafts');
+    }
+  }, [error]);
+
+  useEffect(() => {
+    console.log('Drafts data:', {
+      items,
+      nextPageToken,
+      isValidating,
+      isLoading
+    });
+  }, [items, nextPageToken, isValidating, isLoading]);
 
   if (isEmpty && session) {
     if (isFiltering) {
