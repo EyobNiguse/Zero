@@ -738,12 +738,12 @@ export function CreateEmail({
                 </PopoverContent>
               </Popover>
             )}
-            <div className="-pb-1.5">
+            <div className="-pb-1.5 relative">
              
                 <Input
                   type="file"
                   id="attachment-input"
-                  className="absolute h-full w-full cursor-pointer opacity-0"
+                className="absolute h-full w-full cursor-pointer opacity-0"
                   onChange={handleAttachment}
                   multiple
                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
