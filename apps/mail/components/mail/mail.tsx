@@ -84,11 +84,11 @@ export function DemoMailLayout() {
   }, []);
 
   useEffect(() => {
-    if (activeCategory === 'Primary' || activeCategory === 'All Mail') {
+    if (activeCategory === 'All Mail') {
       setFilteredItems(items);
     } else {
       const categoryMap = {
-        Important: 'important',
+        Primary: 'important',
         Personal: 'personal',
         Updates: 'updates',
         Promotions: 'promotions',
@@ -617,7 +617,7 @@ export const Categories = () => {
 
   return [
     {
-      id: 'Important',
+      id: 'Primary',
       name: t('common.mailCategories.important'),
       searchValue: 'is:important',
       icon: <AlertTriangle className="h-4 w-4" />,
@@ -735,15 +735,6 @@ function MailCategoryTabs({
   // Initialize with just the initialCategory or "Primary"
   const [activeCategory, setActiveCategory] = useState(initialCategory || 'Primary');
 
-  // Move localStorage logic to a useEffect
-  useEffect(() => {
-    // Check localStorage only after initial render
-    const savedCategory = localStorage.getItem('mailActiveCategory');
-    if (savedCategory) {
-      setActiveCategory(savedCategory);
-    }
-  }, [initialCategory]);
-
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
 
@@ -768,6 +759,17 @@ function MailCategoryTabs({
       });
     }
   }, [activeCategory, setSearchValue, isLoading]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      setSearchValue({
+        value: '',
+        highlight: '',
+        folder: '',
+      });
+    };
+  }, [setSearchValue]);
 
   // Function to update clip path
   const updateClipPath = useCallback(() => {
@@ -823,7 +825,6 @@ function MailCategoryTabs({
                   data-tab={category.id}
                   onClick={() => {
                     setActiveCategory(category.id);
-                    localStorage.setItem('mailActiveCategory', category.id);
                   }}
                   className={cn(
                     'flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-medium transition-all duration-200',

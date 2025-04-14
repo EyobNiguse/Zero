@@ -301,7 +301,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         if (value) {
           // Ensure References header includes all previous message IDs
           if (key.toLowerCase() === 'references' && value) {
-            const refs = value.split(' ').filter(Boolean);
+            const refs = value.split(' ').filter(Boolean).map(ref => {
+              // Add angle brackets if not present
+              if (!ref.startsWith('<')) ref = `<${ref}`;
+              if (!ref.endsWith('>')) ref = `${ref}>`;
+              return ref;
+            });
             msg.setHeader(key, refs.join(' '));
           } else {
             msg.setHeader(key, value);
@@ -335,10 +340,13 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
   const normalizeSearch = (folder: string, q: string) => {
     // Handle special folders
     if (folder === 'bin') {
-      return { folder: undefined, q: `in:trash ${q}` };
+      return { folder: undefined, q: `in:trash` };
     }
     if (folder === 'archive') {
-      return { folder: undefined, q: `in:archive ${q}` };
+      return { folder: undefined, q: `in:archive` };
+    }
+    if (folder !== 'inbox') {
+      return { folder, q: `in:${folder}` };
     }
     // Return the query as-is to preserve Gmail's native search syntax
     return { folder, q };
@@ -471,10 +479,18 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const { folder: normalizedFolder, q: normalizedQ } = normalizeSearch(folder, q ?? '');
       const labelIds = [..._labelIds];
       if (normalizedFolder) labelIds.push(normalizedFolder.toUpperCase());
+      console.log({
+        folder,
+        userId: 'me',
+        q: normalizedQ ? normalizedQ : undefined,
+        labelIds: folder === 'inbox' ? labelIds : [],
+        maxResults,
+        pageToken: pageToken ? pageToken : undefined,
+      })
       const res = await gmail.users.threads.list({
         userId: 'me',
         q: normalizedQ ? normalizedQ : undefined,
-        labelIds,
+        labelIds: folder === 'inbox' ? labelIds : [],
         maxResults,
         pageToken: pageToken ? pageToken : undefined,
       });
@@ -648,12 +664,20 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     },
     create: async (data) => {
       const { raw } = await parseOutgoing(data)
+      console.log('Debug - Sending message with threading info:', {
+        threadId: data.threadId,
+        headers: data.headers
+      });
       const res = await gmail.users.messages.send({
         userId: 'me',
         requestBody: {
           raw,
           threadId: data.threadId
         }
+      });
+      console.log('Debug - Message sent successfully:', {
+        messageId: res.data.id,
+        threadId: res.data.threadId
       });
       return res.data;
     },

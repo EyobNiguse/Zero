@@ -30,6 +30,7 @@ import MailDisplay from './mail-display';
 import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { toast } from 'sonner';
+import { NotesPanel } from './note-panel';
 
 
 interface ThreadDisplayProps {
@@ -170,14 +171,14 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
       markAsRead({ ids: [id] }).catch((error) => {
         console.error('Failed to mark email as read:', error);
         toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+      }).then(() => Promise.all([mutateThread(), mutateThreads(), mutateStats()]))
     } else {
       console.log('Marking email as read:', id, ...unreadEmails.map(e => e.id));
       const ids = [id, ...unreadEmails.map(e => e.id)]
       markAsRead({ ids }).catch((error) => {
         console.error('Failed to mark email as read:', error);
         toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+      }).then(() => Promise.all([mutateThread(), mutateThreads(), mutateStats()]))
     }
   }, [emailData, id])
 
@@ -327,8 +328,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
             <ThreadSubject subject={emailData[0]?.subject} />
           </div>
           <div className="flex items-center md:gap-2">
-            {/* disable notes for now, it's still a bit buggy and not ready for prod. */}
-            {/* <NotesPanel threadId={threadId} /> */}
+            <NotesPanel threadId={threadId} />
             <ThreadActionButton
               icon={Expand}
               label={
