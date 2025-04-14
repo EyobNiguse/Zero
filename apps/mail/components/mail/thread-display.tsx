@@ -180,7 +180,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
         toast.error(t('common.mail.failedToMarkAsRead'));
       }).then(() => Promise.all([mutateThread(), mutateThreads(), mutateStats()]))
     }
-  }, [emailData, id, mutateThread, mutateThreads, mutateStats])
+  }, [emailData, id])
 
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
