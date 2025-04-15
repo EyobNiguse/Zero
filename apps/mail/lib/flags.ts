@@ -12,7 +12,4 @@ export const createFeatureGate = (key: string) => flag<boolean, StatsigUser>({
     key,
     adapter: statsigAdapter.featureGate((gate) => gate.value, { exposureLogging: true }),
     identify,
-    decide() {
-        return Math.random() > 0.9;
-    },
 });
