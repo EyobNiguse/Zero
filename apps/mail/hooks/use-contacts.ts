@@ -9,8 +9,9 @@ export const useContacts = () => {
     const { mutate, data } = useSWRImmutable<Sender[]>(['contacts', session?.connectionId])
 
     useEffect(() => {
+        if (!session?.connectionId) return
         const provider = dexieStorageProvider()
-        provider.list('$').then((cachedThreadsResponses) => {
+        provider.list(`$inf$@"${session?.connectionId}"`).then((cachedThreadsResponses) => {
             const seen = new Set<string>();
             const contacts: Sender[] = cachedThreadsResponses.reduce((acc: Sender[], { state }) => {
                 if (state.data) {
@@ -26,7 +27,7 @@ export const useContacts = () => {
             }, []);
             mutate(contacts)
         })
-    }, [])
+    }, [session?.connectionId])
 
     return data
 }
