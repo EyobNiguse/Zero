@@ -643,6 +643,14 @@ export const Categories = () => {
       colors:
         'border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30',
     },
+    {
+      id: 'Unread',
+      name: t('common.mailCategories.unread'),
+      searchValue: 'is:unread',
+      icon: <MailOpen className="h-4 w-4" />,
+      colors:
+        'border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30',
+    },
   ];
 };
 
