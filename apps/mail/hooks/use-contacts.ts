@@ -1,58 +1,37 @@
-'use client';
-
-import type { InitialThread, Sender } from '@/types';
+import { dexieStorageProvider } from '@/lib/idb';
 import { useSession } from '@/lib/auth-client';
-import { useMemo } from 'react';
-import axios from 'axios';
-import useSWR from 'swr';
-
-interface Contact extends Sender {}
-
-const fetchContacts = async (connectionId: string): Promise<Sender[]> => {
-  try {
-    const response = await axios.get(`/api/driver?folder=inbox&max=100`);
-    const data = response.data;
-
-    const uniqueContacts = new Map<string, Contact>();
-
-    if (data && data.threads && Array.isArray(data.threads)) {
-      data.threads.forEach((thread: InitialThread) => {
-        const { sender } = thread;
-
-        if (sender && sender.email && !uniqueContacts.has(sender.email)) {
-          uniqueContacts.set(sender.email, {
-            name: sender.name,
-            email: sender.email,
-          });
-        }
-      });
-    }
-
-    return Array.from(uniqueContacts.values());
-  } catch (error) {
-    console.error('Error fetching contacts:', error);
-    return [];
-  }
-};
+import useSWRImmutable from 'swr/immutable';
+import { useEffect, useState } from 'react';
+import { Sender } from '@/types';
 
 export const useContacts = () => {
   const { data: session } = useSession();
+  const { mutate, data } = useSWRImmutable<Sender[]>(['contacts', session?.connectionId]);
 
-  const { data, error, isLoading } = useSWR<Sender[]>(
-    session?.connectionId ? ['contacts', session.connectionId] : null,
-    () => (session?.connectionId ? fetchContacts(session.connectionId) : []),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 60000,
-    },
-  );
+  useEffect(() => {
+    if (!session?.connectionId) return;
+    const provider = dexieStorageProvider();
+    provider.list(`$inf$@"${session?.connectionId}"`).then((cachedThreadsResponses) => {
+      const seen = new Set<string>();
+      const contacts: Sender[] = cachedThreadsResponses.reduce((acc: Sender[], { state }) => {
+        if (state.data) {
+          for (const thread of state.data[0].threads) {
+            const email = thread.sender.email;
+            if (!seen.has(email)) {
+              seen.add(email);
+              acc.push(thread.sender);
+            }
+          }
+        }
+        return acc;
+      }, []);
+      mutate(contacts);
+    });
+  }, [session?.connectionId]);
 
-  const contacts = useMemo(() => data || [], [data]);
+  if (!data) {
+    return [];
+  }
 
-  return {
-    contacts,
-    isLoading,
-    error,
-  };
+  return data;
 };
