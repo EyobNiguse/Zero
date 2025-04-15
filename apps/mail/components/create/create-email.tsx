@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import Paragraph from '@tiptap/extension-paragraph';
 import { useSettings } from '@/hooks/use-settings';
+import { useContacts } from '@/hooks/use-contacts';
 import Document from '@tiptap/extension-document';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
@@ -58,9 +59,23 @@ export function CreateEmail({
   initialSubject?: string;
   initialBody?: string;
 }) {
-  const [toInput, setToInput] = React.useState('');
   const [toEmails, setToEmails] = React.useState<string[]>(initialTo ? [initialTo] : []);
+  const [toInput, setToInput] = React.useState('');
+  const [selectedContactIndex, setSelectedContactIndex] = React.useState(0);
+  const contacts = useContacts();
   const [ccInput, setCcInput] = React.useState('');
+
+  const filteredContacts = React.useMemo(() => {
+    if (!toInput) return [];
+    const searchTerm = toInput.toLowerCase();
+    return contacts.filter(
+      (contact) =>
+        (contact.email?.toLowerCase().includes(searchTerm) ||
+          contact.name?.toLowerCase().includes(searchTerm)) &&
+        !toEmails.includes(contact.email),
+    );
+  }, [contacts, toInput, toEmails]);
+
   const [ccEmails, setCcEmails] = React.useState<string[]>([]);
   const [bccInput, setBccInput] = React.useState('');
   const [bccEmails, setBccEmails] = React.useState<string[]>([]);
@@ -159,7 +174,6 @@ export function CreateEmail({
   const ccInputRef = React.useRef<HTMLInputElement>(null);
   const bccInputRef = React.useRef<HTMLInputElement>(null);
   const subjectInputRef = React.useRef<HTMLInputElement>(null);
-
 
   // Remove auto-focus logic
   React.useEffect(() => {
@@ -413,7 +427,7 @@ export function CreateEmail({
 
       <div className="relative flex h-full flex-col">
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[500px] space-y-12 px-4 pt-4 sm:max-w-[720px] md:px-2 bg-sidebar rounded-lg">
+          <div className="bg-sidebar mx-auto w-full max-w-[500px] space-y-12 rounded-lg px-4 pt-4 sm:max-w-[720px] md:px-2">
             <div className="space-y-3 md:px-1">
               <div className="flex items-center">
                 <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
@@ -441,23 +455,56 @@ export function CreateEmail({
                       </button>
                     </div>
                   ))}
-                  <input
-                    ref={toInputRef}
-                    autoFocus
-                    disabled={isLoading}
-                    type="text"
-                    className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                    placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
-                    value={toInput}
-                    onChange={(e) => handleEmailInputChange('to', e.target.value)}
-                    onBlur={() => handleAddEmail('to', toInput)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleAddEmail('to', toInput);
-                      }
-                    }}
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      ref={toInputRef}
+                      disabled={isLoading}
+                      type="text"
+                      className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                      placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+                      value={toInput}
+                      onChange={(e) => handleEmailInputChange('to', e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (filteredContacts.length > 0) {
+                            const selectedEmail = filteredContacts[selectedContactIndex]?.email;
+                            if (selectedEmail) handleAddEmail('to', selectedEmail);
+                            setSelectedContactIndex(0);
+                          } else {
+                            handleAddEmail('to', toInput);
+                          }
+                        } else if (e.key === 'ArrowDown' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) =>
+                            Math.min(prev + 1, filteredContacts.length - 1),
+                          );
+                        } else if (e.key === 'ArrowUp' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) => Math.max(prev - 1, 0));
+                        }
+                      }}
+                    />
+                    {toInput && filteredContacts.length > 0 && (
+                      <div className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                        {filteredContacts.map((contact, index) => (
+                          <button
+                            key={contact.email}
+                            className={`w-full px-3 py-2 text-left text-sm ${selectedContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                            onClick={() => {
+                              handleAddEmail('to', contact.email);
+                              setSelectedContactIndex(0);
+                            }}
+                          >
+                            <div className="font-medium">{contact.name || contact.email}</div>
+                            {contact.name && (
+                              <div className="text-muted-foreground text-xs">{contact.email}</div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1">
                     <Button
                       tabIndex={-1}
@@ -623,7 +670,7 @@ export function CreateEmail({
                       onCommandEnter={handleSendEmail}
                     />
                   )}
-                  <div className='flex justify-between'>
+                  <div className="flex justify-between">
                     <div className="flex items-center gap-4">
                       <div className="pb-2 pt-2">
                         <AIAssistant
@@ -682,7 +729,9 @@ export function CreateEmail({
                               console.log('CreateEmail: Successfully applied AI content');
                             } catch (error) {
                               console.error('CreateEmail: Error applying AI content', error);
-                              toast.error('Error applying AI content to your email. Please try again.');
+                              toast.error(
+                                'Error applying AI content to your email. Please try again.',
+                              );
                             }
                           }}
                         />
@@ -696,7 +745,9 @@ export function CreateEmail({
                               <Paperclip className="h-4 w-4" />
                               <span>
                                 {attachments.length}{' '}
-                                {t('common.replyCompose.attachmentCount', { count: attachments.length })}
+                                {t('common.replyCompose.attachmentCount', {
+                                  count: attachments.length,
+                                })}
                               </span>
                             </Button>
                           </PopoverTrigger>
@@ -708,7 +759,9 @@ export function CreateEmail({
                                 </h4>
                                 <p className="text-muted-foreground text-sm">
                                   {attachments.length}{' '}
-                                  {t('common.replyCompose.fileCount', { count: attachments.length })}
+                                  {t('common.replyCompose.fileCount', {
+                                    count: attachments.length,
+                                  })}
                                 </p>
                               </div>
                               <Separator />
@@ -751,10 +804,10 @@ export function CreateEmail({
                         />
                         <Button
                           variant="outline"
-                          className="rounded-full transition-transform cursor-pointer hover:bg-muted h-9 w-9 -ml-1"
+                          className="hover:bg-muted -ml-1 h-9 w-9 cursor-pointer rounded-full transition-transform"
                           tabIndex={-1}
                         >
-                          <Plus className='h-4 w-4 cursor-pointer' />
+                          <Plus className="h-4 w-4 cursor-pointer" />
                         </Button>
                       </div>
                       <Button
@@ -762,7 +815,10 @@ export function CreateEmail({
                         className="h-9 w-9 overflow-hidden rounded-full"
                         onClick={handleSendEmail}
                         disabled={
-                          isLoading || !toEmails.length || !messageContent.trim() || !subjectInput.trim()
+                          isLoading ||
+                          !toEmails.length ||
+                          !messageContent.trim() ||
+                          !subjectInput.trim()
                         }
                       >
                         <ArrowUpIcon className="h-4 w-4" />
@@ -773,10 +829,6 @@ export function CreateEmail({
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-offsetLight dark:bg-offsetDark sticky bottom-0 left-0 right-0 mb-16 flex items-center justify-between p-4 pb-3 md:mb-0">
-
         </div>
       </div>
     </div>
