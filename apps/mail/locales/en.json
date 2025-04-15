@@ -401,6 +401,7 @@
       }
     },
     "createEmail": {
+      "invalidEmail": "Invalid email address",
       "body": "Body",
       "example": "zero@0.email",
       "attachments": "Attachments ({count})",
