@@ -160,12 +160,6 @@ export function CreateEmail({
   const bccInputRef = React.useRef<HTMLInputElement>(null);
   const subjectInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Add auto-focus on mount
-  React.useEffect(() => {
-    if (toInputRef.current) {
-      toInputRef.current.focus();
-    }
-  }, []);
 
   // Remove auto-focus logic
   React.useEffect(() => {
@@ -447,6 +441,7 @@ export function CreateEmail({
                   ))}
                   <input
                     ref={toInputRef}
+                    autoFocus
                     disabled={isLoading}
                     type="text"
                     className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
