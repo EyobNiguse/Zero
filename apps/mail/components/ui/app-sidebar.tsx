@@ -124,7 +124,7 @@ function ComposeButton() {
   return (
     <Button
       asChild
-      className="bg-secondary bg-black text-primary hover:bg-black dark:bg-white dark:hover:bg-white relative isolate mt-1 h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap shadow-inner text-white dark:text-black"
+      className="bg-secondary bg-black text-primary hover:bg-black/80 dark:bg-white dark:hover:bg-white/80 relative isolate mt-1 h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap shadow-inner text-white dark:text-black"
       onMouseEnter={() => () => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => () => iconRef.current?.stopAnimation?.()}
     >

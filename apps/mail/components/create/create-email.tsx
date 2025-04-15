@@ -91,6 +91,8 @@ export function CreateEmail({
   const [draftId, setDraftId] = useQueryState('draftId');
   const [includeSignature, setIncludeSignature] = React.useState(true);
   const { settings } = useSettings();
+  const [isCardHovered, setIsCardHovered] = React.useState(false);
+  const dragCounter = React.useRef(0);
 
   const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(() => {
     if (initialBody) {
@@ -174,6 +176,7 @@ export function CreateEmail({
   const ccInputRef = React.useRef<HTMLInputElement>(null);
   const bccInputRef = React.useRef<HTMLInputElement>(null);
   const subjectInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Remove auto-focus logic
   React.useEffect(() => {
@@ -359,7 +362,7 @@ export function CreateEmail({
   // Add a mount ref to ensure we only auto-focus once
   const isFirstMount = React.useRef(true);
 
-  const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       setAttachments((prev) => [...prev, ...Array.from(files)]);
@@ -370,6 +373,21 @@ export function CreateEmail({
   const removeAttachment = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
     setHasUnsavedChanges(true);
+  };
+
+  const handleDragEnterCard = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current += 1;
+    setIsCardHovered(true);
+  };
+
+  const handleDragLeaveCard = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      setIsCardHovered(false);
+      dragCounter.current = 0;
+    }
   };
 
   React.useEffect(() => {
@@ -413,418 +431,392 @@ export function CreateEmail({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {isDragging && (
-        <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
-          <div className="text-muted-foreground flex flex-col items-center gap-2">
-            <Paperclip className="text-muted-foreground h-12 w-12" />
-            <p className="text-lg font-medium">{t('pages.createEmail.dropFilesToAttach')}</p>
-          </div>
-        </div>
-      )}
       <div className="sticky top-0 z-10 flex items-center justify-between gap-1.5 p-2 transition-colors">
         <SidebarToggle className="h-fit px-2" />
       </div>
 
       <div className="relative flex h-full flex-col">
-        <div className="flex-1 overflow-y-auto">
-          <div className="bg-sidebar mx-auto w-full max-w-[500px] space-y-12 rounded-lg px-4 pt-4 sm:max-w-[720px] md:px-2">
-            <div className="space-y-3 md:px-1">
-              <div className="flex items-center">
-                <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                  {t('common.mailDisplay.to')}
+        <div className="flex-1 ">
+          <div className="mx-auto w-full max-w-[500px] pt-4 sm:max-w-[720px] bg-sidebar rounded-lg border max-h-[80vh] flex flex-col relative" style={{height: ''}} onDragEnter={handleDragEnterCard} onDragLeave={handleDragLeaveCard}>
+            {isDragging && isCardHovered && (
+              <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
+                <div className="text-muted-foreground flex flex-col items-center gap-2">
+                  <Paperclip className="text-muted-foreground h-12 w-12" />
+                  <p className="text-lg font-medium">{t('pages.createEmail.dropFilesToAttach')}</p>
                 </div>
-                <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-                  {toEmails.map((email, index) => (
-                    <div
-                      key={index}
-                      className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
-                    >
-                      <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
-                        {email}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
-                        onClick={() => {
-                          setToEmails((emails) => emails.filter((_, i) => i !== index));
-                          setHasUnsavedChanges(true);
-                        }}
+              </div>
+            )}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-12">
+              <div className="space-y-3 md:px-1">
+                <div className="flex items-center">
+                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                    {t('common.mailDisplay.to')}
+                  </div>
+                  <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+                    {toEmails.map((email, index) => (
+                      <div
+                        key={index}
+                        className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                  <div className="relative flex-1">
+                        <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                          {email}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={isLoading}
+                          className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                          onClick={() => {
+                            setToEmails((emails) => emails.filter((_, i) => i !== index));
+                            setHasUnsavedChanges(true);
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
                     <input
                       ref={toInputRef}
+                      autoFocus
                       disabled={isLoading}
                       type="text"
-                      className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                      className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
                       placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
                       value={toInput}
                       onChange={(e) => handleEmailInputChange('to', e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (filteredContacts.length > 0) {
-                            const selectedEmail = filteredContacts[selectedContactIndex]?.email;
-                            if (selectedEmail) handleAddEmail('to', selectedEmail);
-                            setSelectedContactIndex(0);
-                          } else {
-                            handleAddEmail('to', toInput);
-                          }
-                        } else if (e.key === 'ArrowDown' && filteredContacts.length > 0) {
-                          e.preventDefault();
-                          setSelectedContactIndex((prev) =>
-                            Math.min(prev + 1, filteredContacts.length - 1),
-                          );
-                        } else if (e.key === 'ArrowUp' && filteredContacts.length > 0) {
-                          e.preventDefault();
-                          setSelectedContactIndex((prev) => Math.max(prev - 1, 0));
-                        }
-                      }}
-                    />
-                    {toInput && filteredContacts.length > 0 && (
-                      <div className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
-                        {filteredContacts.map((contact, index) => (
-                          <button
-                            key={contact.email}
-                            className={`w-full px-3 py-2 text-left text-sm ${selectedContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
-                            onClick={() => {
-                              handleAddEmail('to', contact.email);
-                              setSelectedContactIndex(0);
-                            }}
-                          >
-                            <div className="font-medium">{contact.name || contact.email}</div>
-                            {contact.name && (
-                              <div className="text-muted-foreground text-xs">{contact.email}</div>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      tabIndex={-1}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        setShowCc(!showCc);
-                        if (!showCc) {
-                          setTimeout(() => ccInputRef.current?.focus(), 0);
-                        }
-                      }}
-                    >
-                      Cc
-                    </Button>
-                    <Button
-                      tabIndex={-1}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        setShowBcc(!showBcc);
-                        if (!showBcc) {
-                          setTimeout(() => bccInputRef.current?.focus(), 0);
-                        }
-                      }}
-                    >
-                      Bcc
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {showCc && (
-                <div className="flex items-center">
-                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                    Cc
-                  </div>
-                  <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-                    {ccEmails.map((email, index) => (
-                      <div
-                        key={index}
-                        className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
-                      >
-                        <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
-                          {email}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={isLoading}
-                          className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
-                          onClick={() => {
-                            setCcEmails((emails) => emails.filter((_, i) => i !== index));
-                            setHasUnsavedChanges(true);
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    <input
-                      ref={ccInputRef}
-                      disabled={isLoading}
-                      type="text"
-                      className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                      placeholder={ccEmails.length ? '' : 'Add Cc recipients'}
-                      value={ccInput}
-                      onChange={(e) => handleEmailInputChange('cc', e.target.value)}
+                      onBlur={() => handleAddEmail('to', toInput)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          handleAddEmail('cc', ccInput);
+                          handleAddEmail('to', toInput);
                         }
                       }}
                     />
-                  </div>
-                </div>
-              )}
-
-              {showBcc && (
-                <div className="flex items-center">
-                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                    Bcc
-                  </div>
-                  <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-                    {bccEmails.map((email, index) => (
-                      <div
-                        key={index}
-                        className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
-                      >
-                        <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
-                          {email}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={isLoading}
-                          className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
-                          onClick={() => {
-                            setBccEmails((emails) => emails.filter((_, i) => i !== index));
-                            setHasUnsavedChanges(true);
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    <input
-                      ref={bccInputRef}
-                      disabled={isLoading}
-                      type="text"
-                      className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                      placeholder={bccEmails.length ? '' : 'Add Bcc recipients'}
-                      value={bccInput}
-                      onChange={(e) => handleEmailInputChange('bcc', e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleAddEmail('bcc', bccInput);
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center">
-                <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                  {t('common.searchBar.subject')}
-                </div>
-                <input
-                  ref={subjectInputRef}
-                  disabled={isLoading}
-                  type="text"
-                  className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                  placeholder={t('common.searchBar.subject')}
-                  value={subjectInput}
-                  onChange={(e) => {
-                    setSubjectInput(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
-                />
-              </div>
-
-              <div className="flex">
-                <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right font-[600] opacity-50 md:w-24">
-                  {t('pages.createEmail.body')}
-                </div>
-                <div className="w-full">
-                  {defaultValue && (
-                    <Editor
-                      initialValue={defaultValue}
-                      onChange={(newContent) => {
-                        setMessageContent(newContent);
-                        if (newContent.trim() !== '') {
-                          setHasUnsavedChanges(true);
-                        }
-                      }}
-                      key={resetEditorKey}
-                      placeholder={t('pages.createEmail.writeYourMessageHere')}
-                      onAttachmentsChange={setAttachments}
-                      onCommandEnter={handleSendEmail}
-                    />
-                  )}
-                  <div className="flex justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="pb-2 pt-2">
-                        <AIAssistant
-                          currentContent={messageContent}
-                          subject={subjectInput}
-                          recipients={toEmails}
-                          userContext={{ name: userName, email: userEmail }}
-                          onContentGenerated={(jsonContent, newSubject) => {
-                            console.log('CreateEmail: Received AI-generated content', {
-                              jsonContentType: jsonContent.type,
-                              hasContent: Boolean(jsonContent.content),
-                              contentLength: jsonContent.content?.length || 0,
-                              newSubject: newSubject,
-                            });
-
-                            try {
-                              // Update the editor content with the AI-generated content
-                              setDefaultValue(jsonContent);
-
-                              // Extract and set the text content for validation purposes
-                              // This ensures the submit button is enabled immediately
-                              if (jsonContent.content && jsonContent.content.length > 0) {
-                                // Extract text content from JSON structure recursively
-                                const extractTextContent = (node: any): string => {
-                                  if (!node) return '';
-
-                                  if (node.text) return node.text;
-
-                                  if (node.content && Array.isArray(node.content)) {
-                                    return node.content.map(extractTextContent).join(' ');
-                                  }
-
-                                  return '';
-                                };
-
-                                // Process all content nodes
-                                const textContent = jsonContent.content
-                                  .map(extractTextContent)
-                                  .join('\n')
-                                  .trim();
-                                setMessageContent(textContent);
-                              }
-
-                              // Update the subject if provided
-                              if (newSubject && (!subjectInput || subjectInput.trim() === '')) {
-                                console.log('CreateEmail: Setting new subject from AI', newSubject);
-                                setSubjectInput(newSubject);
-                              }
-
-                              // Mark as having unsaved changes
-                              setHasUnsavedChanges(true);
-
-                              // Reset the editor to ensure it picks up the new content
-                              setResetEditorKey((prev) => prev + 1);
-
-                              console.log('CreateEmail: Successfully applied AI content');
-                            } catch (error) {
-                              console.error('CreateEmail: Error applying AI content', error);
-                              toast.error(
-                                'Error applying AI content to your email. Please try again.',
-                              );
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-3">
-                      {attachments.length > 0 && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" className="flex items-center gap-2">
-                              <Paperclip className="h-4 w-4" />
-                              <span>
-                                {attachments.length}{' '}
-                                {t('common.replyCompose.attachmentCount', {
-                                  count: attachments.length,
-                                })}
-                              </span>
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80 touch-auto" align="end">
-                            <div className="space-y-2">
-                              <div className="px-1">
-                                <h4 className="font-medium leading-none">
-                                  {t('common.replyCompose.attachments')}
-                                </h4>
-                                <p className="text-muted-foreground text-sm">
-                                  {attachments.length}{' '}
-                                  {t('common.replyCompose.fileCount', {
-                                    count: attachments.length,
-                                  })}
-                                </p>
-                              </div>
-                              <Separator />
-                              <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
-                                <div className="grid grid-cols-2 gap-2">
-                                  {attachments.map((file, index) => (
-                                    <div
-                                      key={index}
-                                      className="group relative overflow-hidden rounded-md border"
-                                    >
-                                      <UploadedFileIcon
-                                        removeAttachment={removeAttachment}
-                                        index={index}
-                                        file={file}
-                                      />
-                                      <div className="bg-muted/10 p-2">
-                                        <p className="text-xs font-medium">
-                                          {truncateFileName(file.name, 20)}
-                                        </p>
-                                        <p className="text-muted-foreground text-xs">
-                                          {(file.size / (1024 * 1024)).toFixed(2)} MB
-                                        </p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                      <div className="relative">
-                        <Input
-                          type="file"
-                          id="attachment-input"
-                          className="absolute h-full w-full cursor-pointer opacity-0"
-                          onChange={handleAttachment}
-                          multiple
-                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                        />
-                        <Button
-                          variant="outline"
-                          className="hover:bg-muted -ml-1 h-9 w-9 cursor-pointer rounded-full transition-transform"
-                          tabIndex={-1}
-                        >
-                          <Plus className="h-4 w-4 cursor-pointer" />
-                        </Button>
-                      </div>
+                    <div className="flex items-center gap-1">
                       <Button
-                        variant="default"
-                        className="h-9 w-9 overflow-hidden rounded-full"
-                        onClick={handleSendEmail}
-                        disabled={
-                          isLoading ||
-                          !toEmails.length ||
-                          !messageContent.trim() ||
-                          !subjectInput.trim()
-                        }
+                        tabIndex={-1}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          setShowCc(!showCc);
+                          if (!showCc) {
+                            setTimeout(() => ccInputRef.current?.focus(), 0);
+                          }
+                        }}
                       >
-                        <ArrowUpIcon className="h-4 w-4" />
+                        Cc
+                      </Button>
+                      <Button
+                        tabIndex={-1}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          setShowBcc(!showBcc);
+                          if (!showBcc) {
+                            setTimeout(() => bccInputRef.current?.focus(), 0);
+                          }
+                        }}
+                      >
+                        Bcc
                       </Button>
                     </div>
                   </div>
+                </div>
+
+                {showCc && (
+                  <div className="flex items-center">
+                    <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                      Cc
+                    </div>
+                    <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+                      {ccEmails.map((email, index) => (
+                        <div
+                          key={index}
+                          className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
+                        >
+                          <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                            {email}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isLoading}
+                            className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                            onClick={() => {
+                              setCcEmails((emails) => emails.filter((_, i) => i !== index));
+                              setHasUnsavedChanges(true);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <input
+                        ref={ccInputRef}
+                        disabled={isLoading}
+                        type="text"
+                        className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                        placeholder={ccEmails.length ? '' : 'Add Cc recipients'}
+                        value={ccInput}
+                        onChange={(e) => handleEmailInputChange('cc', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleAddEmail('cc', ccInput);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {showBcc && (
+                  <div className="flex items-center">
+                    <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                      Bcc
+                    </div>
+                    <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+                      {bccEmails.map((email, index) => (
+                        <div
+                          key={index}
+                          className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
+                        >
+                          <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                            {email}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isLoading}
+                            className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                            onClick={() => {
+                              setBccEmails((emails) => emails.filter((_, i) => i !== index));
+                              setHasUnsavedChanges(true);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <input
+                        ref={bccInputRef}
+                        disabled={isLoading}
+                        type="text"
+                        className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                        placeholder={bccEmails.length ? '' : 'Add Bcc recipients'}
+                        value={bccInput}
+                        onChange={(e) => handleEmailInputChange('bcc', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleAddEmail('bcc', bccInput);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center">
+                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                    {t('common.searchBar.subject')}
+                  </div>
+                  <input
+                    ref={subjectInputRef}
+                    disabled={isLoading}
+                    type="text"
+                    className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                    placeholder={t('common.searchBar.subject')}
+                    value={subjectInput}
+                    onChange={(e) => {
+                      setSubjectInput(e.target.value);
+                      setHasUnsavedChanges(true);
+                    }}
+                  />
+                </div>
+
+                <div className="flex">
+                  <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right font-[600] opacity-50 md:w-24">
+                    {t('pages.createEmail.body')}
+                  </div>
+                  <div className="w-full">
+                    {defaultValue && (
+                      <Editor
+                        initialValue={defaultValue}
+                        onChange={(newContent) => {
+                          setMessageContent(newContent);
+                          if (newContent.trim() !== '') {
+                            setHasUnsavedChanges(true);
+                          }
+                        }}
+                        key={resetEditorKey}
+                        placeholder={t('pages.createEmail.writeYourMessageHere')}
+                        onAttachmentsChange={setAttachments}
+                        onCommandEnter={handleSendEmail}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="sticky bottom-0 left-0 right-0 py-2 z-10 border-t px-2 ">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="pb-2 pt-2">
+                    <AIAssistant
+                      currentContent={messageContent}
+                      subject={subjectInput}
+                      recipients={toEmails}
+                      userContext={{ name: userName, email: userEmail }}
+                      onContentGenerated={(jsonContent, newSubject) => {
+                        console.log('CreateEmail: Received AI-generated content', {
+                          jsonContentType: jsonContent.type,
+                          hasContent: Boolean(jsonContent.content),
+                          contentLength: jsonContent.content?.length || 0,
+                          newSubject: newSubject,
+                        });
+
+                        try {
+                          // Update the editor content with the AI-generated content
+                          setDefaultValue(jsonContent);
+
+                          // Extract and set the text content for validation purposes
+                          // This ensures the submit button is enabled immediately
+                          if (jsonContent.content && jsonContent.content.length > 0) {
+                            // Extract text content from JSON structure recursively
+                            const extractTextContent = (node: any): string => {
+                              if (!node) return '';
+
+                              if (node.text) return node.text;
+
+                              if (node.content && Array.isArray(node.content)) {
+                                return node.content.map(extractTextContent).join(' ');
+                              }
+
+                              return '';
+                            };
+
+                            // Process all content nodes
+                            const textContent = jsonContent.content
+                              .map(extractTextContent)
+                              .join('\n')
+                              .trim();
+                            setMessageContent(textContent);
+                          }
+
+                          // Update the subject if provided
+                          if (newSubject && (!subjectInput || subjectInput.trim() === '')) {
+                            console.log('CreateEmail: Setting new subject from AI', newSubject);
+                            setSubjectInput(newSubject);
+                          }
+
+                          // Mark as having unsaved changes
+                          setHasUnsavedChanges(true);
+
+                          // Reset the editor to ensure it picks up the new content
+                          setResetEditorKey((prev) => prev + 1);
+
+                          console.log('CreateEmail: Successfully applied AI content');
+                        } catch (error) {
+                          console.error('CreateEmail: Error applying AI content', error);
+                          toast.error(
+                                'Error applying AI content to your email. Please try again.',
+                              );
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3">
+                  {attachments.length > 0 && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="flex items-center gap-2">
+                          <Paperclip className="h-4 w-4" />
+                          <span>
+                            {attachments.length}{' '}
+                            {t('common.replyCompose.attachmentCount', {
+                                  count: attachments.length,
+                                })}
+                          </span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 touch-auto overflow-x-hidden" align="end">
+                        <div className="space-y-2">
+                          <div className="px-1">
+                            <h4 className="font-medium leading-none">
+                              {t('common.replyCompose.attachments')}
+                            </h4>
+                            <p className="text-muted-foreground text-sm">
+                              {attachments.length}{' '}
+                              {t('common.replyCompose.fileCount', {
+                                    count: attachments.length,
+                                  })}
+                            </p>
+                          </div>
+                          <Separator />
+                          <div className="touch-auto overflow-y-auto overflow-x-hidden overscroll-contain px-1 py-1">
+                            <div className="grid grid-cols-2 gap-2">
+                              {attachments.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="group relative overflow-hidden rounded-md border"
+                                >
+                                  <UploadedFileIcon
+                                    removeAttachment={removeAttachment}
+                                    index={index}
+                                    file={file}
+                                  />
+                                  <div className="bg-muted/10 p-2">
+                                    <p className="text-xs font-medium">
+                                      {truncateFileName(file.name, 20)}
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      id="attachment-input"
+                      className="absolute h-full w-full opacity-0"
+                      onChange={handleAttachment}
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                      style={{ display: 'none' }}
+                      ref={fileInputRef}
+                    />
+                    <Button
+                      variant="outline"
+                      className="hover:bg-muted -ml-1 h-9 w-9 cursor-pointer rounded-full transition-transform"
+                      tabIndex={-1}
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button
+                    variant="default"
+                    className="h-9 w-9 overflow-hidden rounded-full"
+                    onClick={handleSendEmail}
+                    disabled={
+                      isLoading ||
+                          !toEmails.length ||
+                          !messageContent.trim() ||
+                          !subjectInput.trim()
+                    }
+                  >
+                    <ArrowUpIcon className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
