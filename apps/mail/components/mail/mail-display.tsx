@@ -50,10 +50,10 @@ const StreamingText = ({ text }: { text: string }) => {
           setIsComplete(true);
           clearInterval(interval);
         }
-      }, 40);
+      }, 20);
 
       return () => clearInterval(interval);
-    }, 2000);
+    }, 1000);
 
     return () => {
       clearTimeout(thinkingTimeout);
@@ -321,7 +321,12 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
               <div className='relative -top-1'>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button size={'icon'} variant="ghost" className="rounded-md">
+                    <Button
+                      size={'icon'}
+                      variant="ghost"
+                      className="rounded-md"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Image
                         src="/ai.svg"
                         alt="logo"

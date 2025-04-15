@@ -154,10 +154,8 @@ const Thread = memo(
       };
     }, []);
 
-    const content = (
-      <div className="p-1 px-3" onClick={onClick ? onClick(message) : undefined}>
-        {demo ? (
-          <div
+    const demoContent = <div className="p-1 px-3" onClick={onClick ? onClick(message) : undefined}>
+      <div
             data-thread-id={message.threadId ?? message.id}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -231,11 +229,6 @@ const Thread = memo(
                   <p
                     className={cn(
                       'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
-                      mail.selected
-                        ? 'max-w-[3ch] overflow-hidden text-ellipsis whitespace-nowrap'
-                        : 'line-clamp-2',
-                      isMailSelected &&
-                        'max-w-[3ch] overflow-hidden text-ellipsis whitespace-nowrap opacity-100',
                     )}
                   >
                     {highlightText(message.subject, searchValue.highlight)}
@@ -243,8 +236,11 @@ const Thread = memo(
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
+      </div>
+    </div>
+
+    const content = (
+      <div className="p-1 px-3" onClick={onClick ? onClick(message) : undefined}>
           <div
             data-thread-id={message.threadId ?? message.id}
             onMouseEnter={handleMouseEnter}
@@ -326,12 +322,11 @@ const Thread = memo(
                 </div>
               </div>
             </div>
-          </div>
-        )}
+        </div>
       </div>
     );
 
-    return (
+    return demo ? demoContent : (
       <ThreadWrapper
         emailId={message.id}
         threadId={message.threadId ?? message.id}
