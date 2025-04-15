@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import Paragraph from '@tiptap/extension-paragraph';
 import { useSettings } from '@/hooks/use-settings';
+import { useContacts } from '@/hooks/use-contacts';
 import Document from '@tiptap/extension-document';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
@@ -58,9 +59,23 @@ export function CreateEmail({
   initialSubject?: string;
   initialBody?: string;
 }) {
-  const [toInput, setToInput] = React.useState('');
   const [toEmails, setToEmails] = React.useState<string[]>(initialTo ? [initialTo] : []);
+  const [toInput, setToInput] = React.useState('');
+  const [selectedContactIndex, setSelectedContactIndex] = React.useState(0);
+  const { contacts } = useContacts();
   const [ccInput, setCcInput] = React.useState('');
+
+  const filteredContacts = React.useMemo(() => {
+    if (!toInput) return [];
+    const searchTerm = toInput.toLowerCase();
+    return contacts.filter(
+      (contact) =>
+        (contact.email?.toLowerCase().includes(searchTerm) ||
+          contact.name?.toLowerCase().includes(searchTerm)) &&
+        !toEmails.includes(contact.email),
+    );
+  }, [contacts, toInput, toEmails]);
+
   const [ccEmails, setCcEmails] = React.useState<string[]>([]);
   const [bccInput, setBccInput] = React.useState('');
   const [bccEmails, setBccEmails] = React.useState<string[]>([]);
@@ -437,21 +452,56 @@ export function CreateEmail({
                       </button>
                     </div>
                   ))}
-                  <input
-                    ref={toInputRef}
-                    disabled={isLoading}
-                    type="text"
-                    className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                    placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
-                    value={toInput}
-                    onChange={(e) => handleEmailInputChange('to', e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleAddEmail('to', toInput);
-                      }
-                    }}
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      ref={toInputRef}
+                      disabled={isLoading}
+                      type="text"
+                      className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                      placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+                      value={toInput}
+                      onChange={(e) => handleEmailInputChange('to', e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (filteredContacts.length > 0) {
+                            const selectedEmail = filteredContacts[selectedContactIndex]?.email;
+                            if (selectedEmail) handleAddEmail('to', selectedEmail);
+                            setSelectedContactIndex(0);
+                          } else {
+                            handleAddEmail('to', toInput);
+                          }
+                        } else if (e.key === 'ArrowDown' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) =>
+                            Math.min(prev + 1, filteredContacts.length - 1),
+                          );
+                        } else if (e.key === 'ArrowUp' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) => Math.max(prev - 1, 0));
+                        }
+                      }}
+                    />
+                    {toInput && filteredContacts.length > 0 && (
+                      <div className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                        {filteredContacts.map((contact, index) => (
+                          <button
+                            key={contact.email}
+                            className={`w-full px-3 py-2 text-left text-sm ${selectedContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                            onClick={() => {
+                              handleAddEmail('to', contact.email);
+                              setSelectedContactIndex(0);
+                            }}
+                          >
+                            <div className="font-medium">{contact.name || contact.email}</div>
+                            {contact.name && (
+                              <div className="text-muted-foreground text-xs">{contact.email}</div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1">
                     <Button
                       tabIndex={-1}
@@ -739,22 +789,21 @@ export function CreateEmail({
               </Popover>
             )}
             <div className="-pb-1.5 relative">
-             
-                <Input
-                  type="file"
-                  id="attachment-input"
+              <Input
+                type="file"
+                id="attachment-input"
                 className="absolute h-full w-full cursor-pointer opacity-0"
-                  onChange={handleAttachment}
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                />
-                <Button
-                  variant="ghost"
-                  className="rounded-full transition-transform cursor-pointer hover:bg-muted h-8 w-8 -ml-1"
-                  tabIndex={-1}
-                >
-                  <Plus className='h-4 w-4 cursor-pointer'/>
-                </Button>
+                onChange={handleAttachment}
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              />
+              <Button
+                variant="ghost"
+                className="hover:bg-muted -ml-1 h-8 w-8 cursor-pointer rounded-full transition-transform"
+                tabIndex={-1}
+              >
+                <Plus className="h-4 w-4 cursor-pointer" />
+              </Button>
             </div>
           </div>
           <div className="flex justify-end gap-3">
