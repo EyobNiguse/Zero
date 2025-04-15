@@ -334,7 +334,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
               </div>
             </div>
             {data ? (
-              <div className="relative top-1">
+              <div className='relative -top-1'>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button size={'icon'} variant="ghost" className="rounded-md">

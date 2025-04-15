@@ -1,14 +1,19 @@
 'use client';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { generateHTML, generateJSON } from '@tiptap/core';
 import { useConnections } from '@/hooks/use-connections';
 import { createDraft, getDraft } from '@/actions/drafts';
 import { ArrowUpIcon, Paperclip, X } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import Paragraph from '@tiptap/extension-paragraph';
 import { useSettings } from '@/hooks/use-settings';
 import Document from '@tiptap/extension-document';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
+import { truncateFileName } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import { AIAssistant } from './ai-assistant';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
@@ -16,16 +21,11 @@ import Text from '@tiptap/extension-text';
 import Bold from '@tiptap/extension-bold';
 import { type JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Plus } from 'lucide-react';
-import { truncateFileName } from '@/lib/utils';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -158,6 +158,14 @@ export function CreateEmail({
   const toInputRef = React.useRef<HTMLInputElement>(null);
   const ccInputRef = React.useRef<HTMLInputElement>(null);
   const bccInputRef = React.useRef<HTMLInputElement>(null);
+  const subjectInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Add auto-focus on mount
+  React.useEffect(() => {
+    if (toInputRef.current) {
+      toInputRef.current.focus();
+    }
+  }, []);
 
   // Remove auto-focus logic
   React.useEffect(() => {
@@ -272,8 +280,12 @@ export function CreateEmail({
       setIsLoading(true);
       await sendEmail({
         to: toEmails.map((email) => ({ email, name: email.split('@')[0] || email })),
-        cc: showCc ? ccEmails.map((email) => ({ email, name: email.split('@')[0] || email })) : undefined,
-        bcc: showBcc ? bccEmails.map((email) => ({ email, name: email.split('@')[0] || email })) : undefined,
+        cc: showCc
+          ? ccEmails.map((email) => ({ email, name: email.split('@')[0] || email }))
+          : undefined,
+        bcc: showBcc
+          ? bccEmails.map((email) => ({ email, name: email.split('@')[0] || email }))
+          : undefined,
         subject: subjectInput,
         message: messageContent,
         attachments: attachments,
@@ -580,7 +592,7 @@ export function CreateEmail({
                   {t('common.searchBar.subject')}
                 </div>
                 <input
-                  ref={toInputRef}
+                  ref={subjectInputRef}
                   disabled={isLoading}
                   type="text"
                   className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
@@ -683,67 +695,73 @@ export function CreateEmail({
                 }}
               />
             </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Paperclip className="h-4 w-4" />
-                  <span>
-                    {attachments.length || 'no'}{' '}
-                    {t('common.replyCompose.attachmentCount', { count: attachments.length })}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 touch-auto" align="start">
-                <div className="space-y-2">
-                  <div className="px-1">
-                    <h4 className="font-medium leading-none">
-                      {t('common.replyCompose.attachments')}
-                    </h4>
-                    <p className="text-muted-foreground text-sm">
+            {attachments.length > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Paperclip className="h-4 w-4" />
+                    <span>
                       {attachments.length}{' '}
-                      {t('common.replyCompose.fileCount', { count: attachments.length })}
-                    </p>
-                  </div>
-                  <Separator />
-                  <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
-                    <div className="grid grid-cols-2 gap-2">
-                      {attachments.map((file, index) => (
-                        <div
-                          key={index}
-                          className="group relative overflow-hidden rounded-md border"
-                        >
-                          <UploadedFileIcon
-                            removeAttachment={removeAttachment}
-                            index={index}
-                            file={file}
-                          />
-                          <div className="bg-muted/10 p-2">
-                            <p className="text-xs font-medium">
-                              {truncateFileName(file.name, 20)}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {(file.size / (1024 * 1024)).toFixed(2)} MB
-                            </p>
+                      {t('common.replyCompose.attachmentCount', { count: attachments.length })}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 touch-auto" align="start">
+                  <div className="space-y-2">
+                    <div className="px-1">
+                      <h4 className="font-medium leading-none">
+                        {t('common.replyCompose.attachments')}
+                      </h4>
+                      <p className="text-muted-foreground text-sm">
+                        {attachments.length}{' '}
+                        {t('common.replyCompose.fileCount', { count: attachments.length })}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        {attachments.map((file, index) => (
+                          <div
+                            key={index}
+                            className="group relative overflow-hidden rounded-md border"
+                          >
+                            <UploadedFileIcon
+                              removeAttachment={removeAttachment}
+                              index={index}
+                              file={file}
+                            />
+                            <div className="bg-muted/10 p-2">
+                              <p className="text-xs font-medium">
+                                {truncateFileName(file.name, 20)}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                {(file.size / (1024 * 1024)).toFixed(2)} MB
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <div className='-left-5 relative group'>
-              <Input
-                type="file"
-                id="attachment-input"
-                className='w-10 opacity-0'
-                onChange={handleAttachment}
-                multiple
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-              />
-              <Button variant={'outline'} size={'icon'} type='button' className='transition-transform group-hover:scale-90 scale-75 absolute top-0 left-0 rounded-full pointer-events-none'>
-                <Plus />
-              </Button>
+                </PopoverContent>
+              </Popover>
+            )}
+            <div className="-pb-1.5 relative">
+                <Input
+                  type="file"
+                  id="attachment-input"
+                className="absolute h-full w-full cursor-pointer opacity-0"
+                  onChange={handleAttachment}
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                />
+                <Button
+                  variant="ghost"
+                  className="rounded-full transition-transform cursor-pointer hover:bg-muted h-8 w-8 -ml-1"
+                  tabIndex={-1}
+                >
+                  <Plus className='h-4 w-4 cursor-pointer'/>
+                </Button>
             </div>
           </div>
           <div className="flex justify-end gap-3">

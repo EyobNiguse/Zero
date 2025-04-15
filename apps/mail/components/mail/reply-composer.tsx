@@ -1156,66 +1156,74 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 </Button>
               </div>
             )}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Paperclip className="h-4 w-4" />
-                  <span>
-                    {attachments.length || 'no'}{' '}
-                    {t('common.replyCompose.attachmentCount', { count: attachments.length })}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 touch-auto" align="start">
-                <div className="space-y-2">
-                  <div className="px-1">
-                    <h4 className="font-medium leading-none">
-                      {t('common.replyCompose.attachments')}
-                    </h4>
-                    <p className="text-muted-foreground text-sm">
+            {/* Conditionally render the Popover only if attachments exist */}
+            {attachments.length > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Paperclip className="h-4 w-4" />
+                    <span>
                       {attachments.length}{' '}
-                      {t('common.replyCompose.fileCount', { count: attachments.length })}
-                    </p>
-                  </div>
-                  <Separator />
-                  <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
-                    <div className="grid grid-cols-2 gap-2">
-                      {attachments.map((file, index) => (
-                        <div
-                          key={index}
-                          className="group relative overflow-hidden rounded-md border"
-                        >
-                          <UploadedFileIcon
-                            removeAttachment={removeAttachment}
-                            index={index}
-                            file={file}
-                          />
-                          <div className="bg-muted/10 p-2">
-                            <p className="text-xs font-medium">
-                              {truncateFileName(file.name, 20)}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {(file.size / (1024 * 1024)).toFixed(2)} MB
-                            </p>
+                      {t('common.replyCompose.attachmentCount', { count: attachments.length })}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 touch-auto" align="start">
+                  <div className="space-y-2">
+                    <div className="px-1">
+                      <h4 className="font-medium leading-none">
+                        {t('common.replyCompose.attachments')}
+                      </h4>
+                      <p className="text-muted-foreground text-sm">
+                        {attachments.length}{' '}
+                        {t('common.replyCompose.fileCount', { count: attachments.length })}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div className="h-[300px] touch-auto overflow-y-auto overscroll-contain px-1 py-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        {attachments.map((file, index) => (
+                          <div
+                            key={index}
+                            className="group relative overflow-hidden rounded-md border"
+                          >
+                            <UploadedFileIcon
+                              removeAttachment={removeAttachment}
+                              index={index}
+                              file={file}
+                            />
+                            <div className="bg-muted/10 p-2">
+                              <p className="text-xs font-medium">
+                                {truncateFileName(file.name, 20)}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                {(file.size / (1024 * 1024)).toFixed(2)} MB
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <div className='-left-5 relative group'>
+                </PopoverContent>
+              </Popover>
+            )}
+            {/* The Plus button is always visible, wrapped in a label for better click handling */}
+            <div className="-pb-1.5 relative">
               <Input
                 type="file"
-                id="attachment-input"
-                className='w-10 opacity-0'
+                id="reply-attachment-input"
+                className="absolute h-full w-full cursor-pointer opacity-0"
                 onChange={handleAttachmentEvent}
                 multiple
                 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
               />
-              <Button variant={'outline'} size={'icon'} type='button' className='transition-transform group-hover:scale-90 scale-75 absolute top-0 left-0 rounded-full pointer-events-none'>
-                <Plus />
+              <Button
+                variant="ghost"
+                className="rounded-full transition-transform cursor-pointer hover:bg-muted h-8 w-8 -ml-1"
+                tabIndex={-1}
+              >
+                <Plus className="h-4 w-4 cursor-pointer"/>
               </Button>
             </div>
           </div>
