@@ -6,6 +6,7 @@ import {
   LogIn,
   LogOut,
   MoonIcon,
+  Settings,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -225,6 +226,12 @@ export function NavUser() {
                   <p className="text-[13px] opacity-60">{t('common.navUser.appTheme')}</p>
                 </div>
               </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/settings/general')}>
+                <div className="flex items-center gap-2">
+                  <Settings size={16} className="opacity-60" />
+                  <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
+                </div>
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <a href="https://discord.gg/0email" target="_blank" className="w-full">
                   <div className="flex items-center gap-2">
@@ -239,6 +246,7 @@ export function NavUser() {
                   <p className="text-[13px] opacity-60">{t('common.actions.logout')}</p>
                 </div>
               </DropdownMenuItem>
+              
             </>
           ) : (
             <>
