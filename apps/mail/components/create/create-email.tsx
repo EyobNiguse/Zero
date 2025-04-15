@@ -158,6 +158,14 @@ export function CreateEmail({
   const toInputRef = React.useRef<HTMLInputElement>(null);
   const ccInputRef = React.useRef<HTMLInputElement>(null);
   const bccInputRef = React.useRef<HTMLInputElement>(null);
+  const subjectInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Add auto-focus on mount
+  React.useEffect(() => {
+    if (toInputRef.current) {
+      toInputRef.current.focus();
+    }
+  }, []);
 
   // Remove auto-focus logic
   React.useEffect(() => {
@@ -584,7 +592,7 @@ export function CreateEmail({
                   {t('common.searchBar.subject')}
                 </div>
                 <input
-                  ref={toInputRef}
+                  ref={subjectInputRef}
                   disabled={isLoading}
                   type="text"
                   className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
@@ -739,7 +747,6 @@ export function CreateEmail({
               </Popover>
             )}
             <div className="-pb-1.5 relative">
-             
                 <Input
                   type="file"
                   id="attachment-input"
