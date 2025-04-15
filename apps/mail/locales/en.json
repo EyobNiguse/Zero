@@ -40,7 +40,8 @@
       "trustSender": "Trust Sender",
       "cancel": "Cancel",
       "save": "Save",
-      "remove": "Remove"
+      "remove": "Remove",
+      "settings": "Settings"
     },
     "themes": {
       "dark": "Dark",
