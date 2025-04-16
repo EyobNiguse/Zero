@@ -27,6 +27,12 @@ import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -50,6 +56,17 @@ const createEmptyDocContent = (): JSONContent => ({
   ],
 });
 
+const filterContacts = (contacts: any[], searchTerm: string, excludeEmails: string[]) => {
+  if (!searchTerm) return [];
+  const term = searchTerm.toLowerCase();
+  return contacts.filter(
+    (contact) =>
+      (contact.email?.toLowerCase().includes(term) ||
+        contact.name?.toLowerCase().includes(term)) &&
+      !excludeEmails.includes(contact.email)
+  );
+};
+
 export function CreateEmail({
   initialTo = '',
   initialSubject = '',
@@ -62,20 +79,10 @@ export function CreateEmail({
   const [toEmails, setToEmails] = React.useState<string[]>(initialTo ? [initialTo] : []);
   const [toInput, setToInput] = React.useState('');
   const [selectedContactIndex, setSelectedContactIndex] = React.useState(0);
+  const [selectedCcContactIndex, setSelectedCcContactIndex] = React.useState(0);
+  const [selectedBccContactIndex, setSelectedBccContactIndex] = React.useState(0);
   const contacts = useContacts();
   const [ccInput, setCcInput] = React.useState('');
-
-  const filteredContacts = React.useMemo(() => {
-    if (!toInput) return [];
-    const searchTerm = toInput.toLowerCase();
-    return contacts.filter(
-      (contact) =>
-        (contact.email?.toLowerCase().includes(searchTerm) ||
-          contact.name?.toLowerCase().includes(searchTerm)) &&
-        !toEmails.includes(contact.email),
-    );
-  }, [contacts, toInput, toEmails]);
-
   const [ccEmails, setCcEmails] = React.useState<string[]>([]);
   const [bccInput, setBccInput] = React.useState('');
   const [bccEmails, setBccEmails] = React.useState<string[]>([]);
@@ -118,6 +125,21 @@ export function CreateEmail({
     activeAccount?.name || session?.activeConnection?.name || session?.user?.name || '';
   const userEmail =
     activeAccount?.email || session?.activeConnection?.email || session?.user?.email || '';
+
+  const filteredContacts = React.useMemo(
+    () => filterContacts(contacts, toInput, toEmails),
+    [contacts, toInput, toEmails]
+  );
+
+  const filteredCcContacts = React.useMemo(
+    () => filterContacts(contacts, ccInput, [...toEmails, ...ccEmails]),
+    [contacts, ccInput, toEmails, ccEmails]
+  );
+
+  const filteredBccContacts = React.useMemo(
+    () => filterContacts(contacts, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
+    [contacts, bccInput, toEmails, ccEmails, bccEmails]
+  );
 
   React.useEffect(() => {
     if (!draftId && !defaultValue) {
@@ -198,7 +220,7 @@ export function CreateEmail({
   }, []);
 
   const handleEmailInputChange = (type: 'to' | 'cc' | 'bcc', value: string) => {
-    // Just update the input value, no validation or checks
+    // Update the input value immediately without any validation
     switch (type) {
       case 'to':
         setToInput(value);
@@ -225,7 +247,8 @@ export function CreateEmail({
       setEmailState([...emailState, trimmedEmail]);
       setInputState('');
       setHasUnsavedChanges(true);
-    } else {
+    } else if (emailState.length === 0) {
+      // Only show error if there are no emails yet
       toast.error(t('pages.createEmail.invalidEmail'));
     }
   };
@@ -424,6 +447,41 @@ export function CreateEmail({
     }
   }, [initialTo, initialSubject, initialBody, defaultValue]);
 
+  const toDropdownRef = React.useRef<HTMLDivElement>(null);
+  const ccDropdownRef = React.useRef<HTMLDivElement>(null);
+  const bccDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Add this effect to handle scrolling
+  React.useEffect(() => {
+    const dropdownRef = toDropdownRef.current;
+    if (dropdownRef && selectedContactIndex >= 0) {
+      const selectedItem = dropdownRef.children[selectedContactIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedContactIndex]);
+
+  React.useEffect(() => {
+    const dropdownRef = ccDropdownRef.current;
+    if (dropdownRef && selectedCcContactIndex >= 0) {
+      const selectedItem = dropdownRef.children[selectedCcContactIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedCcContactIndex]);
+
+  React.useEffect(() => {
+    const dropdownRef = bccDropdownRef.current;
+    if (dropdownRef && selectedBccContactIndex >= 0) {
+      const selectedItem = dropdownRef.children[selectedBccContactIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedBccContactIndex]);
+
   return (
     <div
       className="bg-offsetLight dark:bg-offsetDark relative flex h-full flex-col overflow-hidden shadow-inner md:rounded-2xl md:border md:shadow-sm"
@@ -474,23 +532,56 @@ export function CreateEmail({
                         </button>
                       </div>
                     ))}
+                    <div className='flex-1 relative'>
                     <input
                       ref={toInputRef}
-                      autoFocus
                       disabled={isLoading}
                       type="text"
-                      className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                      className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
                       placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
                       value={toInput}
                       onChange={(e) => handleEmailInputChange('to', e.target.value)}
-                      onBlur={() => handleAddEmail('to', toInput)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
+                        if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleAddEmail('to', toInput);
+                          if (filteredContacts.length > 0) {
+                            const selectedEmail = filteredContacts[selectedContactIndex]?.email;
+                            if (selectedEmail) handleAddEmail('to', selectedEmail);
+                            setSelectedContactIndex(0);
+                          } else {
+                            handleAddEmail('to', toInput);
+                          }
+                        } else if (e.key === 'ArrowDown' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) =>
+                            Math.min(prev + 1, filteredContacts.length - 1),
+                          );
+                        } else if (e.key === 'ArrowUp' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) => Math.max(prev - 1, 0));
                         }
                       }}
                     />
+                    {toInput && filteredContacts.length > 0 && (
+                      <div ref={toDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                        {filteredContacts.map((contact, index) => (
+                          <button
+                            key={contact.email}
+                            className={`w-full px-3 py-2 text-left text-sm ${selectedContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                            onClick={() => {
+                              handleAddEmail('to', contact.email);
+                              setSelectedContactIndex(0);
+                            }}
+                          >
+                            <div className="font-medium">{contact.name || contact.email}</div>
+                            {contact.name && (
+                              <div className="text-muted-foreground text-xs">{contact.email}</div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    </div>
                     <div className="flex items-center gap-1">
                       <Button
                         tabIndex={-1}
@@ -553,21 +644,58 @@ export function CreateEmail({
                           </button>
                         </div>
                       ))}
-                      <input
-                        ref={ccInputRef}
-                        disabled={isLoading}
-                        type="text"
-                        className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                        placeholder={ccEmails.length ? '' : 'Add Cc recipients'}
-                        value={ccInput}
-                        onChange={(e) => handleEmailInputChange('cc', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleAddEmail('cc', ccInput);
-                          }
-                        }}
-                      />
+                      <div className='flex-1 relative'>
+                        <input
+                          ref={ccInputRef}
+                          disabled={isLoading}
+                          type="text"
+                          className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                          placeholder={ccEmails.length ? '' : t('pages.createEmail.example')}
+                          value={ccInput}
+                          onChange={(e) => handleEmailInputChange('cc', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (filteredCcContacts.length > 0) {
+                                const selectedEmail = filteredCcContacts[selectedCcContactIndex]?.email;
+                                if (selectedEmail) {
+                                  handleAddEmail('cc', selectedEmail);
+                                  setSelectedCcContactIndex(0);
+                                }
+                              } else {
+                                handleAddEmail('cc', ccInput);
+                              }
+                            } else if (e.key === 'ArrowDown' && filteredCcContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedCcContactIndex((prev) =>
+                                Math.min(prev + 1, filteredCcContacts.length - 1),
+                              );
+                            } else if (e.key === 'ArrowUp' && filteredCcContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedCcContactIndex((prev) => Math.max(prev - 1, 0));
+                            }
+                          }}
+                        />
+                        {ccInput && filteredCcContacts.length > 0 && (
+                          <div ref={ccDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                            {filteredCcContacts.map((contact, index) => (
+                              <button
+                                key={contact.email}
+                                className={`w-full px-3 py-2 text-left text-sm ${selectedCcContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                                onClick={() => {
+                                  handleAddEmail('cc', contact.email);
+                                  setSelectedCcContactIndex(0);
+                                }}
+                              >
+                                <div className="font-medium">{contact.name || contact.email}</div>
+                                {contact.name && (
+                                  <div className="text-muted-foreground text-xs">{contact.email}</div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -599,21 +727,58 @@ export function CreateEmail({
                           </button>
                         </div>
                       ))}
-                      <input
-                        ref={bccInputRef}
-                        disabled={isLoading}
-                        type="text"
-                        className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                        placeholder={bccEmails.length ? '' : 'Add Bcc recipients'}
-                        value={bccInput}
-                        onChange={(e) => handleEmailInputChange('bcc', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleAddEmail('bcc', bccInput);
-                          }
-                        }}
-                      />
+                      <div className='flex-1 relative'>
+                        <input
+                          ref={bccInputRef}
+                          disabled={isLoading}
+                          type="text"
+                          className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                          placeholder={bccEmails.length ? '' : t('pages.createEmail.example')}
+                          value={bccInput}
+                          onChange={(e) => handleEmailInputChange('bcc', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (filteredBccContacts.length > 0) {
+                                const selectedEmail = filteredBccContacts[selectedBccContactIndex]?.email;
+                                if (selectedEmail) {
+                                  handleAddEmail('bcc', selectedEmail);
+                                  setSelectedBccContactIndex(0);
+                                }
+                              } else {
+                                handleAddEmail('bcc', bccInput);
+                              }
+                            } else if (e.key === 'ArrowDown' && filteredBccContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedBccContactIndex((prev) =>
+                                Math.min(prev + 1, filteredBccContacts.length - 1),
+                              );
+                            } else if (e.key === 'ArrowUp' && filteredBccContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedBccContactIndex((prev) => Math.max(prev - 1, 0));
+                            }
+                          }}
+                        />
+                        {bccInput && filteredBccContacts.length > 0 && (
+                          <div ref={bccDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                            {filteredBccContacts.map((contact, index) => (
+                              <button
+                                key={contact.email}
+                                className={`w-full px-3 py-2 text-left text-sm ${selectedBccContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                                onClick={() => {
+                                  handleAddEmail('bcc', contact.email);
+                                  setSelectedBccContactIndex(0);
+                                }}
+                              >
+                                <div className="font-medium">{contact.name || contact.email}</div>
+                                {contact.name && (
+                                  <div className="text-muted-foreground text-xs">{contact.email}</div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
