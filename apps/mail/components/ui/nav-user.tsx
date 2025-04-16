@@ -31,6 +31,7 @@ import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { dexieStorageProvider } from '@/lib/idb';
 import { usePathname, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 export function NavUser() {
   const { data: session, refetch } = useSession();
@@ -243,11 +244,13 @@ export function NavUser() {
                   <p className="text-[13px] opacity-60">{t('common.navUser.appTheme')}</p>
                 </div>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push(getSettingsHref())}>
-                <div className="flex items-center gap-2">
-                  <Settings size={16} className="opacity-60" />
-                  <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
-                </div>
+              <DropdownMenuItem asChild>
+                <Link href={getSettingsHref()} className="cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Settings size={16} className="opacity-60" />
+                    <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
+                  </div>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <a href="https://discord.gg/0email" target="_blank" className="w-full">
