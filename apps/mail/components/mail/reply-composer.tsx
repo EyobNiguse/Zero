@@ -51,6 +51,7 @@ import type { z } from 'zod';
 import { createDraft } from '@/actions/drafts';
 import { extractTextFromHTML } from '@/actions/extractText';
 import { Input } from '../ui/input';
+import posthog from 'posthog-js';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -321,6 +322,17 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         },
         threadId
       }).then(() => mutate());
+      
+      
+      if (ccRecipients && bccRecipients) {
+        posthog.capture('Reply Email Sent with CC and BCC');
+      } else if (ccRecipients) {
+        posthog.capture('Reply Email Sent with CC');
+      } else if (bccRecipients) {
+        posthog.capture('Reply Email Sent with BCC');
+      } else {
+        posthog.capture('Reply Email Sent');
+      }
 
       reset();
       setComposerIsOpen(false);

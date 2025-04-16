@@ -33,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import posthog from 'posthog-js';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -326,6 +327,17 @@ export function CreateEmail({
         message: messageContent,
         attachments: attachments,
       });
+
+      // Track different email sending scenarios
+      if (showCc && showBcc) {
+        console.log(posthog.capture('Create Email Sent with CC and BCC'));
+      } else if (showCc) {
+        console.log(posthog.capture('Create Email Sent with CC'));
+      } else if (showBcc) {
+        console.log(posthog.capture('Create Email Sent with BCC'));
+      } else {
+        console.log(posthog.capture('Create Email Sent'));
+      }
 
       setIsLoading(false);
       toast.success(t('pages.createEmail.emailSentSuccessfully'));
@@ -970,6 +982,8 @@ export function CreateEmail({
                     </Button>
                   </div>
                   <Button
+
+
                     variant="default"
                     className="h-9 w-9 overflow-hidden rounded-full"
                     onClick={handleSendEmail}
