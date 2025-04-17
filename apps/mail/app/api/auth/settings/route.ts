@@ -1,5 +1,5 @@
 import { processIP, getRatelimitModule, checkRateLimit, getAuthenticatedUserId } from '../../utils';
-import { userSettingsSchema } from '@zero/db/user_settings_default';
+import { defaultUserSettings, userSettingsSchema } from '@zero/db/user_settings_default';
 import { NextRequest, NextResponse } from 'next/server';
 import { Ratelimit } from '@upstash/ratelimit';
 import { userSettings } from '@zero/db/schema';
@@ -28,7 +28,7 @@ export const GET = async (req: NextRequest) => {
     .limit(1);
 
   // Returning null here when there are no settings so we can use the default settings with timezone from the browser
-  if (!result) return null;
+  if (!result) return NextResponse.json({ settings: defaultUserSettings }, { status: 200 });
 
   const settings = userSettingsSchema.parse(result.settings);
 
