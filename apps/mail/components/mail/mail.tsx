@@ -42,7 +42,7 @@ import { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useMail } from '@/components/mail/use-mail';
@@ -74,7 +74,7 @@ export function DemoMailLayout() {
   const isValidating = false;
   const isLoading = false;
   const isDesktop = true;
-  const threadIdParam = useQueryState('threadId');
+  const [threadIdParam] = useQueryState('threadId');
   const [activeCategory, setActiveCategory] = useState('Primary');
   const [filteredItems, setFilteredItems] = useState(items);
 
@@ -377,28 +377,7 @@ export function MailLayout() {
                 )}
               />
               <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
-                {isLoading ? (
-                  <div className="flex flex-col">
-                    {[...Array(8)].map((_, i) => (
-                      <div key={i} className="flex flex-col px-4 py-3">
-                        <div className="flex w-full items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="h-4 w-24" />
-                          </div>
-                          <Skeleton className="h-3 w-12" />
-                        </div>
-                        <Skeleton className="mt-2 h-3 w-32" />
-                        <Skeleton className="mt-2 h-3 w-full" />
-                        <div className="mt-2 flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-md" />
-                          <Skeleton className="h-4 w-16 rounded-md" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <MailList isCompact={true} />
-                )}
+                <MailList isCompact={true} />
               </div>
             </div>
           </ResizablePanel>
@@ -464,7 +443,7 @@ function BulkSelectActions() {
           await new Promise((resolve) => setTimeout(resolve, 499));
           const emailData = await getMail({ id: bulkSelected });
           if (emailData) {
-            const [firstEmail] = emailData;
+            const firstEmail = emailData.latest;
             if (firstEmail)
               return handleUnsubscribe({ emailData: firstEmail }).catch((e) => {
                 toast.error(e.message ?? 'Unknown error while unsubscribing');
@@ -492,6 +471,7 @@ function BulkSelectActions() {
     try {
       const response = await markAsRead({ ids: mail.bulkSelected });
       if (response.success) {
+        // TODO: fix this, it needs useThread mutation 
         await mutateThreads();
         await mutateStats();
         setMail((prev) => ({
@@ -653,6 +633,14 @@ export const Categories = () => {
       name: t('common.mailCategories.promotions'),
       searchValue: 'is:promotions',
       icon: <Tag className="h-4 w-4 rotate-90" />,
+      colors:
+        'border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30',
+    },
+    {
+      id: 'Unread',
+      name: t('common.mailCategories.unread'),
+      searchValue: 'is:unread',
+      icon: <MailOpen className="h-4 w-4" />,
       colors:
         'border-0 text-red-800 bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30',
     },

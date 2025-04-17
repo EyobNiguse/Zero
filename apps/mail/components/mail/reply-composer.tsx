@@ -42,6 +42,12 @@ import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { Sender } from '@/types';
 import { toast } from 'sonner';
+import type { z } from 'zod';
+
+import { createDraft } from '@/actions/drafts';
+import { extractTextFromHTML } from '@/actions/extractText';
+import { Input } from '../ui/input';
+import posthog from 'posthog-js';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -226,14 +232,14 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const ccEmails = watch('cc');
   const bccEmails = watch('bcc');
 
-  const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
-    const trimmedEmail = value.trim().replace(/,$/, '');
-    const currentEmails = getValues(type);
-    if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
-      setValue(type, [...currentEmails, trimmedEmail]);
-      setValue(`${type}Input`, '');
-    }
-  };
+  // const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
+  //   const trimmedEmail = value.trim().replace(/,$/, '');
+  //   const currentEmails = getValues(type);
+  //   if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
+  //     setValue(type, [...currentEmails, trimmedEmail]);
+  //     setValue(`${type}Input`, '');
+  //   }
+  // };
 
   const handleSendEmail = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (e) {
@@ -241,7 +247,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     }
     if (!emailData) return;
     try {
-      const originalEmail = emailData[emailData.length - 1];
+      const originalEmail = emailData.latest
       const userEmail = session?.activeConnection?.email?.toLowerCase();
 
       if (!userEmail) {
@@ -267,16 +273,16 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
       const ccRecipients: Sender[] | undefined = showCc
         ? ccEmails.map((email) => ({
-            email,
-            name: email.split('@')[0] || 'User',
-          }))
+          email,
+          name: email.split('@')[0] || 'User',
+        }))
         : undefined;
 
       const bccRecipients: Sender[] | undefined = showBcc
         ? bccEmails.map((email) => ({
-            email,
-            name: email.split('@')[0] || 'User',
-          }))
+          email,
+          name: email.split('@')[0] || 'User',
+        }))
         : undefined;
 
       const messageId = originalEmail.messageId;
@@ -313,6 +319,17 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         },
         threadId,
       }).then(() => mutate());
+      
+      
+      if (ccRecipients && bccRecipients) {
+        posthog.capture('Reply Email Sent with CC and BCC');
+      } else if (ccRecipients) {
+        posthog.capture('Reply Email Sent with CC');
+      } else if (bccRecipients) {
+        posthog.capture('Reply Email Sent with BCC');
+      } else {
+        posthog.capture('Reply Email Sent');
+      }
 
       reset();
       setComposerIsOpen(false);
@@ -489,15 +506,15 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const isMessageEmpty =
     !getValues('messageContent') ||
     getValues('messageContent') ===
-      JSON.stringify({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [],
-          },
-        ],
-      });
+    JSON.stringify({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [],
+        },
+      ],
+    });
 
   // Check if form is valid for submission
   const isFormValid = !isMessageEmpty || attachments.length > 0;
@@ -507,16 +524,14 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     aiDispatch({ type: 'SET_LOADING', payload: true });
     try {
       // Extract relevant information from the email thread for context
-      const latestEmail = emailData[emailData.length - 1];
+      const latestEmail = emailData.latest;
       if (!latestEmail) return;
       const originalSender = latestEmail?.sender?.name || 'the recipient';
 
       // Create a summary of the thread content for context
-      const threadContent = (
-        await Promise.all(
-          emailData.map(async (email) => {
-            const body = await extractTextFromHTML(email.decodedBody || 'No content');
-            return `
+      const threadContent = (await Promise.all(emailData.messages.map(async (email) => {
+        const body = await extractTextFromHTML(email.decodedBody || 'No content');
+        return `
             <email>
               <from>${email.sender?.name || 'Unknown'} &lt;${email.sender?.email || 'unknown@email.com'}&gt;</from>
               <subject>${email.subject || 'No Subject'}</subject>
@@ -600,9 +615,9 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
   // Helper function to initialize recipients based on mode
   const initializeRecipients = useCallback(() => {
-    if (!emailData || !emailData.length) return { to: [], cc: [] };
+    if (!emailData || !emailData.messages.length) return { to: [], cc: [] };
 
-    const latestEmail = emailData[emailData.length - 1];
+    const latestEmail = emailData.latest;
     if (!latestEmail) return { to: [], cc: [] };
 
     const userEmail = session?.activeConnection?.email?.toLowerCase();
@@ -674,7 +689,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const renderHeaderContent = () => {
     if (!emailData) return null;
 
-    const latestEmail = emailData[emailData.length - 1];
+    const latestEmail = emailData.latest;
     if (!latestEmail) return null;
 
     const icon =
@@ -784,6 +799,15 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       },
     });
 
+    const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
+      const trimmedEmail = value.trim().replace(/,$/, '');
+      const currentEmails = getValues(type);
+      if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
+        setValue(type, [...currentEmails, trimmedEmail]);
+        setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
+      }
+    };
+
     return (
       <div className="flex items-center gap-2">
         <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] opacity-50">
@@ -804,6 +828,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
             className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
             placeholder={value.length ? '' : placeholder}
             {...rest}
+            onBlur={(e) => handleAddEmail('to', e.currentTarget.value)}
             onKeyDown={(e) => {
               const currentValue = e.currentTarget.value;
               if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && currentValue) {
@@ -868,12 +893,12 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
   // Update saveDraft function
   const saveDraft = useCallback(async () => {
-    if (!emailData || !emailData[0]) return;
+    if (!emailData || !emailData.latest) return;
     if (!getValues('messageContent')) return;
 
     try {
       composerDispatch({ type: 'SET_LOADING', payload: true });
-      const originalEmail = emailData[0];
+      const originalEmail = emailData.latest;
       const draftData = {
         to: mode === 'forward' ? getValues('to').join(', ') : originalEmail.sender.email,
         subject: originalEmail.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
@@ -916,10 +941,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
   // Simplified composer visibility check
   if (!composerIsOpen) {
-    if (!emailData || emailData.length === 0) return null;
+    if (!emailData || emailData.messages.length === 0) return null;
 
     // Get the latest email in the thread
-    const latestEmail = emailData[emailData.length - 1];
+    const latestEmail = emailData.latest;
     if (!latestEmail) return null;
 
     // Get all unique participants (excluding current user)
@@ -1037,7 +1062,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setShowCc(true);
+                setShowCc(!showCc);
+                if (showCc) {
+                  setValue('cc', []);
+                }
                 setIsEditingRecipients(true);
                 setTimeout(() => {
                   ccInputRef.current?.focus();
@@ -1045,7 +1073,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               }}
               className="text-xs"
             >
-              Add Cc
+              {showCc ? 'Remove Cc' : 'Add Cc'}
             </Button>
             <Button
               type="button"
@@ -1054,7 +1082,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setShowBcc(true);
+                setShowBcc(!showBcc);
+                if (showBcc) {
+                  setValue('bcc', []);
+                }
                 setIsEditingRecipients(true);
                 setTimeout(() => {
                   bccInputRef.current?.focus();
@@ -1062,7 +1093,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               }}
               className="text-xs"
             >
-              Add Bcc
+              {showBcc ? 'Remove Bcc' : 'Add Bcc'}
             </Button>
             <CloseButton onClick={toggleComposer} />
           </div>
@@ -1101,8 +1132,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 email: session?.user.email,
               }}
               senderInfo={{
-                name: emailData[0]?.sender?.name,
-                email: emailData[0]?.sender?.email,
+                name: emailData.latest?.sender?.name,
+                email: emailData.latest?.sender?.email,
               }}
             />
           </div>
@@ -1214,26 +1245,22 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               </Popover>
             )}
             {/* The Plus button is always visible, wrapped in a label for better click handling */}
-            <div className="">
-              <label htmlFor="reply-attachment-input" className="cursor-pointer">
-                <Input
-                  type="file"
-                  id="reply-attachment-input" // Use a unique ID
-                  className="absolute h-full w-full cursor-pointer opacity-0"
-                  onChange={handleAttachmentEvent}
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                />
-                <Button
-                  variant="ghost" // Match create-email style (might need adjustment)
-                  size="icon" // Match create-email style
-                  type="button"
-                  className="hover:bg-muted -ml-1 h-8 w-8 cursor-pointer rounded-full transition-transform" // Match create-email style
-                  tabIndex={-1}
-                >
-                  <Plus className="h-4 w-4 cursor-pointer" />
-                </Button>
-              </label>
+            <div className="-pb-1.5 relative">
+              <Input
+                type="file"
+                id="reply-attachment-input"
+                className="absolute h-full w-full cursor-pointer opacity-0"
+                onChange={handleAttachmentEvent}
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              />
+              <Button
+                variant="ghost"
+                className="rounded-full transition-transform cursor-pointer hover:bg-muted h-8 w-8 -ml-1"
+                tabIndex={-1}
+              >
+                <Plus className="h-4 w-4 cursor-pointer"/>
+              </Button>
             </div>
           </div>
           <div className="mr-2 flex items-center gap-2">
