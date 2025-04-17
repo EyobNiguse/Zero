@@ -1,64 +1,19 @@
-'use server';
-
-import { type UserSettings, userSettingsSchema } from '@zero/db/user_settings_default';
-import { earlyAccess, user, userSettings } from '@zero/db/schema';
+import { type NextRequest, NextResponse } from 'next/server';
+import { earlyAccess, user } from '@zero/db/schema';
 import { getAuthenticatedUserId } from '@/app/api/utils';
 import { eq } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { db } from '@zero/db';
 
-function validateSettings(settings: unknown): UserSettings {
-  try {
-    return userSettingsSchema.parse(settings);
-  } catch (error) {
-    console.error('Settings validation error: Schema mismatch', {
-      error,
-      settings,
-    });
-    throw new Error('Invalid settings format');
-  }
-}
-
-export async function saveUserSettings(settings: UserSettings) {
+export async function POST(req: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId();
-    settings = validateSettings(settings);
-    const timestamp = new Date();
+    const { email } = await req.json();
 
-    const [existingSettings] = await db
-      .select()
-      .from(userSettings)
-      .where(eq(userSettings.userId, userId))
-      .limit(1);
-
-    if (existingSettings) {
-      await db
-        .update(userSettings)
-        .set({
-          settings: settings,
-          updatedAt: timestamp,
-        })
-        .where(eq(userSettings.userId, userId));
-    } else {
-      await db.insert(userSettings).values({
-        id: crypto.randomUUID(),
-        userId,
-        settings,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      });
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to save user settings:', error);
-    throw new Error('Failed to save user settings');
-  }
-}
-
-export async function handleGoldenTicket(email: string) {
-  try {
-    const userId = await getAuthenticatedUserId();
     const [foundUser] = await db
       .select({
         hasUsedTicket: earlyAccess.hasUsedTicket,
@@ -71,23 +26,26 @@ export async function handleGoldenTicket(email: string) {
       .limit(1);
 
     if (!foundUser) {
-      return { success: false, error: 'User not found' };
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     if (foundUser.hasUsedTicket) {
-      return { success: false, error: 'Golden ticket already claimed' };
+      return NextResponse.json({ error: 'Golden ticket already claimed' }, { status: 400 });
     }
 
     if (!foundUser.isEarlyAccess) {
-      return { success: false, error: 'Unauthorized' };
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const sendNotification = () => {
-      return resend.emails.send({
-        from: '0.email <onboarding@0.email>',
-        to: email,
-        subject: 'You <> Zero',
-        html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    const resend = process.env.RESEND_API_KEY
+      ? new Resend(process.env.RESEND_API_KEY)
+      : { emails: { send: async (...args: any[]) => console.log(args) } };
+
+    await resend.emails.send({
+      from: '0.email <onboarding@0.email>',
+      to: email,
+      subject: 'You <> Zero',
+      html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" lang="en">
   <head>
     <link
@@ -208,8 +166,7 @@ export async function handleGoldenTicket(email: string) {
     </table>
   </body>
 </html>`,
-      });
-    };
+    });
 
     await db
       .insert(earlyAccess)
@@ -245,7 +202,6 @@ export async function handleGoldenTicket(email: string) {
             .catch((err) => {
               console.error('Error updating early access', err);
             });
-          await sendNotification();
           throw error;
         }
       });
@@ -258,15 +214,12 @@ export async function handleGoldenTicket(email: string) {
       })
       .where(eq(earlyAccess.email, foundUser.email));
 
-    const resend = process.env.RESEND_API_KEY
-      ? new Resend(process.env.RESEND_API_KEY)
-      : { emails: { send: async (...args: any[]) => console.log(args) } };
-
-    await sendNotification();
-
-    return { success: true };
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to handle golden ticket:', error);
-    throw new Error('Failed to handle golden ticket');
+    return NextResponse.json(
+      { error: 'Failed to handle golden ticket' },
+      { status: 500 },
+    );
   }
-}
+} 
