@@ -119,8 +119,8 @@ export function DemoMailLayout() {
               'border-none !bg-transparent',
               mail?.selected ? 'md:hidden lg:block' : '', // Hide on md, but show again on lg and up
             )}
-            defaultSize={isMobile ? 100 : 35}
-            minSize={isMobile ? 100 : 35}
+            defaultSize={isMobile ? 100 : 25}
+            minSize={isMobile ? 100 : 25}
           >
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
