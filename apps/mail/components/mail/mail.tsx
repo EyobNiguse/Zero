@@ -451,7 +451,7 @@ function BulkSelectActions() {
           await new Promise((resolve) => setTimeout(resolve, 499));
           const emailData = await getMail({ id: bulkSelected });
           if (emailData) {
-            const [firstEmail] = emailData;
+            const firstEmail = emailData.latest;
             if (firstEmail)
               return handleUnsubscribe({ emailData: firstEmail }).catch((e) => {
                 toast.error(e.message ?? 'Unknown error while unsubscribing');

@@ -1,53 +1,21 @@
-"use server";
+'use server';
 
-import { type UserSettings, userSettingsSchema } from "@zero/db/user_settings_default";
-import { earlyAccess, user, userSettings } from "@zero/db/schema";
-import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { db } from "@zero/db";
-import { Resend } from "resend";
-
-async function getAuthenticatedUserId(): Promise<string> {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-  
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized, please reconnect");
-  }
-  
-  return session.user.id;
-}
+import { type UserSettings, userSettingsSchema } from '@zero/db/user_settings_default';
+import { earlyAccess, user, userSettings } from '@zero/db/schema';
+import { getAuthenticatedUserId } from '@/app/api/utils';
+import { eq } from 'drizzle-orm';
+import { Resend } from 'resend';
+import { db } from '@zero/db';
 
 function validateSettings(settings: unknown): UserSettings {
   try {
     return userSettingsSchema.parse(settings);
   } catch (error) {
-    console.error("Settings validation error: Schema mismatch", {
+    console.error('Settings validation error: Schema mismatch', {
       error,
-      settings
+      settings,
     });
-    throw new Error("Invalid settings format");
-  }
-}
-
-export async function getUserSettings() {
-  try {
-    const userId = await getAuthenticatedUserId();
-
-    const [result] = await db
-      .select()
-      .from(userSettings)
-      .where(eq(userSettings.userId, userId))
-      .limit(1);
-
-    // Returning null here when there are no settings so we can use the default settings with timezone from the browser
-    if (!result) return null;
-
-    return validateSettings(result.settings);
-  } catch (error) {
-    console.error("Failed to fetch user settings:", error);
-    throw new Error("Failed to fetch user settings");
+    throw new Error('Invalid settings format');
   }
 }
 
@@ -83,8 +51,8 @@ export async function saveUserSettings(settings: UserSettings) {
 
     return { success: true };
   } catch (error) {
-    console.error("Failed to save user settings:", error);
-    throw new Error("Failed to save user settings");
+    console.error('Failed to save user settings:', error);
+    throw new Error('Failed to save user settings');
   }
 }
 
@@ -95,7 +63,7 @@ export async function handleGoldenTicket(email: string) {
       .select({
         hasUsedTicket: earlyAccess.hasUsedTicket,
         email: user.email,
-        isEarlyAccess: earlyAccess.isEarlyAccess
+        isEarlyAccess: earlyAccess.isEarlyAccess,
       })
       .from(user)
       .leftJoin(earlyAccess, eq(user.email, earlyAccess.email))
@@ -121,7 +89,7 @@ export async function handleGoldenTicket(email: string) {
         subject: 'You <> Zero',
         text: `Congrats on joining Zero (beta)! Your friend gave you direct access to the beta while skipping the waitlist! You are able to log in now with your email. If you have any questions or need help, please don't hesitate to reach out to us on Discord https://discord.gg/0email.`,
       });
-    }
+    };
 
     await db
       .insert(earlyAccess)
@@ -132,38 +100,49 @@ export async function handleGoldenTicket(email: string) {
         updatedAt: new Date(),
         isEarlyAccess: true,
         hasUsedTicket: '',
-      }).catch(async (error) => {
+      })
+      .catch(async (error) => {
         console.log('Error registering early access', error);
         if (error.code === '23505') {
           console.log('Email already registered for early access, granted access');
-          await db.update(earlyAccess).set({
-            hasUsedTicket: '',
-            updatedAt: new Date(),
-            isEarlyAccess: true
-          }).where(eq(earlyAccess.email, email))
+          await db
+            .update(earlyAccess)
+            .set({
+              hasUsedTicket: '',
+              updatedAt: new Date(),
+              isEarlyAccess: true,
+            })
+            .where(eq(earlyAccess.email, email));
         } else {
           console.error('Error registering early access', error);
-          await db.update(earlyAccess).set({
-            hasUsedTicket: email,
-            updatedAt: new Date()
-          }).where(eq(earlyAccess.email, foundUser.email)).catch((err) => {
-            console.error('Error updating early access', err);
-          })
-          await sendNotification()
+          await db
+            .update(earlyAccess)
+            .set({
+              hasUsedTicket: email,
+              updatedAt: new Date(),
+            })
+            .where(eq(earlyAccess.email, foundUser.email))
+            .catch((err) => {
+              console.error('Error updating early access', err);
+            });
+          await sendNotification();
           throw error;
         }
-      })
+      });
 
-    await db.update(earlyAccess).set({
-      hasUsedTicket: email,
-      updatedAt: new Date()
-    }).where(eq(earlyAccess.email, foundUser.email))
+    await db
+      .update(earlyAccess)
+      .set({
+        hasUsedTicket: email,
+        updatedAt: new Date(),
+      })
+      .where(eq(earlyAccess.email, foundUser.email));
 
     const resend = process.env.RESEND_API_KEY
       ? new Resend(process.env.RESEND_API_KEY)
       : { emails: { send: async (...args: any[]) => console.log(args) } };
 
-    await sendNotification()
+    await sendNotification();
 
     return { success: true };
   } catch (error) {
