@@ -94,9 +94,13 @@ const options = {
             updatedAt: new Date(),
           })
           .catch((err) =>
-            console.log('Tried to add user to earlyAccess after error, failed', foundUser),
+            console.log('Tried to add user to earlyAccess after error, failed', foundUser, err),
           );
-        redirect('/login?error=early_access_required');
+        try {
+          redirect('/login?error=early_access_required');
+        } catch (error) {
+          console.warn('Error redirecting to login page:', error);
+        }
       }
 
       let activeConnection = null;
