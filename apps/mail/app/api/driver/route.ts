@@ -45,8 +45,6 @@ export const GET = async (req: NextRequest) => {
   } catch (error) {
     console.warn('Error getting threads:', error);
     await logoutUser();
-    const url = req.nextUrl.clone();
-    url.pathname = '/login?error=unauthorized';
-    return NextResponse.rewrite(url);
+    // return NextResponse.redirect('/login?error=unauthorized');
   }
 };
