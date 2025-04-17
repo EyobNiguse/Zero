@@ -1,4 +1,4 @@
-import { checkRateLimit, getRatelimitModule, processIP } from '../utils';
+import { checkRateLimit, getAuthenticatedUserId, getRatelimitModule, processIP } from '../utils';
 import { type NextRequest, NextResponse } from 'next/server';
 import { getActiveDriver } from '@/actions/utils';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -6,6 +6,7 @@ import { defaultPageSize } from '@/lib/utils';
 import { getMails } from '@/actions/mail';
 
 export const GET = async (req: NextRequest) => {
+  const userId = await getAuthenticatedUserId();
   const finalIp = processIP(req);
   const searchParams = req.nextUrl.searchParams;
   let [folder, pageToken, q, max] = [
@@ -15,7 +16,7 @@ export const GET = async (req: NextRequest) => {
     Number(searchParams.get('max')),
   ];
   const ratelimit = getRatelimitModule({
-    prefix: `ratelimit:list-threads-${folder}`,
+    prefix: `ratelimit:list-threads-${folder}-${userId}`,
     limiter: Ratelimit.slidingWindow(60, '1m'),
   });
   const { success, headers } = await checkRateLimit(ratelimit, finalIp);
