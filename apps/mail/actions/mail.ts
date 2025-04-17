@@ -29,7 +29,7 @@ export const getMails = async ({
     console.error('Error getting threads:', error);
     // throw error;
     await throwUnauthorizedGracefully();
-    return [];
+    return { messages: [], nextPageToken: null };
   }
 };
 

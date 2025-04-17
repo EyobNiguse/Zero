@@ -18,6 +18,7 @@ export const getDrafts = async ({
     console.error('Error getting threads:', error);
     await throwUnauthorizedGracefully();
     // throw error;
+    return { messages: [], nextPageToken: null };
   }
 };
 
