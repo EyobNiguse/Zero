@@ -1,4 +1,10 @@
-import { checkRateLimit, getAuthenticatedUserId, getRatelimitModule, processIP } from '../utils';
+import {
+  checkRateLimit,
+  getAuthenticatedUserId,
+  getRatelimitModule,
+  logoutUser,
+  processIP,
+} from '../utils';
 import { type NextRequest, NextResponse } from 'next/server';
 import { getActiveDriver } from '@/actions/utils';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -38,6 +44,7 @@ export const GET = async (req: NextRequest) => {
     });
   } catch (error) {
     console.warn('Error getting threads:', error);
+    await logoutUser();
     return NextResponse.redirect('/login?error=unauthorized');
   }
 };

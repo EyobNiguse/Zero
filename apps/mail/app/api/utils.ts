@@ -42,6 +42,11 @@ export async function getAuthenticatedUserId(): Promise<string> {
   return session.user.id;
 }
 
+export async function logoutUser() {
+  const headersList = await headers();
+  await auth.api.signOut({ headers: headersList });
+}
+
 export const checkRateLimit = async (ratelimit: Ratelimit, finalIp: string) => {
   const { success, limit, reset, remaining } = await ratelimit.limit(finalIp);
   const headers = {
