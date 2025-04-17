@@ -30,7 +30,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { useThreads } from '@/hooks/use-threads';
 import { LABELS, FOLDERS } from '@/lib/utils';
 import { useStats } from '@/hooks/use-stats';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '../mail/use-mail';
 import { useTranslations } from 'use-intl';
 import { type ReactNode } from 'react';
@@ -77,7 +77,7 @@ export function ThreadContextMenu({
 	const isArchiveFolder = currentFolder === FOLDERS.ARCHIVE;
   const { mutate: mutateStats } = useStats();
   const t = useTranslations();
-
+  const router = useRouter();
 	const selectedThreads = useMemo(() => {
 		if (mail.bulkSelected.length) {
 			return threads.filter(thread => mail.bulkSelected.includes(thread.id));
@@ -186,30 +186,39 @@ export function ThreadContextMenu({
 		});
 	};
 
+  const handleThreadReply = () => {
+    router.push(`/mail/inbox?threadId=${threadId}&mode=reply`);
+  };
+
+  const handleThreadReplyAll = () => {
+    router.push(`/mail/inbox?threadId=${threadId}&mode=replyAll`);
+  };
+
+  const handleThreadForward = () => {
+    router.push(`/mail/inbox?threadId=${threadId}&mode=forward`);
+  };
+
 	const primaryActions: EmailAction[] = [
 		{
 			id: 'reply',
 			label: t('common.mail.reply'),
 			icon: <Reply className="mr-2.5 h-4 w-4" />,
-			shortcut: 'R',
-			action: noopAction,
-			disabled: true,
+			action: handleThreadReply,
+			disabled: false,
 		},
 		{
 			id: 'reply-all',
 			label: t('common.mail.replyAll'),
 			icon: <ReplyAll className="mr-2.5 h-4 w-4" />,
-			shortcut: '⇧R',
-			action: noopAction,
-			disabled: true,
+			action: handleThreadReplyAll,
+			disabled: false,
 		},
 		{
 			id: 'forward',
 			label: t('common.mail.forward'),
 			icon: <Forward className="mr-2.5 h-4 w-4" />,
-			shortcut: 'F',
-			action: noopAction,
-			disabled: true,
+			action: handleThreadForward,
+			disabled: false,
 		},
 	];
 
@@ -270,7 +279,6 @@ export function ThreadContextMenu({
           id: 'archive',
           label: t('common.mail.archive'),
           icon: <Archive className="mr-2.5 h-4 w-4" />,
-          shortcut: 'E',
           action: handleMove(LABELS.SENT, ''),
           disabled: false,
         },
@@ -289,7 +297,6 @@ export function ThreadContextMenu({
         id: 'archive',
         label: t('common.mail.archive'),
         icon: <Archive className="mr-2.5 h-4 w-4" />,
-        shortcut: 'E',
         action: handleMove(LABELS.INBOX, ''),
         disabled: false,
       },
@@ -315,7 +322,6 @@ export function ThreadContextMenu({
       id: 'toggle-read',
       label: isUnread ? t('common.mail.markAsRead') : t('common.mail.markAsUnread'),
       icon: isUnread ? <Mail className="mr-2.5 h-4 w-4" /> : <MailOpen className="mr-2.5 h-4 w-4" />,
-      shortcut: 'U',
       action: handleReadUnread,
       disabled: false,
     },
@@ -323,7 +329,6 @@ export function ThreadContextMenu({
       id: 'favorite',
       label: isStarred ? t('common.mail.removeFavorite') : t('common.mail.addFavorite'),
       icon: isStarred ? <StarOff className="mr-2.5 h-4 w-4" /> : <Star className="mr-2.5 h-4 w-4" />,
-      shortcut: 'S',
       action: handleFavorites,
       disabled: false,
     },

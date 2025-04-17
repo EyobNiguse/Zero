@@ -142,6 +142,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const { mutate: mutateStats } = useStats();
   const { folder } = useParams<{ folder: string }>();
   const [threadId, setThreadId] = useQueryState('threadId');
+  const [mode, setMode] = useQueryState('mode');
 
   // Check if thread contains any images (excluding sender avatars)
   const hasImages = useMemo(() => {
@@ -191,7 +192,8 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const isInBin = folder === FOLDERS.BIN;
   const handleClose = useCallback(() => {
     setThreadId(null);
-  }, []);
+    setMode(null);
+  }, [setThreadId, setMode]);
 
   const moveThreadTo = useCallback(
     async (destination: ThreadDestination) => {
@@ -274,6 +276,18 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [handleClose]);
+
+  // Add effect to handle mode changes
+  useEffect(() => {
+    if (mode && threadId) {
+      setMail((prev) => ({
+        ...prev,
+        replyComposerOpen: mode === 'reply',
+        replyAllComposerOpen: mode === 'replyAll',
+        forwardComposerOpen: mode === 'forward',
+      }));
+    }
+  }, [mode, threadId, setMail]);
 
   if (!emailData || isLoading)
     return (
