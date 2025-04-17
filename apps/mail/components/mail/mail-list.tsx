@@ -36,7 +36,6 @@ import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
 import { toast } from 'sonner';
-import { Skeleton } from '../ui/skeleton';
 const HOVER_DELAY = 1000;
 
 const ThreadWrapper = ({
@@ -161,9 +160,9 @@ const Thread = memo(
       };
     }, []);
 
-    if (isLoading || !latestMessage || !getThreadData) return null
+    if (!demo && (isLoading || !latestMessage || !getThreadData)) return null 
 
-    const demoContent = <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
+    const demoContent = demo && latestMessage ? <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
       <div
             data-thread-id={latestMessage.threadId ?? message.id}
             onMouseEnter={handleMouseEnter}
@@ -246,9 +245,11 @@ const Thread = memo(
               </div>
             </div>
       </div>
-    </div>
+    </div> : null
 
-    const content = (
+    if (demo) return demoContent
+
+    const content = latestMessage && getThreadData ? (
       <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
@@ -333,9 +334,9 @@ const Thread = memo(
             </div>
         </div>
       </div>
-    );
+    ) : null;
 
-    return demo ? demoContent : (
+    return latestMessage ? (
       <ThreadWrapper
         emailId={message.id}
         threadId={latestMessage.threadId ?? message.id}
@@ -347,7 +348,7 @@ const Thread = memo(
       >
         {content}
       </ThreadWrapper>
-    );
+    ) : null;
   },
 );
 
@@ -397,6 +398,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     isLoading,
     loadMore,
     mutate,
+    isReachingEnd
   } = useThreads();
 
   const allCategories = Categories();
@@ -592,7 +594,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [handleMouseEnter, setThreadId, t, setMail],
   );
 
-  const isEmpty = items.length === 0;
   const isFiltering = searchValue.value.trim().length > 0;
 
   // Add effect to handle search loading state
@@ -605,28 +606,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       }));
     }
   }, [isLoading, isFiltering, setSearchValue]);
-
-  if (isEmpty && session) {
-    if (isFiltering) {
-      return (
-        <div className="flex min-h-[90vh] flex-col items-center justify-center md:min-h-[90vh]">
-          {isLoading || searchValue.isLoading ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-              <p className="text-muted-foreground text-sm">
-                {searchValue.isAISearching
-                  ? t('common.searchBar.aiSearching')
-                  : t('common.searchBar.searching')}
-              </p>
-            </div>
-          ) : (
-            <EmptyState folder="search" className="min-h-[90vh] md:min-h-[90vh]" />
-          )}
-        </div>
-      );
-    }
-    return <EmptyState folder={folder as FolderType} className="min-h-[90vh] md:min-h-[90vh]" />;
-  }
 
   return (
     <>
@@ -643,7 +622,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
                 isCompact={isCompact}
                 sessionData={sessionData}
                 message={data}
-                key={data.id}
+                key={`${data.id}-${index}`}
                 isKeyboardFocused={focusedIndex === index && keyboardActive}
                 isInQuickActionMode={isQuickActionMode && focusedIndex === index}
                 selectedQuickActionIndex={quickActionIndex}
@@ -651,14 +630,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               />
             );
           })}
-          {items.length >= 9 && nextPageToken && (
+          {items.length >= 9 && nextPageToken && !isValidating && (
             <Button
               variant={'ghost'}
               className="w-full rounded-none"
               onMouseDown={handleScroll}
-              disabled={isLoading || isValidating}
+              disabled={isLoading}
             >
-              {isLoading || isValidating ? (
+              {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
                   {t('common.actions.loading')}
