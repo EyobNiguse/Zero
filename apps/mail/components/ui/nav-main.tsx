@@ -54,7 +54,7 @@ type IconRefType = SVGSVGElement & {
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
 
   /**
    * Validates URLs to prevent open redirect vulnerabilities.
@@ -85,13 +85,13 @@ export function NavMain({ items }: NavMainProps) {
       const category = searchParams.get('category');
 
       // Handle settings navigation
-      if (item.isSettingsButton) {
+      // if (item.isSettingsButton) {
         // Include current path with category query parameter if present
-        const currentPath = category
-          ? `${pathname}?category=${encodeURIComponent(category)}`
-          : pathname;
-        return `${item.url}?from=${encodeURIComponent(currentPath)}`;
-      }
+      //   const currentPath = category
+      //     ? `${pathname}?category=${encodeURIComponent(category)}`
+      //     : pathname;
+      //   return `${item.url}?from=${encodeURIComponent(currentPath)}`;
+      // }
 
       // Handle back button with redirect protection
       if (item.isBackButton) {
@@ -172,7 +172,7 @@ export function NavMain({ items }: NavMainProps) {
             </SidebarMenuItem>
           </Collapsible>
         ))}
-        {!session?.hasUsedTicket ? <GoldenTicketModal /> : null}
+        {!session || isPending ? null : !session?.hasUsedTicket ? <GoldenTicketModal /> : null}
       </SidebarMenu>
     </SidebarGroup>
   );
@@ -182,7 +182,6 @@ function NavItem(item: NavItemProps & { href: string }) {
 	const iconRef = useRef<IconRefType>(null);
 	const { data: stats } = useStats();
 	const t = useTranslations();
-	const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
 
   if (item.disabled) {
     return (
@@ -233,7 +232,7 @@ function NavItem(item: NavItemProps & { href: string }) {
   return (
     <Collapsible defaultOpen={item.isActive}>
       <CollapsibleTrigger asChild>
-        <Link {...linkProps} target={item.target}>{buttonContent}</Link>
+        <Link {...linkProps} prefetch target={item.target}>{buttonContent}</Link>
       </CollapsibleTrigger>
     </Collapsible>
   );

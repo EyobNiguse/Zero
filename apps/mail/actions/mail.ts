@@ -1,5 +1,7 @@
 'use server';
 import { deleteActiveConnection, FatalErrors, getActiveDriver } from './utils';
+import { IGetThreadResponse } from '@/app/api/driver/types';
+import { ParsedMessage } from '@/types';
 
 export const getMails = async ({
   folder,
@@ -28,13 +30,19 @@ export const getMails = async ({
   }
 };
 
-export const getMail = async ({ id }: { id: string }) => {
+export const getMail = async ({ id }: { id: string }): Promise<IGetThreadResponse> => {
   if (!id) {
     throw new Error('Missing required fields');
   }
   try {
     const driver = await getActiveDriver();
-    return await driver.get(id);
+    const mailData = await driver.get(id);
+
+    if (!mailData) {
+      throw new Error('Mail data not found');
+    }
+
+    return mailData;
   } catch (error) {
     if (FatalErrors.includes((error as Error).message)) await deleteActiveConnection();
     console.error('Error getting mail:', error);
@@ -107,7 +115,7 @@ export const modifyLabels = async ({
     return { success: false, error: 'No label changes specified' };
   } catch (error) {
     if (FatalErrors.includes((error as Error).message)) await deleteActiveConnection();
-    console.error('Server: Error updating thread labels:', error);
+    console.error('Error updating thread labels:', error);
     throw error;
   }
 };
@@ -116,29 +124,30 @@ export const toggleStar = async ({ ids }: { ids: string[] }) => {
   try {
     const driver = await getActiveDriver();
     const { threadIds } = driver.normalizeIds(ids);
-    
+
     if (!threadIds.length) {
       return { success: false, error: 'No thread IDs provided' };
     }
 
-    const threadResults = await Promise.allSettled(
-      threadIds.map(id => driver.get(id))
-    );
+    const threadResults = await Promise.allSettled(threadIds.map((id) => driver.get(id)));
 
-    let allStarred = true;
-    let anyValid = false;
+    let anyStarred = false;
+    let processedThreads = 0;
 
     for (const result of threadResults) {
-      if (result.status === 'fulfilled' && result.value?.[0]) {
-        anyValid = true;
-        if (!result.value[0].tags?.includes('STARRED')) {
-          allStarred = false;
+      if (result.status === 'fulfilled' && result.value && result.value.messages.length > 0) {
+        processedThreads++;
+        const isThreadStarred = result.value.messages.some((message: ParsedMessage) =>
+          message.tags?.includes('STARRED'),
+        );
+        if (isThreadStarred) {
+          anyStarred = true;
           break;
         }
       }
     }
 
-    const shouldStar = !anyValid || !allStarred;
+    const shouldStar = processedThreads > 0 && !anyStarred;
 
     await driver.modifyLabels(threadIds, {
       addLabels: shouldStar ? ['STARRED'] : [],

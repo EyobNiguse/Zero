@@ -72,7 +72,7 @@ const options = {
         .select({
           activeConnectionId: _user.defaultConnectionId,
           hasEarlyAccess: earlyAccess.isEarlyAccess,
-          hasUsedTicket: earlyAccess.hasUsedTicket
+          hasUsedTicket: earlyAccess.hasUsedTicket,
         })
         .from(_user)
         .leftJoin(earlyAccess, eq(_user.email, earlyAccess.email))
@@ -80,7 +80,11 @@ const options = {
         .limit(1);
 
       // Check early access and proceed
-      if (!foundUser?.hasEarlyAccess && process.env.NODE_ENV === 'production') {
+      if (
+        !foundUser?.hasEarlyAccess &&
+        process.env.NODE_ENV === 'production' &&
+        process.env.EARLY_ACCESS_ENABLED
+      ) {
         await db
           .insert(earlyAccess)
           .values({
@@ -92,8 +96,7 @@ const options = {
           .catch((err) =>
             console.log('Tried to add user to earlyAccess after error, failed', foundUser),
           );
-          redirect('/login?error=early_access_required');
-
+        redirect('/login?error=early_access_required');
       }
 
       let activeConnection = null;
@@ -113,6 +116,13 @@ const options = {
             email: connectionDetails.email,
             picture: connectionDetails.picture,
           };
+        } else {
+          await db
+            .update(_user)
+            .set({
+              defaultConnectionId: null,
+            })
+            .where(eq(_user.id, user.id));
         }
       }
 
@@ -170,7 +180,7 @@ const options = {
         activeConnection,
         user,
         session,
-        hasUsedTicket: foundUser?.hasUsedTicket ?? false
+        hasUsedTicket: foundUser?.hasUsedTicket ?? false,
       };
     }),
   ],

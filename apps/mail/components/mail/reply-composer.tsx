@@ -1,14 +1,13 @@
 'use client';
 
 import {
-  type Dispatch,
-  type SetStateAction,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  useReducer,
-} from 'react';
+  cleanEmailAddress,
+  truncateFileName,
+  cn,
+  convertJSONToHTML,
+  createAIJsonContent,
+  constructReplyBody,
+} from '@/lib/utils';
 import {
   ArrowUp,
   Paperclip,
@@ -22,33 +21,47 @@ import {
   ReplyAll,
 } from 'lucide-react';
 import {
-  cleanEmailAddress,
-  truncateFileName,
-  cn,
-  convertJSONToHTML,
-  createAIJsonContent,
-  constructReplyBody,
-} from '@/lib/utils';
+  type Dispatch,
+  type SetStateAction,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useReducer,
+} from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
+import { useForm, SubmitHandler, useWatch } from 'react-hook-form';
 import { generateAIResponse } from '@/actions/ai-reply';
 import { Separator } from '@/components/ui/separator';
+import { useMail } from '@/components/mail/use-mail';
+import { useSettings } from '@/hooks/use-settings';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
+import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
-import { useForm } from 'react-hook-form';
 import type { JSONContent } from 'novel';
-import { toast } from 'sonner';
-import type { z } from 'zod';
-import { useSettings } from '@/hooks/use-settings';
-import { useMail } from '@/components/mail/use-mail';
-import { useThread } from '@/hooks/use-threads';
 import { useQueryState } from 'nuqs';
 import { Sender } from '@/types';
+import { toast } from 'sonner';
+import type { z } from 'zod';
 
 import { createDraft } from '@/actions/drafts';
+import { extractTextFromHTML } from '@/actions/extractText';
+import { Input } from '../ui/input';
+import posthog from 'posthog-js';
+
+// Utility function to check if an email is a noreply address
+const isNoReplyAddress = (email: string): boolean => {
+  const lowerEmail = email.toLowerCase();
+  return (
+    lowerEmail.includes('noreply') ||
+    lowerEmail.includes('no-reply') ||
+    lowerEmail.includes('notifications@github.com')
+  );
+};
 
 // Define state interfaces
 interface ComposerState {
@@ -66,6 +79,13 @@ interface AIState {
   isLoading: boolean;
   suggestion: string | null;
   showOptions: boolean;
+}
+
+interface MailState {
+  replyComposerOpen: boolean;
+  replyAllComposerOpen: boolean;
+  forwardComposerOpen: boolean;
+  // ... other existing state
 }
 
 // Define action types
@@ -125,32 +145,45 @@ const aiReducer = (state: AIState, action: AIAction): AIState => {
 };
 
 interface ReplyComposeProps {
-  mode?: 'reply' | 'forward';
+  mode?: 'reply' | 'replyAll' | 'forward';
 }
 
 type FormData = {
   messageContent: string;
-  to: string;
+  to: string[];
+  cc: string[];
+  bcc: string[];
+  toInput: string;
+  ccInput: string;
+  bccInput: string;
 };
 
 export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const [threadId] = useQueryState('threadId');
-  const { data: emailData } = useThread(threadId);
+  const { data: emailData, mutate } = useThread(threadId);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
   const [mail, setMail] = useMail();
-  const [toInput, setToInput] = useState('');
-  const [toEmails, setToEmails] = useState<string[]>([]);
-  const [includeSignature, setIncludeSignature] = useState(true);
   const { settings } = useSettings();
   const [draftId, setDraftId] = useQueryState('draftId');
+  const [isEditingRecipients, setIsEditingRecipients] = useState(false);
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
+  const ccInputRef = useRef<HTMLInputElement | null>(null);
+  const bccInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use global state instead of local state
-  const composerIsOpen = mode === 'reply' ? mail.replyComposerOpen : mail.forwardComposerOpen;
+  const composerIsOpen =
+    mode === 'reply'
+      ? mail.replyComposerOpen
+      : mode === 'replyAll'
+        ? mail.replyAllComposerOpen
+        : mail.forwardComposerOpen;
   const setComposerIsOpen = (value: boolean) => {
     setMail((prev: typeof mail) => ({
       ...prev,
       replyComposerOpen: mode === 'reply' ? value : prev.replyComposerOpen,
+      replyAllComposerOpen: mode === 'replyAll' ? value : prev.replyAllComposerOpen,
       forwardComposerOpen: mode === 'forward' ? value : prev.forwardComposerOpen,
     }));
   };
@@ -176,22 +209,159 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const composerRef = useRef<HTMLFormElement>(null);
   const t = useTranslations();
 
-  // Handle keyboard shortcuts for sending email
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Check for Cmd/Ctrl + Enter
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    getValues,
+    reset,
+    control,
+    watch,
+  } = useForm<FormData>({
+    defaultValues: {
+      messageContent: '',
+      to: [],
+      cc: [],
+      bcc: [],
+      toInput: '',
+      ccInput: '',
+      bccInput: '',
+    },
+  });
+
+  // Watch all recipient fields
+  const toEmails = watch('to');
+  const ccEmails = watch('cc');
+  const bccEmails = watch('bcc');
+
+  // const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
+  //   const trimmedEmail = value.trim().replace(/,$/, '');
+  //   const currentEmails = getValues(type);
+  //   if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
+  //     setValue(type, [...currentEmails, trimmedEmail]);
+  //     setValue(`${type}Input`, '');
+  //   }
+  // };
+
+  const handleSendEmail = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (e) {
       e.preventDefault();
-      if (isFormValid) {
-        void handleSendEmail(e as unknown as React.MouseEvent<HTMLButtonElement>);
+    }
+    if (!emailData) return;
+    try {
+      const originalEmail = emailData.latest
+      const userEmail = session?.activeConnection?.email?.toLowerCase();
+
+      if (!userEmail) {
+        throw new Error('Active connection email not found');
+      }
+
+      if (!originalEmail) {
+        throw new Error('Original email not found');
+      }
+
+      const subject =
+        mode === 'forward'
+          ? `Fwd: ${originalEmail.subject || ''}`
+          : originalEmail.subject?.startsWith('Re:')
+            ? originalEmail.subject
+            : `Re: ${originalEmail?.subject || ''}`;
+
+      // Convert email strings to Sender objects
+      const toRecipients: Sender[] = toEmails.map((email) => ({
+        email,
+        name: email.split('@')[0] || 'User',
+      }));
+
+      const ccRecipients: Sender[] | undefined = showCc
+        ? ccEmails.map((email) => ({
+          email,
+          name: email.split('@')[0] || 'User',
+        }))
+        : undefined;
+
+      const bccRecipients: Sender[] | undefined = showBcc
+        ? bccEmails.map((email) => ({
+          email,
+          name: email.split('@')[0] || 'User',
+        }))
+        : undefined;
+
+      const messageId = originalEmail.messageId;
+      const threadId = originalEmail.threadId;
+      const formattedMessage = getValues('messageContent');
+      const originalDate = new Date(originalEmail.receivedOn || '').toLocaleString();
+      const quotedMessage = originalEmail.decodedBody;
+
+      const replyBody = constructReplyBody(
+        formattedMessage,
+        originalDate,
+        originalEmail.sender,
+        toRecipients,
+        quotedMessage,
+      );
+
+      const inReplyTo = messageId
+      const existingRefs = originalEmail.references?.split(' ') || [];
+      const references = [...existingRefs, originalEmail?.inReplyTo, cleanEmailAddress(messageId)]
+        .filter(Boolean)
+        .join(' ');
+
+      await sendEmail({
+        to: toRecipients,
+        cc: ccRecipients,
+        bcc: bccRecipients,
+        subject,
+        message: replyBody,
+        attachments,
+        headers: {
+          'In-Reply-To': inReplyTo ?? '',
+          References: references,
+          'Thread-Id': threadId ?? '',
+        },
+        threadId
+      }).then(() => mutate());
+      
+      
+      if (ccRecipients && bccRecipients) {
+        posthog.capture('Reply Email Sent with CC and BCC');
+      } else if (ccRecipients) {
+        posthog.capture('Reply Email Sent with CC');
+      } else if (bccRecipients) {
+        posthog.capture('Reply Email Sent with BCC');
+      } else {
+        posthog.capture('Reply Email Sent');
+      }
+
+      reset();
+      setComposerIsOpen(false);
+      toast.success(t('pages.createEmail.emailSentSuccessfully'));
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error(t('pages.createEmail.failedToSendEmail'));
+    }
+  };
+
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    await handleSendEmail();
+  };
+
+  const handleAttachment = (files: File[]) => {
+    if (files) {
+      composerDispatch({ type: 'SET_UPLOADING', payload: true });
+      try {
+        setAttachments([...attachments, ...files]);
+      } finally {
+        composerDispatch({ type: 'SET_UPLOADING', payload: false });
       }
     }
   };
 
-  const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachmentEvent = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       composerDispatch({ type: 'SET_UPLOADING', payload: true });
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
         setAttachments([...attachments, ...Array.from(e.target.files)]);
       } finally {
         composerDispatch({ type: 'SET_UPLOADING', payload: false });
@@ -240,129 +410,42 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     return emailRegex.test(email);
   };
 
-  const handleAddEmail = (email: string) => {
-    const trimmedEmail = email.trim().replace(/,$/, '');
+  const CloseButton = ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="h-6 w-6"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        composerDispatch({ type: 'SET_EDITOR_FOCUSED', payload: false });
+        onClick(e);
+      }}
+    >
+      <X className="h-4 w-4" />
+    </Button>
+  );
 
-    if (!trimmedEmail) return;
-
-    if (toEmails.includes(trimmedEmail)) {
-      setToInput('');
-      return;
+  const toggleComposer = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-
-    if (!isValidEmail(trimmedEmail)) {
-      toast.error(`Invalid email format: ${trimmedEmail}`);
-      return;
+    // Force blur any focused elements
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
     }
-
-    setToEmails([...toEmails, trimmedEmail]);
-    setToInput('');
-    form.setValue('to', toEmails.join(', '));
-  };
-
-  const form = useForm<FormData>({
-    defaultValues: {
-      messageContent: '',
-      to: '',
-    },
-  });
-
-  // Add a loading state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSendEmail = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    if (!emailData) return;
-    setIsSubmitting(true);
-    try {
-      const originalEmail = emailData[0];
-      const userEmail = session?.activeConnection?.email?.toLowerCase();
-
-      if (!userEmail) {
-        throw new Error('Active connection email not found');
-      }
-
-      if (!originalEmail) {
-        throw new Error('Original email not found');
-      }
-
-      // Handle subject based on mode
-      const subject =
-        mode === 'forward'
-          ? `Fwd: ${originalEmail.subject || ''}`
-          : originalEmail.subject?.startsWith('Re:')
-            ? originalEmail.subject
-            : `Re: ${originalEmail?.subject || ''}`;
-
-      const recipients: Sender[] =
-        mode === 'forward'
-          ? toEmails.map((email) => ({ email, name: 'User' }))
-          : [
-            {
-              email: cleanEmailAddress(originalEmail.sender.email),
-              name: originalEmail.sender.name ? originalEmail.sender.name : ''
-            }
-          ]
-
-
-      const cc: Sender[] | null = originalEmail.cc ? originalEmail.cc.map((to) => ({
-        email: cleanEmailAddress(to.email),
-        name: to.name ? to.name : ''
-      })) : null
-
-      if (!recipients) {
-        throw new Error('No valid recipients found');
-      }
-
-      const messageId = originalEmail.messageId;
-      const threadId = originalEmail.threadId;
-      const formattedMessage = form.getValues('messageContent');
-      const originalDate = new Date(originalEmail.receivedOn || '').toLocaleString();
-      const quotedMessage = originalEmail.decodedBody;
-
-      const replyBody = constructReplyBody(
-        formattedMessage,
-        originalDate,
-        originalEmail.sender,
-        recipients,
-        quotedMessage,
-      );
-
-      const inReplyTo = messageId;
-      const existingRefs = originalEmail.references?.split(' ') || [];
-      const references = [...existingRefs, originalEmail?.inReplyTo, cleanEmailAddress(messageId)]
-        .filter(Boolean)
-        .join(' ');
-
-      await sendEmail({
-        to: recipients,
-        cc: cc ?? undefined,
-        subject,
-        message: replyBody,
-        attachments,
-        headers: {
-          'In-Reply-To': inReplyTo ?? '',
-          References: references,
-          'Thread-Id': threadId ?? '',
-        },
-      });
-
-      form.reset();
-      setComposerIsOpen(false);
-      toast.success(t('pages.createEmail.emailSentSuccessfully'));
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast.error(t('pages.createEmail.failedToSendEmail'));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const toggleComposer = () => {
-    setComposerIsOpen(!composerIsOpen);
-    if (!composerIsOpen) {
-      // Focus will be handled by the useEffect below
-    }
+    setMail((prev) => ({
+      ...prev,
+      replyComposerOpen: false,
+      replyAllComposerOpen: false,
+      forwardComposerOpen: false,
+    }));
+    setIsEditingRecipients(false);
+    setShowCc(false);
+    setShowBcc(false);
+    reset();
   };
 
   useEffect(() => {
@@ -406,10 +489,26 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     startHeight.current = editorHeight;
   };
 
+  // Handle keyboard shortcuts for sending email
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Check for Cmd/Ctrl + Enter
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (isFormValid) {
+        handleSubmit(onSubmit)();
+      }
+    }
+  };
+
+  // Update onChange handler in Editor component
+  const handleEditorChange = (content: string) => {
+    setValue('messageContent', content);
+  };
+
   // Check if the message is empty
   const isMessageEmpty =
-    !form.getValues('messageContent') ||
-    form.getValues('messageContent') ===
+    !getValues('messageContent') ||
+    getValues('messageContent') ===
     JSON.stringify({
       type: 'doc',
       content: [
@@ -428,21 +527,21 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     aiDispatch({ type: 'SET_LOADING', payload: true });
     try {
       // Extract relevant information from the email thread for context
-      const latestEmail = emailData[emailData.length - 1];
+      const latestEmail = emailData.latest;
+      if (!latestEmail) return;
       const originalSender = latestEmail?.sender?.name || 'the recipient';
 
       // Create a summary of the thread content for context
-      const threadContent = emailData
-        .map((email) => {
-          return `
-From: ${email.sender?.name || 'Unknown'} <${email.sender?.email || 'unknown@email.com'}>
-Subject: ${email.subject || 'No Subject'}
-Date: ${new Date(email.receivedOn || '').toLocaleString()}
-
-${email.decodedBody || 'No content'}
-          `;
-        })
-        .join('\n---\n');
+      const threadContent = (await Promise.all(emailData.messages.map(async (email) => {
+        const body = await extractTextFromHTML(email.decodedBody || 'No content');
+        return `
+            <email>
+              <from>${email.sender?.name || 'Unknown'} &lt;${email.sender?.email || 'unknown@email.com'}&gt;</from>
+              <subject>${email.subject || 'No Subject'}</subject>
+              <date>${new Date(email.receivedOn || '').toLocaleString()}</date>
+              <body>${body}</body>
+            </email>`;
+      }))).join('\n\n');
 
       const suggestion = await generateAIResponse(threadContent, originalSender);
       aiDispatch({ type: 'SET_SUGGESTION', payload: suggestion });
@@ -484,7 +583,7 @@ ${email.decodedBody || 'No content'}
       const jsonContent = createAIJsonContent(aiState.suggestion);
       const htmlContent = convertJSONToHTML(jsonContent);
 
-      form.setValue('messageContent', htmlContent);
+      setValue('messageContent', htmlContent);
 
       composerDispatch({ type: 'SET_EDITOR_INITIAL_VALUE', payload: undefined });
       aiDispatch({ type: 'RESET' });
@@ -515,71 +614,255 @@ ${email.decodedBody || 'No content'}
     return false; // Return false to allow normal tab behavior
   }, [aiState.showOptions, aiState.suggestion]);
 
-  // Helper function to render the header content based on mode
-  const renderHeaderContent = () => {
-    if (!emailData) return;
+  // Helper function to initialize recipients based on mode
+  const initializeRecipients = useCallback(() => {
+    if (!emailData || !emailData.messages.length) return { to: [], cc: [] };
+
+    const latestEmail = emailData.latest;
+    if (!latestEmail) return { to: [], cc: [] };
+
+    const userEmail = session?.activeConnection?.email?.toLowerCase();
+    const to: string[] = [];
+    const cc: string[] = [];
+
     if (mode === 'forward') {
+      return { to: [], cc: [] };
+    }
+
+    if (mode === 'reply') {
+      // Add reply-to or sender email to To
+      const replyEmail = latestEmail.replyTo || latestEmail.sender?.email;
+      if (replyEmail) {
+        to.push(replyEmail);
+      }
+    } else if (mode === 'replyAll') {
+      // Add original sender to To if not current user
+      if (latestEmail.sender?.email && latestEmail.sender.email.toLowerCase() !== userEmail) {
+        to.push(latestEmail.sender.email);
+      }
+
+      // Add all original recipients to CC except current user and primary recipient
+      if (latestEmail.to) {
+        latestEmail.to.forEach((recipient) => {
+          if (
+            recipient.email &&
+            recipient.email.toLowerCase() !== userEmail &&
+            recipient.email.toLowerCase() !== to[0]?.toLowerCase()
+          ) {
+            cc.push(recipient.email);
+          }
+        });
+      }
+
+      // Add CC recipients if they exist
+      if (latestEmail.cc) {
+        latestEmail.cc.forEach((recipient) => {
+          if (
+            recipient.email &&
+            recipient.email.toLowerCase() !== userEmail &&
+            recipient.email.toLowerCase() !== to[0]?.toLowerCase() &&
+            !cc.includes(recipient.email)
+          ) {
+            cc.push(recipient.email);
+          }
+        });
+      }
+
+      // If there are CC recipients, show the CC field
+      if (cc.length > 0) {
+        setShowCc(true);
+      }
+    }
+
+    return { to, cc };
+  }, [emailData, mode, session?.activeConnection?.email]);
+
+  // Initialize recipients when composer opens
+  useEffect(() => {
+    if (composerIsOpen) {
+      const { to, cc } = initializeRecipients();
+      setValue('to', to);
+      setValue('cc', cc);
+    }
+  }, [composerIsOpen, initializeRecipients, setValue]);
+
+  // Modify renderHeaderContent to show recipient fields
+  const renderHeaderContent = () => {
+    if (!emailData) return null;
+
+    const latestEmail = emailData.latest;
+    if (!latestEmail) return null;
+
+    const icon =
+      mode === 'forward' ? (
+        <Forward className="h-4 w-4" />
+      ) : mode === 'replyAll' ? (
+        <ReplyAll className="h-4 w-4" />
+      ) : (
+        <Reply className="h-4 w-4" />
+      );
+
+    if (isEditingRecipients || mode === 'forward') {
       return (
-        <div className="flex items-center gap-2">
-          <Forward className="h-4 w-4" />
-          <p className="truncate">Forward email</p>
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              {icon}
+              <span className="text-sm font-medium">
+                {mode === 'forward' ? 'Forward' : 'Recipients'}
+              </span>
+            </div>
+          </div>
+
+          <RecipientInput
+            type="to"
+            value={toEmails}
+            onRemove={(index) => {
+              const newEmails = toEmails.filter((_, i) => i !== index);
+              setValue('to', newEmails);
+            }}
+            placeholder={t('pages.createEmail.example')}
+          />
+
+          {showCc && (
+            <RecipientInput
+              type="cc"
+              value={ccEmails}
+              onRemove={(index) => {
+                const newEmails = ccEmails.filter((_, i) => i !== index);
+                setValue('cc', newEmails);
+              }}
+              placeholder="Add Cc recipients"
+              inputRef={ccInputRef}
+            />
+          )}
+
+          {showBcc && (
+            <RecipientInput
+              type="bcc"
+              value={bccEmails}
+              onRemove={(index) => {
+                const newEmails = bccEmails.filter((_, i) => i !== index);
+                setValue('bcc', newEmails);
+              }}
+              placeholder="Add Bcc recipients"
+              inputRef={bccInputRef}
+            />
+          )}
         </div>
       );
     }
 
+    // Show compact view with all recipients
+    const allRecipients = [...toEmails, ...(showCc ? ccEmails : []), ...(showBcc ? bccEmails : [])];
+    const recipientDisplay = allRecipients.join(', ');
+
     return (
-      <div className="flex items-center gap-2">
-        <Reply className="h-4 w-4" />
-        <p className="truncate"> ({emailData[emailData.length - 1]?.sender?.email})</p>
+      <div
+        className="hover:bg-accent/50 flex flex-1 cursor-pointer items-center gap-2 rounded px-2 py-1"
+        onClick={() => setIsEditingRecipients(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            setIsEditingRecipients(true);
+          }
+        }}
+      >
+        {icon}
+        <p className="truncate" title={recipientDisplay}>
+          {recipientDisplay || t('common.mailDisplay.to')}
+        </p>
       </div>
     );
   };
 
   // Extract recipient input component for reusability
-  const RecipientInput = () => (
-    <div className="ml-1 flex items-center">
-      <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] font-[600] opacity-50">
-        {t('common.mailDisplay.to')}
-      </div>
-      <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-        {toEmails.map((email, index) => (
-          <EmailTag
-            key={index}
-            email={email}
-            onRemove={() => {
-              setToEmails((emails) => emails.filter((_, i) => i !== index));
-              form.setValue('to', toEmails.join(', '));
+  const RecipientInput = ({
+    type,
+    value,
+    onRemove,
+    placeholder,
+    inputRef,
+  }: {
+    type: 'to' | 'cc' | 'bcc';
+    value: string[];
+    onRemove: (index: number) => void;
+    placeholder: string;
+    inputRef?: React.RefObject<HTMLInputElement | null>;
+  }) => {
+    const { ref, ...rest } = register(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', {
+      validate: (value: string) => {
+        if (value && !isValidEmail(value)) {
+          return 'Invalid email format';
+        }
+        return true;
+      },
+    });
+
+    const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
+      const trimmedEmail = value.trim().replace(/,$/, '');
+      const currentEmails = getValues(type);
+      if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
+        setValue(type, [...currentEmails, trimmedEmail]);
+        setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
+      }
+    };
+
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] opacity-50">
+          {type}:
+        </div>
+        <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+          {value.map((email, index) => (
+            <EmailTag key={index} email={email} onRemove={() => onRemove(index)} />
+          ))}
+          <input
+            ref={(e) => {
+              ref(e);
+              if (inputRef) {
+                (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = e;
+              }
+            }}
+            type="email"
+            className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+            placeholder={value.length ? '' : placeholder}
+            {...rest}
+            onBlur={(e) => handleAddEmail('to', e.currentTarget.value)}
+            onKeyDown={(e) => {
+              const currentValue = e.currentTarget.value;
+              if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && currentValue) {
+                e.preventDefault();
+                if (isValidEmail(currentValue)) {
+                  const newEmails = [...value];
+                  newEmails.push(currentValue);
+                  setValue(type as 'to' | 'cc' | 'bcc', newEmails);
+                  setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
+                }
+              } else if (e.key === 'Backspace' && !currentValue && value.length > 0) {
+                e.preventDefault();
+                const newEmails = value.filter((_, i) => i !== value.length - 1);
+                setValue(type as 'to' | 'cc' | 'bcc', newEmails);
+              }
+            }}
+            onPaste={(e) => {
+              e.preventDefault();
+              const pastedText = e.clipboardData.getData('text');
+              const emails = pastedText.split(/[,\n]/).map((email) => email.trim());
+              const validEmails = emails.filter(
+                (email) => email && !value.includes(email) && isValidEmail(email),
+              );
+              if (validEmails.length > 0) {
+                setValue(type as 'to' | 'cc' | 'bcc', [...value, ...validEmails]);
+                setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
+              }
             }}
           />
-        ))}
-        <input
-          type="email"
-          className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-          placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
-          value={toInput}
-          onChange={(e) => setToInput(e.target.value)}
-          onPaste={(e) => {
-            e.preventDefault();
-            const pastedText = e.clipboardData.getData('text');
-            const emails = pastedText.split(/[,\n]/).map(email => email.trim());
-            emails.forEach(email => {
-              if (email && !toEmails.includes(email) && isValidEmail(email)) {
-                setToEmails(prev => [...prev, email]);
-              }
-            });
-          }}
-          onKeyDown={(e) => {
-            if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
-              e.preventDefault();
-              handleAddEmail(toInput);
-            } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-              setToEmails((emails) => emails.filter((_, i) => i !== emails.length - 1));
-            }
-          }}
-        />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Extract email tag component
   const EmailTag = ({ email, onRemove }: { email: string; onRemove: () => void }) => (
@@ -599,35 +882,30 @@ ${email.decodedBody || 'No content'}
   useEffect(() => {
     if (!composerIsOpen) {
       // Reset form state
-      form.reset();
+      reset();
       // Reset attachments
       setAttachments([]);
       // Reset AI state
       aiDispatch({ type: 'RESET' });
-      // Reset to emails if in forward mode
-      if (mode === 'forward') {
-        setToEmails([]);
-        setToInput('');
-      }
       // Reset editor key to force a fresh instance
       composerDispatch({ type: 'INCREMENT_EDITOR_KEY' });
     }
-  }, [composerIsOpen, form, mode]);
+  }, [composerIsOpen, reset, mode]);
 
-  // Add saveDraft function
+  // Update saveDraft function
   const saveDraft = useCallback(async () => {
-    if (!emailData || !emailData[0]) return;
-    if (!form.getValues('messageContent')) return;
+    if (!emailData || !emailData.latest) return;
+    if (!getValues('messageContent')) return;
 
     try {
       composerDispatch({ type: 'SET_LOADING', payload: true });
-      const originalEmail = emailData[0];
+      const originalEmail = emailData.latest;
       const draftData = {
-        to: mode === 'forward' ? toEmails.join(', ') : originalEmail.sender.email,
+        to: mode === 'forward' ? getValues('to').join(', ') : originalEmail.sender.email,
         subject: originalEmail.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
           ? originalEmail.subject
           : `${mode === 'forward' ? 'Fwd: ' : 'Re: '}${originalEmail.subject || ''}`,
-        message: form.getValues('messageContent'),
+        message: getValues('messageContent'),
         attachments: attachments,
         id: draftId,
       };
@@ -645,68 +923,173 @@ ${email.decodedBody || 'No content'}
     } finally {
       composerDispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [mode, toEmails, emailData, form, attachments, draftId, setDraftId]);
-
-  // Update onChange handler in Editor component
-  const handleEditorChange = (content: string) => {
-    form.setValue('messageContent', content);
-  };
+  }, [mode, emailData, getValues, attachments, draftId, setDraftId]);
 
   // Simplified composer visibility check
   if (!composerIsOpen) {
-    if (mode === 'reply') {
-      return (
-        <div className="bg-offsetLight dark:bg-offsetDark w-full px-2">
+    if (!emailData || emailData.messages.length === 0) return null;
+
+    // Get the latest email in the thread
+    const latestEmail = emailData.latest;
+    if (!latestEmail) return null;
+
+    // Get all unique participants (excluding current user)
+    const userEmail = session?.activeConnection?.email?.toLowerCase();
+    const allParticipants = new Set<string>();
+
+    // Add recipients from 'to' field
+    latestEmail.to.forEach((recipient) => {
+      if (recipient.email.toLowerCase() !== userEmail) {
+        allParticipants.add(recipient.email.toLowerCase());
+      }
+    });
+
+    // Add recipients from 'cc' field if exists
+    if (latestEmail.cc) {
+      latestEmail.cc.forEach((recipient) => {
+        if (recipient.email.toLowerCase() !== userEmail) {
+          allParticipants.add(recipient.email.toLowerCase());
+        }
+      });
+    }
+
+    // Add sender if not current user
+    if (latestEmail.sender.email.toLowerCase() !== userEmail) {
+      allParticipants.add(latestEmail.sender.email.toLowerCase());
+    }
+
+    // Show Reply All only if there are more than one participant (excluding current user)
+    const showReplyAll = allParticipants.size > 1;
+
+    return (
+      <div className="bg-offsetLight dark:bg-offsetDark flex w-full gap-2 px-2">
+        <Button
+          onClick={() => {
+            setMail((prev) => ({
+              ...prev,
+              replyComposerOpen: true,
+              forwardComposerOpen: false,
+              mode: 'reply',
+            }));
+          }}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
+          variant="outline"
+        >
+          <Reply className="h-4 w-4" />
+          <span>{t('common.threadDisplay.reply')}</span>
+        </Button>
+        {showReplyAll && (
           <Button
-            onClick={toggleComposer}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md"
+            onClick={() => {
+              setMail((prev) => ({
+                ...prev,
+                replyComposerOpen: false,
+                forwardComposerOpen: false,
+                replyAllComposerOpen: true,
+                mode: 'replyAll',
+              }));
+            }}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
             variant="outline"
           >
             <ReplyAll className="h-4 w-4" />
-            <span>
-              {t('common.replyCompose.replyTo')} All
-            </span>
+            <span>{t('common.threadDisplay.replyAll')}</span>
           </Button>
-        </div>
-      );
-    }
-    return null;
+        )}
+        <Button
+          onClick={() => {
+            setMail((prev) => ({
+              ...prev,
+              replyComposerOpen: false,
+              forwardComposerOpen: true,
+              mode: 'forward',
+            }));
+          }}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
+          variant="outline"
+        >
+          <Forward className="h-4 w-4" />
+          <span>{t('common.threadDisplay.forward')}</span>
+        </Button>
+      </div>
+    );
   }
-  if (!emailData) return;
+  if (!emailData) return null;
   return (
     <div className="bg-offsetLight dark:bg-offsetDark w-full px-2">
       <form
         ref={composerRef}
         className={cn(
-          'border-border ring-offset-background relative z-20 flex flex-col space-y-2.5 rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
+          'border-border ring-offset-background relative z-20 flex flex-col rounded-[10px] border px-2 py-2 transition-all duration-300 ease-in-out',
           composerState.isEditorFocused ? 'ring-2 ring-[#3D3D3D] ring-offset-1' : '',
         )}
         style={{
           minHeight: '150px',
           maxHeight: '800px',
+          overflow: 'hidden',
         }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onSubmit={(e) => e.preventDefault()}
+        onSubmit={handleSubmit(onSubmit)}
         onKeyDown={handleKeyDown}
       >
         {/* Drag overlay */}
         {composerState.isDragging && <DragOverlay />}
 
         {/* Header */}
-        <div className="text-muted-foreground flex items-center justify-between text-sm">
+        <div className="text-muted-foreground flex-shrink-0 flex items-start justify-between text-sm">
           {renderHeaderContent()}
-          <CloseButton onClick={toggleComposer} />
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowCc(!showCc);
+                if (showCc) {
+                  setValue('cc', []);
+                }
+                setIsEditingRecipients(true);
+                setTimeout(() => {
+                  ccInputRef.current?.focus();
+                }, 0);
+              }}
+              className="text-xs"
+            >
+              {showCc ? 'Remove Cc' : 'Add Cc'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowBcc(!showBcc);
+                if (showBcc) {
+                  setValue('bcc', []);
+                }
+                setIsEditingRecipients(true);
+                setTimeout(() => {
+                  bccInputRef.current?.focus();
+                }, 0);
+              }}
+              className="text-xs"
+            >
+              {showBcc ? 'Remove Bcc' : 'Add Bcc'}
+            </Button>
+            <CloseButton onClick={toggleComposer} />
+          </div>
         </div>
 
-        {/* Recipient input for forward mode */}
-        {mode === 'forward' && <RecipientInput />}
-
         {/* Editor container with fixed menu and growing content */}
-        <div className="flex flex-grow flex-col">
-          <div className="w-full">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="w-full overflow-auto">
             <Editor
+              onAttachmentsChange={handleAttachment}
               key={composerState.editorKey}
               onChange={handleEditorChange}
               initialValue={composerState.editorInitialValue}
@@ -735,24 +1118,20 @@ ${email.decodedBody || 'No content'}
                 email: session?.user.email,
               }}
               senderInfo={{
-                name: emailData[0]?.sender?.name,
-                email: emailData[0]?.sender?.email,
+                name: emailData.latest?.sender?.name,
+                email: emailData.latest?.sender?.email,
               }}
-            />
-            <div
-              className="h-2 w-full cursor-ns-resize hover:bg-gray-200 dark:hover:bg-gray-700"
-              onMouseDown={handleResizeStart}
             />
           </div>
         </div>
 
         {aiState.showOptions && (
-          <div className="text-muted-foreground ml-2 mt-1 text-xs">
+          <div className="text-muted-foreground flex-shrink-0 ml-2 mt-1 text-xs">
             Press <kbd className="bg-muted rounded px-1 py-0.5">Tab</kbd> to accept
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between">
+        <div className="flex-shrink-0 mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             {!aiState.showOptions ? (
               <Button
@@ -799,7 +1178,7 @@ ${email.decodedBody || 'No content'}
                 </Button>
               </div>
             )}
-
+            {/* Conditionally render the Popover only if attachments exist */}
             {attachments.length > 0 && (
               <Popover>
                 <PopoverTrigger asChild>
@@ -851,21 +1230,31 @@ ${email.decodedBody || 'No content'}
                 </PopoverContent>
               </Popover>
             )}
-            <input
-              type="file"
-              id="attachment-input"
-              className="hidden"
-              onChange={handleAttachment}
-              multiple
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-            />
+            {/* The Plus button is always visible, wrapped in a label for better click handling */}
+            <div className="-pb-1.5 relative">
+              <Input
+                type="file"
+                id="reply-attachment-input"
+                className="absolute h-full w-full cursor-pointer opacity-0"
+                onChange={handleAttachmentEvent}
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              />
+              <Button
+                variant="ghost"
+                className="rounded-full transition-transform cursor-pointer hover:bg-muted h-8 w-8 -ml-1"
+                tabIndex={-1}
+              >
+                <Plus className="h-4 w-4 cursor-pointer"/>
+              </Button>
+            </div>
           </div>
           <div className="mr-2 flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8" 
-              disabled={composerState.isLoading || !form.getValues('messageContent')}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              disabled={composerState.isLoading || !getValues('messageContent')}
               onClick={(e) => {
                 e.preventDefault();
                 void saveDraft();
@@ -876,11 +1265,11 @@ ${email.decodedBody || 'No content'}
             <Button
               ref={sendButtonRef}
               size="sm"
-              className={cn('relative h-8 w-8 rounded-full', composerState.isLoading && 'cursor-not-allowed')}
-              onClick={async (e) => {
-                e.preventDefault();
-                await handleSendEmail(e);
-              }}
+              className={cn(
+                'relative h-8 w-8 rounded-full',
+                composerState.isLoading && 'cursor-not-allowed',
+              )}
+              onClick={handleSendEmail}
               disabled={composerState.isLoading}
               type="button"
             >
@@ -905,17 +1294,3 @@ const DragOverlay = () => {
     </div>
   );
 };
-
-const CloseButton = ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
-  <Button
-    variant="ghost"
-    size="icon"
-    className="h-6 w-6"
-    onClick={(e) => {
-      e.preventDefault();
-      onClick(e);
-    }}
-  >
-    <X className="h-4 w-4" />
-  </Button>
-);

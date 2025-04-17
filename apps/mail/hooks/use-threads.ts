@@ -1,11 +1,13 @@
 'use client';
 import { useParams, useSearchParams } from 'next/navigation';
+import { IGetThreadResponse } from '@/app/api/driver/types';
 import type { InitialThread, ParsedMessage } from '@/types';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useSession } from '@/lib/auth-client';
 import { defaultPageSize } from '@/lib/utils';
 import useSWRInfinite from 'swr/infinite';
 import useSWR, { preload } from 'swr';
+import { useQueryState } from 'nuqs';
 import { useMemo } from 'react';
 import axios from 'axios';
 
@@ -50,7 +52,7 @@ const fetchEmails = async ([
 const fetchThread = async (args: any[]) => {
   const [_, id] = args;
   try {
-    const response = await axios.get<ParsedMessage[]>(`/api/driver/${id}`);
+    const response = await axios.get<IGetThreadResponse>(`/api/driver/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching email:', error);
@@ -78,6 +80,11 @@ export const useThreads = () => {
   const { folder } = useParams<{ folder: string }>();
   const [searchValue] = useSearchValue();
   const { data: session } = useSession();
+  const searchParams = new URLSearchParams({
+    q: searchValue.value,
+    folder,
+    max: defaultPageSize.toString(),
+  });
 
   const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(
     (_, previousPageData) => {
@@ -85,11 +92,11 @@ export const useThreads = () => {
       return getKey(previousPageData, [
         session.connectionId,
         folder,
-        searchValue.value,
+        searchValue.value, // Always apply search filter
         defaultPageSize,
       ]);
     },
-    fetchEmails,
+    () => axios.get<RawResponse>(`/api/driver?${searchParams.toString()}`).then((res) => res.data),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -99,19 +106,12 @@ export const useThreads = () => {
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
-  const threads = useMemo(() => (data ? data.flatMap((e) => e.threads) : []), [data]);
+  const threads = useMemo(() => (data ? data.flatMap((e) => e.threads) : []), [data, session]);
   const isEmpty = useMemo(() => threads.length === 0, [threads]);
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
   const loadMore = async () => {
     if (isLoading || isValidating) return;
     await setSize(size + 1);
-  };
-
-  // Create a new mutate function that resets the pagination state
-  const refresh = async () => {
-    await mutate(undefined, { revalidate: true });
-    // Reset the size to 1 to clear pagination
-    await setSize(1);
   };
 
   return {
@@ -124,21 +124,21 @@ export const useThreads = () => {
     error,
     loadMore,
     isReachingEnd,
-    mutate: refresh,
+    mutate,
   };
 };
 
 export const useThread = (threadId: string | null) => {
   const { data: session } = useSession();
-  const searchParams = useSearchParams();
-  const id = threadId ? threadId : searchParams.get('threadId');
+  const [_threadId] = useQueryState('threadId');
+  const id = threadId ? threadId : _threadId;
 
-  const { data, isLoading, error, mutate } = useSWR<ParsedMessage[]>(
+  const { data, isLoading, error, mutate } = useSWR<IGetThreadResponse>(
     session?.user.id && id ? [session.user.id, id, session.connectionId] : null,
-    fetchThread,
+    () => axios.get<IGetThreadResponse>(`/api/driver/${id}`).then((res) => res.data),
   );
 
-  const hasUnread = useMemo(() => data?.some((e) => e.unread), [data]);
+  const hasUnread = useMemo(() => data?.messages.some((e) => e.unread), [data]);
 
   return { data, isLoading, error, hasUnread, mutate };
 };

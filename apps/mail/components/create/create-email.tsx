@@ -1,13 +1,20 @@
 'use client';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { generateHTML, generateJSON } from '@tiptap/core';
 import { useConnections } from '@/hooks/use-connections';
 import { createDraft, getDraft } from '@/actions/drafts';
-import { ArrowUpIcon, Paperclip, X, CheckIcon, XIcon } from 'lucide-react';
+import { ArrowUpIcon, Paperclip, X } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import Paragraph from '@tiptap/extension-paragraph';
+import { useSettings } from '@/hooks/use-settings';
+import { useContacts } from '@/hooks/use-contacts';
 import Document from '@tiptap/extension-document';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
+import { truncateFileName } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import { AIAssistant } from './ai-assistant';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
@@ -15,17 +22,29 @@ import Text from '@tiptap/extension-text';
 import Bold from '@tiptap/extension-bold';
 import { type JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
-import type { Editor as EditorType } from '@tiptap/core';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import posthog from 'posthog-js';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+};
+
+// Add a more lenient check for partial emails
+const isPartialEmail = (email: string): boolean => {
+  return email.includes('@');
 };
 
 const createEmptyDocContent = (): JSONContent => ({
@@ -38,6 +57,17 @@ const createEmptyDocContent = (): JSONContent => ({
   ],
 });
 
+const filterContacts = (contacts: any[], searchTerm: string, excludeEmails: string[]) => {
+  if (!searchTerm) return [];
+  const term = searchTerm.toLowerCase();
+  return contacts.filter(
+    (contact) =>
+      (contact.email?.toLowerCase().includes(term) ||
+        contact.name?.toLowerCase().includes(term)) &&
+      !excludeEmails.includes(contact.email)
+  );
+};
+
 export function CreateEmail({
   initialTo = '',
   initialSubject = '',
@@ -47,8 +77,18 @@ export function CreateEmail({
   initialSubject?: string;
   initialBody?: string;
 }) {
-  const [toInput, setToInput] = React.useState('');
   const [toEmails, setToEmails] = React.useState<string[]>(initialTo ? [initialTo] : []);
+  const [toInput, setToInput] = React.useState('');
+  const [selectedContactIndex, setSelectedContactIndex] = React.useState(0);
+  const [selectedCcContactIndex, setSelectedCcContactIndex] = React.useState(0);
+  const [selectedBccContactIndex, setSelectedBccContactIndex] = React.useState(0);
+  const contacts = useContacts();
+  const [ccInput, setCcInput] = React.useState('');
+  const [ccEmails, setCcEmails] = React.useState<string[]>([]);
+  const [bccInput, setBccInput] = React.useState('');
+  const [bccEmails, setBccEmails] = React.useState<string[]>([]);
+  const [showCc, setShowCc] = React.useState(false);
+  const [showBcc, setShowBcc] = React.useState(false);
   const [subjectInput, setSubjectInput] = React.useState(initialSubject);
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const [resetEditorKey, setResetEditorKey] = React.useState(0);
@@ -57,8 +97,11 @@ export function CreateEmail({
   const [isLoading, setIsLoading] = React.useState(false);
   const [messageContent, setMessageContent] = React.useState(initialBody);
   const [draftId, setDraftId] = useQueryState('draftId');
-  const [editor, setEditor] = React.useState<EditorType | null>(null);
-  
+  const [includeSignature, setIncludeSignature] = React.useState(true);
+  const { settings } = useSettings();
+  const [isCardHovered, setIsCardHovered] = React.useState(false);
+  const dragCounter = React.useRef(0);
+
   const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(() => {
     if (initialBody) {
       try {
@@ -84,12 +127,20 @@ export function CreateEmail({
   const userEmail =
     activeAccount?.email || session?.activeConnection?.email || session?.user?.email || '';
 
-  const [aiSuggestion, setAiSuggestion] = React.useState<{
-    content: string;
-    subject?: string;
-  } | null>(null);
+  const filteredContacts = React.useMemo(
+    () => filterContacts(contacts, toInput, toEmails),
+    [contacts, toInput, toEmails]
+  );
 
-  const t = useTranslations();
+  const filteredCcContacts = React.useMemo(
+    () => filterContacts(contacts, ccInput, [...toEmails, ...ccEmails]),
+    [contacts, ccInput, toEmails, ccEmails]
+  );
+
+  const filteredBccContacts = React.useMemo(
+    () => filterContacts(contacts, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
+    [contacts, bccInput, toEmails, ccEmails, bccEmails]
+  );
 
   React.useEffect(() => {
     if (!draftId && !defaultValue) {
@@ -141,24 +192,66 @@ export function CreateEmail({
     loadDraft();
   }, [draftId]);
 
-  const handleAddEmail = (email: string) => {
-    const trimmedEmail = email.trim().replace(/,$/, '');
+  const t = useTranslations();
 
+  // Add refs for all inputs
+  const toInputRef = React.useRef<HTMLInputElement>(null);
+  const ccInputRef = React.useRef<HTMLInputElement>(null);
+  const bccInputRef = React.useRef<HTMLInputElement>(null);
+  const subjectInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Remove auto-focus logic
+  React.useEffect(() => {
+    if (!isFirstMount.current) return;
+    isFirstMount.current = false;
+  }, []);
+
+  // Remove keyboard shortcut handler
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only trigger if "/" is pressed and no input/textarea is focused
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
+  const handleEmailInputChange = (type: 'to' | 'cc' | 'bcc', value: string) => {
+    // Update the input value immediately without any validation
+    switch (type) {
+      case 'to':
+        setToInput(value);
+        break;
+      case 'cc':
+        setCcInput(value);
+        break;
+      case 'bcc':
+        setBccInput(value);
+        break;
+    }
+  };
+
+  const handleAddEmail = (type: 'to' | 'cc' | 'bcc', email: string) => {
+    // Only validate and add when Enter is pressed
+    const trimmedEmail = email.trim();
     if (!trimmedEmail) return;
 
-    if (toEmails.includes(trimmedEmail)) {
-      setToInput('');
-      return;
-    }
+    const emailState = type === 'to' ? toEmails : type === 'cc' ? ccEmails : bccEmails;
+    const setEmailState = type === 'to' ? setToEmails : type === 'cc' ? setCcEmails : setBccEmails;
+    const setInputState = type === 'to' ? setToInput : type === 'cc' ? setCcInput : setBccInput;
 
-    if (!isValidEmail(trimmedEmail)) {
-      toast.error(`Invalid email format: ${trimmedEmail}`);
-      return;
+    if (isValidEmail(trimmedEmail)) {
+      setEmailState([...emailState, trimmedEmail]);
+      setInputState('');
+      setHasUnsavedChanges(true);
+    } else if (emailState.length === 0) {
+      // Only show error if there are no emails yet
+      toast.error(t('pages.createEmail.invalidEmail'));
     }
-
-    setToEmails([...toEmails, trimmedEmail]);
-    setToInput('');
-    setHasUnsavedChanges(true);
   };
 
   const saveDraft = React.useCallback(async () => {
@@ -223,18 +316,40 @@ export function CreateEmail({
     try {
       setIsLoading(true);
       await sendEmail({
-        to: toEmails.join(','),
+        to: toEmails.map((email) => ({ email, name: email.split('@')[0] || email })),
+        cc: showCc
+          ? ccEmails.map((email) => ({ email, name: email.split('@')[0] || email }))
+          : undefined,
+        bcc: showBcc
+          ? bccEmails.map((email) => ({ email, name: email.split('@')[0] || email }))
+          : undefined,
         subject: subjectInput,
         message: messageContent,
         attachments: attachments,
-        includeSignature: includeSignature && Boolean(settings?.signature?.enabled),
       });
+
+      // Track different email sending scenarios
+      if (showCc && showBcc) {
+        console.log(posthog.capture('Create Email Sent with CC and BCC'));
+      } else if (showCc) {
+        console.log(posthog.capture('Create Email Sent with CC'));
+      } else if (showBcc) {
+        console.log(posthog.capture('Create Email Sent with BCC'));
+      } else {
+        console.log(posthog.capture('Create Email Sent'));
+      }
 
       setIsLoading(false);
       toast.success(t('pages.createEmail.emailSentSuccessfully'));
 
       setToInput('');
       setToEmails([]);
+      setCcInput('');
+      setCcEmails([]);
+      setBccInput('');
+      setBccEmails([]);
+      setShowCc(false);
+      setShowBcc(false);
       setSubjectInput('');
       setAttachments([]);
       setMessageContent('');
@@ -251,95 +366,80 @@ export function CreateEmail({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    if (e.dataTransfer.files) {
-      setAttachments((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
-      setHasUnsavedChanges(true);
+    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
     }
   };
 
-  // Add ref for to input
-  const toInputRef = React.useRef<HTMLInputElement>(null);
-  // Add refs for subject and editor
-  const subjectInputRef = React.useRef<HTMLInputElement>(null);
-  const editorRef = React.useRef<any>(null);
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        setAttachments((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
+        setHasUnsavedChanges(true);
+      }
+    }
+  };
 
   // Add a mount ref to ensure we only auto-focus once
   const isFirstMount = React.useRef(true);
 
-  // Auto-focus logic
-  React.useEffect(() => {
-    if (!isFirstMount.current) return;
-    isFirstMount.current = false;
-
-    requestAnimationFrame(() => {
-      if (toEmails.length === 0 && !toInput) {
-        toInputRef.current?.focus();
-        console.log('Focusing to input');
-      } else if (!subjectInput.trim()) {
-        subjectInputRef.current?.focus();
-        console.log('Focusing subject input');
-      } else {
-        const editorElement = document.querySelector('.ProseMirror');
-        if (editorElement instanceof HTMLElement) {
-          editorElement.focus();
-          console.log('Focusing editor');
-        }
-      }
-    });
-  }, []); // Empty dependency array since we only want this on mount
-
-  // Keyboard shortcut handler
-  React.useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Only trigger if "/" is pressed and no input/textarea is focused
-      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
-        e.preventDefault();
-        toInputRef.current?.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyPress);
-    return () => document.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
-  // Initialize signature toggle from settings
-  React.useEffect(() => {
-    if (settings?.signature) {
-      setIncludeSignature(settings.signature.includeByDefault);
+  const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setAttachments((prev) => [...prev, ...Array.from(files)]);
+      setHasUnsavedChanges(true);
     }
-  }, [settings]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDragEnterCard = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current += 1;
+    setIsCardHovered(true);
+  };
+
+  const handleDragLeaveCard = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      setIsCardHovered(false);
+      dragCounter.current = 0;
+    }
+  };
 
   React.useEffect(() => {
     if (initialTo) {
-      const emails = initialTo.split(',').map(email => email.trim());
-      const validEmails = emails.filter(email => isValidEmail(email));
+      const emails = initialTo.split(',').map((email) => email.trim());
+      const validEmails = emails.filter((email) => isValidEmail(email));
       if (validEmails.length > 0) {
         setToEmails(validEmails);
       } else {
         setToInput(initialTo);
       }
     }
-    
+
     if (initialSubject) {
       setSubjectInput(initialSubject);
     }
-    
+
     if (initialBody && !defaultValue) {
       setDefaultValue({
         type: 'doc',
@@ -349,51 +449,50 @@ export function CreateEmail({
             content: [
               {
                 type: 'text',
-                text: initialBody
-              }
-            ]
-          }
-        ]
+                text: initialBody,
+              },
+            ],
+          },
+        ],
       });
       setMessageContent(initialBody);
     }
   }, [initialTo, initialSubject, initialBody, defaultValue]);
 
-  const handleAcceptAISuggestion = () => {
-    if (!aiSuggestion) return;
+  const toDropdownRef = React.useRef<HTMLDivElement>(null);
+  const ccDropdownRef = React.useRef<HTMLDivElement>(null);
+  const bccDropdownRef = React.useRef<HTMLDivElement>(null);
 
-    try {
-      // Update editor content
-      if (editor) {
-        const paragraphs = aiSuggestion.content.split('\n\n');
-        const jsonContent = {
-          type: 'doc',
-          content: paragraphs.map(p => ({
-            type: 'paragraph',
-            content: [{ type: 'text', text: p }]
-          }))
-        };
-        editor.commands.setContent(jsonContent);
+  // Add this effect to handle scrolling
+  React.useEffect(() => {
+    const dropdownRef = toDropdownRef.current;
+    if (dropdownRef && selectedContactIndex >= 0) {
+      const selectedItem = dropdownRef.children[selectedContactIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
-
-      // Update subject if empty and suggestion has subject
-      if (aiSuggestion.subject && !subjectInput) {
-        setSubjectInput(aiSuggestion.subject);
-      }
-
-      // Clear suggestion
-      setAiSuggestion(null);
-      toast.success('Email content updated');
-      setHasUnsavedChanges(true);
-    } catch (error) {
-      console.error('Error applying suggestion:', error);
-      toast.error('Failed to apply suggestion');
     }
-  };
+  }, [selectedContactIndex]);
 
-  const handleRejectAISuggestion = () => {
-    setAiSuggestion(null);
-  };
+  React.useEffect(() => {
+    const dropdownRef = ccDropdownRef.current;
+    if (dropdownRef && selectedCcContactIndex >= 0) {
+      const selectedItem = dropdownRef.children[selectedCcContactIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedCcContactIndex]);
+
+  React.useEffect(() => {
+    const dropdownRef = bccDropdownRef.current;
+    if (dropdownRef && selectedBccContactIndex >= 0) {
+      const selectedItem = dropdownRef.children[selectedBccContactIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedBccContactIndex]);
 
   return (
     <div
@@ -401,229 +500,505 @@ export function CreateEmail({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      data-create-email
-      ref={(el) => {
-        if (el) {
-          (el as any).__onContentGenerated = (jsonContent: any, newSubject?: string) => {
-            try {
-              // Update the editor content with the AI-generated content
-              if (editor) {
-                editor.commands.setContent(jsonContent);
-              }
-
-              // Extract and set the text content for validation purposes
-              if (jsonContent.content && jsonContent.content.length > 0) {
-                const extractTextContent = (node: any): string => {
-                  if (!node) return '';
-                  if (node.text) return node.text;
-                  if (node.content && Array.isArray(node.content)) {
-                    return node.content.map(extractTextContent).join(' ');
-                  }
-                  return '';
-                };
-
-                const textContent = jsonContent.content
-                  .map(extractTextContent)
-                  .join('\n')
-                  .trim();
-                setMessageContent(textContent);
-              }
-
-              // Update the subject if provided
-              if (newSubject && (!subjectInput || subjectInput.trim() === '')) {
-                setSubjectInput(newSubject);
-              }
-
-              // Mark as having unsaved changes
-              setHasUnsavedChanges(true);
-            } catch (error) {
-              console.error('Error applying AI content:', error);
-              toast.error('Error applying AI content to your email. Please try again.');
-            }
-          };
-        }
-      }}
     >
-      {isDragging && (
-        <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
-          <div className="text-muted-foreground flex flex-col items-center gap-2">
-            <Paperclip className="text-muted-foreground h-12 w-12" />
-            <p className="text-lg font-medium">{t('pages.createEmail.dropFilesToAttach')}</p>
-          </div>
-        </div>
-      )}
       <div className="sticky top-0 z-10 flex items-center justify-between gap-1.5 p-2 transition-colors">
         <SidebarToggle className="h-fit px-2" />
       </div>
 
       <div className="relative flex h-full flex-col">
-        <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl space-y-12 px-4 pt-4 md:px-2">
-            {aiSuggestion && (
-              <div className="mb-4 rounded-lg border bg-muted/5 p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="text-sm font-medium">AI Suggestion</div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAcceptAISuggestion}
-                      className="h-8 rounded-md border border-green-500/20 bg-green-500/10 px-4 text-[13px] font-medium text-green-600 hover:bg-green-500/20 hover:text-green-700"
-                    >
-                      <CheckIcon className="mr-1 h-4 w-4" />
-                      Accept
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRejectAISuggestion}
-                      className="h-8 rounded-md border border-red-500/20 bg-red-500/10 px-4 text-[13px] font-medium text-red-600 hover:bg-red-500/20 hover:text-red-700"
-                    >
-                      <XIcon className="mr-1 h-4 w-4" />
-                      Reject
-                    </Button>
-                  </div>
+        <div className="flex-1 ">
+          <div className="mx-auto w-full max-w-[500px] pt-4 sm:max-w-[720px] bg-sidebar rounded-lg border max-h-[80vh] flex flex-col relative" style={{height: ''}} onDragEnter={handleDragEnterCard} onDragLeave={handleDragLeaveCard}>
+            {isDragging && isCardHovered && (
+              <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
+                <div className="text-muted-foreground flex flex-col items-center gap-2">
+                  <Paperclip className="text-muted-foreground h-12 w-12" />
+                  <p className="text-lg font-medium">{t('pages.createEmail.dropFilesToAttach')}</p>
                 </div>
-                {aiSuggestion.subject && (
-                  <div className="mb-2 text-sm">
-                    <span className="font-medium">Subject:</span> {aiSuggestion.subject}
-                  </div>
-                )}
-                <div className="whitespace-pre-wrap text-sm font-mono">{aiSuggestion.content}</div>
               </div>
             )}
-
-            <div className="space-y-3 md:px-1">
-              <div className="flex items-center">
-                <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                  {t('common.mailDisplay.to')}
-                </div>
-                <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-                  {toEmails.map((email, index) => (
-                    <div
-                      key={index}
-                      className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
-                    >
-                      <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
-                        {email}
-                      </span>
-                      <button
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-12">
+              <div className="space-y-3 md:px-1">
+                <div className="flex items-center">
+                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                    {t('common.mailDisplay.to')}
+                  </div>
+                  <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+                    {toEmails.map((email, index) => (
+                      <div
+                        key={index}
+                        className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
+                      >
+                        <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                          {email}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={isLoading}
+                          className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                          onClick={() => {
+                            setToEmails((emails) => emails.filter((_, i) => i !== index));
+                            setHasUnsavedChanges(true);
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <div className='flex-1 relative'>
+                    <input
+                      ref={toInputRef}
+                      disabled={isLoading}
+                      type="text"
+                      className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                      placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+                      value={toInput}
+                      onChange={(e) => handleEmailInputChange('to', e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (filteredContacts.length > 0) {
+                            const selectedEmail = filteredContacts[selectedContactIndex]?.email;
+                            if (selectedEmail) handleAddEmail('to', selectedEmail);
+                            setSelectedContactIndex(0);
+                          } else {
+                            handleAddEmail('to', toInput);
+                          }
+                        } else if (e.key === 'ArrowDown' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) =>
+                            Math.min(prev + 1, filteredContacts.length - 1),
+                          );
+                        } else if (e.key === 'ArrowUp' && filteredContacts.length > 0) {
+                          e.preventDefault();
+                          setSelectedContactIndex((prev) => Math.max(prev - 1, 0));
+                        }
+                      }}
+                    />
+                    {toInput && filteredContacts.length > 0 && (
+                      <div ref={toDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                        {filteredContacts.map((contact, index) => (
+                          <button
+                            key={contact.email}
+                            className={`w-full px-3 py-2 text-left text-sm ${selectedContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                            onClick={() => {
+                              handleAddEmail('to', contact.email);
+                              setSelectedContactIndex(0);
+                            }}
+                          >
+                            <div className="font-medium">{contact.name || contact.email}</div>
+                            {contact.name && (
+                              <div className="text-muted-foreground text-xs">{contact.email}</div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        tabIndex={-1}
                         type="button"
-                        disabled={isLoading}
-                        className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
                         onClick={() => {
-                          setToEmails((emails) => emails.filter((_, i) => i !== index));
-                          setHasUnsavedChanges(true);
+                          setShowCc(!showCc);
+                          if (!showCc) {
+                            setTimeout(() => ccInputRef.current?.focus(), 0);
+                          }
                         }}
                       >
-                        <X className="h-3 w-3" />
-                      </button>
+                        Cc
+                      </Button>
+                      <Button
+                        tabIndex={-1}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          setShowBcc(!showBcc);
+                          if (!showBcc) {
+                            setTimeout(() => bccInputRef.current?.focus(), 0);
+                          }
+                        }}
+                      >
+                        Bcc
+                      </Button>
                     </div>
-                  ))}
+                  </div>
+                </div>
+
+                {showCc && (
+                  <div className="flex items-center">
+                    <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                      Cc
+                    </div>
+                    <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+                      {ccEmails.map((email, index) => (
+                        <div
+                          key={index}
+                          className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
+                        >
+                          <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                            {email}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isLoading}
+                            className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                            onClick={() => {
+                              setCcEmails((emails) => emails.filter((_, i) => i !== index));
+                              setHasUnsavedChanges(true);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className='flex-1 relative'>
+                        <input
+                          ref={ccInputRef}
+                          disabled={isLoading}
+                          type="text"
+                          className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                          placeholder={ccEmails.length ? '' : t('pages.createEmail.example')}
+                          value={ccInput}
+                          onChange={(e) => handleEmailInputChange('cc', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (filteredCcContacts.length > 0) {
+                                const selectedEmail = filteredCcContacts[selectedCcContactIndex]?.email;
+                                if (selectedEmail) {
+                                  handleAddEmail('cc', selectedEmail);
+                                  setSelectedCcContactIndex(0);
+                                }
+                              } else {
+                                handleAddEmail('cc', ccInput);
+                              }
+                            } else if (e.key === 'ArrowDown' && filteredCcContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedCcContactIndex((prev) =>
+                                Math.min(prev + 1, filteredCcContacts.length - 1),
+                              );
+                            } else if (e.key === 'ArrowUp' && filteredCcContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedCcContactIndex((prev) => Math.max(prev - 1, 0));
+                            }
+                          }}
+                        />
+                        {ccInput && filteredCcContacts.length > 0 && (
+                          <div ref={ccDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                            {filteredCcContacts.map((contact, index) => (
+                              <button
+                                key={contact.email}
+                                className={`w-full px-3 py-2 text-left text-sm ${selectedCcContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                                onClick={() => {
+                                  handleAddEmail('cc', contact.email);
+                                  setSelectedCcContactIndex(0);
+                                }}
+                              >
+                                <div className="font-medium">{contact.name || contact.email}</div>
+                                {contact.name && (
+                                  <div className="text-muted-foreground text-xs">{contact.email}</div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {showBcc && (
+                  <div className="flex items-center">
+                    <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                      Bcc
+                    </div>
+                    <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+                      {bccEmails.map((email, index) => (
+                        <div
+                          key={index}
+                          className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium"
+                        >
+                          <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                            {email}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isLoading}
+                            className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
+                            onClick={() => {
+                              setBccEmails((emails) => emails.filter((_, i) => i !== index));
+                              setHasUnsavedChanges(true);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className='flex-1 relative'>
+                        <input
+                          ref={bccInputRef}
+                          disabled={isLoading}
+                          type="text"
+                          className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                          placeholder={bccEmails.length ? '' : t('pages.createEmail.example')}
+                          value={bccInput}
+                          onChange={(e) => handleEmailInputChange('bcc', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (filteredBccContacts.length > 0) {
+                                const selectedEmail = filteredBccContacts[selectedBccContactIndex]?.email;
+                                if (selectedEmail) {
+                                  handleAddEmail('bcc', selectedEmail);
+                                  setSelectedBccContactIndex(0);
+                                }
+                              } else {
+                                handleAddEmail('bcc', bccInput);
+                              }
+                            } else if (e.key === 'ArrowDown' && filteredBccContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedBccContactIndex((prev) =>
+                                Math.min(prev + 1, filteredBccContacts.length - 1),
+                              );
+                            } else if (e.key === 'ArrowUp' && filteredBccContacts.length > 0) {
+                              e.preventDefault();
+                              setSelectedBccContactIndex((prev) => Math.max(prev - 1, 0));
+                            }
+                          }}
+                        />
+                        {bccInput && filteredBccContacts.length > 0 && (
+                          <div ref={bccDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                            {filteredBccContacts.map((contact, index) => (
+                              <button
+                                key={contact.email}
+                                className={`w-full px-3 py-2 text-left text-sm ${selectedBccContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                                onClick={() => {
+                                  handleAddEmail('bcc', contact.email);
+                                  setSelectedBccContactIndex(0);
+                                }}
+                              >
+                                <div className="font-medium">{contact.name || contact.email}</div>
+                                {contact.name && (
+                                  <div className="text-muted-foreground text-xs">{contact.email}</div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center">
+                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                    {t('common.searchBar.subject')}
+                  </div>
                   <input
-                    ref={toInputRef}
+                    ref={subjectInputRef}
                     disabled={isLoading}
-                    type="email"
-                    className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                    placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
-                    value={toInput}
-                    onChange={(e) => setToInput(e.target.value)}
-                    onPaste={(e) => {
-                      e.preventDefault();
-                      const pastedText = e.clipboardData.getData('text');
-                      const emails = pastedText.split(/[,\n]/).map(email => email.trim());
-                      emails.forEach(email => {
-                        if (email && !toEmails.includes(email) && isValidEmail(email)) {
-                          setToEmails(prev => [...prev, email]);
+                    type="text"
+                    className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                    placeholder={t('common.searchBar.subject')}
+                    value={subjectInput}
+                    onChange={(e) => {
+                      setSubjectInput(e.target.value);
+                      setHasUnsavedChanges(true);
+                    }}
+                  />
+                </div>
+
+                <div className="flex">
+                  <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right font-[600] opacity-50 md:w-24">
+                    {t('pages.createEmail.body')}
+                  </div>
+                  <div className="w-full">
+                    {defaultValue && (
+                      <Editor
+                        initialValue={defaultValue}
+                        onChange={(newContent) => {
+                          setMessageContent(newContent);
+                          if (newContent.trim() !== '') {
+                            setHasUnsavedChanges(true);
+                          }
+                        }}
+                        key={resetEditorKey}
+                        placeholder={t('pages.createEmail.writeYourMessageHere')}
+                        onAttachmentsChange={setAttachments}
+                        onCommandEnter={handleSendEmail}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="sticky bottom-0 left-0 right-0 py-2 z-10 border-t px-2 ">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="pb-2 pt-2">
+                    <AIAssistant
+                      currentContent={messageContent}
+                      subject={subjectInput}
+                      recipients={toEmails}
+                      userContext={{ name: userName, email: userEmail }}
+                      onContentGenerated={(jsonContent, newSubject) => {
+                        console.log('CreateEmail: Received AI-generated content', {
+                          jsonContentType: jsonContent.type,
+                          hasContent: Boolean(jsonContent.content),
+                          contentLength: jsonContent.content?.length || 0,
+                          newSubject: newSubject,
+                        });
+
+                        try {
+                          // Update the editor content with the AI-generated content
+                          setDefaultValue(jsonContent);
+
+                          // Extract and set the text content for validation purposes
+                          // This ensures the submit button is enabled immediately
+                          if (jsonContent.content && jsonContent.content.length > 0) {
+                            // Extract text content from JSON structure recursively
+                            const extractTextContent = (node: any): string => {
+                              if (!node) return '';
+
+                              if (node.text) return node.text;
+
+                              if (node.content && Array.isArray(node.content)) {
+                                return node.content.map(extractTextContent).join(' ');
+                              }
+
+                              return '';
+                            };
+
+                            // Process all content nodes
+                            const textContent = jsonContent.content
+                              .map(extractTextContent)
+                              .join('\n')
+                              .trim();
+                            setMessageContent(textContent);
+                          }
+
+                          // Update the subject if provided
+                          if (newSubject && (!subjectInput || subjectInput.trim() === '')) {
+                            console.log('CreateEmail: Setting new subject from AI', newSubject);
+                            setSubjectInput(newSubject);
+                          }
+
+                          // Mark as having unsaved changes
                           setHasUnsavedChanges(true);
+
+                          // Reset the editor to ensure it picks up the new content
+                          setResetEditorKey((prev) => prev + 1);
+
+                          console.log('CreateEmail: Successfully applied AI content');
+                        } catch (error) {
+                          console.error('CreateEmail: Error applying AI content', error);
+                          toast.error(
+                                'Error applying AI content to your email. Please try again.',
+                              );
                         }
-                      });
-                    }}
-                    onKeyDown={(e) => {
-                      if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && toInput.trim()) {
-                        e.preventDefault();
-                        handleAddEmail(toInput);
-                      } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-                        setToEmails((emails) => emails.filter((_, i) => i !== emails.length - 1));
-                        setHasUnsavedChanges(true);
-                      }
-                    }}
-                    onBlur={() => {
-                      if (toInput.trim()) {
-                        handleAddEmail(toInput);
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+                <div className="flex justify-end gap-3">
+                  {attachments.length > 0 && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="flex items-center gap-2">
+                          <Paperclip className="h-4 w-4" />
+                          <span>
+                            {attachments.length}{' '}
+                            {t('common.replyCompose.attachmentCount', {
+                                  count: attachments.length,
+                                })}
+                          </span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 touch-auto overflow-x-hidden" align="end">
+                        <div className="space-y-2">
+                          <div className="px-1">
+                            <h4 className="font-medium leading-none">
+                              {t('common.replyCompose.attachments')}
+                            </h4>
+                            <p className="text-muted-foreground text-sm">
+                              {attachments.length}{' '}
+                              {t('common.replyCompose.fileCount', {
+                                    count: attachments.length,
+                                  })}
+                            </p>
+                          </div>
+                          <Separator />
+                          <div className="touch-auto overflow-y-auto overflow-x-hidden overscroll-contain px-1 py-1">
+                            <div className="grid grid-cols-2 gap-2">
+                              {attachments.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="group relative overflow-hidden rounded-md border"
+                                >
+                                  <UploadedFileIcon
+                                    removeAttachment={removeAttachment}
+                                    index={index}
+                                    file={file}
+                                  />
+                                  <div className="bg-muted/10 p-2">
+                                    <p className="text-xs font-medium">
+                                      {truncateFileName(file.name, 20)}
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      id="attachment-input"
+                      className="absolute h-full w-full opacity-0"
+                      onChange={handleAttachment}
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                      style={{ display: 'none' }}
+                      ref={fileInputRef}
+                    />
+                    <Button
+                      variant="outline"
+                      className="hover:bg-muted -ml-1 h-9 w-9 cursor-pointer rounded-full transition-transform"
+                      tabIndex={-1}
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button
 
-              <div className="flex items-center">
-                <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-                  {t('common.searchBar.subject')}
-                </div>
-                <input
-                  ref={subjectInputRef}
-                  disabled={isLoading}
-                  type="text"
-                  className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                  placeholder={t('common.searchBar.subject')}
-                  value={subjectInput}
-                  onChange={(e) => {
-                    setSubjectInput(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
-                />
-              </div>
 
-              <div className="flex">
-                <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right font-[600] opacity-50 md:w-24">
-                  {t('pages.createEmail.body')}
-                </div>
-                <div className="w-full">
-                  <Editor
-                    initialValue={defaultValue || undefined}
-                    onChange={(newContent) => {
-                      setMessageContent(newContent);
-                      if (newContent.trim() !== '') {
-                        setHasUnsavedChanges(true);
-                      }
-                    }}
-                    key={resetEditorKey}
-                    placeholder={t('pages.createEmail.writeYourMessageHere')}
-                    onAttachmentsChange={setAttachments}
-                    onCommandEnter={handleSendEmail}
-                    onEditorReady={setEditor}
-                  />
+                    variant="default"
+                    className="h-9 w-9 overflow-hidden rounded-full"
+                    onClick={handleSendEmail}
+                    disabled={
+                      isLoading ||
+                          !toEmails.length ||
+                          !messageContent.trim() ||
+                          !subjectInput.trim()
+                    }
+                  >
+                    <ArrowUpIcon className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-offsetLight dark:bg-offsetDark sticky bottom-0 left-0 right-0 flex items-center justify-between p-4 pb-3 md:mb-0 mb-16">
-          <div className="flex items-center gap-4">
-            <div className="mr-1 pb-2 pt-2">
-              <AIAssistant
-                currentContent={messageContent}
-                subject={subjectInput}
-                recipients={toEmails}
-                userContext={{ name: userName, email: userEmail }}
-                onSuggestion={setAiSuggestion}
-              />
-            </div>
-            
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="default"
-              className="h-9 w-9 overflow-hidden rounded-full"
-              onClick={handleSendEmail}
-              disabled={
-                isLoading || !toEmails.length || !messageContent.trim() || !subjectInput.trim()
-              }
-            >
-              <ArrowUpIcon className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>

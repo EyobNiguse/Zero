@@ -9,6 +9,7 @@ import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
 import { type JSONContent } from 'novel';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 
 // Types
 interface AIAssistantProps {
@@ -285,6 +286,9 @@ export function AIAssistant({
     try {
       setIsLoading(true);
 
+      // Track AI assistant usage
+      posthog.capture('Create Email AI Assistant Submit');
+
       // Add user message
       addMessage('user', prompt, 'question');
 
@@ -356,6 +360,9 @@ export function AIAssistant({
           content: actualContent
         });
       }
+
+      // Track AI assistant usage
+      posthog.capture('Create Email AI Assistant Submit');
 
       // Add confirmation message
       addMessage('system', 'Email content applied successfully.', 'system');
