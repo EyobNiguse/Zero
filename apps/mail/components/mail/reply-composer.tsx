@@ -51,6 +51,7 @@ import type { z } from 'zod';
 import { createDraft } from '@/actions/drafts';
 import { extractTextFromHTML } from '@/actions/extractText';
 import { Input } from '../ui/input';
+import posthog from 'posthog-js';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -249,7 +250,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     }
     if (!emailData) return;
     try {
-      const originalEmail = emailData[emailData.length - 1];
+      const originalEmail = emailData.latest
       const userEmail = session?.activeConnection?.email?.toLowerCase();
 
       if (!userEmail) {
@@ -321,6 +322,17 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         },
         threadId
       }).then(() => mutate());
+      
+      
+      if (ccRecipients && bccRecipients) {
+        posthog.capture('Reply Email Sent with CC and BCC');
+      } else if (ccRecipients) {
+        posthog.capture('Reply Email Sent with CC');
+      } else if (bccRecipients) {
+        posthog.capture('Reply Email Sent with BCC');
+      } else {
+        posthog.capture('Reply Email Sent');
+      }
 
       reset();
       setComposerIsOpen(false);
@@ -515,12 +527,12 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     aiDispatch({ type: 'SET_LOADING', payload: true });
     try {
       // Extract relevant information from the email thread for context
-      const latestEmail = emailData[emailData.length - 1];
+      const latestEmail = emailData.latest;
       if (!latestEmail) return;
       const originalSender = latestEmail?.sender?.name || 'the recipient';
 
       // Create a summary of the thread content for context
-      const threadContent = (await Promise.all(emailData.map(async (email) => {
+      const threadContent = (await Promise.all(emailData.messages.map(async (email) => {
         const body = await extractTextFromHTML(email.decodedBody || 'No content');
         return `
             <email>
@@ -604,9 +616,9 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
   // Helper function to initialize recipients based on mode
   const initializeRecipients = useCallback(() => {
-    if (!emailData || !emailData.length) return { to: [], cc: [] };
+    if (!emailData || !emailData.messages.length) return { to: [], cc: [] };
 
-    const latestEmail = emailData[emailData.length - 1];
+    const latestEmail = emailData.latest;
     if (!latestEmail) return { to: [], cc: [] };
 
     const userEmail = session?.activeConnection?.email?.toLowerCase();
@@ -678,7 +690,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const renderHeaderContent = () => {
     if (!emailData) return null;
 
-    const latestEmail = emailData[emailData.length - 1];
+    const latestEmail = emailData.latest;
     if (!latestEmail) return null;
 
     const icon =
@@ -882,12 +894,12 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
   // Update saveDraft function
   const saveDraft = useCallback(async () => {
-    if (!emailData || !emailData[0]) return;
+    if (!emailData || !emailData.latest) return;
     if (!getValues('messageContent')) return;
 
     try {
       composerDispatch({ type: 'SET_LOADING', payload: true });
-      const originalEmail = emailData[0];
+      const originalEmail = emailData.latest;
       const draftData = {
         to: mode === 'forward' ? getValues('to').join(', ') : originalEmail.sender.email,
         subject: originalEmail.subject?.startsWith(mode === 'forward' ? 'Fwd: ' : 'Re: ')
@@ -915,10 +927,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
   // Simplified composer visibility check
   if (!composerIsOpen) {
-    if (!emailData || emailData.length === 0) return null;
+    if (!emailData || emailData.messages.length === 0) return null;
 
     // Get the latest email in the thread
-    const latestEmail = emailData[emailData.length - 1];
+    const latestEmail = emailData.latest;
     if (!latestEmail) return null;
 
     // Get all unique participants (excluding current user)
@@ -1106,8 +1118,8 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
                 email: session?.user.email,
               }}
               senderInfo={{
-                name: emailData[0]?.sender?.name,
-                email: emailData[0]?.sender?.email,
+                name: emailData.latest?.sender?.name,
+                email: emailData.latest?.sender?.email,
               }}
             />
           </div>
