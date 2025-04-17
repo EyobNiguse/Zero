@@ -20,10 +20,15 @@ export const getRatelimitModule = (config: {
 };
 
 export const throwUnauthorizedGracefully = async () => {
-  console.log('Unauthorized, redirecting to login');
-  const headersList = await headers();
-  await auth.api.signOut({ headers: headersList });
-  redirect('/login?error=unauthorized');
+  console.warn('Unauthorized, redirecting to login');
+  try {
+    const headersList = await headers();
+    await auth.api.signOut({ headers: headersList });
+    redirect('/login?error=unauthorized');
+  } catch (error) {
+    console.warn('Error signing out & redirecting to login:', error);
+    throw error;
+  }
 };
 
 export async function getAuthenticatedUserId(): Promise<string> {
