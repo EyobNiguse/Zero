@@ -10,29 +10,28 @@ import {
   Trash,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useParams } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useParams } from 'next/navigation';
 
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useThread, useThreads } from '@/hooks/use-threads';
+import { markAsRead, markAsUnread } from '@/actions/mail';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { Button } from '@/components/ui/button';
-import { markAsRead, markAsUnread } from '@/actions/mail';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
 import ReplyCompose from './reply-composer';
 import { useTranslations } from 'next-intl';
 import { useMail } from '../mail/use-mail';
+import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
 import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
-import { toast } from 'sonner';
-import { NotesPanel } from './note-panel';
 import { useQueryState } from 'nuqs';
-
+import { toast } from 'sonner';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -85,9 +84,7 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
             </div>
           </ScrollArea>
           <div className="relative flex-shrink-0 md:top-1">
-            <ReplyCompose 
-                mode={mail.forwardComposerOpen ? 'forward' : 'reply'} 
-            />
+            <ReplyCompose mode={mail.forwardComposerOpen ? 'forward' : 'reply'} />
           </div>
         </div>
       </div>
@@ -149,45 +146,51 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   // Check if thread contains any images (excluding sender avatars)
   const hasImages = useMemo(() => {
     if (!emailData) return false;
-    return emailData.messages.some(message => {
-      const hasAttachments = message.attachments?.some(attachment => 
-        attachment.mimeType?.startsWith('image/')
+    return emailData.messages.some((message) => {
+      const hasAttachments = message.attachments?.some((attachment) =>
+        attachment.mimeType?.startsWith('image/'),
       );
-      const hasInlineImages = message.processedHtml?.includes('<img') && 
+      const hasInlineImages =
+        message.processedHtml?.includes('<img') &&
         !message.processedHtml.includes('data:image/svg+xml;base64'); // Exclude avatar SVGs
       return hasAttachments || hasInlineImages;
     });
   }, [emailData]);
 
-  const hasMultipleParticipants = (emailData?.latest?.to?.length ?? 0) + (emailData?.latest?.cc?.length ?? 0) + 1 > 2;
+  const hasMultipleParticipants =
+    (emailData?.latest?.to?.length ?? 0) + (emailData?.latest?.cc?.length ?? 0) + 1 > 2;
 
   /**
    * Mark email as read if it's unread, if there are no unread emails, mark the current thread as read
    */
   useEffect(() => {
     if (!emailData || !id) return;
-    const unreadEmails = emailData.messages.filter(e => e.unread);
+    const unreadEmails = emailData.messages.filter((e) => e.unread);
     if (unreadEmails.length === 0) {
       console.log('Marking email as read:', id);
-      markAsRead({ ids: [id] }).catch((error) => {
-        console.error('Failed to mark email as read:', error);
-        toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateStats()]))
+      markAsRead({ ids: [id] })
+        .catch((error) => {
+          console.error('Failed to mark email as read:', error);
+          toast.error(t('common.mail.failedToMarkAsRead'));
+        })
+        .then(() => Promise.all([mutateThread(), mutateStats()]));
     } else {
-      console.log('Marking email as read:', id, ...unreadEmails.map(e => e.id));
-      const ids = [id, ...unreadEmails.map(e => e.id)]
-      markAsRead({ ids }).catch((error) => {
-        console.error('Failed to mark email as read:', error);
-        toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateStats()]))
+      console.log('Marking email as read:', id, ...unreadEmails.map((e) => e.id));
+      const ids = [id, ...unreadEmails.map((e) => e.id)];
+      markAsRead({ ids })
+        .catch((error) => {
+          console.error('Failed to mark email as read:', error);
+          toast.error(t('common.mail.failedToMarkAsRead'));
+        })
+        .then(() => Promise.all([mutateThread(), mutateStats()]));
     }
-  }, [emailData, id])
+  }, [emailData, id]);
 
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
   const isInBin = folder === FOLDERS.BIN;
   const handleClose = useCallback(() => {
-    setThreadId(null)
+    setThreadId(null);
   }, []);
 
   const moveThreadTo = useCallback(
@@ -316,11 +319,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       >
         <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[10px]">
           <div className="flex flex-1 items-center gap-2">
-            <ThreadActionButton
-              icon={X}
-              label={t('common.actions.close')}
-              onClick={handleClose}
-            />
+            <ThreadActionButton icon={X} label={t('common.actions.close')} onClick={handleClose} />
             <ThreadSubject subject={emailData.latest?.subject} />
           </div>
           <div className="flex items-center md:gap-2">
@@ -374,13 +373,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
               icon={Reply}
               label={t('common.threadDisplay.reply')}
               disabled={!emailData}
-              className={cn(mail.replyComposerOpen && "bg-primary/10")}
+              className={cn(mail.replyComposerOpen && 'bg-primary/10')}
               onClick={() => {
-                setMail((prev) => ({ 
-                  ...prev, 
+                setMail((prev) => ({
+                  ...prev,
                   replyComposerOpen: true,
                   replyAllComposerOpen: false,
-                  forwardComposerOpen: false 
+                  forwardComposerOpen: false,
                 }));
               }}
             />
@@ -389,13 +388,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 icon={ReplyAll}
                 label={t('common.threadDisplay.replyAll')}
                 disabled={!emailData}
-                className={cn(mail.replyAllComposerOpen && "bg-primary/10")}
+                className={cn(mail.replyAllComposerOpen && 'bg-primary/10')}
                 onClick={() => {
-                  setMail((prev) => ({ 
-                    ...prev, 
+                  setMail((prev) => ({
+                    ...prev,
                     replyComposerOpen: false,
                     replyAllComposerOpen: true,
-                    forwardComposerOpen: false 
+                    forwardComposerOpen: false,
                   }));
                 }}
               />
@@ -404,13 +403,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
               icon={Forward}
               label={t('common.threadDisplay.forward')}
               disabled={!emailData}
-              className={cn(mail.forwardComposerOpen && "bg-primary/10")}
+              className={cn(mail.forwardComposerOpen && 'bg-primary/10')}
               onClick={() => {
-                setMail((prev) => ({ 
-                  ...prev, 
+                setMail((prev) => ({
+                  ...prev,
                   replyComposerOpen: false,
                   replyAllComposerOpen: false,
-                  forwardComposerOpen: true 
+                  forwardComposerOpen: true,
                 }));
               }}
             />
@@ -420,15 +419,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           <ScrollArea className="h-full flex-1" type="auto">
             <div className="pb-4">
               {hasImages && !mail.showImages && (
-                <div className="bg-warning/10 border-warning/20 border rounded-lg p-4 m-4">
+                <div className="bg-warning/10 border-warning/20 m-4 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-warning">
-                      {t('common.mail.imagesHidden')}
-                    </p>
+                    <p className="text-warning text-sm">{t('common.mail.imagesHidden')}</p>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setMail(prev => ({ ...prev, showImages: true }))}
+                      onClick={() => setMail((prev) => ({ ...prev, showImages: true }))}
                     >
                       {t('common.mail.showImages')}
                     </Button>
@@ -455,12 +452,15 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
               ))}
             </div>
           </ScrollArea>
-          <div className={cn(
-            'relative z-10 mt-3 ',
-            isFullscreen ? 'mb-2' : ''
-          )}>
+          <div className={cn('relative z-10 mt-3', isFullscreen ? 'mb-2' : '')}>
             <ReplyCompose
-              mode={mail.forwardComposerOpen ? 'forward' : mail.replyAllComposerOpen ? 'replyAll' : 'reply'}
+              mode={
+                mail.forwardComposerOpen
+                  ? 'forward'
+                  : mail.replyAllComposerOpen
+                    ? 'replyAll'
+                    : 'reply'
+              }
             />
           </div>
         </div>

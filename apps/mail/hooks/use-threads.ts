@@ -80,11 +80,6 @@ export const useThreads = () => {
   const { folder } = useParams<{ folder: string }>();
   const [searchValue] = useSearchValue();
   const { data: session } = useSession();
-  const searchParams = new URLSearchParams({
-    q: searchValue.value,
-    folder,
-    max: defaultPageSize.toString(),
-  });
 
   const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(
     (_, previousPageData) => {
@@ -96,7 +91,17 @@ export const useThreads = () => {
         defaultPageSize,
       ]);
     },
-    () => axios.get<RawResponse>(`/api/driver?${searchParams.toString()}`).then((res) => res.data),
+    async (key) => {
+      const [connectionId, folder, query, max, labelIds, pageToken] = key;
+      const searchParams = new URLSearchParams({
+        q: query,
+        folder,
+        max: max?.toString() ?? defaultPageSize.toString(),
+        pageToken: pageToken ?? '',
+      } as Record<string, string>);
+      const res = await axios.get<RawResponse>(`/api/driver?${searchParams.toString()}`);
+      return res.data;
+    },
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
