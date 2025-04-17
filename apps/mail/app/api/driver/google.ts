@@ -82,6 +82,46 @@ const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
 // Helper function for delays
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Exponential backoff helper function
+const withExponentialBackoff = async <T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  initialDelay = 1000,
+  maxDelay = 10000,
+): Promise<T> => {
+  let retries = 0;
+  let delayMs = initialDelay;
+
+  while (true) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      if (retries >= maxRetries) {
+        throw error;
+      }
+
+      // Check if error is rate limit related
+      const isRateLimit =
+        error?.code === 429 ||
+        error?.errors?.[0]?.reason === 'rateLimitExceeded' ||
+        error?.errors?.[0]?.reason === 'userRateLimitExceeded';
+
+      if (!isRateLimit) {
+        throw error;
+      }
+
+      console.log(
+        `Rate limit hit, retrying in ${delayMs}ms (attempt ${retries + 1}/${maxRetries})`,
+      );
+      await delay(delayMs);
+
+      // Exponential backoff with jitter
+      delayMs = Math.min(delayMs * 2 + Math.random() * 1000, maxDelay);
+      retries++;
+    }
+  }
+};
+
 export const driver = async (config: IConfig): Promise<MailManager> => {
   const auth = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID as string,
@@ -496,164 +536,176 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const labelIds = [..._labelIds];
       if (normalizedFolder) labelIds.push(normalizedFolder.toUpperCase());
 
-      const res = await gmail.users.threads.list({
-        userId: 'me',
-        q: normalizedQ ? normalizedQ : undefined,
-        labelIds: folder === 'inbox' ? labelIds : [],
-        maxResults,
-        pageToken: pageToken ? pageToken : undefined,
+      return withExponentialBackoff(async () => {
+        const res = await gmail.users.threads.list({
+          userId: 'me',
+          q: normalizedQ ? normalizedQ : undefined,
+          labelIds: folder === 'inbox' ? labelIds : [],
+          maxResults,
+          pageToken: pageToken ? pageToken : undefined,
+          quotaUser: config.auth?.email,
+        });
+        return { ...res.data, threads: res.data.threads } as any;
       });
-      return { ...res.data, threads: res.data.threads } as any;
     },
     get: async (id: string) => {
-      console.log('Fetching thread:', id);
-      const res = await gmail.users.threads.get({ userId: 'me', id, format: 'full' });
-      if (!res.data.messages)
-        return { messages: [], latest: undefined, hasUnread: false, totalReplies: 0 };
-      let hasUnread = false;
-      const messages: ParsedMessage[] = await Promise.all(
-        res.data.messages.map(async (message) => {
-          const bodyData =
-            message.payload?.body?.data ||
-            (message.payload?.parts ? findHtmlBody(message.payload.parts) : '') ||
-            message.payload?.parts?.[0]?.body?.data ||
-            '';
+      return withExponentialBackoff(async () => {
+        const res = await gmail.users.threads.get({
+          userId: 'me',
+          id,
+          format: 'full',
+          quotaUser: config.auth?.email,
+        });
+        if (!res.data.messages)
+          return { messages: [], latest: undefined, hasUnread: false, totalReplies: 0 };
+        let hasUnread = false;
+        const messages: ParsedMessage[] = await Promise.all(
+          res.data.messages.map(async (message) => {
+            const bodyData =
+              message.payload?.body?.data ||
+              (message.payload?.parts ? findHtmlBody(message.payload.parts) : '') ||
+              message.payload?.parts?.[0]?.body?.data ||
+              '';
 
-          if (!bodyData) {
-            console.log('⚠️ Driver: No email body data found');
-          } else {
-            console.log('✓ Driver: Found email body data');
-          }
-
-          console.log('🔄 Driver: Processing email body...');
-          const decodedBody = bodyData ? fromBinary(bodyData) : '';
-
-          // Process inline images if present
-          let processedBody = decodedBody;
-          if (message.payload?.parts) {
-            const inlineImages = message.payload.parts.filter((part) => {
-              const contentDisposition =
-                part.headers?.find((h) => h.name?.toLowerCase() === 'content-disposition')?.value ||
-                '';
-              const isInline = contentDisposition.toLowerCase().includes('inline');
-              const hasContentId = part.headers?.some(
-                (h) => h.name?.toLowerCase() === 'content-id',
-              );
-              return isInline && hasContentId;
-            });
-
-            for (const part of inlineImages) {
-              const contentId = part.headers?.find(
-                (h) => h.name?.toLowerCase() === 'content-id',
-              )?.value;
-              if (contentId && part.body?.attachmentId) {
-                try {
-                  const imageData = await manager.getAttachment(
-                    message.id!,
-                    part.body.attachmentId,
-                  );
-                  if (imageData) {
-                    // Remove < and > from Content-ID if present
-                    const cleanContentId = contentId.replace(/[<>]/g, '');
-
-                    const escapedContentId = cleanContentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    // Replace cid: URL with data URL
-                    processedBody = processedBody.replace(
-                      new RegExp(`cid:${escapedContentId}`, 'g'),
-                      `data:${part.mimeType};base64,${imageData}`,
-                    );
-                  }
-                } catch (error) {
-                  console.error('Failed to process inline image:', error);
-                }
-              }
+            if (!bodyData) {
+              console.log('⚠️ Driver: No email body data found');
+            } else {
+              console.log('✓ Driver: Found email body data');
             }
-          }
 
-          console.log('✅ Driver: Email processing complete', {
-            hasBody: !!bodyData,
-            decodedBodyLength: processedBody.length,
-          });
+            console.log('🔄 Driver: Processing email body...');
+            const decodedBody = bodyData ? fromBinary(bodyData) : '';
 
-          const parsedData = parse(message);
-
-          const attachments = await Promise.all(
-            message.payload?.parts
-              ?.filter((part) => {
-                if (!part.filename || part.filename.length === 0) return false;
-
+            // Process inline images if present
+            let processedBody = decodedBody;
+            if (message.payload?.parts) {
+              const inlineImages = message.payload.parts.filter((part) => {
                 const contentDisposition =
                   part.headers?.find((h) => h.name?.toLowerCase() === 'content-disposition')
                     ?.value || '';
                 const isInline = contentDisposition.toLowerCase().includes('inline');
-
                 const hasContentId = part.headers?.some(
                   (h) => h.name?.toLowerCase() === 'content-id',
                 );
+                return isInline && hasContentId;
+              });
 
-                return !isInline || (isInline && !hasContentId);
-              })
-              ?.map(async (part) => {
-                console.log('Processing attachment:', part.filename);
-                const attachmentId = part.body?.attachmentId;
-                if (!attachmentId) {
-                  console.log('No attachment ID found for', part.filename);
-                  return null;
+              for (const part of inlineImages) {
+                const contentId = part.headers?.find(
+                  (h) => h.name?.toLowerCase() === 'content-id',
+                )?.value;
+                if (contentId && part.body?.attachmentId) {
+                  try {
+                    const imageData = await manager.getAttachment(
+                      message.id!,
+                      part.body.attachmentId,
+                    );
+                    if (imageData) {
+                      // Remove < and > from Content-ID if present
+                      const cleanContentId = contentId.replace(/[<>]/g, '');
+
+                      const escapedContentId = cleanContentId.replace(
+                        /[.*+?^${}()|[\]\\]/g,
+                        '\\$&',
+                      );
+                      // Replace cid: URL with data URL
+                      processedBody = processedBody.replace(
+                        new RegExp(`cid:${escapedContentId}`, 'g'),
+                        `data:${part.mimeType};base64,${imageData}`,
+                      );
+                    }
+                  } catch (error) {
+                    console.error('Failed to process inline image:', error);
+                  }
                 }
+              }
+            }
 
-                try {
-                  if (!message.id) {
-                    console.error('No message ID found for attachment');
+            console.log('✅ Driver: Email processing complete', {
+              hasBody: !!bodyData,
+              decodedBodyLength: processedBody.length,
+            });
+
+            const parsedData = parse(message);
+
+            const attachments = await Promise.all(
+              message.payload?.parts
+                ?.filter((part) => {
+                  if (!part.filename || part.filename.length === 0) return false;
+
+                  const contentDisposition =
+                    part.headers?.find((h) => h.name?.toLowerCase() === 'content-disposition')
+                      ?.value || '';
+                  const isInline = contentDisposition.toLowerCase().includes('inline');
+
+                  const hasContentId = part.headers?.some(
+                    (h) => h.name?.toLowerCase() === 'content-id',
+                  );
+
+                  return !isInline || (isInline && !hasContentId);
+                })
+                ?.map(async (part) => {
+                  console.log('Processing attachment:', part.filename);
+                  const attachmentId = part.body?.attachmentId;
+                  if (!attachmentId) {
+                    console.log('No attachment ID found for', part.filename);
                     return null;
                   }
-                  const attachmentData = await manager.getAttachment(message.id, attachmentId);
-                  console.log('Fetched attachment data:', {
-                    filename: part.filename,
-                    mimeType: part.mimeType,
-                    size: part.body?.size,
-                    dataLength: attachmentData?.length || 0,
-                    hasData: !!attachmentData,
-                  });
-                  return {
-                    filename: part.filename || '',
-                    mimeType: part.mimeType || '',
-                    size: Number(part.body?.size || 0),
-                    attachmentId: attachmentId,
-                    headers: part.headers || [],
-                    body: attachmentData ?? '',
-                  };
-                } catch (error) {
-                  console.error('Failed to fetch attachment:', part.filename, error);
-                  return null;
-                }
-              }) || [],
-          ).then((attachments) =>
-            attachments.filter((a): a is NonNullable<typeof a> => a !== null),
-          );
 
-          const fullEmailData = {
-            ...parsedData,
-            body: '',
-            processedHtml: '',
-            blobUrl: '',
-            decodedBody: processedBody,
-            attachments,
-          };
+                  try {
+                    if (!message.id) {
+                      console.error('No message ID found for attachment');
+                      return null;
+                    }
+                    const attachmentData = await manager.getAttachment(message.id, attachmentId);
+                    console.log('Fetched attachment data:', {
+                      filename: part.filename,
+                      mimeType: part.mimeType,
+                      size: part.body?.size,
+                      dataLength: attachmentData?.length || 0,
+                      hasData: !!attachmentData,
+                    });
+                    return {
+                      filename: part.filename || '',
+                      mimeType: part.mimeType || '',
+                      size: Number(part.body?.size || 0),
+                      attachmentId: attachmentId,
+                      headers: part.headers || [],
+                      body: attachmentData ?? '',
+                    };
+                  } catch (error) {
+                    console.error('Failed to fetch attachment:', part.filename, error);
+                    return null;
+                  }
+                }) || [],
+            ).then((attachments) =>
+              attachments.filter((a): a is NonNullable<typeof a> => a !== null),
+            );
 
-          console.log('📧 Driver: Returning email data', {
-            id: fullEmailData.id,
-            hasBody: !!fullEmailData.body,
-            hasBlobUrl: !!fullEmailData.blobUrl,
-            blobUrlLength: fullEmailData.blobUrl.length,
-            labels: fullEmailData.tags,
-          });
+            const fullEmailData = {
+              ...parsedData,
+              body: '',
+              processedHtml: '',
+              blobUrl: '',
+              decodedBody: processedBody,
+              attachments,
+            };
 
-          if (fullEmailData.unread) hasUnread = true;
+            console.log('📧 Driver: Returning email data', {
+              id: fullEmailData.id,
+              hasBody: !!fullEmailData.body,
+              hasBlobUrl: !!fullEmailData.blobUrl,
+              blobUrlLength: fullEmailData.blobUrl.length,
+              labels: fullEmailData.tags,
+            });
 
-          return fullEmailData;
-        }),
-      );
-      return { messages, latest: messages[0], hasUnread, totalReplies: messages.length };
+            if (fullEmailData.unread) hasUnread = true;
+
+            return fullEmailData;
+          }),
+        );
+        return { messages, latest: messages[0], hasUnread, totalReplies: messages.length };
+      });
     },
     create: async (data) => {
       const { raw } = await parseOutgoing(data);

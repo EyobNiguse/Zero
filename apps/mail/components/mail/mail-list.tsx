@@ -494,7 +494,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     }
     // Otherwise select all items
     else if (items.length > 0) {
-      const allIds = items.map((item) => item.threadId ?? item.id);
+        // TODO: debug
+      const allIds = items.map((item) => item.id);
       setMail((prev) => ({
         ...prev,
         bulkSelected: allIds,

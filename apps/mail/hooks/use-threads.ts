@@ -91,7 +91,7 @@ export const useThreads = () => {
         defaultPageSize,
       ]);
     },
-    fetchEmails,
+    () => axios.get<RawResponse>(`/api/driver`).then((res) => res.data),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -130,7 +130,7 @@ export const useThread = (threadId: string | null) => {
 
   const { data, isLoading, error, mutate } = useSWR<IGetThreadResponse>(
     session?.user.id && id ? [session.user.id, id, session.connectionId] : null,
-    fetchThread,
+    () => axios.get<IGetThreadResponse>(`/api/driver/${id}`).then((res) => res.data),
   );
 
   const hasUnread = useMemo(() => data?.messages.some((e) => e.unread), [data]);

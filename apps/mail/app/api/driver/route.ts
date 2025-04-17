@@ -1,5 +1,6 @@
 import { checkRateLimit, getRatelimitModule, processIP } from '../utils';
 import { type NextRequest, NextResponse } from 'next/server';
+import { getActiveDriver } from '@/actions/utils';
 import { Ratelimit } from '@upstash/ratelimit';
 import { defaultPageSize } from '@/lib/utils';
 import { getMails } from '@/actions/mail';
@@ -28,13 +29,8 @@ export const GET = async (req: NextRequest) => {
   if (!pageToken) pageToken = '';
   if (!q) q = '';
   if (!max) max = defaultPageSize;
-  const threadsResponse = await getMails({
-    folder,
-    q,
-    max,
-    pageToken,
-    labelIds: undefined,
-  });
+  const driver = await getActiveDriver();
+  const threadsResponse = await driver.list(folder, q, max, undefined, pageToken);
   return NextResponse.json(threadsResponse, {
     status: 200,
     headers,
