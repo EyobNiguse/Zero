@@ -26,18 +26,16 @@ export const GetSummary = async (threadId: string) => {
 
   try {
     if (!process.env.BRAIN_URL || process.env.NODE_ENV !== 'production') {
-      throw new Error('Brain URL not found');
+      return null;
     }
 
     const response = await axios
       .get(process.env.BRAIN_URL + `/brain/message/thread/${threadId}`)
       .then((e) => e.data);
 
-    console.log('Summary:', response);
-
     return response?.content ?? null;
   } catch (error) {
-    console.error('Error getting summary:', error);
+    // console.error('Error getting summary:', error);
     return null;
   }
 };
