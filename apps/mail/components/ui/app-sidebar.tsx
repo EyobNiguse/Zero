@@ -9,7 +9,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import React, { useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useStats } from '@/hooks/use-stats';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { FOLDERS } from '@/lib/utils';
 import { NavMain } from './nav-main';
@@ -20,7 +19,6 @@ import Link from 'next/link';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
-  const isMobile = useIsMobile();
 
   const pathname = usePathname();
 
@@ -61,7 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Sidebar
         collapsible="icon"
         {...props}
-        className="bg-offsetWhite dark:bg-offsetDark flex flex-col items-center"
+        className="bg-offsetWhite dark:bg-offsetDark flex flex-col items-center select-none"
       >
         <div className="flex w-full flex-col">
           <SidebarHeader className="flex flex-col gap-2 p-2">
@@ -122,12 +120,11 @@ function ComposeButton() {
   const iconRef = useRef<SquarePenIconHandle>(null);
   const { state } = useSidebar();
   const isMobile = useIsMobile();
-  const router = useRouter();
   const t = useTranslations();
   return (
     <Button
       asChild
-      className="bg-secondary bg-subtleWhite text-primary hover:bg-subtleWhite dark:bg-subtleBlack dark:hover:bg-subtleBlack relative isolate mt-1 h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap shadow-inner"
+      className="bg-secondary bg-black text-primary hover:bg-black/80 dark:bg-white dark:hover:bg-white/80 relative isolate mt-1 h-8 w-[calc(100%)] overflow-hidden whitespace-nowrap shadow-inner text-white dark:text-black"
       onMouseEnter={() => () => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => () => iconRef.current?.stopAnimation?.()}
     >

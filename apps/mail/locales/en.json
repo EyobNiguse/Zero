@@ -29,6 +29,9 @@
       "failedToAddToFavorites": "Failed to add to favorites",
       "failedToRemoveFromFavorites": "Failed to remove from favorites",
       "failedToModifyFavorites": "Failed to modify favorites",
+      "movingToBin": "Moving to bin...",
+      "movedToBin": "Moved to bin",
+      "failedToMoveToBin": "Failed to move to bin",
       "markingAsRead": "Marking as read...",
       "markingAsUnread": "Marking as unread...",
       "hiddenImagesWarning": "Images are hidden by default for security reasons.",
@@ -37,7 +40,8 @@
       "trustSender": "Trust Sender",
       "cancel": "Cancel",
       "save": "Save",
-      "remove": "Remove"
+      "remove": "Remove",
+      "settings": "Settings"
     },
     "themes": {
       "dark": "Dark",
@@ -100,7 +104,7 @@
       "aiEnhancedQuery": "Enhanced search query"
     },
     "navUser": {
-      "customerSupport": "Customer Support",
+      "customerSupport": "Community",
       "documentation": "Documentation",
       "appTheme": "App Theme",
       "accounts": "Accounts",
@@ -113,7 +117,8 @@
       "personal": "Personal",
       "updates": "Updates",
       "promotions": "Promotions",
-      "social": "Social"
+      "social": "Social",
+      "unread": "Unread"
     },
     "replyCompose": {
       "replyTo": "Reply to",
@@ -131,6 +136,7 @@
       "from": "From",
       "to": "To",
       "cc": "Cc",
+      "bcc":"Bcc",
       "date": "Date",
       "mailedBy": "Mailed-By",
       "signedBy": "Signed-By",
@@ -244,7 +250,8 @@
       "moveToInbox": "Move to Inbox",
       "unarchive": "Unarchive",
       "archive": "Archive",
-      "moveToTrash": "Move to Trash",
+      "moveToBin": "Move to Bin",
+      "restoreFromBin": "Restore from Bin",
       "markAsUnread": "Mark as Unread",
       "markAsRead": "Mark as Read",
       "addFavorite": "Favorite",
@@ -259,7 +266,9 @@
       "labels": "Labels",
       "createNewLabel": "Create New Label",
       "noLabelsAvailable": "No labels available",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "imagesHidden": "Images are hidden for security reasons",
+      "showImages": "Show Images"
     },
     "units": {
       "mb": "{amount} MB"
@@ -311,7 +320,8 @@
         "languageChangedTo": "Language changed to {locale}",
         "customPrompt": "Custom AI Prompt",
         "customPromptPlaceholder": "Enter your custom prompt for the AI...",
-        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt."
+        "customPromptDescription": "Customize how the AI writes your email replies. This will be added to the base prompt.",
+        "noResultsFound": "No results found"
       },
       "connections": {
         "title": "Email Connections",
@@ -388,11 +398,16 @@
           "viewEmailDetails": "View Email Details",
           "goToDrafts": "Go to Drafts",
           "expandEmailView": "Expand Email View",
-          "helpWithShortcuts": "Help with shortcuts"
+          "helpWithShortcuts": "Help with shortcuts",
+          "recordHotkey": "Record Hotkey",
+          "pressKeys": "Press keys",
+          "releaseKeys": "Release keys",
+          "selectAll": "Select All"
         }
       }
     },
     "createEmail": {
+      "invalidEmail": "Invalid email address",
       "body": "Body",
       "example": "zero@0.email",
       "attachments": "Attachments ({count})",

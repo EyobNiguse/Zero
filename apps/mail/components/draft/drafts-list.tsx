@@ -9,7 +9,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { highlightText } from '@/lib/email-utils.client';
 import { useMail } from '@/components/mail/use-mail';
-import { useHotKey } from '@/hooks/use-hot-key';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { useDrafts } from '@/hooks/use-drafts';
 import { useSession } from '@/lib/auth-client';
 import { ScrollArea } from '../ui/scroll-area';
@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'use-intl';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
+import { ChevronDown } from 'lucide-react';
 
 const Draft = ({ message, onClick }: ThreadProps) => {
   const [mail] = useMail();
@@ -32,7 +33,6 @@ const Draft = ({ message, onClick }: ThreadProps) => {
         key={message.id}
         className={cn(
           'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-          !message.unread && 'opacity-50',
           (isMailSelected || isMailBulkSelected) && 'border-border bg-primary/5 opacity-100',
         )}
       >
@@ -92,7 +92,7 @@ export function DraftsList({ isCompact }: MailListProps) {
     isValidating,
     isLoading,
     loadMore,
-    error
+    error,
   } = useDrafts(searchValue.value, defaultPageSize);
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -135,27 +135,27 @@ export function DraftsList({ isCompact }: MailListProps) {
     setSelectAllBelowMode(false);
   };
 
-  useHotKey('Control', () => {
+  useHotkeys('Control', () => {
     resetSelectMode();
     setMassSelectMode(true);
   });
 
-  useHotKey('Meta', () => {
+  useHotkeys('Meta', () => {
     resetSelectMode();
     setMassSelectMode(true);
   });
 
-  useHotKey('Shift', () => {
+  useHotkeys('Shift', () => {
     resetSelectMode();
     setRangeSelectMode(true);
   });
 
-  useHotKey('Alt+Shift', () => {
+  useHotkeys('Alt+Shift', () => {
     resetSelectMode();
     setSelectAllBelowMode(true);
   });
 
-  useHotKey('Meta+Shift+u', async () => {
+  useHotkeys('Meta+Shift+u', async () => {
     resetSelectMode();
     const res = await markAsUnread({ ids: mail.bulkSelected });
     if (res.success) {
@@ -167,7 +167,7 @@ export function DraftsList({ isCompact }: MailListProps) {
     } else toast.error(t('common.mail.failedToMarkAsUnread'));
   });
 
-  useHotKey('Control+Shift+u', async () => {
+  useHotkeys('Control+Shift+u', async () => {
     resetSelectMode();
     const res = await markAsUnread({ ids: mail.bulkSelected });
     if (res.success) {
@@ -179,7 +179,7 @@ export function DraftsList({ isCompact }: MailListProps) {
     } else toast.error(t('common.mail.failedToMarkAsUnread'));
   });
 
-  useHotKey('Meta+Shift+i', async () => {
+  useHotkeys('Meta+Shift+i', async () => {
     resetSelectMode();
     const res = await markAsRead({ ids: mail.bulkSelected });
     if (res.success) {
@@ -191,7 +191,7 @@ export function DraftsList({ isCompact }: MailListProps) {
     } else toast.error(t('common.mail.failedToMarkAsRead'));
   });
 
-  useHotKey('Control+Shift+i', async () => {
+  useHotkeys('Control+Shift+i', async () => {
     resetSelectMode();
     const res = await markAsRead({ ids: mail.bulkSelected });
     if (res.success) {
@@ -217,29 +217,25 @@ export function DraftsList({ isCompact }: MailListProps) {
   //   else toast.error("Failed to mark as junk");
   // });
 
-  useHotKey('Meta+a', async (event) => {
-    // @ts-expect-error
+  useHotkeys('Meta+a', async (event) => {
     event.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
-  useHotKey('Control+a', async (event) => {
-    // @ts-expect-error
+  useHotkeys('Control+a', async (event) => {
     event.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
-  useHotKey('Meta+n', async (event) => {
-    // @ts-expect-error
+  useHotkeys('Meta+n', async (event) => {
     event.preventDefault();
     resetSelectMode();
     selectAll();
   });
 
-  useHotKey('Control+n', async (event) => {
-    // @ts-expect-error
+  useHotkeys('Control+n', async (event) => {
     event.preventDefault();
     resetSelectMode();
     selectAll();
@@ -345,7 +341,7 @@ export function DraftsList({ isCompact }: MailListProps) {
       items,
       nextPageToken,
       isValidating,
-      isLoading
+      isLoading,
     });
   }, [items, nextPageToken, isValidating, isLoading]);
 
@@ -379,10 +375,28 @@ export function DraftsList({ isCompact }: MailListProps) {
           {items.map((item, index) => {
             return rowRenderer({ index, data: item });
           })}
+          {items.length >= 9 && nextPageToken && (
+            <Button
+              variant={'ghost'}
+              className="w-full rounded-none"
+              onMouseDown={handleScroll}
+              disabled={isLoading || isValidating}
+            >
+              {isLoading || isValidating ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                  {t('common.actions.loading')}
+                </div>
+              ) : (
+                <>
+                  {t('common.mail.loadMore')} <ChevronDown />
+                </>
+              )}
+            </Button>
+          )}
         </ScrollArea>
       </div>
-      <Button onClick={handleScroll}>{t('common.mail.loadMore')}</Button>
-      <div className="w-full pt-2 text-center">
+      <div className="w-full pt-4 text-center">
         {isLoading || isValidating ? (
           <div className="text-center">
             <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />

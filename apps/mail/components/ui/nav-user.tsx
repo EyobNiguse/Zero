@@ -6,8 +6,7 @@ import {
   LogIn,
   LogOut,
   MoonIcon,
-  Settings2Icon,
-  UserPlus,
+  Settings,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -19,30 +18,49 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { SettingsGearIcon } from '../icons/animated/settings-gear';
 import { useConnections } from '@/hooks/use-connections';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
 import { putConnection } from '@/actions/connections';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SunIcon } from '../icons/animated/sun';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
-import { Button } from './button';
 import { toast } from 'sonner';
+import { dexieStorageProvider } from '@/lib/idb';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import axios from 'axios';
 
 export function NavUser() {
   const { data: session, refetch } = useSession();
   const router = useRouter();
   const { data: connections, isLoading, mutate } = useConnections();
-  const pathname = usePathname();
   const [isRendered, setIsRendered] = useState(false);
   const { theme, resolvedTheme, setTheme } = useTheme();
   const t = useTranslations();
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const getSettingsHref = useCallback(() => {
+    // Get the current category parameter if it exists
+    const category = searchParams.get('category');
+
+    // Construct the current path with category if present
+    const currentPath = category
+      ? `${pathname}?category=${encodeURIComponent(category)}`
+      : pathname;
+
+    // Return settings URL with the current path as 'from' parameter
+    return `/settings/general?from=${encodeURIComponent(currentPath)}`;
+  }, [pathname, searchParams]);
+
+  const handleClearCache = useCallback(async () => {
+    dexieStorageProvider().clear();
+    toast.success('Cache cleared successfully');
+  }, []);
 
   const activeAccount = useMemo(() => {
     if (!session) return null;
@@ -71,7 +89,6 @@ export function NavUser() {
   if (!isRendered) return null;
 
   const handleAccountSwitch = (connection: IConnection) => async () => {
-    router.push('/mail/inbox'); // this is temp, its not good. bad. we change later.
     await putConnection(connection.id);
     refetch();
     mutate();
@@ -227,6 +244,14 @@ export function NavUser() {
                   <p className="text-[13px] opacity-60">{t('common.navUser.appTheme')}</p>
                 </div>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={getSettingsHref()} className="cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Settings size={16} className="opacity-60" />
+                    <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <a href="https://discord.gg/0email" target="_blank" className="w-full">
                   <div className="flex items-center gap-2">
@@ -241,6 +266,7 @@ export function NavUser() {
                   <p className="text-[13px] opacity-60">{t('common.actions.logout')}</p>
                 </div>
               </DropdownMenuItem>
+
             </>
           ) : (
             <>
@@ -264,6 +290,16 @@ export function NavUser() {
                 Terms
               </a>
             </div>
+            <DropdownMenuSeparator className="mt-1" />
+            <p className="text-muted-foreground px-2 py-1 text-[11px] font-medium">
+              Debug
+            </p>
+            <DropdownMenuItem onClick={handleClearCache}>
+              <div className="flex items-center gap-2">
+                <HelpCircle size={16} className="opacity-60" />
+                <p className="text-[13px] opacity-60">Clear Local Cache</p>
+              </div>
+            </DropdownMenuItem>
           </>
         )}
       </DropdownMenuContent>

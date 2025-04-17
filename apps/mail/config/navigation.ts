@@ -79,15 +79,15 @@ export const navigationConfig: Record<string, NavConfig> = {
             title: 'navigation.sidebar.bin',
             url: '/mail/bin',
             icon: DeleteIcon,
-            disabled: true,
+            disabled: false,
           },
-          {
-            id: 'settings',
-            title: 'navigation.sidebar.settings',
-            url: '/settings/general',
-            icon: SettingsGearIcon,
-            isSettingsButton: true,
-          },
+          // {
+          //   id: 'settings',
+          //   title: 'navigation.sidebar.settings',
+          //   url: '/settings/general',
+          //   icon: SettingsGearIcon,
+          //   isSettingsButton: true,
+          // },
           {
             id: 'feedback',
             title: 'navigation.sidebar.feedback',
@@ -172,7 +172,7 @@ export const navigationConfig: Record<string, NavConfig> = {
             title: 'navigation.settings.shortcuts',
             url: '/settings/shortcuts',
             icon: KeyboardIcon,
-            disabled: true,
+            // disabled: true,
           },
           // {
           //   title: "Notifications",

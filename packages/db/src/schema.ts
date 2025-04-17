@@ -47,6 +47,15 @@ export const account = createTable("account", {
   updatedAt: timestamp("updated_at").notNull(),
 });
 
+export const userHotkeys = createTable("user_hotkeys", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id),
+  shortcuts: jsonb("shortcuts").notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
 export const verification = createTable("verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
@@ -62,6 +71,7 @@ export const earlyAccess = createTable("early_access", {
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
   isEarlyAccess: boolean("is_early_access").notNull().default(false),
+  hasUsedTicket: text("has_used_ticket").default('')
 });
 
 export const connection = createTable("connection", {
