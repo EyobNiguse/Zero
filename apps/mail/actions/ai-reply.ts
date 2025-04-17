@@ -1,8 +1,9 @@
 'use server';
 
+import { throwUnauthorizedGracefully } from '@/app/api/utils';
+import { generateCompletions } from '@/lib/groq';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { generateCompletions } from '@/lib/groq';
 
 // Generates an AI response for an email reply based on the thread content
 export async function generateAIResponse(
@@ -13,7 +14,7 @@ export async function generateAIResponse(
   const session = await auth.api.getSession({ headers: headersList });
 
   if (!session?.user) {
-    throw new Error('Unauthorized');
+    return throwUnauthorizedGracefully();
   }
 
   if (!process.env.GROQ_API_KEY) {
@@ -21,7 +22,7 @@ export async function generateAIResponse(
   }
 
   // Use a more aggressive content reduction approach
-  const processedContent = threadContent
+  const processedContent = threadContent;
 
   // Create the system message
   const systemPrompt = `You are an email assistant helping ${session.user.name} write professional and concise email replies.
@@ -44,7 +45,7 @@ export async function generateAIResponse(
   - Double space paragraphs (2 newlines)
   - Add two spaces below the sign-off
   - End with the name: ${session.user.name}`;
-  
+
   // Create the user message - keep it shorter
   const prompt = `
   Here's the context of the email thread (some parts may be summarized or truncated due to length):
@@ -82,7 +83,7 @@ export async function generateAIResponse(
       systemPrompt: process.env.AI_SYSTEM_PROMPT || systemPrompt,
       prompt,
       temperature: 0.6,
-      userName: session.user.name
+      userName: session.user.name,
     });
 
     return completion;
