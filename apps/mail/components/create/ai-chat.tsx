@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowUpIcon, Mic, CheckIcon, XIcon } from 'lucide-react';
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AITextarea } from './ai-textarea';
 import { cn } from '@/lib/utils';
@@ -27,24 +27,58 @@ interface Message {
 
 interface AIChatProps {
   editor: any;
+  onMessagesChange?: (messages: Message[]) => void;
 }
 
-export function AIChat({ editor }: AIChatProps) {
+export function AIChat({ editor, onMessagesChange }: AIChatProps) {
   const [value, setValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { data: session } = useSession();
   const { data: connections } = useConnections();
 
   const activeAccount = connections?.find((connection) => connection.id === session?.connectionId);
 
+  // Scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  // Auto scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+    if (onMessagesChange) {
+      onMessagesChange(messages);
+    }
+  }, [messages, onMessagesChange, scrollToBottom]);
+
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
+    
+    // Set a minimum height
+    const minHeight = 24; // 1.5rem
+    const maxHeight = 120; // Maximum height before scrolling
+
+    // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
+    
+    // Get the scroll height and constrain it
+    const scrollHeight = Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight));
+    textarea.style.height = `${scrollHeight}px`;
+  }, []);
+
+  // Initialize height when component mounts
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '24px';
+    }
   }, []);
 
   const handleSendMessage = async () => {
@@ -60,6 +94,11 @@ export function AIChat({ editor }: AIChatProps) {
     setMessages(prev => [...prev, userMessage]);
     setValue('');
     setIsLoading(true);
+
+    // Reset textarea height after sending
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '24px';
+    }
 
     try {
       const response = await fetch('/api/chat', {
@@ -107,9 +146,6 @@ export function AIChat({ editor }: AIChatProps) {
       toast.error("Failed to generate response. Please try again.");
     } finally {
       setIsLoading(false);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = '60px';
-      }
     }
   };
 
@@ -175,130 +211,127 @@ export function AIChat({ editor }: AIChatProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
-      <div className="w-full">
-        <div className="relative">
-         
-
-          {/* Messages */}
-          <div className="max-h-[500px] overflow-y-auto space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex flex-col gap-2 rounded-lg p-4",
-                  message.role === 'user' 
-                    ? "bg-background border border-border" 
-                    : "bg-muted"
+    <div className="flex h-full flex-col">
+      {/* Messages container */}
+      <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
+        <div className="min-h-full space-y-4 p-4">
+          {messages.map((message, index) => (
+            <div
+              key={message.id}
+              className={cn(
+                "flex flex-col gap-2 rounded-lg p-4",
+                message.role === 'user' 
+                  ? "bg-background border border-border" 
+                  : "bg-muted"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                {message.role === 'user' ? (
+                  <>
+                    <Avatar className="size-6 rounded-lg">
+                      <AvatarImage
+                        className="rounded-lg"
+                        src={(activeAccount?.picture ?? undefined) || (session?.user.image ?? undefined)}
+                        alt={activeAccount?.name || session?.user.name || 'User'}
+                      />
+                      <AvatarFallback className="text-xs rounded-lg">
+                        {(activeAccount?.name || session?.user.name || 'User')
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">
+                      {activeAccount?.name || session?.user.name || 'You'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Avatar className="size-5">
+                      <AvatarImage src="/white-icon.svg" alt="Zero" />
+                      <AvatarFallback className="text-xs rounded-lg">Zero</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">Zero</span>
+                  </>
                 )}
-              >
-                <div className="flex items-center gap-2">
-                  {message.role === 'user' ? (
-                    <>
-                      <Avatar className="size-6 rounded-lg">
-                        <AvatarImage
-                          className="rounded-lg"
-                          src={(activeAccount?.picture ?? undefined) || (session?.user.image ?? undefined)}
-                          alt={activeAccount?.name || session?.user.name || 'User'}
-                        />
-                        <AvatarFallback className="text-xs rounded-lg">
-                          {(activeAccount?.name || session?.user.name || 'User')
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">
-                        {activeAccount?.name || session?.user.name || 'You'}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Avatar className="size-5">
-                        <AvatarImage src="/white-icon.svg" alt="Zero" />
-                        <AvatarFallback className="text-xs rounded-lg">Zero</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">Zero</span>
-                    </>
-                  )}
-                  <span className="text-muted-foreground text-sm">
-                    {formatTimestamp(message.timestamp)}
-                  </span>
-                </div>
-                
-                <div className="prose dark:prose-invert max-w-none">
-                  {message.content}
-                </div>
-
-                {message.type === 'email' && message.emailContent && (
-                  <div className="mt-4 rounded border bg-background p-4 font-mono text-sm">
-                    {message.emailContent.subject && (
-                      <div className="mb-2 text-blue-500">
-                        Subject: {message.emailContent.subject}
-                      </div>
-                    )}
-                    <div className="whitespace-pre-wrap">
-                      {message.emailContent.content}
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 border-green-500/20 hover:bg-green-500/10 hover:text-green-500"
-                        onClick={() => handleAcceptSuggestion(message.emailContent!)}
-                      >
-                        <CheckIcon className="mr-1 h-4 w-4" />
-                        Accept
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => handleRejectSuggestion(message.id)}
-                      >
-                        <XIcon className="mr-1 h-4 w-4" />
-                        Reject
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <span className="text-muted-foreground text-sm">
+                  {formatTimestamp(message.timestamp)}
+                </span>
               </div>
-            ))}
-          </div>
+              
+              <div className="prose dark:prose-invert max-w-none">
+                {message.content}
+              </div>
 
-          {/* Input */}
-          <div className="relative bg-background rounded-2xl mt-4 mx-1">
-        
-              <AITextarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => {
-                  setValue(e.target.value);
-                  adjustHeight();
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="Message Zero..."
-                className="min-h-[0px] w-full resize-none border bg-transparenttext-sm focus:outline-none focus:ring-0 focus:ring-offset-0"
-               
-              />
-              <div className="absolute bottom-3 right-3">
-                <Button 
-                  variant="default" 
-                  size="icon"
-                  className="h-8 w-8 rounded-full" 
-                  disabled={!value.trim() || isLoading}
-                  onClick={handleSendMessage}
-                >
-                  {isLoading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <ArrowUpIcon className="h-4 w-4" />
+              {message.type === 'email' && message.emailContent && (
+                <div className="mt-4 rounded border bg-background p-4 font-mono text-sm">
+                  {message.emailContent.subject && (
+                    <div className="mb-2 text-blue-500">
+                      Subject: {message.emailContent.subject}
+                    </div>
                   )}
-                </Button>
-            
+                  <div className="whitespace-pre-wrap">
+                    {message.emailContent.content}
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-green-500/20 hover:bg-green-500/10 hover:text-green-500"
+                      onClick={() => handleAcceptSuggestion(message.emailContent!)}
+                    >
+                      <CheckIcon className="mr-1 h-4 w-4" />
+                      Accept
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleRejectSuggestion(message.id)}
+                    >
+                      <XIcon className="mr-1 h-4 w-4" />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
+          ))}
+          {/* Invisible element to scroll to */}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Fixed input at bottom */}
+      <div className="flex-shrink-0 bg-white dark:bg-black px-4 py-2">
+        <div className="relative bg-offsetLight dark:bg-offsetDark rounded">
+          <AITextarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              adjustHeight();
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Message Zero..."
+            className="min-h-[80px] max-h-[420px] w-full resize-none rounded bg-transparent text-sm transition-shadow duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#454545] focus-visible:ring-offset-1 overflow-y-auto pt-3 px-3 border"
+          />
+          <div className="absolute bottom-2 right-2">
+            <Button 
+              variant="default" 
+              size="icon"
+              className="h-7 w-7 rounded-full" 
+              disabled={!value.trim() || isLoading}
+              onClick={handleSendMessage}
+            >
+              {isLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <ArrowUpIcon className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
       </div>

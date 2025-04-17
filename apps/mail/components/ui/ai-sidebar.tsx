@@ -51,6 +51,7 @@ export function AISidebarProvider({ children }: { children: React.ReactNode }) {
 export function AISidebar({ children, className }: AISidebarProps & { children: React.ReactNode }) {
   const { open, setOpen } = useAISidebar();
   const { editor } = useEditor();
+  const [hasMessages, setHasMessages] = useState(false);
 
   useHotKey('Meta+0', () => {
     setOpen(!open);
@@ -79,30 +80,30 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                 'my-3 mr-3',
                 className
               )}>
-                <div className="flex h-full flex-col overflow-hidden">
-                  <div className="flex h-full flex-col pb-1 overflow-y-auto">
-                    <div className="mb-4 flex items-center justify-end">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="md:h-fit md:p-2 w-8" onClick={() => setOpen(false)}>
-                            <PanelLeftOpen size={18} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Close</TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <div className="flex flex-1 flex-col items-center justify-center gap-4">
-                      <div className="relative h-20 w-20">
-                        <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
-                        <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
+                <div className="flex h-full flex-col">
+                  <div className="sticky top-0 z-10 mb-4 flex items-center justify-end bg-white dark:bg-black">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:h-fit md:p-2 w-8" onClick={() => setOpen(false)}>
+                          <PanelLeftOpen size={18} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Close</TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="relative flex-1 overflow-hidden">
+                    {!hasMessages && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <div className="relative h-20 w-20">
+                          <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
+                          <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
+                        </div>
+                        <p className="animate-shine mt-2 hidden bg-gradient-to-r from-neutral-500 via-neutral-300 to-neutral-500 bg-[length:200%_100%] bg-clip-text text-lg text-transparent opacity-50 md:block">
+                          Ask Zero a question...
+                        </p>
                       </div>
-                      <p className="animate-shine mt-2 hidden bg-gradient-to-r from-neutral-500 via-neutral-300 to-neutral-500 bg-[length:200%_100%] bg-clip-text text-lg text-transparent opacity-50 md:block">
-                        Ask Zero a question...
-                      </p>
-                    </div>
-                    <div className="mt-auto">
-                      <AIChat editor={editor} />
-                    </div>
+                    )}
+                    <AIChat editor={editor} onMessagesChange={(messages) => setHasMessages(messages.length > 0)} />
                   </div>
                 </div>
               </div>
