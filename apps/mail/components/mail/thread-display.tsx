@@ -227,7 +227,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       if (!result.success) throw new Error('Failed to mark as unread');
 
       setMail((prev) => ({ ...prev, bulkSelected: [] }));
-      await Promise.all([mutateStats(), mutateThreads()]);
+      await Promise.all([mutateStats(), mutateThread()]);
       handleClose();
     };
 
@@ -236,7 +236,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       success: t('common.mail.markedAsUnread'),
       error: t('common.mail.failedToMarkAsUnread'),
     });
-  }, [emailData, threadId, mutateStats, mutateThreads, t, handleClose, setMail]);
+  }, [emailData, threadId, t]);
 
   const handleFavourites = async () => {
     if (!emailData || !threadId) return;

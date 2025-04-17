@@ -479,6 +479,7 @@ function BulkSelectActions() {
     try {
       const response = await markAsRead({ ids: mail.bulkSelected });
       if (response.success) {
+        // TODO: fix this, it needs useThread mutation 
         await mutateThreads();
         await mutateStats();
         setMail((prev) => ({

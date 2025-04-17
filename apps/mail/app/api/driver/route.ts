@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getActiveDriver } from '@/actions/utils';
 import { Ratelimit } from '@upstash/ratelimit';
 import { defaultPageSize } from '@/lib/utils';
-import { getMails } from '@/actions/mail';
 
 export const GET = async (req: NextRequest) => {
   const userId = await getAuthenticatedUserId();
