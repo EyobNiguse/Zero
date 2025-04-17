@@ -20,8 +20,8 @@ import {
   Forward,
   ReplyAll,
 } from 'lucide-react';
-import { useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { extractTextFromHTML } from '@/actions/extractText';
 import { useForm, SubmitHandler } from 'react-hook-form';
@@ -40,14 +40,10 @@ import { sendEmail } from '@/actions/send';
 import type { JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
+import posthog from 'posthog-js';
 import { Sender } from '@/types';
 import { toast } from 'sonner';
 import type { z } from 'zod';
-
-import { createDraft } from '@/actions/drafts';
-import { extractTextFromHTML } from '@/actions/extractText';
-import { Input } from '../ui/input';
-import posthog from 'posthog-js';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -247,7 +243,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     }
     if (!emailData) return;
     try {
-      const originalEmail = emailData.latest
+      const originalEmail = emailData.latest;
       const userEmail = session?.activeConnection?.email?.toLowerCase();
 
       if (!userEmail) {
@@ -273,16 +269,16 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
       const ccRecipients: Sender[] | undefined = showCc
         ? ccEmails.map((email) => ({
-          email,
-          name: email.split('@')[0] || 'User',
-        }))
+            email,
+            name: email.split('@')[0] || 'User',
+          }))
         : undefined;
 
       const bccRecipients: Sender[] | undefined = showBcc
         ? bccEmails.map((email) => ({
-          email,
-          name: email.split('@')[0] || 'User',
-        }))
+            email,
+            name: email.split('@')[0] || 'User',
+          }))
         : undefined;
 
       const messageId = originalEmail.messageId;
@@ -319,8 +315,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         },
         threadId,
       }).then(() => mutate());
-      
-      
+
       if (ccRecipients && bccRecipients) {
         posthog.capture('Reply Email Sent with CC and BCC');
       } else if (ccRecipients) {
@@ -506,15 +501,15 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const isMessageEmpty =
     !getValues('messageContent') ||
     getValues('messageContent') ===
-    JSON.stringify({
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [],
-        },
-      ],
-    });
+      JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [],
+          },
+        ],
+      });
 
   // Check if form is valid for submission
   const isFormValid = !isMessageEmpty || attachments.length > 0;
@@ -529,9 +524,11 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       const originalSender = latestEmail?.sender?.name || 'the recipient';
 
       // Create a summary of the thread content for context
-      const threadContent = (await Promise.all(emailData.messages.map(async (email) => {
-        const body = await extractTextFromHTML(email.decodedBody || 'No content');
-        return `
+      const threadContent = (
+        await Promise.all(
+          emailData.messages.map(async (email) => {
+            const body = await extractTextFromHTML(email.decodedBody || 'No content');
+            return `
             <email>
               <from>${email.sender?.name || 'Unknown'} &lt;${email.sender?.email || 'unknown@email.com'}&gt;</from>
               <subject>${email.subject || 'No Subject'}</subject>
@@ -1256,10 +1253,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               />
               <Button
                 variant="ghost"
-                className="rounded-full transition-transform cursor-pointer hover:bg-muted h-8 w-8 -ml-1"
+                className="hover:bg-muted -ml-1 h-8 w-8 cursor-pointer rounded-full transition-transform"
                 tabIndex={-1}
               >
-                <Plus className="h-4 w-4 cursor-pointer"/>
+                <Plus className="h-4 w-4 cursor-pointer" />
               </Button>
             </div>
           </div>
