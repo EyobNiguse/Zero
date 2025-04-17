@@ -10,7 +10,7 @@ import {
   Trash,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSearchParams, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
@@ -30,6 +30,8 @@ import MailDisplay from './mail-display';
 import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { toast } from 'sonner';
+import { NotesPanel } from './note-panel';
+import { useQueryState } from 'nuqs';
 
 
 interface ThreadDisplayProps {
@@ -133,23 +135,21 @@ function ThreadActionButton({
   );
 }
 
-export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisplayProps) {
+export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const { data: emailData, isLoading, mutate: mutateThread } = useThread(id ?? null);
   const { mutate: mutateThreads } = useThreads();
-  const searchParams = useSearchParams();
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mail, setMail] = useMail();
   const t = useTranslations();
   const { mutate: mutateStats } = useStats();
   const { folder } = useParams<{ folder: string }>();
-  const threadIdParam = searchParams.get('threadId');
-  const threadId = threadParam ?? threadIdParam ?? '';
+  const [threadId, setThreadId] = useQueryState('threadId');
 
   // Check if thread contains any images (excluding sender avatars)
   const hasImages = useMemo(() => {
     if (!emailData) return false;
-    return emailData.some(message => {
+    return emailData.messages.some(message => {
       const hasAttachments = message.attachments?.some(attachment => 
         attachment.mimeType?.startsWith('image/')
       );
@@ -159,25 +159,27 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
     });
   }, [emailData]);
 
+  const hasMultipleParticipants = (emailData?.latest?.to?.length ?? 0) + (emailData?.latest?.cc?.length ?? 0) + 1 > 2;
+
   /**
    * Mark email as read if it's unread, if there are no unread emails, mark the current thread as read
    */
   useEffect(() => {
     if (!emailData || !id) return;
-    const unreadEmails = emailData.filter(e => e.unread);
+    const unreadEmails = emailData.messages.filter(e => e.unread);
     if (unreadEmails.length === 0) {
       console.log('Marking email as read:', id);
       markAsRead({ ids: [id] }).catch((error) => {
         console.error('Failed to mark email as read:', error);
         toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+      }).then(() => Promise.all([mutateThread(), mutateStats()]))
     } else {
       console.log('Marking email as read:', id, ...unreadEmails.map(e => e.id));
       const ids = [id, ...unreadEmails.map(e => e.id)]
       markAsRead({ ids }).catch((error) => {
         console.error('Failed to mark email as read:', error);
         toast.error(t('common.mail.failedToMarkAsRead'));
-      }).then(() => Promise.all([mutateThread(), mutateThreads()]))
+      }).then(() => Promise.all([mutateThread(), mutateStats()]))
     }
   }, [emailData, id])
 
@@ -185,17 +187,12 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
   const isInSpam = folder === FOLDERS.SPAM;
   const isInBin = folder === FOLDERS.BIN;
   const handleClose = useCallback(() => {
-    // Reset reply composer state when closing thread display
-    setMail((prev) => ({
-      ...prev,
-      replyComposerOpen: false,
-      forwardComposerOpen: false
-    }));
-    onClose?.();
-  }, [onClose, setMail]);
+    setThreadId(null)
+  }, []);
 
   const moveThreadTo = useCallback(
     async (destination: ThreadDestination) => {
+      if (!threadId) return;
       const promise = async () => {
         await moveThreadsTo({
           threadIds: [threadId],
@@ -230,7 +227,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
       if (!result.success) throw new Error('Failed to mark as unread');
 
       setMail((prev) => ({ ...prev, bulkSelected: [] }));
-      await Promise.all([mutateStats(), mutateThreads()]);
+      await Promise.all([mutateStats(), mutateThread()]);
       handleClose();
     };
 
@@ -239,12 +236,12 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
       success: t('common.mail.markedAsUnread'),
       error: t('common.mail.failedToMarkAsUnread'),
     });
-  }, [emailData, threadId, mutateStats, mutateThreads, t, handleClose, setMail]);
+  }, [emailData, threadId, t]);
 
   const handleFavourites = async () => {
     if (!emailData || !threadId) return;
     const done = Promise.all([mutateThreads()]);
-    if (emailData[0]?.tags?.includes('STARRED')) {
+    if (emailData.latest?.tags?.includes('STARRED')) {
       toast.promise(
         modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }).then(() => done),
         {
@@ -324,11 +321,10 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
               label={t('common.actions.close')}
               onClick={handleClose}
             />
-            <ThreadSubject subject={emailData[0]?.subject} />
+            <ThreadSubject subject={emailData.latest?.subject} />
           </div>
           <div className="flex items-center md:gap-2">
-            {/* disable notes for now, it's still a bit buggy and not ready for prod. */}
-            {/* <NotesPanel threadId={threadId} /> */}
+            {threadId ? <NotesPanel threadId={threadId} /> : null}
             <ThreadActionButton
               icon={Expand}
               label={
@@ -388,20 +384,22 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
                 }));
               }}
             />
-            <ThreadActionButton
-              icon={ReplyAll}
-              label={t('common.threadDisplay.replyAll')}
-              disabled={!emailData}
-              className={cn(mail.replyAllComposerOpen && "bg-primary/10")}
-              onClick={() => {
-                setMail((prev) => ({ 
-                  ...prev, 
-                  replyComposerOpen: false,
-                  replyAllComposerOpen: true,
-                  forwardComposerOpen: false 
-                }));
-              }}
-            />
+            {hasMultipleParticipants && (
+              <ThreadActionButton
+                icon={ReplyAll}
+                label={t('common.threadDisplay.replyAll')}
+                disabled={!emailData}
+                className={cn(mail.replyAllComposerOpen && "bg-primary/10")}
+                onClick={() => {
+                  setMail((prev) => ({ 
+                    ...prev, 
+                    replyComposerOpen: false,
+                    replyAllComposerOpen: true,
+                    forwardComposerOpen: false 
+                  }));
+                }}
+              />
+            )}
             <ThreadActionButton
               icon={Forward}
               label={t('common.threadDisplay.forward')}
@@ -437,7 +435,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
                   </div>
                 </div>
               )}
-              {(emailData || []).map((message, index) => (
+              {(emailData.messages || []).map((message, index) => (
                 <div
                   key={message.id}
                   className={cn(
@@ -451,7 +449,7 @@ export function ThreadDisplay({ threadParam, onClose, isMobile, id }: ThreadDisp
                     isMuted={isMuted}
                     isLoading={false}
                     index={index}
-                    totalEmails={emailData.length}
+                    totalEmails={emailData?.totalReplies}
                   />
                 </div>
               ))}
