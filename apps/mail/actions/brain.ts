@@ -5,7 +5,7 @@ import axios from 'axios';
 
 export const EnableBrain = async () => {
   if (!process.env.BRAIN_URL) {
-    throw new Error('Brain URL not found');
+    return null;
   }
 
   const connection = await getActiveConnection();
