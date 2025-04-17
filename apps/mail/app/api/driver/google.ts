@@ -129,22 +129,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     process.env.GOOGLE_REDIRECT_URI as string,
   );
 
-  const getScope = () =>
-    [
-      'https://www.googleapis.com/auth/gmail.modify',
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email',
-    ].join(' ');
+  const getScope = () => ['https://www.googleapis.com/auth/gmail.modify'].join(' ');
   if (config.auth) {
     auth.setCredentials({
       refresh_token: config.auth.refresh_token,
       scope: getScope(),
     });
-    if (process.env.NODE_ENV === 'production') {
-      EnableBrain()
-        .then(() => console.log('✅ Driver: Enabled'))
-        .catch(() => console.log('✅ Driver: Enabled'));
-    }
   }
   const parse = ({
     id,
@@ -535,18 +525,15 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const { folder: normalizedFolder, q: normalizedQ } = normalizeSearch(folder, q ?? '');
       const labelIds = [..._labelIds];
       if (normalizedFolder) labelIds.push(normalizedFolder.toUpperCase());
-
-      return withExponentialBackoff(async () => {
-        const res = await gmail.users.threads.list({
-          userId: 'me',
-          q: normalizedQ ? normalizedQ : undefined,
-          labelIds: folder === 'inbox' ? labelIds : [],
-          maxResults,
-          pageToken: pageToken ? pageToken : undefined,
-          quotaUser: config.auth?.email,
-        });
-        return { ...res.data, threads: res.data.threads } as any;
+      const res = await gmail.users.threads.list({
+        userId: 'me',
+        q: normalizedQ ? normalizedQ : undefined,
+        labelIds: folder === 'inbox' ? labelIds : [],
+        maxResults,
+        pageToken: pageToken ? pageToken : undefined,
+        quotaUser: config.auth?.email,
       });
+      return { ...res.data, threads: res.data.threads } as any;
     },
     get: async (id: string) => {
       return withExponentialBackoff(async () => {

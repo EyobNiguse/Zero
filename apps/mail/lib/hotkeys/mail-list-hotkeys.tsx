@@ -39,7 +39,7 @@ export function MailListHotkeys() {
         bulkSelected: [],
       }));
     } else if (items.length > 0) {
-      const allIds = items.map((item) => item.threadId ?? item.id);
+      const allIds = items.map((item) => item.id);
       setMail((prev) => ({
         ...prev,
         bulkSelected: allIds,

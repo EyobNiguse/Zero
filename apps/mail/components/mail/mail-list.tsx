@@ -481,28 +481,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const isKeyPressed = useKeyState();
 
-  const selectAll = useCallback(() => {
-    // If there are already items selected, deselect them all
-    if (mail.bulkSelected.length > 0) {
-      setMail((prev) => ({
-        ...prev,
-        bulkSelected: [],
-      }));
-      // toast.success(t('common.mail.deselectAll'));
-    }
-    // Otherwise select all items
-    else if (items.length > 0) {
-      // TODO: debug
-      const allIds = items.map((item) => item.id);
-      setMail((prev) => ({
-        ...prev,
-        bulkSelected: allIds,
-      }));
-    } else {
-      toast.info(t('common.mail.noEmailsToSelect'));
-    }
-  }, [items, setMail, mail.bulkSelected, t]);
-
   const getSelectMode = useCallback((): MailSelectMode => {
     if (isKeyPressed('Control') || isKeyPressed('Meta')) {
       return 'mass';
@@ -532,7 +510,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       // Update URL param without navigation
       void setThreadId(messageThreadId);
     },
-    [handleMouseEnter, setThreadId, t, setMail],
+    [],
   );
 
   const isFiltering = searchValue.value.trim().length > 0;
