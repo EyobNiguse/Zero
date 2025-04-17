@@ -11,23 +11,30 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import type { ConditionalThreadProps, InitialThread, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
+import type {
+  ConditionalThreadProps,
+  InitialThread,
+  MailListProps,
+  MailSelectMode,
+  ParsedMessage,
+} from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
+import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
 import { ThreadContextMenu } from '@/components/context/thread-context';
-import { useParams, useRouter } from 'next/navigation';
 import { cn, FOLDERS, formatDate, getEmailLogo } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
-import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
-import { useHotKey, useKeyState } from '@/hooks/use-hot-key';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
+import { useHotkeysContext } from 'react-hotkeys-hook';
+import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
+import { useKeyState } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
@@ -36,7 +43,7 @@ import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
 import { toast } from 'sonner';
-const HOVER_DELAY = 1000;
+const HOVER_DELAY = 1000; // ms before prefetching
 
 const ThreadWrapper = ({
   children,
@@ -91,7 +98,7 @@ const Thread = memo(
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
-    const {data: getThreadData, isLoading} = useThread(demo ? null : message.id);
+    const { data: getThreadData, isLoading } = useThread(demo ? null : message.id);
 
     const latestMessage = demo ? demoMessage : getThreadData?.latest;
 
@@ -104,8 +111,8 @@ const Thread = memo(
     const isMailBulkSelected = mail.bulkSelected.includes(latestMessage?.threadId ?? message.id);
 
     const threadLabels = useMemo(() => {
-        if (!latestMessage) return [];
-        return [...(latestMessage.tags || [])];
+      if (!latestMessage) return [];
+      return [...(latestMessage.tags || [])];
     }, [latestMessage]);
 
     const isFolderInbox = folder === FOLDERS.INBOX || !folder;
@@ -144,6 +151,7 @@ const Thread = memo(
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
+      window.dispatchEvent(new CustomEvent('emailHover', { detail: { id: null } }));
     };
 
     // Reset prefetch flag when message changes
@@ -160,10 +168,12 @@ const Thread = memo(
       };
     }, []);
 
-    if (!demo && (isLoading || !latestMessage || !getThreadData)) return null 
+    if (!demo && (isLoading || !latestMessage || !getThreadData)) return null;
 
-    const demoContent = demo && latestMessage ? <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
-      <div
+    const demoContent =
+      demo && latestMessage ? (
+        <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
+          <div
             data-thread-id={latestMessage.threadId ?? message.id}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -198,11 +208,11 @@ const Thread = memo(
                     <div className="flex flex-row items-center gap-1">
                       <p
                         className={cn(
-                            latestMessage.unread && !isMailSelected ? 'font-bold' : 'font-medium',
+                          latestMessage.unread && !isMailSelected ? 'font-bold' : 'font-medium',
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                    <span className={cn(threadId ? 'max-w-[3ch] truncate' : '')}>
+                        <span className={cn(threadId ? 'max-w-[3ch] truncate' : '')}>
                           {highlightText(latestMessage.sender.name, searchValue.highlight)}
                         </span>{' '}
                         {latestMessage.unread && !isMailSelected ? (
@@ -234,23 +244,21 @@ const Thread = memo(
                       </p>
                     ) : null}
                   </div>
-                  <p
-                    className={cn(
-                      'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
-                    )}
-                  >
+                  <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
                     {highlightText(latestMessage.subject, searchValue.highlight)}
                   </p>
                 </div>
               </div>
             </div>
-      </div>
-    </div> : null
+          </div>
+        </div>
+      ) : null;
 
-    if (demo) return demoContent
+    if (demo) return demoContent;
 
-    const content = latestMessage && getThreadData ? (
-      <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
+    const content =
+      latestMessage && getThreadData ? (
+        <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             onMouseEnter={handleMouseEnter}
@@ -258,7 +266,9 @@ const Thread = memo(
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
               'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-              (isMailSelected || !getThreadData.hasUnread && !['sent', 'archive', 'bin'].includes(folder)) && 'dark:opacity-50 opacity-80 dark:hover:opacity-80',
+              (isMailSelected ||
+                (!getThreadData.hasUnread && !['sent', 'archive', 'bin'].includes(folder))) &&
+                'opacity-80 dark:opacity-50 dark:hover:opacity-80',
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
               isKeyboardFocused && 'ring-primary/50 ring-2',
@@ -286,13 +296,11 @@ const Thread = memo(
                     <div className="flex flex-row items-center gap-1">
                       <p
                         className={cn(
-                            getThreadData.hasUnread && !isMailSelected ? 'font-bold' : 'font-medium',
+                          getThreadData.hasUnread && !isMailSelected ? 'font-bold' : 'font-medium',
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span
-                        className={cn('truncate', threadId ? 'max-w-[20ch] truncate' : '')}
-                        >
+                        <span className={cn('truncate', threadId ? 'max-w-[20ch] truncate' : '')}>
                           {highlightText(latestMessage.sender.name, searchValue.highlight)}
                         </span>{' '}
                         {getThreadData.hasUnread && !isMailSelected ? (
@@ -332,9 +340,9 @@ const Thread = memo(
                 </div>
               </div>
             </div>
+          </div>
         </div>
-      </div>
-    ) : null;
+      ) : null;
 
     return latestMessage ? (
       <ThreadWrapper
@@ -392,13 +400,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [threadId, setThreadId] = useQueryState('threadId');
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
+  const { enableScope, disableScope } = useHotkeysContext();
   const {
     data: { threads: items, nextPageToken },
     isValidating,
     isLoading,
     loadMore,
     mutate,
-    isReachingEnd
+    isReachingEnd,
   } = useThreads();
 
   const allCategories = Categories();
@@ -483,7 +492,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     }
     // Otherwise select all items
     else if (items.length > 0) {
-        // TODO: debug
+      // TODO: debug
       const allIds = items.map((item) => item.id);
       setMail((prev) => ({
         ...prev,
@@ -493,74 +502,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       toast.info(t('common.mail.noEmailsToSelect'));
     }
   }, [items, setMail, mail.bulkSelected, t]);
-
-  useHotKey('Meta+Shift+u', () => {
-    markAsUnread({ ids: mail.bulkSelected }).then((result) => {
-      if (result.success) {
-        toast.success(t('common.mail.markedAsUnread'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsUnread'));
-    });
-  });
-
-  useHotKey('Control+Shift+u', () => {
-    markAsUnread({ ids: mail.bulkSelected }).then((response) => {
-      if (response.success) {
-        toast.success(t('common.mail.markedAsUnread'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsUnread'));
-    });
-  });
-
-  useHotKey('Meta+Shift+i', () => {
-    markAsRead({ ids: mail.bulkSelected }).then((data) => {
-      if (data.success) {
-        toast.success(t('common.mail.markedAsRead'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsRead'));
-    });
-  });
-
-  useHotKey('Control+Shift+i', () => {
-    markAsRead({ ids: mail.bulkSelected }).then((response) => {
-      if (response.success) {
-        toast.success(t('common.mail.markedAsRead'));
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else toast.error(t('common.mail.failedToMarkAsRead'));
-    });
-  });
-
-  // useHotKey('Meta+a', (event) => {
-  //   event?.preventDefault();
-  //   selectAll();
-  // });
-
-  useHotKey('Control+a', (event) => {
-    event?.preventDefault();
-    selectAll();
-  });
-
-  // useHotKey('Meta+n', (event) => {
-  //   event?.preventDefault();
-  //   selectAll();
-  // });
-
-  // useHotKey('Control+n', (event) => {
-  //   event?.preventDefault();
-  //   selectAll();
-  // });
 
   const getSelectMode = useCallback((): MailSelectMode => {
     if (isKeyPressed('Control') || isKeyPressed('Meta')) {
@@ -612,6 +553,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       <div
         ref={parentRef}
         className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
+        onMouseEnter={() => {
+          console.log('[MailList] Mouse Enter - Enabling scope: mail-list');
+          enableScope('mail-list');
+        }}
+        onMouseLeave={() => {
+          console.log('[MailList] Mouse Leave - Disabling scope: mail-list');
+          disableScope('mail-list');
+        }}
       >
         <ScrollArea className="hide-scrollbar h-full overflow-auto">
           {items.map((data, index) => {
@@ -688,7 +637,7 @@ const MailLabels = memo(
                     {getLabelIcon(label)}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent className="px-1 py-0 text-xs hidden">
+                <TooltipContent className="hidden px-1 py-0 text-xs">
                   {t('common.notes.title')}
                 </TooltipContent>
               </Tooltip>
@@ -734,7 +683,7 @@ const MailLabels = memo(
                   {getLabelIcon(label)}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="px-1 py-0 text-xs hidden" variant={style}>
+              <TooltipContent className="hidden px-1 py-0 text-xs" variant={style}>
                 {labelContent}
               </TooltipContent>
             </Tooltip>

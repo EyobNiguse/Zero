@@ -1,10 +1,17 @@
 'use client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { generateHTML, generateJSON } from '@tiptap/core';
 import { useConnections } from '@/hooks/use-connections';
 import { createDraft, getDraft } from '@/actions/drafts';
 import { ArrowUpIcon, Paperclip, X } from 'lucide-react';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { Separator } from '@/components/ui/separator';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import Paragraph from '@tiptap/extension-paragraph';
@@ -23,17 +30,12 @@ import Bold from '@tiptap/extension-bold';
 import { type JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
 import { Plus } from 'lucide-react';
+import { useEffect } from 'react';
+import posthog from 'posthog-js';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import posthog from 'posthog-js';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -62,9 +64,8 @@ const filterContacts = (contacts: any[], searchTerm: string, excludeEmails: stri
   const term = searchTerm.toLowerCase();
   return contacts.filter(
     (contact) =>
-      (contact.email?.toLowerCase().includes(term) ||
-        contact.name?.toLowerCase().includes(term)) &&
-      !excludeEmails.includes(contact.email)
+      (contact.email?.toLowerCase().includes(term) || contact.name?.toLowerCase().includes(term)) &&
+      !excludeEmails.includes(contact.email),
   );
 };
 
@@ -99,6 +100,7 @@ export function CreateEmail({
   const [draftId, setDraftId] = useQueryState('draftId');
   const [includeSignature, setIncludeSignature] = React.useState(true);
   const { settings } = useSettings();
+  const { enableScope, disableScope } = useHotkeysContext();
   const [isCardHovered, setIsCardHovered] = React.useState(false);
   const dragCounter = React.useRef(0);
 
@@ -129,17 +131,17 @@ export function CreateEmail({
 
   const filteredContacts = React.useMemo(
     () => filterContacts(contacts, toInput, toEmails),
-    [contacts, toInput, toEmails]
+    [contacts, toInput, toEmails],
   );
 
   const filteredCcContacts = React.useMemo(
     () => filterContacts(contacts, ccInput, [...toEmails, ...ccEmails]),
-    [contacts, ccInput, toEmails, ccEmails]
+    [contacts, ccInput, toEmails, ccEmails],
   );
 
   const filteredBccContacts = React.useMemo(
     () => filterContacts(contacts, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
-    [contacts, bccInput, toEmails, ccEmails, bccEmails]
+    [contacts, bccInput, toEmails, ccEmails, bccEmails],
   );
 
   React.useEffect(() => {
@@ -459,6 +461,16 @@ export function CreateEmail({
     }
   }, [initialTo, initialSubject, initialBody, defaultValue]);
 
+  useEffect(() => {
+    console.log('Enabling compose scope (CreateEmail)');
+    enableScope('compose');
+
+    return () => {
+      console.log('Disabling compose scope (CreateEmail)');
+      disableScope('compose');
+    };
+  }, [enableScope, disableScope]);
+
   const toDropdownRef = React.useRef<HTMLDivElement>(null);
   const ccDropdownRef = React.useRef<HTMLDivElement>(null);
   const bccDropdownRef = React.useRef<HTMLDivElement>(null);
@@ -506,8 +518,13 @@ export function CreateEmail({
       </div>
 
       <div className="relative flex h-full flex-col">
-        <div className="flex-1 ">
-          <div className="mx-auto w-full max-w-[500px] pt-4 sm:max-w-[720px] bg-sidebar rounded-lg border max-h-[80vh] flex flex-col relative" style={{height: ''}} onDragEnter={handleDragEnterCard} onDragLeave={handleDragLeaveCard}>
+        <div className="flex-1">
+          <div
+            className="bg-sidebar relative mx-auto flex max-h-[80vh] w-full max-w-[500px] flex-col rounded-lg border pt-4 sm:max-w-[720px]"
+            style={{ height: '' }}
+            onDragEnter={handleDragEnterCard}
+            onDragLeave={handleDragLeaveCard}
+          >
             {isDragging && isCardHovered && (
               <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
                 <div className="text-muted-foreground flex flex-col items-center gap-2">
@@ -516,7 +533,7 @@ export function CreateEmail({
                 </div>
               </div>
             )}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-12">
+            <div className="min-h-0 flex-1 space-y-12 overflow-y-auto overflow-x-hidden">
               <div className="space-y-3 md:px-1">
                 <div className="flex items-center">
                   <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
@@ -544,55 +561,58 @@ export function CreateEmail({
                         </button>
                       </div>
                     ))}
-                    <div className='flex-1 relative'>
-                    <input
-                      ref={toInputRef}
-                      disabled={isLoading}
-                      type="text"
-                      className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-                      placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
-                      value={toInput}
-                      onChange={(e) => handleEmailInputChange('to', e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (filteredContacts.length > 0) {
-                            const selectedEmail = filteredContacts[selectedContactIndex]?.email;
-                            if (selectedEmail) handleAddEmail('to', selectedEmail);
-                            setSelectedContactIndex(0);
-                          } else {
-                            handleAddEmail('to', toInput);
-                          }
-                        } else if (e.key === 'ArrowDown' && filteredContacts.length > 0) {
-                          e.preventDefault();
-                          setSelectedContactIndex((prev) =>
-                            Math.min(prev + 1, filteredContacts.length - 1),
-                          );
-                        } else if (e.key === 'ArrowUp' && filteredContacts.length > 0) {
-                          e.preventDefault();
-                          setSelectedContactIndex((prev) => Math.max(prev - 1, 0));
-                        }
-                      }}
-                    />
-                    {toInput && filteredContacts.length > 0 && (
-                      <div ref={toDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
-                        {filteredContacts.map((contact, index) => (
-                          <button
-                            key={contact.email}
-                            className={`w-full px-3 py-2 text-left text-sm ${selectedContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
-                            onClick={() => {
-                              handleAddEmail('to', contact.email);
+                    <div className="relative flex-1">
+                      <input
+                        ref={toInputRef}
+                        disabled={isLoading}
+                        type="text"
+                        className="text-md relative left-[3px] w-full min-w-[120px] bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                        placeholder={toEmails.length ? '' : t('pages.createEmail.example')}
+                        value={toInput}
+                        onChange={(e) => handleEmailInputChange('to', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (filteredContacts.length > 0) {
+                              const selectedEmail = filteredContacts[selectedContactIndex]?.email;
+                              if (selectedEmail) handleAddEmail('to', selectedEmail);
                               setSelectedContactIndex(0);
-                            }}
-                          >
-                            <div className="font-medium">{contact.name || contact.email}</div>
-                            {contact.name && (
-                              <div className="text-muted-foreground text-xs">{contact.email}</div>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                            } else {
+                              handleAddEmail('to', toInput);
+                            }
+                          } else if (e.key === 'ArrowDown' && filteredContacts.length > 0) {
+                            e.preventDefault();
+                            setSelectedContactIndex((prev) =>
+                              Math.min(prev + 1, filteredContacts.length - 1),
+                            );
+                          } else if (e.key === 'ArrowUp' && filteredContacts.length > 0) {
+                            e.preventDefault();
+                            setSelectedContactIndex((prev) => Math.max(prev - 1, 0));
+                          }
+                        }}
+                      />
+                      {toInput && filteredContacts.length > 0 && (
+                        <div
+                          ref={toDropdownRef}
+                          className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg"
+                        >
+                          {filteredContacts.map((contact, index) => (
+                            <button
+                              key={contact.email}
+                              className={`w-full px-3 py-2 text-left text-sm ${selectedContactIndex === index ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                              onClick={() => {
+                                handleAddEmail('to', contact.email);
+                                setSelectedContactIndex(0);
+                              }}
+                            >
+                              <div className="font-medium">{contact.name || contact.email}</div>
+                              {contact.name && (
+                                <div className="text-muted-foreground text-xs">{contact.email}</div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
@@ -656,7 +676,7 @@ export function CreateEmail({
                           </button>
                         </div>
                       ))}
-                      <div className='flex-1 relative'>
+                      <div className="relative flex-1">
                         <input
                           ref={ccInputRef}
                           disabled={isLoading}
@@ -669,7 +689,8 @@ export function CreateEmail({
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               if (filteredCcContacts.length > 0) {
-                                const selectedEmail = filteredCcContacts[selectedCcContactIndex]?.email;
+                                const selectedEmail =
+                                  filteredCcContacts[selectedCcContactIndex]?.email;
                                 if (selectedEmail) {
                                   handleAddEmail('cc', selectedEmail);
                                   setSelectedCcContactIndex(0);
@@ -689,7 +710,10 @@ export function CreateEmail({
                           }}
                         />
                         {ccInput && filteredCcContacts.length > 0 && (
-                          <div ref={ccDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                          <div
+                            ref={ccDropdownRef}
+                            className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg"
+                          >
                             {filteredCcContacts.map((contact, index) => (
                               <button
                                 key={contact.email}
@@ -701,7 +725,9 @@ export function CreateEmail({
                               >
                                 <div className="font-medium">{contact.name || contact.email}</div>
                                 {contact.name && (
-                                  <div className="text-muted-foreground text-xs">{contact.email}</div>
+                                  <div className="text-muted-foreground text-xs">
+                                    {contact.email}
+                                  </div>
                                 )}
                               </button>
                             ))}
@@ -739,7 +765,7 @@ export function CreateEmail({
                           </button>
                         </div>
                       ))}
-                      <div className='flex-1 relative'>
+                      <div className="relative flex-1">
                         <input
                           ref={bccInputRef}
                           disabled={isLoading}
@@ -752,7 +778,8 @@ export function CreateEmail({
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               if (filteredBccContacts.length > 0) {
-                                const selectedEmail = filteredBccContacts[selectedBccContactIndex]?.email;
+                                const selectedEmail =
+                                  filteredBccContacts[selectedBccContactIndex]?.email;
                                 if (selectedEmail) {
                                   handleAddEmail('bcc', selectedEmail);
                                   setSelectedBccContactIndex(0);
@@ -772,7 +799,10 @@ export function CreateEmail({
                           }}
                         />
                         {bccInput && filteredBccContacts.length > 0 && (
-                          <div ref={bccDropdownRef} className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg">
+                          <div
+                            ref={bccDropdownRef}
+                            className="bg-background absolute left-0 top-full z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border shadow-lg"
+                          >
                             {filteredBccContacts.map((contact, index) => (
                               <button
                                 key={contact.email}
@@ -784,7 +814,9 @@ export function CreateEmail({
                               >
                                 <div className="font-medium">{contact.name || contact.email}</div>
                                 {contact.name && (
-                                  <div className="text-muted-foreground text-xs">{contact.email}</div>
+                                  <div className="text-muted-foreground text-xs">
+                                    {contact.email}
+                                  </div>
                                 )}
                               </button>
                             ))}
@@ -837,7 +869,7 @@ export function CreateEmail({
                 </div>
               </div>
             </div>
-            <div className="sticky bottom-0 left-0 right-0 py-2 z-10 border-t px-2 ">
+            <div className="sticky bottom-0 left-0 right-0 z-10 border-t px-2 py-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="pb-2 pt-2">
@@ -897,9 +929,7 @@ export function CreateEmail({
                           console.log('CreateEmail: Successfully applied AI content');
                         } catch (error) {
                           console.error('CreateEmail: Error applying AI content', error);
-                          toast.error(
-                                'Error applying AI content to your email. Please try again.',
-                              );
+                          toast.error('Error applying AI content to your email. Please try again.');
                         }
                       }}
                     />
@@ -914,8 +944,8 @@ export function CreateEmail({
                           <span>
                             {attachments.length}{' '}
                             {t('common.replyCompose.attachmentCount', {
-                                  count: attachments.length,
-                                })}
+                              count: attachments.length,
+                            })}
                           </span>
                         </Button>
                       </PopoverTrigger>
@@ -928,8 +958,8 @@ export function CreateEmail({
                             <p className="text-muted-foreground text-sm">
                               {attachments.length}{' '}
                               {t('common.replyCompose.fileCount', {
-                                    count: attachments.length,
-                                  })}
+                                count: attachments.length,
+                              })}
                             </p>
                           </div>
                           <Separator />
@@ -982,16 +1012,14 @@ export function CreateEmail({
                     </Button>
                   </div>
                   <Button
-
-
                     variant="default"
                     className="h-9 w-9 overflow-hidden rounded-full"
                     onClick={handleSendEmail}
                     disabled={
                       isLoading ||
-                          !toEmails.length ||
-                          !messageContent.trim() ||
-                          !subjectInput.trim()
+                      !toEmails.length ||
+                      !messageContent.trim() ||
+                      !subjectInput.trim()
                     }
                   >
                     <ArrowUpIcon className="h-4 w-4" />
