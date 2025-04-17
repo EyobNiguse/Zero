@@ -74,7 +74,7 @@ export function DraftsLayout() {
               </>
             ) : (
               <div className="flex flex-1 justify-center">
-                <SearchBar />
+                {/* <SearchBar /> */}
               </div>
             )}
           </div>
