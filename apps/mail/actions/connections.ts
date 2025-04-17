@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthenticatedUserId } from '@/app/api/utils';
+import { getAuthenticatedUserId, throwUnauthorizedGracefully } from '@/app/api/utils';
 import { connection, user } from '@zero/db/schema';
 import { type IConnection } from '@/types';
 import { headers } from 'next/headers';
@@ -14,13 +14,13 @@ export async function deleteConnection(connectionId: string) {
     const session = await auth.api.getSession({ headers: headersList });
 
     if (!session) {
-      throw new Error('Unauthorized, reconnect');
+      return throwUnauthorizedGracefully();
     }
 
     const userId = session?.user?.id;
 
     if (!userId) {
-      throw new Error('Unauthorized, reconnect');
+      return throwUnauthorizedGracefully();
     }
 
     await db
@@ -46,13 +46,13 @@ export async function putConnection(connectionId: string) {
     const session = await auth.api.getSession({ headers: headersList });
 
     if (!session) {
-      throw new Error('Unauthorized, reconnect');
+      return throwUnauthorizedGracefully();
     }
 
     const userId = session?.user?.id;
 
     if (!userId) {
-      throw new Error('Unauthorized, reconnect');
+      return throwUnauthorizedGracefully();
     }
 
     const [foundConnection] = await db

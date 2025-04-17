@@ -1,4 +1,5 @@
 import { Ratelimit, Algorithm, RatelimitConfig } from '@upstash/ratelimit';
+import { redirect } from 'next/navigation';
 import { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import { redis } from '@/lib/redis';
@@ -18,12 +19,24 @@ export const getRatelimitModule = (config: {
   return ratelimit;
 };
 
+export const throwUnauthorizedGracefully = async () => {
+  console.warn('Unauthorized, redirecting to login');
+  try {
+    const headersList = await headers();
+    await auth.api.signOut({ headers: headersList });
+    redirect('/login?error=unauthorized');
+  } catch (error) {
+    console.warn('Error signing out & redirecting to login:', error);
+    throw error;
+  }
+};
+
 export async function getAuthenticatedUserId(): Promise<string> {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
 
   if (!session?.user?.id) {
-    throw new Error('Unauthorized, please reconnect');
+    return throwUnauthorizedGracefully();
   }
 
   return session.user.id;
