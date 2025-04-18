@@ -225,6 +225,56 @@ export function SearchBar() {
     return query;
   }
 
+  function parseNaturalLanguageDate(query: string): { from?: Date; to?: Date } | null {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    // Common date patterns
+    const patterns = [
+      // "emails from [month] [year]"
+      {
+        regex: /(?:emails?|mail)\s+from\s+(\w+)\s+(\d{4})/i,
+        transform: (match: string[]) => {
+          const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+          const monthIndex = monthNames.findIndex(m => m.toLowerCase().startsWith(match[1]?.toLowerCase() ?? ''));
+          if (monthIndex === -1) return null;
+          
+          const year = parseInt(match[2] ?? currentYear.toString());
+          const from = new Date(year, monthIndex, 1);
+          const to = new Date(year, monthIndex + 1, 0); // Last day of the month
+          return { from, to };
+        }
+      },
+      // "emails from [month]" (assumes current year)
+      {
+        regex: /(?:emails?|mail)\s+from\s+(\w+)/i,
+        transform: (match: string[]) => {
+          const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+          const monthIndex = monthNames.findIndex(m => m.toLowerCase().startsWith(match[1]?.toLowerCase() ?? ''));
+          if (monthIndex === -1) return null;
+          
+          const from = new Date(currentYear, monthIndex, 1);
+          const to = new Date(currentYear, monthIndex + 1, 0); // Last day of the month
+          return { from, to };
+        }
+      }
+    ];
+
+    // Check if query matches any pattern
+    for (const pattern of patterns) {
+      const match = query.match(pattern.regex);
+      if (match) {
+        const result = pattern.transform(match);
+        if (result) {
+          return result;
+        }
+      }
+    }
+
+    return null;
+  }
+
   const submitSearch = useCallback(
     async (data: SearchForm) => {
       setIsSearching(true);
@@ -234,39 +284,41 @@ export function SearchBar() {
         if (data.q.trim()) {
           const searchTerm = data.q.trim();
           
-          // Parse natural language search patterns
-          const parsedTerm = parseNaturalLanguageSearch(searchTerm);
-          
-          // If the term was transformed by natural language parsing, use it directly
-          if (parsedTerm !== searchTerm) {
-            searchTerms.push(parsedTerm);
-          } else {
-            // Use Gmail's native search operators for proper prioritization
-            // Gmail will automatically prioritize 'from:' matches over content matches
-            if (searchTerm.includes('@')) {
-              // For email addresses, use exact match
-              searchTerms.push(`from:${searchTerm}`);
-            } else {
-              // For names or other terms, use a combination of operators
-              searchTerms.push(`(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`);
+          // Parse natural language date queries
+          const dateRange = parseNaturalLanguageDate(searchTerm);
+          if (dateRange) {
+            if (dateRange.from) {
+              // Format date according to Gmail's requirements (YYYY/MM/DD)
+              const fromDate = format(dateRange.from, 'yyyy/MM/dd');
+              searchTerms.push(`after:${fromDate}`);
             }
-          }
-
-          // Handle exact phrase matching
-          if (searchTerm.includes('"')) {
-            const exactPhrases = searchTerm.match(/"([^"]+)"/g);
-            if (exactPhrases) {
-              exactPhrases.forEach(phrase => {
-                const cleanPhrase = phrase.replace(/"/g, '');
-                // Check if the phrase contains natural language patterns
-                const parsedPhrase = parseNaturalLanguageSearch(cleanPhrase);
-                if (parsedPhrase !== cleanPhrase) {
-                  searchTerms.push(parsedPhrase);
-                } else {
-                  // Use Gmail's search operators for exact phrases
-                  searchTerms.push(`(from:"${cleanPhrase}" OR subject:"${cleanPhrase}" OR "${cleanPhrase}")`);
-                }
-              });
+            if (dateRange.to) {
+              // Format date according to Gmail's requirements (YYYY/MM/DD)
+              const toDate = format(dateRange.to, 'yyyy/MM/dd');
+              searchTerms.push(`before:${toDate}`);
+            }
+            
+            // For date queries, we don't want to search the content
+            const cleanedQuery = searchTerm
+              .replace(/emails?\s+from\s+/i, '')
+              .replace(/\b\d{4}\b/g, '')
+              .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, '')
+              .trim();
+              
+            if (cleanedQuery) {
+              searchTerms.push(cleanedQuery);
+            }
+          } else {
+            // Parse natural language search patterns
+            const parsedTerm = parseNaturalLanguageSearch(searchTerm);
+            if (parsedTerm !== searchTerm) {
+              searchTerms.push(parsedTerm);
+            } else {
+              if (searchTerm.includes('@')) {
+                searchTerms.push(`from:${searchTerm}`);
+              } else {
+                searchTerms.push(`(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`);
+              }
             }
           }
         }
@@ -277,8 +329,6 @@ export function SearchBar() {
         if (data.fileName) searchTerms.push(`filename:${data.fileName}`);
         if (data.deliveredTo) searchTerms.push(`deliveredto:${data.deliveredTo.toLowerCase()}`);
         if (data.unicorn) searchTerms.push(`+${data.unicorn}`);
-        if (data.dateRange.from) searchTerms.push(`after:${format(data.dateRange.from, 'yyyy/MM/dd')}`);
-        if (data.dateRange.to) searchTerms.push(`before:${format(data.dateRange.to, 'yyyy/MM/dd')}`);
 
         let searchQuery = searchTerms.join(' ');
         searchQuery = extractMetaText(searchQuery) || '';
@@ -297,12 +347,10 @@ export function SearchBar() {
         console.error('Search error:', error);
         if (data.q) {
           const searchTerm = data.q.trim();
-          // Use natural language parsing in fallback as well
           const parsedTerm = parseNaturalLanguageSearch(searchTerm);
           if (parsedTerm !== searchTerm) {
             searchTerms.push(parsedTerm);
           } else {
-            // Use Gmail's native search operators in fallback
             if (searchTerm.includes('@')) {
               searchTerms.push(`from:${searchTerm}`);
             } else {

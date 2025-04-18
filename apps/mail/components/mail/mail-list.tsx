@@ -17,6 +17,7 @@ import type {
   MailListProps,
   MailSelectMode,
   ParsedMessage,
+  SearchValueState,
 } from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -90,7 +91,7 @@ const Thread = memo(
     demoMessage,
   }: ConditionalThreadProps) => {
     const [mail] = useMail();
-    const [searchValue] = useSearchValue();
+    const [searchValue, setSearchValue] = useSearchValue();
     const t = useTranslations();
     const { folder } = useParams<{ folder: string }>();
     const { mutate } = useThreads();
@@ -102,6 +103,147 @@ const Thread = memo(
 
     const latestMessage = demo ? demoMessage : getThreadData?.latest;
     const emailContent = demo ? demoMessage : getThreadData?.email;
+
+    const getMainSearchTerm = useCallback((searchQuery: string) => {
+      // Don't highlight terms if this is a date-based search
+      const datePatterns = [
+        /emails?\s+from\s+(\w+)\s+(\d{4})/i,  // "emails from [month] [year]"
+        /emails?\s+from\s+(\w+)/i,            // "emails from [month]"
+        /emails?\s+from\s+(\d{4})/i,          // "emails from [year]"
+        /emails?\s+from\s+last\s+(\w+)/i,     // "emails from last [time period]"
+        /emails?\s+from\s+(\d+)\s+(\w+)\s+ago/i  // "emails from [X] [time period] ago"
+      ];
+
+      // If it's a date-based search, don't highlight anything
+      for (const pattern of datePatterns) {
+        if (searchQuery.match(pattern)) {
+          return '';
+        }
+      }
+
+      // Handle other natural language queries
+      const naturalLanguageMatches = {
+        'emails from': /emails?\s+from\s+(\w+)/i,
+        'mail from': /mail\s+from\s+(\w+)/i,
+        'from': /\bfrom\s+(\w+)/i,
+        'to': /\bto\s+(\w+)/i,
+        'about': /\babout\s+(\w+)/i,
+        'regarding': /\bregarding\s+(\w+)/i,
+      };
+
+      // Try to match natural language patterns
+      for (const [, pattern] of Object.entries(naturalLanguageMatches)) {
+        const match = searchQuery.match(pattern);
+        if (match && match[1]) {
+          return match[1];
+        }
+      }
+
+      // If no natural language match, remove search operators and date-related terms
+      const cleanedQuery = searchQuery
+        .replace(/\b(from|to|subject|has|in|after|before):\s*/gi, '')
+        .replace(/\b(is|has):\s*/gi, '')
+        .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, '')
+        .replace(/\b\d{4}\b/g, '')  // Remove 4-digit years
+        .replace(/["']/g, '')
+        .trim();
+
+      // Split by spaces and get the first meaningful term
+      const terms = cleanedQuery.split(/\s+/);
+      return terms[0] || '';
+    }, []);
+
+    const getSemanticSearchQuery = useCallback((searchQuery: string) => {
+      const query = searchQuery.toLowerCase();
+      
+      // Check for date-based queries first
+      const datePatterns = [
+        // "emails from [month] [year]"
+        /emails?\s+from\s+(\w+)\s+(\d{4})/i,
+        // "emails from [month]"
+        /emails?\s+from\s+(\w+)/i,
+        // "emails from [year]"
+        /emails?\s+from\s+(\d{4})/i,
+        // "emails from last [time period]"
+        /emails?\s+from\s+last\s+(\w+)/i,
+        // "emails from [X] [time period] ago"
+        /emails?\s+from\s+(\d+)\s+(\w+)\s+ago/i
+      ];
+
+      // If the query matches a date pattern, return it as is
+      for (const pattern of datePatterns) {
+        if (query.match(pattern)) {
+          // Don't modify the query - let the search-bar.tsx handle the date formatting
+          return searchQuery;
+        }
+      }
+
+      // For non-date queries, split into terms
+      const terms = query.split(/\s+/);
+      
+      // Remove date-related terms unless explicitly searching for them
+      const cleanedTerms = terms.filter(term => {
+        // Keep terms if explicitly searching for dates
+        if (query.includes('show') && query.includes('date')) {
+          return true;
+        }
+        
+        // Remove standalone years
+        if (/^\d{4}$/.test(term)) {
+          return false;
+        }
+        
+        // Remove month names
+        const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+        if (months.includes(term)) {
+          return false;
+        }
+        
+        return true;
+      });
+
+      // Build semantic search query
+      let semanticQuery = '';
+      
+      if (cleanedTerms.includes('vercel') || cleanedTerms.includes('zeit')) {
+        semanticQuery += 'from:vercel ';
+        
+        if (cleanedTerms.some(term => ['bill', 'invoice', 'receipt', 'payment'].includes(term))) {
+          semanticQuery += '(subject:"receipt from vercel" OR subject:"#" OR "Your receipt from Vercel Inc") ';
+        } else if (cleanedTerms.some(term => ['update', 'feature', 'release', 'changelog'].includes(term))) {
+          semanticQuery += '-subject:receipt (subject:update OR subject:changelog OR subject:release) ';
+        }
+      }
+
+      // Use cleaned terms if no specific query built
+      if (!semanticQuery) {
+        semanticQuery = cleanedTerms.join(' ');
+      }
+
+      return semanticQuery.trim();
+    }, []);
+
+    const mainSearchTerm = useMemo(() => {
+      if (!searchValue.highlight) return '';
+      return getMainSearchTerm(searchValue.highlight);
+    }, [searchValue.highlight, getMainSearchTerm]);
+
+    const semanticSearchQuery = useMemo(() => {
+      if (!searchValue.value) return '';
+      return getSemanticSearchQuery(searchValue.value);
+    }, [searchValue.value, getSemanticSearchQuery]);
+
+    // Use semanticSearchQuery when filtering/searching emails
+    useEffect(() => {
+      if (semanticSearchQuery && semanticSearchQuery !== searchValue.value) {
+        // Update the search value with our semantic query
+        setSearchValue(prev => ({
+          ...prev,
+          value: semanticSearchQuery,
+          isAISearching: true
+        }));
+      }
+    }, [semanticSearchQuery]);
 
     const isMailSelected = useMemo(() => {
       if (!threadId || !latestMessage) return false;
@@ -253,6 +395,13 @@ const Thread = memo(
                       {highlightText(emailContent.body || emailContent.snippet, searchValue.highlight)}
                     </div>
                   )}
+                  {mainSearchTerm && (
+                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
+                        {mainSearchTerm}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -346,6 +495,13 @@ const Thread = memo(
                   {emailContent && (
                     <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
                       {highlightText(emailContent.body || emailContent.snippet, searchValue.highlight)}
+                    </div>
+                  )}
+                  {mainSearchTerm && (
+                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
+                        {mainSearchTerm}
+                      </span>
                     </div>
                   )}
                 </div>
