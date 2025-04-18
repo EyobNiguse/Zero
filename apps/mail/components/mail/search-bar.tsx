@@ -1,7 +1,6 @@
 import { matchFilterPrefix, filterSuggestionsFunction, filterSuggestions } from '@/lib/filter';
 import { cn, extractFilterValue, type FilterSuggestion } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, CalendarIcon, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { Calendar } from '@/components/ui/calendar';
@@ -12,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import React from 'react';
+import { parseNaturalLanguageSearch, parseNaturalLanguageDate } from '@/lib/utils';
 
 const SEARCH_SUGGESTIONS = [
   '"Emails from last week..."',
@@ -183,97 +183,6 @@ export function SearchBar() {
       }
     };
   }, [isFocused, formValues.q]);
-
-  function parseNaturalLanguageSearch(query: string): string {
-    // Common search patterns
-    const patterns = [
-      // From pattern
-      {
-        regex: /^from\s+([^:\s]+)/i,
-        transform: (match: string[]) => `from:${match[1]}`
-      },
-      // To pattern
-      {
-        regex: /^to\s+([^:\s]+)/i,
-        transform: (match: string[]) => `to:${match[1]}`
-      },
-      // Subject pattern
-      {
-        regex: /^subject\s+([^:\s]+)/i,
-        transform: (match: string[]) => `subject:${match[1]}`
-      },
-      // Has attachment pattern
-      {
-        regex: /^has\s+(attachment|file)/i,
-        transform: () => 'has:attachment'
-      },
-      // Is pattern (unread, read, starred)
-      {
-        regex: /^is\s+(unread|read|starred)/i,
-        transform: (match: string[]) => `is:${match[1]}`
-      }
-    ];
-
-    // Check if query matches any pattern
-    for (const pattern of patterns) {
-      const match = query.match(pattern.regex);
-      if (match) {
-        return pattern.transform(match);
-      }
-    }
-
-    return query;
-  }
-
-  function parseNaturalLanguageDate(query: string): { from?: Date; to?: Date } | null {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-
-    // Common date patterns
-    const patterns = [
-      // "emails from [month] [year]"
-      {
-        regex: /(?:emails?|mail)\s+from\s+(\w+)\s+(\d{4})/i,
-        transform: (match: string[]) => {
-          const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-          const monthIndex = monthNames.findIndex(m => m.toLowerCase().startsWith(match[1]?.toLowerCase() ?? ''));
-          if (monthIndex === -1) return null;
-          
-          const year = parseInt(match[2] ?? currentYear.toString());
-          const from = new Date(year, monthIndex, 1);
-          const to = new Date(year, monthIndex + 1, 0); // Last day of the month
-          return { from, to };
-        }
-      },
-      // "emails from [month]" (assumes current year)
-      {
-        regex: /(?:emails?|mail)\s+from\s+(\w+)/i,
-        transform: (match: string[]) => {
-          const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-          const monthIndex = monthNames.findIndex(m => m.toLowerCase().startsWith(match[1]?.toLowerCase() ?? ''));
-          if (monthIndex === -1) return null;
-          
-          const from = new Date(currentYear, monthIndex, 1);
-          const to = new Date(currentYear, monthIndex + 1, 0); // Last day of the month
-          return { from, to };
-        }
-      }
-    ];
-
-    // Check if query matches any pattern
-    for (const pattern of patterns) {
-      const match = query.match(pattern.regex);
-      if (match) {
-        const result = pattern.transform(match);
-        if (result) {
-          return result;
-        }
-      }
-    }
-
-    return null;
-  }
 
   const submitSearch = useCallback(
     async (data: SearchForm) => {
