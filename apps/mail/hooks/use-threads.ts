@@ -111,7 +111,10 @@ export const useThreads = () => {
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
-  const threads = useMemo(() => (data ? data.flatMap((e) => e.threads) : []), [data, session]);
+  const threads = useMemo(
+    () => (data ? data.flatMap((e) => e.threads).filter(Boolean) : []),
+    [data, session],
+  );
   const isEmpty = useMemo(() => threads.length === 0, [threads]);
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
   const loadMore = async () => {
