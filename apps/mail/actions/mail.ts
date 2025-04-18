@@ -1,5 +1,6 @@
 'use server';
 import { deleteActiveConnection, FatalErrors, getActiveDriver } from './utils';
+import { throwUnauthorizedGracefully } from '@/app/api/utils';
 import { IGetThreadResponse } from '@/app/api/driver/types';
 import { ParsedMessage } from '@/types';
 
@@ -26,7 +27,9 @@ export const getMails = async ({
   } catch (error) {
     if (FatalErrors.includes((error as Error).message)) await deleteActiveConnection();
     console.error('Error getting threads:', error);
-    throw error;
+    // throw error;
+    await throwUnauthorizedGracefully();
+    return { messages: [], nextPageToken: null };
   }
 };
 

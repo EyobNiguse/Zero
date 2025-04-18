@@ -20,19 +20,13 @@ import {
   Forward,
   ReplyAll,
 } from 'lucide-react';
-import {
-  type Dispatch,
-  type SetStateAction,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  useReducer,
-} from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
-import { useForm, SubmitHandler, useWatch } from 'react-hook-form';
+import { extractTextFromHTML } from '@/actions/extractText';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { generateAIResponse } from '@/actions/ai-reply';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { Separator } from '@/components/ui/separator';
 import { useMail } from '@/components/mail/use-mail';
 import { useSettings } from '@/hooks/use-settings';
@@ -40,18 +34,16 @@ import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
+import { createDraft } from '@/actions/drafts';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
 import type { JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
+import { Input } from '../ui/input';
+import posthog from 'posthog-js';
 import { Sender } from '@/types';
 import { toast } from 'sonner';
 import type { z } from 'zod';
-
-import { createDraft } from '@/actions/drafts';
-import { extractTextFromHTML } from '@/actions/extractText';
-import { Input } from '../ui/input';
-import posthog from 'posthog-js';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -79,13 +71,6 @@ interface AIState {
   isLoading: boolean;
   suggestion: string | null;
   showOptions: boolean;
-}
-
-interface MailState {
-  replyComposerOpen: boolean;
-  replyAllComposerOpen: boolean;
-  forwardComposerOpen: boolean;
-  // ... other existing state
 }
 
 // Define action types
@@ -158,14 +143,15 @@ type FormData = {
   bccInput: string;
 };
 
-export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
+export default function ReplyCompose() {
   const [threadId] = useQueryState('threadId');
   const { data: emailData, mutate } = useThread(threadId);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
   const [mail, setMail] = useMail();
-  const { settings } = useSettings();
   const [draftId, setDraftId] = useQueryState('draftId');
+  const [mode, setMode] = useQueryState('mode');
+  const { enableScope, disableScope } = useHotkeysContext();
   const [isEditingRecipients, setIsEditingRecipients] = useState(false);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
@@ -173,20 +159,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const bccInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use global state instead of local state
-  const composerIsOpen =
-    mode === 'reply'
-      ? mail.replyComposerOpen
-      : mode === 'replyAll'
-        ? mail.replyAllComposerOpen
-        : mail.forwardComposerOpen;
-  const setComposerIsOpen = (value: boolean) => {
-    setMail((prev: typeof mail) => ({
-      ...prev,
-      replyComposerOpen: mode === 'reply' ? value : prev.replyComposerOpen,
-      replyAllComposerOpen: mode === 'replyAll' ? value : prev.replyAllComposerOpen,
-      forwardComposerOpen: mode === 'forward' ? value : prev.forwardComposerOpen,
-    }));
-  };
+  const composerIsOpen = !!mode;
 
   // Use reducers instead of multiple useState
   const [composerState, composerDispatch] = useReducer(composerReducer, {
@@ -250,7 +223,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     }
     if (!emailData) return;
     try {
-      const originalEmail = emailData.latest
+      const originalEmail = emailData.latest;
       const userEmail = session?.activeConnection?.email?.toLowerCase();
 
       if (!userEmail) {
@@ -276,16 +249,16 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
       const ccRecipients: Sender[] | undefined = showCc
         ? ccEmails.map((email) => ({
-          email,
-          name: email.split('@')[0] || 'User',
-        }))
+            email,
+            name: email.split('@')[0] || 'User',
+          }))
         : undefined;
 
       const bccRecipients: Sender[] | undefined = showBcc
         ? bccEmails.map((email) => ({
-          email,
-          name: email.split('@')[0] || 'User',
-        }))
+            email,
+            name: email.split('@')[0] || 'User',
+          }))
         : undefined;
 
       const messageId = originalEmail.messageId;
@@ -302,7 +275,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         quotedMessage,
       );
 
-      const inReplyTo = messageId
+      const inReplyTo = messageId;
       const existingRefs = originalEmail.references?.split(' ') || [];
       const references = [...existingRefs, originalEmail?.inReplyTo, cleanEmailAddress(messageId)]
         .filter(Boolean)
@@ -320,10 +293,9 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
           References: references,
           'Thread-Id': threadId ?? '',
         },
-        threadId
+        threadId,
       }).then(() => mutate());
-      
-      
+
       if (ccRecipients && bccRecipients) {
         posthog.capture('Reply Email Sent with CC and BCC');
       } else if (ccRecipients) {
@@ -335,7 +307,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       }
 
       reset();
-      setComposerIsOpen(false);
+      setMode(null);
       toast.success(t('pages.createEmail.emailSentSuccessfully'));
     } catch (error) {
       console.error('Error sending email:', error);
@@ -397,10 +369,6 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         setAttachments([...attachments, ...Array.from(e.dataTransfer.files)]);
-        // Open the composer if it's not already open
-        if (!composerIsOpen) {
-          setComposerIsOpen(true);
-        }
       }
     }
   };
@@ -436,12 +404,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-    setMail((prev) => ({
-      ...prev,
-      replyComposerOpen: false,
-      replyAllComposerOpen: false,
-      forwardComposerOpen: false,
-    }));
+    setMode(null);
     setIsEditingRecipients(false);
     setShowCc(false);
     setShowBcc(false);
@@ -509,15 +472,15 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const isMessageEmpty =
     !getValues('messageContent') ||
     getValues('messageContent') ===
-    JSON.stringify({
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [],
-        },
-      ],
-    });
+      JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [],
+          },
+        ],
+      });
 
   // Check if form is valid for submission
   const isFormValid = !isMessageEmpty || attachments.length > 0;
@@ -532,16 +495,20 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       const originalSender = latestEmail?.sender?.name || 'the recipient';
 
       // Create a summary of the thread content for context
-      const threadContent = (await Promise.all(emailData.messages.map(async (email) => {
-        const body = await extractTextFromHTML(email.decodedBody || 'No content');
-        return `
+      const threadContent = (
+        await Promise.all(
+          emailData.messages.map(async (email) => {
+            const body = await extractTextFromHTML(email.decodedBody || 'No content');
+            return `
             <email>
               <from>${email.sender?.name || 'Unknown'} &lt;${email.sender?.email || 'unknown@email.com'}&gt;</from>
               <subject>${email.subject || 'No Subject'}</subject>
               <date>${new Date(email.receivedOn || '').toLocaleString()}</date>
               <body>${body}</body>
             </email>`;
-      }))).join('\n\n');
+          }),
+        )
+      ).join('\n\n');
 
       const suggestion = await generateAIResponse(threadContent, originalSender);
       aiDispatch({ type: 'SET_SUGGESTION', payload: suggestion });
@@ -705,7 +672,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     if (isEditingRecipients || mode === 'forward') {
       return (
         <div className="flex-1 space-y-2">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {icon}
               <span className="text-sm font-medium">
@@ -925,6 +892,21 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     }
   }, [mode, emailData, getValues, attachments, draftId, setDraftId]);
 
+  useEffect(() => {
+    if (composerIsOpen) {
+      console.log('Enabling compose scope (ReplyCompose)');
+      enableScope('compose');
+    } else {
+      console.log('Disabling compose scope (ReplyCompose)');
+      disableScope('compose');
+    }
+
+    return () => {
+      console.log('Cleaning up compose scope (ReplyCompose)');
+      disableScope('compose');
+    };
+  }, [composerIsOpen, enableScope, disableScope]);
+
   // Simplified composer visibility check
   if (!composerIsOpen) {
     if (!emailData || emailData.messages.length === 0) return null;
@@ -965,12 +947,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       <div className="bg-offsetLight dark:bg-offsetDark flex w-full gap-2 px-2">
         <Button
           onClick={() => {
-            setMail((prev) => ({
-              ...prev,
-              replyComposerOpen: true,
-              forwardComposerOpen: false,
-              mode: 'reply',
-            }));
+            setMode('reply');
           }}
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
           variant="outline"
@@ -981,13 +958,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         {showReplyAll && (
           <Button
             onClick={() => {
-              setMail((prev) => ({
-                ...prev,
-                replyComposerOpen: false,
-                forwardComposerOpen: false,
-                replyAllComposerOpen: true,
-                mode: 'replyAll',
-              }));
+              setMode('replyAll');
             }}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
             variant="outline"
@@ -998,12 +969,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         )}
         <Button
           onClick={() => {
-            setMail((prev) => ({
-              ...prev,
-              replyComposerOpen: false,
-              forwardComposerOpen: true,
-              mode: 'forward',
-            }));
+            setMode('forward');
           }}
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
           variant="outline"
@@ -1038,7 +1004,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         {composerState.isDragging && <DragOverlay />}
 
         {/* Header */}
-        <div className="text-muted-foreground flex-shrink-0 flex items-start justify-between text-sm">
+        <div className="text-muted-foreground flex flex-shrink-0 items-start justify-between text-sm">
           {renderHeaderContent()}
           <div className="flex items-center gap-2">
             <Button
@@ -1126,12 +1092,12 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         </div>
 
         {aiState.showOptions && (
-          <div className="text-muted-foreground flex-shrink-0 ml-2 mt-1 text-xs">
+          <div className="text-muted-foreground ml-2 mt-1 flex-shrink-0 text-xs">
             Press <kbd className="bg-muted rounded px-1 py-0.5">Tab</kbd> to accept
           </div>
         )}
 
-        <div className="flex-shrink-0 mt-auto flex items-center justify-between">
+        <div className="mt-auto flex flex-shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">
             {!aiState.showOptions ? (
               <Button
@@ -1242,10 +1208,10 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
               />
               <Button
                 variant="ghost"
-                className="rounded-full transition-transform cursor-pointer hover:bg-muted h-8 w-8 -ml-1"
+                className="hover:bg-muted -ml-1 h-8 w-8 cursor-pointer rounded-full transition-transform"
                 tabIndex={-1}
               >
-                <Plus className="h-4 w-4 cursor-pointer"/>
+                <Plus className="h-4 w-4 cursor-pointer" />
               </Button>
             </div>
           </div>

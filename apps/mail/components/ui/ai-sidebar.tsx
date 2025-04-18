@@ -14,10 +14,6 @@ interface AISidebarProps {
   className?: string;
 }
 
-// Create a context to manage the AI sidebar state globally
-import { createContext, useContext } from 'react';
-import { useHotKey } from '@/hooks/use-hot-key';
-
 type AISidebarContextType = {
   open: boolean;
   setOpen: (open: boolean) => void;

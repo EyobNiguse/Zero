@@ -52,7 +52,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
-import { useHotKey } from '@/hooks/use-hot-key';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useRouter } from 'next/navigation';
@@ -218,6 +218,7 @@ export function MailLayout() {
   const { data: session, isPending } = useSession();
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
+  const { enableScope, disableScope } = useHotkeysContext();
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -250,15 +251,27 @@ export function MailLayout() {
 
   const [threadId, setThreadId] = useQueryState('threadId');
 
-  const handleClose = () => {
-    setThreadId(null);
-  }
+  useEffect(() => {
+    if (threadId) {
+      console.log('Enabling thread-display scope, disabling mail-list');
+      enableScope('thread-display');
+      disableScope('mail-list');
+    } else {
+      console.log('Enabling mail-list scope, disabling thread-display');
+      enableScope('mail-list');
+      disableScope('thread-display');
+    }
 
-  // Search bar is always visible now, no need for keyboard shortcuts to toggle it
-  useHotKey('Esc', (event) => {
-    event?.preventDefault();
-    // Handle other Esc key functionality if needed
-  });
+    return () => {
+      console.log('Cleaning up mail/thread scopes');
+      disableScope('thread-display');
+      disableScope('mail-list');
+    };
+  }, [threadId, enableScope, disableScope]);
+
+  const handleClose = useCallback(() => {
+    setThreadId(null);
+  }, [setThreadId]);
 
   // Add mailto protocol handler registration
   useEffect(() => {
