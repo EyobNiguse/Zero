@@ -243,18 +243,22 @@ const Thread = memo(
                         ) : null}
                       </p>
                       <MailLabels labels={threadLabels} />
-                      {Math.random() > 0.5 ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-                              {Math.random() * 10}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent className="px-1 py-0 text-xs">
-                            {t('common.mail.replies', { count: Math.random() * 10 })}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : null}
+                      {Math.random() > 0.5 &&
+                        (() => {
+                          const count = Math.floor(Math.random() * 10) + 1;
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
+                                  {count}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent className="px-1 py-0 text-xs">
+                                {t('common.mail.replies', { count })}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })()}
                     </div>
                     {latestMessage.receivedOn ? (
                       <p
