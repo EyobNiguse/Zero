@@ -6,11 +6,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ArrowUpIcon, MinusCircle, Paperclip, PlusCircle, X } from 'lucide-react';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { generateHTML, generateJSON } from '@tiptap/core';
 import { useConnections } from '@/hooks/use-connections';
 import { createDraft, getDraft } from '@/actions/drafts';
-import { ArrowUpIcon, Paperclip, X } from 'lucide-react';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { Separator } from '@/components/ui/separator';
 import { SidebarToggle } from '../ui/sidebar-toggle';
@@ -495,6 +495,50 @@ export function CreateEmail({
                 </div>
               </div>
             )}
+            <div className="flex items-center justify-end gap-2 pr-4">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                tabIndex={-1}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowCc(!showCc);
+                  if (!showCc) {
+                    setCcEmails([]);
+                  }
+                  setTimeout(() => {
+                    ccInputRef.current?.focus();
+                  }, 0);
+                }}
+                className="text-xs"
+              >
+                {showCc ? <MinusCircle /> : <PlusCircle />}
+                <span>CC</span>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                tabIndex={-1}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowBcc(!showBcc);
+                  if (!showBcc) {
+                    setBccEmails([]);
+                  }
+                  setTimeout(() => {
+                    bccInputRef.current?.focus();
+                  }, 0);
+                }}
+                className="text-xs"
+              >
+                {showBcc ? <MinusCircle /> : <PlusCircle />}
+                <span>BCC</span>
+              </Button>
+            </div>
             <div className="min-h-0 flex-1 space-y-12 overflow-y-auto overflow-x-hidden">
               <div className="space-y-3 md:px-1">
                 <EmailInput
