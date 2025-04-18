@@ -81,9 +81,6 @@ export function CreateEmail({
 }) {
   const [toEmails, setToEmails] = React.useState<string[]>(initialTo ? [initialTo] : []);
   const [toInput, setToInput] = React.useState('');
-  const [selectedContactIndex, setSelectedContactIndex] = React.useState(0);
-  const [selectedCcContactIndex, setSelectedCcContactIndex] = React.useState(0);
-  const [selectedBccContactIndex, setSelectedBccContactIndex] = React.useState(0);
   const [ccInput, setCcInput] = React.useState('');
   const [ccEmails, setCcEmails] = React.useState<string[]>([]);
   const [bccInput, setBccInput] = React.useState('');
@@ -470,41 +467,6 @@ export function CreateEmail({
       disableScope('compose');
     };
   }, [enableScope, disableScope]);
-
-  const toDropdownRef = React.useRef<HTMLDivElement>(null);
-  const ccDropdownRef = React.useRef<HTMLDivElement>(null);
-  const bccDropdownRef = React.useRef<HTMLDivElement>(null);
-
-  // Add this effect to handle scrolling
-  React.useEffect(() => {
-    const dropdownRef = toDropdownRef.current;
-    if (dropdownRef && selectedContactIndex >= 0) {
-      const selectedItem = dropdownRef.children[selectedContactIndex] as HTMLElement;
-      if (selectedItem) {
-        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }
-    }
-  }, [selectedContactIndex]);
-
-  React.useEffect(() => {
-    const dropdownRef = ccDropdownRef.current;
-    if (dropdownRef && selectedCcContactIndex >= 0) {
-      const selectedItem = dropdownRef.children[selectedCcContactIndex] as HTMLElement;
-      if (selectedItem) {
-        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }
-    }
-  }, [selectedCcContactIndex]);
-
-  React.useEffect(() => {
-    const dropdownRef = bccDropdownRef.current;
-    if (dropdownRef && selectedBccContactIndex >= 0) {
-      const selectedItem = dropdownRef.children[selectedBccContactIndex] as HTMLElement;
-      if (selectedItem) {
-        selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }
-    }
-  }, [selectedBccContactIndex]);
 
   return (
     <div
