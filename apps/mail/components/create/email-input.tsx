@@ -37,7 +37,7 @@ export function EmailInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar' || e.key === 'Tab') {
+    if (['Enter', ' ', 'Space', 'Spacebar', 'Tab'].includes(e.key)) {
       if (e.key === 'Tab' && !inputValue.trim().length) {
         return;
       }
