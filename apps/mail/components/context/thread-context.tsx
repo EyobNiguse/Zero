@@ -27,9 +27,9 @@ import {
 } from 'lucide-react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { markAsRead, markAsUnread, toggleStar } from '@/actions/mail';
+import { useThread, useThreads } from '@/hooks/use-threads';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useParams, useRouter } from 'next/navigation';
-import { useThreads } from '@/hooks/use-threads';
 import { modifyLabels } from '@/actions/mail';
 import { LABELS, FOLDERS } from '@/lib/utils';
 import { useStats } from '@/hooks/use-stats';
@@ -86,6 +86,7 @@ export function ThreadContextMenu({
   const router = useRouter();
   const [, setMode] = useQueryState('mode');
   const [, setThreadId] = useQueryState('threadId');
+  const { mutate: mutateThread } = useThread(threadId);
   const selectedThreads = useMemo(() => {
     if (mail.bulkSelected.length) {
       return threads.filter((thread) => mail.bulkSelected.includes(thread.id));
@@ -188,7 +189,7 @@ export function ThreadContextMenu({
 
     const promise = action({ ids: targets }).then(() => {
       setMail((prev) => ({ ...prev, bulkSelected: [] }));
-      return mutate();
+      return mutateThread();
     });
 
     toast.promise(promise, {
