@@ -268,10 +268,20 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         }
         return false;
       })
-      .map((recipient) => ({
-        name: recipient.name || '',
-        addr: recipient.email,
-      }));
+      .map((recipient) => {
+        // Parse the email address from the recipient string
+        const emailMatch = recipient.email.match(/<([^>]+)>/);
+        const email = emailMatch ? emailMatch[1] : recipient.email;
+        // Ensure we have a valid email address
+        if (!email) {
+          console.error('Debug - Invalid email address:', recipient.email);
+          throw new Error('Invalid email address');
+        }
+        return {
+          name: recipient.name || '',
+          addr: email,
+        };
+      });
 
     console.log('Debug - Filtered to recipients:', JSON.stringify(toRecipients, null, 2));
 
