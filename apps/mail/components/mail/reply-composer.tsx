@@ -1,14 +1,6 @@
 'use client';
 
 import {
-  cleanEmailAddress,
-  truncateFileName,
-  cn,
-  convertJSONToHTML,
-  createAIJsonContent,
-  constructReplyBody,
-} from '@/lib/utils';
-import {
   ArrowUp,
   Paperclip,
   Reply,
@@ -19,7 +11,17 @@ import {
   X as XIcon,
   Forward,
   ReplyAll,
+  MinusCircle,
+  PlusCircle,
 } from 'lucide-react';
+import {
+  cleanEmailAddress,
+  truncateFileName,
+  cn,
+  convertJSONToHTML,
+  createAIJsonContent,
+  constructReplyBody,
+} from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
@@ -974,7 +976,8 @@ export default function ReplyCompose() {
               }}
               className="text-xs"
             >
-              {showCc ? 'Remove Cc' : 'Add Cc'}
+              {showCc ? <MinusCircle /> : <PlusCircle />}
+              <span>CC</span>
             </Button>
             <Button
               type="button"
@@ -995,7 +998,8 @@ export default function ReplyCompose() {
               }}
               className="text-xs"
             >
-              {showBcc ? 'Remove Bcc' : 'Add Bcc'}
+              {showBcc ? <MinusCircle /> : <PlusCircle />}
+              <span>BCC</span>
             </Button>
             <CloseButton onClick={toggleComposer} />
           </div>
