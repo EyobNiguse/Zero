@@ -23,6 +23,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useRef, useState, useEffect, useCallback, useReducer } from 'react';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
+import { EmailInput } from '@/components/create/email-input';
 import { extractTextFromHTML } from '@/actions/extractText';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { generateAIResponse } from '@/actions/ai-reply';
@@ -30,6 +31,7 @@ import { useHotkeysContext } from 'react-hotkeys-hook';
 import { Separator } from '@/components/ui/separator';
 import { useMail } from '@/components/mail/use-mail';
 import { useSettings } from '@/hooks/use-settings';
+import { useContacts } from '@/hooks/use-contacts';
 import Editor from '@/components/create/editor';
 import { Button } from '@/components/ui/button';
 import { useThread } from '@/hooks/use-threads';
@@ -44,6 +46,7 @@ import posthog from 'posthog-js';
 import { Sender } from '@/types';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import React from 'react';
 
 // Utility function to check if an email is a noreply address
 const isNoReplyAddress = (email: string): boolean => {
@@ -157,6 +160,8 @@ export default function ReplyCompose() {
   const [showBcc, setShowBcc] = useState(false);
   const ccInputRef = useRef<HTMLInputElement | null>(null);
   const bccInputRef = useRef<HTMLInputElement | null>(null);
+  const [contacts, isLoading] = useContacts();
+  const contactsList: Sender[] = Array.isArray(contacts) ? contacts : [];
 
   // Use global state instead of local state
   const composerIsOpen = !!mode;
@@ -207,15 +212,47 @@ export default function ReplyCompose() {
   const toEmails = watch('to');
   const ccEmails = watch('cc');
   const bccEmails = watch('bcc');
+  const toInput = watch('toInput');
+  const ccInput = watch('ccInput');
+  const bccInput = watch('bccInput');
 
-  // const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
-  //   const trimmedEmail = value.trim().replace(/,$/, '');
-  //   const currentEmails = getValues(type);
-  //   if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
-  //     setValue(type, [...currentEmails, trimmedEmail]);
-  //     setValue(`${type}Input`, '');
-  //   }
-  // };
+  const filterContacts = (contacts: Sender[], searchTerm: string, excludeEmails: string[]) => {
+    if (!searchTerm) return [];
+    const term = searchTerm.toLowerCase();
+    return contacts.filter(
+      (contact) =>
+        (contact.email?.toLowerCase().includes(term) ||
+          contact.name?.toLowerCase().includes(term)) &&
+        !excludeEmails.includes(contact.email),
+    );
+  };
+
+  const handleAddEmail = (type: 'to' | 'cc' | 'bcc', email: string) => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) return;
+
+    const currentEmails = getValues(type);
+    if (isValidEmail(trimmedEmail) && !currentEmails.includes(trimmedEmail)) {
+      setValue(type, [...currentEmails, trimmedEmail]);
+      setValue(`${type}Input`, '');
+      composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: true });
+    }
+  };
+
+  const filteredContacts = React.useMemo(
+    () => filterContacts(contactsList, toInput, toEmails),
+    [contactsList, toInput, toEmails],
+  );
+
+  const filteredCcContacts = React.useMemo(
+    () => filterContacts(contactsList, ccInput, [...toEmails, ...ccEmails]),
+    [contactsList, ccInput, toEmails, ccEmails],
+  );
+
+  const filteredBccContacts = React.useMemo(
+    () => filterContacts(contactsList, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
+    [contactsList, bccInput, toEmails, ccEmails, bccEmails],
+  );
 
   const handleSendEmail = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (e) {
@@ -681,39 +718,52 @@ export default function ReplyCompose() {
             </div>
           </div>
 
-          <RecipientInput
+          <EmailInput
             type="to"
-            value={toEmails}
-            onRemove={(index) => {
-              const newEmails = toEmails.filter((_, i) => i !== index);
-              setValue('to', newEmails);
-            }}
-            placeholder={t('pages.createEmail.example')}
+            emails={toEmails}
+            setEmails={(emails) => setValue('to', emails)}
+            inputValue={toInput}
+            setInputValue={(value) => setValue('toInput', value)}
+            filteredContacts={filteredContacts}
+            isLoading={composerState.isLoading}
+            onAddEmail={handleAddEmail}
+            hasUnsavedChanges={composerState.hasUnsavedChanges}
+            setHasUnsavedChanges={(value) =>
+              composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: value })
+            }
           />
 
           {showCc && (
-            <RecipientInput
+            <EmailInput
               type="cc"
-              value={ccEmails}
-              onRemove={(index) => {
-                const newEmails = ccEmails.filter((_, i) => i !== index);
-                setValue('cc', newEmails);
-              }}
-              placeholder="Add Cc recipients"
-              inputRef={ccInputRef}
+              emails={ccEmails}
+              setEmails={(emails) => setValue('cc', emails)}
+              inputValue={ccInput}
+              setInputValue={(value) => setValue('ccInput', value)}
+              filteredContacts={filteredCcContacts}
+              isLoading={composerState.isLoading}
+              onAddEmail={handleAddEmail}
+              hasUnsavedChanges={composerState.hasUnsavedChanges}
+              setHasUnsavedChanges={(value) =>
+                composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: value })
+              }
             />
           )}
 
           {showBcc && (
-            <RecipientInput
+            <EmailInput
               type="bcc"
-              value={bccEmails}
-              onRemove={(index) => {
-                const newEmails = bccEmails.filter((_, i) => i !== index);
-                setValue('bcc', newEmails);
-              }}
-              placeholder="Add Bcc recipients"
-              inputRef={bccInputRef}
+              emails={bccEmails}
+              setEmails={(emails) => setValue('bcc', emails)}
+              inputValue={bccInput}
+              setInputValue={(value) => setValue('bccInput', value)}
+              filteredContacts={filteredBccContacts}
+              isLoading={composerState.isLoading}
+              onAddEmail={handleAddEmail}
+              hasUnsavedChanges={composerState.hasUnsavedChanges}
+              setHasUnsavedChanges={(value) =>
+                composerDispatch({ type: 'SET_UNSAVED_CHANGES', payload: value })
+              }
             />
           )}
         </div>
@@ -743,107 +793,6 @@ export default function ReplyCompose() {
       </div>
     );
   };
-
-  // Extract recipient input component for reusability
-  const RecipientInput = ({
-    type,
-    value,
-    onRemove,
-    placeholder,
-    inputRef,
-  }: {
-    type: 'to' | 'cc' | 'bcc';
-    value: string[];
-    onRemove: (index: number) => void;
-    placeholder: string;
-    inputRef?: React.RefObject<HTMLInputElement | null>;
-  }) => {
-    const { ref, ...rest } = register(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', {
-      validate: (value: string) => {
-        if (value && !isValidEmail(value)) {
-          return 'Invalid email format';
-        }
-        return true;
-      },
-    });
-
-    const handleAddEmail = (type: 'to' | 'cc' | 'bcc', value: string) => {
-      const trimmedEmail = value.trim().replace(/,$/, '');
-      const currentEmails = getValues(type);
-      if (trimmedEmail && !currentEmails.includes(trimmedEmail) && isValidEmail(trimmedEmail)) {
-        setValue(type, [...currentEmails, trimmedEmail]);
-        setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
-      }
-    };
-
-    return (
-      <div className="flex items-center gap-2">
-        <div className="text-muted-foreground flex-shrink-0 text-right text-[1rem] opacity-50">
-          {type}:
-        </div>
-        <div className="group relative left-[2px] flex w-full flex-wrap items-center gap-1 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
-          {value.map((email, index) => (
-            <EmailTag key={index} email={email} onRemove={() => onRemove(index)} />
-          ))}
-          <input
-            ref={(e) => {
-              ref(e);
-              if (inputRef) {
-                (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = e;
-              }
-            }}
-            type="email"
-            className="text-md relative left-[3px] min-w-[120px] flex-1 bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
-            placeholder={value.length ? '' : placeholder}
-            {...rest}
-            onBlur={(e) => handleAddEmail('to', e.currentTarget.value)}
-            onKeyDown={(e) => {
-              const currentValue = e.currentTarget.value;
-              if ((e.key === ',' || e.key === 'Enter' || e.key === ' ') && currentValue) {
-                e.preventDefault();
-                if (isValidEmail(currentValue)) {
-                  const newEmails = [...value];
-                  newEmails.push(currentValue);
-                  setValue(type as 'to' | 'cc' | 'bcc', newEmails);
-                  setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
-                }
-              } else if (e.key === 'Backspace' && !currentValue && value.length > 0) {
-                e.preventDefault();
-                const newEmails = value.filter((_, i) => i !== value.length - 1);
-                setValue(type as 'to' | 'cc' | 'bcc', newEmails);
-              }
-            }}
-            onPaste={(e) => {
-              e.preventDefault();
-              const pastedText = e.clipboardData.getData('text');
-              const emails = pastedText.split(/[,\n]/).map((email) => email.trim());
-              const validEmails = emails.filter(
-                (email) => email && !value.includes(email) && isValidEmail(email),
-              );
-              if (validEmails.length > 0) {
-                setValue(type as 'to' | 'cc' | 'bcc', [...value, ...validEmails]);
-                setValue(`${type}Input` as 'toInput' | 'ccInput' | 'bccInput', '');
-              }
-            }}
-          />
-        </div>
-      </div>
-    );
-  };
-
-  // Extract email tag component
-  const EmailTag = ({ email, onRemove }: { email: string; onRemove: () => void }) => (
-    <div className="bg-accent flex items-center gap-1 rounded-md border px-2 text-sm font-medium">
-      <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">{email}</span>
-      <button
-        type="button"
-        className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
-        onClick={onRemove}
-      >
-        <X className="h-3 w-3" />
-      </button>
-    </div>
-  );
 
   // Add this effect near other useEffects
   useEffect(() => {
