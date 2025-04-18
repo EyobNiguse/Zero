@@ -3,12 +3,13 @@
 import { AIChat } from '@/components/create/ai-chat';
 import { Button } from '@/components/ui/button';
 import { X, MessageSquare, PanelLeftOpen } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext, createContext } from 'react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useEditor } from '@/components/providers/editor-provider';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 interface AISidebarProps {
   className?: string;
@@ -49,11 +50,11 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { editor } = useEditor();
   const [hasMessages, setHasMessages] = useState(false);
 
-  useHotKey('Meta+0', () => {
+  useHotkeys('Meta+0', () => {
     setOpen(!open);
   });
 
-  useHotKey('Control+0', () => {
+  useHotkeys('Control+0', () => {
     setOpen(!open);
   });
 

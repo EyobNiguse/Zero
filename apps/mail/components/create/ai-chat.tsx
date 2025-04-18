@@ -12,6 +12,7 @@ import { nanoid } from 'nanoid';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSession } from '@/lib/auth-client';
 import { useConnections } from '@/hooks/use-connections';
+import VoiceChat from './voice';
 
 interface Message {
   id: string;
@@ -307,32 +308,8 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       {/* Fixed input at bottom */}
       <div className="flex-shrink-0 bg-white dark:bg-black px-4 py-2">
         <div className="relative bg-offsetLight dark:bg-offsetDark rounded">
-          <AITextarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-              adjustHeight();
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="Message Zero..."
-            className="min-h-[80px] max-h-[420px] w-full resize-none rounded bg-transparent text-sm transition-shadow duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#454545] focus-visible:ring-offset-1 overflow-y-auto pt-3 px-3 border"
-          />
-          <div className="absolute bottom-2 right-2">
-            <Button 
-              variant="default" 
-              size="icon"
-              className="h-7 w-7 rounded-full" 
-              disabled={!value.trim() || isLoading}
-              onClick={handleSendMessage}
-            >
-              {isLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              ) : (
-                <ArrowUpIcon className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+        <VoiceChat />
+          
         </div>
       </div>
     </div>
