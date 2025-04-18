@@ -73,13 +73,6 @@ interface AIState {
   showOptions: boolean;
 }
 
-interface MailState {
-  replyComposerOpen: boolean;
-  replyAllComposerOpen: boolean;
-  forwardComposerOpen: boolean;
-  // ... other existing state
-}
-
 // Define action types
 type ComposerAction =
   | { type: 'SET_UPLOADING'; payload: boolean }
@@ -150,14 +143,14 @@ type FormData = {
   bccInput: string;
 };
 
-export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
+export default function ReplyCompose() {
   const [threadId] = useQueryState('threadId');
   const { data: emailData, mutate } = useThread(threadId);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { data: session } = useSession();
   const [mail, setMail] = useMail();
-  const { settings } = useSettings();
   const [draftId, setDraftId] = useQueryState('draftId');
+  const [mode, setMode] = useQueryState('mode');
   const { enableScope, disableScope } = useHotkeysContext();
   const [isEditingRecipients, setIsEditingRecipients] = useState(false);
   const [showCc, setShowCc] = useState(false);
@@ -166,20 +159,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
   const bccInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use global state instead of local state
-  const composerIsOpen =
-    mode === 'reply'
-      ? mail.replyComposerOpen
-      : mode === 'replyAll'
-        ? mail.replyAllComposerOpen
-        : mail.forwardComposerOpen;
-  const setComposerIsOpen = (value: boolean) => {
-    setMail((prev: typeof mail) => ({
-      ...prev,
-      replyComposerOpen: mode === 'reply' ? value : prev.replyComposerOpen,
-      replyAllComposerOpen: mode === 'replyAll' ? value : prev.replyAllComposerOpen,
-      forwardComposerOpen: mode === 'forward' ? value : prev.forwardComposerOpen,
-    }));
-  };
+  const composerIsOpen = !!mode;
 
   // Use reducers instead of multiple useState
   const [composerState, composerDispatch] = useReducer(composerReducer, {
@@ -327,7 +307,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       }
 
       reset();
-      setComposerIsOpen(false);
+      setMode(null);
       toast.success(t('pages.createEmail.emailSentSuccessfully'));
     } catch (error) {
       console.error('Error sending email:', error);
@@ -389,10 +369,6 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
 
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         setAttachments([...attachments, ...Array.from(e.dataTransfer.files)]);
-        // Open the composer if it's not already open
-        if (!composerIsOpen) {
-          setComposerIsOpen(true);
-        }
       }
     }
   };
@@ -428,12 +404,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-    setMail((prev) => ({
-      ...prev,
-      replyComposerOpen: false,
-      replyAllComposerOpen: false,
-      forwardComposerOpen: false,
-    }));
+    setMode(null);
     setIsEditingRecipients(false);
     setShowCc(false);
     setShowBcc(false);
@@ -976,12 +947,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
       <div className="bg-offsetLight dark:bg-offsetDark flex w-full gap-2 px-2">
         <Button
           onClick={() => {
-            setMail((prev) => ({
-              ...prev,
-              replyComposerOpen: true,
-              forwardComposerOpen: false,
-              mode: 'reply',
-            }));
+            setMode('reply');
           }}
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
           variant="outline"
@@ -992,13 +958,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         {showReplyAll && (
           <Button
             onClick={() => {
-              setMail((prev) => ({
-                ...prev,
-                replyComposerOpen: false,
-                forwardComposerOpen: false,
-                replyAllComposerOpen: true,
-                mode: 'replyAll',
-              }));
+              setMode('replyAll');
             }}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
             variant="outline"
@@ -1009,12 +969,7 @@ export default function ReplyCompose({ mode = 'reply' }: ReplyComposeProps) {
         )}
         <Button
           onClick={() => {
-            setMail((prev) => ({
-              ...prev,
-              replyComposerOpen: false,
-              forwardComposerOpen: true,
-              mode: 'forward',
-            }));
+            setMode('forward');
           }}
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md"
           variant="outline"
