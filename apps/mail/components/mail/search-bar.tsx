@@ -7,13 +7,11 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { Calendar } from '@/components/ui/calendar';
 import { type DateRange } from 'react-day-picker';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import React from 'react';
-import { enhanceSearchQuery } from '@/actions/ai-search';
 
 const SEARCH_SUGGESTIONS = [
   '"Emails from last week..."',
@@ -23,6 +21,9 @@ const SEARCH_SUGGESTIONS = [
   '"Starred emails..."',
   '"Emails with links..."',
   '"Emails from last month..."',
+  '"Emails in Inbox..."',
+  '"Emails with PDF attachments..."',
+  '"Emails delivered to me..."',
 ];
 
 // function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRange) => void }) {
@@ -75,28 +76,39 @@ type SearchForm = {
   subject: string;
   from: string;
   to: string;
+  cc: string;
+  bcc: string;
   q: string;
   dateRange: DateRange;
   category: string;
   folder: string;
+  has: any;
+  fileName: any;
+  deliveredTo: string;
+  unicorn: string;
 };
 
 export function SearchBar() {
   // const [popoverOpen, setPopoverOpen] = useState(false);
   const [, setSearchValue] = useSearchValue();
   const [isSearching, setIsSearching] = useState(false);
-  const [isAISearching, setIsAISearching] = useState(false);
   const [value, setValue] = useState<SearchForm>({
     folder: '',
     subject: '',
     from: '',
     to: '',
+    cc: '',
+    bcc: '',
     q: '',
     dateRange: {
       from: undefined,
       to: undefined,
     },
     category: '',
+    has: '',
+    fileName: '',
+    deliveredTo: '',
+    unicorn: '',
   });
 
   const t = useTranslations();
@@ -137,7 +149,11 @@ export function SearchBar() {
       value.dateRange.from ||
       value.dateRange.to ||
       value.category ||
-      value.folder,
+      value.folder ||
+      value.has ||
+      value.fileName ||
+      value.deliveredTo ||
+      value.unicorn,
     [value],
   );
 
@@ -168,64 +184,136 @@ export function SearchBar() {
     };
   }, [isFocused, formValues.q]);
 
+  function parseNaturalLanguageSearch(query: string): string {
+    // Common search patterns
+    const patterns = [
+      // From pattern
+      {
+        regex: /^from\s+([^:\s]+)/i,
+        transform: (match: string[]) => `from:${match[1]}`
+      },
+      // To pattern
+      {
+        regex: /^to\s+([^:\s]+)/i,
+        transform: (match: string[]) => `to:${match[1]}`
+      },
+      // Subject pattern
+      {
+        regex: /^subject\s+([^:\s]+)/i,
+        transform: (match: string[]) => `subject:${match[1]}`
+      },
+      // Has attachment pattern
+      {
+        regex: /^has\s+(attachment|file)/i,
+        transform: () => 'has:attachment'
+      },
+      // Is pattern (unread, read, starred)
+      {
+        regex: /^is\s+(unread|read|starred)/i,
+        transform: (match: string[]) => `is:${match[1]}`
+      }
+    ];
+
+    // Check if query matches any pattern
+    for (const pattern of patterns) {
+      const match = query.match(pattern.regex);
+      if (match) {
+        return pattern.transform(match);
+      }
+    }
+
+    return query;
+  }
+
   const submitSearch = useCallback(
     async (data: SearchForm) => {
       setIsSearching(true);
       let searchTerms = [];
 
       try {
-        // Only enhance the query if there's a search term
         if (data.q.trim()) {
-          setIsAISearching(true);
-          const { enhancedQuery, error } = await enhanceSearchQuery(data.q.trim());
-          setIsAISearching(false);
+          const searchTerm = data.q.trim();
           
-          if (error) {
-            console.error('AI enhancement error:', error);
-            // Fallback to original query if AI enhancement fails
-            searchTerms.push(data.q.trim());
+          // Parse natural language search patterns
+          const parsedTerm = parseNaturalLanguageSearch(searchTerm);
+          
+          // If the term was transformed by natural language parsing, use it directly
+          if (parsedTerm !== searchTerm) {
+            searchTerms.push(parsedTerm);
           } else {
-            searchTerms.push(enhancedQuery);
+            // Use Gmail's native search operators for proper prioritization
+            // Gmail will automatically prioritize 'from:' matches over content matches
+            if (searchTerm.includes('@')) {
+              // For email addresses, use exact match
+              searchTerms.push(`from:${searchTerm}`);
+            } else {
+              // For names or other terms, use a combination of operators
+              searchTerms.push(`(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`);
+            }
+          }
+
+          // Handle exact phrase matching
+          if (searchTerm.includes('"')) {
+            const exactPhrases = searchTerm.match(/"([^"]+)"/g);
+            if (exactPhrases) {
+              exactPhrases.forEach(phrase => {
+                const cleanPhrase = phrase.replace(/"/g, '');
+                // Check if the phrase contains natural language patterns
+                const parsedPhrase = parseNaturalLanguageSearch(cleanPhrase);
+                if (parsedPhrase !== cleanPhrase) {
+                  searchTerms.push(parsedPhrase);
+                } else {
+                  // Use Gmail's search operators for exact phrases
+                  searchTerms.push(`(from:"${cleanPhrase}" OR subject:"${cleanPhrase}" OR "${cleanPhrase}")`);
+                }
+              });
+            }
           }
         }
 
-        // Add any additional filters
-        if (data.from) searchTerms.push(`from:${data.from.toLowerCase()}`);
-        if (data.to) searchTerms.push(`to:${data.to.toLowerCase()}`);
-        if (data.subject) searchTerms.push(`subject:(${data.subject})`);
-        if (data.dateRange.from)
-          searchTerms.push(`after:${format(data.dateRange.from, 'yyyy/MM/dd')}`);
-        if (data.dateRange.to) 
-          searchTerms.push(`before:${format(data.dateRange.to, 'yyyy/MM/dd')}`);
+        // Add filters
+        if (data.folder) searchTerms.push(`in:${data.folder.toLowerCase()}`);
+        if (data.has) searchTerms.push(`has:${data.has.toLowerCase()}`);
+        if (data.fileName) searchTerms.push(`filename:${data.fileName}`);
+        if (data.deliveredTo) searchTerms.push(`deliveredto:${data.deliveredTo.toLowerCase()}`);
+        if (data.unicorn) searchTerms.push(`+${data.unicorn}`);
+        if (data.dateRange.from) searchTerms.push(`after:${format(data.dateRange.from, 'yyyy/MM/dd')}`);
+        if (data.dateRange.to) searchTerms.push(`before:${format(data.dateRange.to, 'yyyy/MM/dd')}`);
 
         let searchQuery = searchTerms.join(' ');
-
-        searchQuery = extractMetaText(searchQuery) || ''
-
-        const folder = data.folder ? data.folder.toUpperCase() : '';
+        searchQuery = extractMetaText(searchQuery) || '';
 
         console.log('Final search query:', searchQuery);
         
         setSearchValue({
           value: searchQuery,
           highlight: data.q,
-          folder: folder,
+          folder: data.folder ? data.folder.toUpperCase() : '',
           isLoading: true,
-          isAISearching: isAISearching
+          isAISearching: false
         });
 
       } catch (error) {
         console.error('Search error:', error);
-        // Fallback to regular search if AI fails
         if (data.q) {
-          searchTerms.push(data.q.trim());
+          const searchTerm = data.q.trim();
+          // Use natural language parsing in fallback as well
+          const parsedTerm = parseNaturalLanguageSearch(searchTerm);
+          if (parsedTerm !== searchTerm) {
+            searchTerms.push(parsedTerm);
+          } else {
+            // Use Gmail's native search operators in fallback
+            if (searchTerm.includes('@')) {
+              searchTerms.push(`from:${searchTerm}`);
+            } else {
+              searchTerms.push(`(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`);
+            }
+          }
         }
-        const searchQuery = searchTerms.join(' ');
-        const folder = data.folder ? data.folder.toUpperCase() : '';
         setSearchValue({
-          value: searchQuery,
+          value: searchTerms.join(' '),
           highlight: data.q,
-          folder: folder,
+          folder: data.folder ? data.folder.toUpperCase() : '',
           isLoading: true,
           isAISearching: false
         });
@@ -233,7 +321,7 @@ export function SearchBar() {
         setIsSearching(false);
       }
     },
-    [setSearchValue, isAISearching],
+    [setSearchValue],
   );
 
   const handleInputChange = useCallback(
@@ -249,8 +337,20 @@ export function SearchBar() {
       }
 
       const cursorPosition = e.target.selectionStart || 0;
-
       const textBeforeCursor = inputValue.substring(0, cursorPosition);
+
+      // Check for exact phrase matching
+      if (textBeforeCursor.includes('"')) {
+        const lastQuoteIndex = textBeforeCursor.lastIndexOf('"');
+        const isOpeningQuote = textBeforeCursor.slice(0, lastQuoteIndex).split('"').length % 2 === 0;
+        
+        if (isOpeningQuote) {
+          // Inside a quoted phrase, don't show suggestions
+          setSuggestionsState((prev) => ({ ...prev, show: false }));
+          form.setValue('q', inputValue);
+          return;
+        }
+      }
 
       const match = matchFilterPrefix(textBeforeCursor);
 
@@ -637,7 +737,7 @@ export function SearchBar() {
           <Input
             placeholder={isFocused ? "" : "Search..."}
             ref={inputRef}
-            className="bg-muted-foreground/20 dark:bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none transition-all duration-300"
+            className="bg-muted-foreground/20 dark:bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none transition-all duration-300 select-none"
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}

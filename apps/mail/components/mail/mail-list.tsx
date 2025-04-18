@@ -101,6 +101,7 @@ const Thread = memo(
     const { data: getThreadData, isLoading } = useThread(demo ? null : message.id);
 
     const latestMessage = demo ? demoMessage : getThreadData?.latest;
+    const emailContent = demo ? demoMessage : getThreadData?.email;
 
     const isMailSelected = useMemo(() => {
       if (!threadId || !latestMessage) return false;
@@ -247,6 +248,11 @@ const Thread = memo(
                   <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
                     {highlightText(latestMessage.subject, searchValue.highlight)}
                   </p>
+                  {emailContent && (
+                    <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                      {highlightText(emailContent.body || emailContent.snippet, searchValue.highlight)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -258,7 +264,7 @@ const Thread = memo(
 
     const content =
       latestMessage && getThreadData ? (
-        <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
+        <div className="p-1 px-3 select-none" onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             onMouseEnter={handleMouseEnter}
@@ -337,6 +343,11 @@ const Thread = memo(
                     </p>
                     <MailLabels labels={threadLabels} />
                   </div>
+                  {emailContent && (
+                    <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                      {highlightText(emailContent.body || emailContent.snippet, searchValue.highlight)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -402,7 +413,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [searchValue, setSearchValue] = useSearchValue();
   const { enableScope, disableScope } = useHotkeysContext();
   const {
-    data: { threads: items, nextPageToken },
+    data: { threads: items = [], nextPageToken },
     isValidating,
     isLoading,
     loadMore,
@@ -534,40 +545,74 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
         }}
       >
         <ScrollArea className="hide-scrollbar h-full overflow-auto">
-          {items.map((data, index) => {
-            return (
-              <Thread
-                onClick={handleMailClick}
-                selectMode={getSelectMode()}
-                isCompact={isCompact}
-                sessionData={sessionData}
-                message={data}
-                key={`${data.id}-${index}`}
-                isKeyboardFocused={focusedIndex === index && keyboardActive}
-                isInQuickActionMode={isQuickActionMode && focusedIndex === index}
-                selectedQuickActionIndex={quickActionIndex}
-                resetNavigation={resetNavigation}
-              />
-            );
-          })}
-          {items.length >= 9 && nextPageToken && !isValidating && (
-            <Button
-              variant={'ghost'}
-              className="w-full rounded-none"
-              onMouseDown={handleScroll}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                  {t('common.actions.loading')}
-                </div>
-              ) : (
-                <>
-                  {t('common.mail.loadMore')} <ChevronDown />
-                </>
+          {isLoading ? (
+            <div className="flex h-32 items-center justify-center">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+            </div>
+          ) : !items || items.length === 0 ? (
+            <div className="flex h-32 flex-col items-center justify-center gap-2 text-center">
+              <p className="text-muted-foreground text-sm">
+                {searchValue.value
+                  ? t('common.mail.noSearchResults')
+                  : t('common.mail.noEmails')}
+              </p>
+              {searchValue.value && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchValue({
+                      value: '',
+                      highlight: '',
+                      folder: '',
+                      isLoading: false,
+                    });
+                  }}
+                >
+                  {t('common.mail.clearSearch')}
+                </Button>
               )}
-            </Button>
+            </div>
+          ) : (
+            <>
+              {items.filter(Boolean).map((data, index) => {
+                if (!data || !data.id) return null;
+                
+                return (
+                  <Thread
+                    onClick={handleMailClick}
+                    selectMode={getSelectMode()}
+                    isCompact={isCompact}
+                    sessionData={sessionData}
+                    message={data}
+                    key={`${data.id}-${index}`}
+                    isKeyboardFocused={focusedIndex === index && keyboardActive}
+                    isInQuickActionMode={isQuickActionMode && focusedIndex === index}
+                    selectedQuickActionIndex={quickActionIndex}
+                    resetNavigation={resetNavigation}
+                  />
+                );
+              })}
+              {items.length >= 9 && nextPageToken && !isValidating && (
+                <Button
+                  variant={'ghost'}
+                  className="w-full rounded-none"
+                  onMouseDown={handleScroll}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                      {t('common.actions.loading')}
+                    </div>
+                  ) : (
+                    <>
+                      {t('common.mail.loadMore')} <ChevronDown />
+                    </>
+                  )}
+                </Button>
+              )}
+            </>
           )}
         </ScrollArea>
       </div>
