@@ -160,8 +160,6 @@ export default function ReplyCompose() {
   const [showBcc, setShowBcc] = useState(false);
   const ccInputRef = useRef<HTMLInputElement | null>(null);
   const bccInputRef = useRef<HTMLInputElement | null>(null);
-  const [contacts, isLoading] = useContacts();
-  const contactsList: Sender[] = Array.isArray(contacts) ? contacts : [];
 
   // Use global state instead of local state
   const composerIsOpen = !!mode;
@@ -239,20 +237,20 @@ export default function ReplyCompose() {
     }
   };
 
-  const filteredContacts = React.useMemo(
-    () => filterContacts(contactsList, toInput, toEmails),
-    [contactsList, toInput, toEmails],
-  );
+  //   const filteredContacts = React.useMemo(
+  //     () => filterContacts(contactsList, toInput, toEmails),
+  //     [contactsList, toInput, toEmails],
+  //   );
 
-  const filteredCcContacts = React.useMemo(
-    () => filterContacts(contactsList, ccInput, [...toEmails, ...ccEmails]),
-    [contactsList, ccInput, toEmails, ccEmails],
-  );
+  //   const filteredCcContacts = React.useMemo(
+  //     () => filterContacts(contactsList, ccInput, [...toEmails, ...ccEmails]),
+  //     [contactsList, ccInput, toEmails, ccEmails],
+  //   );
 
-  const filteredBccContacts = React.useMemo(
-    () => filterContacts(contactsList, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
-    [contactsList, bccInput, toEmails, ccEmails, bccEmails],
-  );
+  //   const filteredBccContacts = React.useMemo(
+  //     () => filterContacts(contactsList, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
+  //     [contactsList, bccInput, toEmails, ccEmails, bccEmails],
+  //   );
 
   const handleSendEmail = async (values: FormData) => {
     if (!emailData) return;
@@ -725,7 +723,7 @@ export default function ReplyCompose() {
             setEmails={(emails) => setValue('to', emails)}
             inputValue={toInput}
             setInputValue={(value) => setValue('toInput', value)}
-            filteredContacts={filteredContacts}
+            filteredContacts={[]}
             isLoading={composerState.isLoading}
             onAddEmail={handleAddEmail}
             hasUnsavedChanges={composerState.hasUnsavedChanges}
@@ -741,7 +739,7 @@ export default function ReplyCompose() {
               setEmails={(emails) => setValue('cc', emails)}
               inputValue={ccInput}
               setInputValue={(value) => setValue('ccInput', value)}
-              filteredContacts={filteredCcContacts}
+              filteredContacts={[]}
               isLoading={composerState.isLoading}
               onAddEmail={handleAddEmail}
               hasUnsavedChanges={composerState.hasUnsavedChanges}
@@ -758,7 +756,7 @@ export default function ReplyCompose() {
               setEmails={(emails) => setValue('bcc', emails)}
               inputValue={bccInput}
               setInputValue={(value) => setValue('bccInput', value)}
-              filteredContacts={filteredBccContacts}
+              filteredContacts={[]}
               isLoading={composerState.isLoading}
               onAddEmail={handleAddEmail}
               hasUnsavedChanges={composerState.hasUnsavedChanges}

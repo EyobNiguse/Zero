@@ -84,7 +84,6 @@ export function CreateEmail({
   const [selectedContactIndex, setSelectedContactIndex] = React.useState(0);
   const [selectedCcContactIndex, setSelectedCcContactIndex] = React.useState(0);
   const [selectedBccContactIndex, setSelectedBccContactIndex] = React.useState(0);
-  const contacts = useContacts();
   const [ccInput, setCcInput] = React.useState('');
   const [ccEmails, setCcEmails] = React.useState<string[]>([]);
   const [bccInput, setBccInput] = React.useState('');
@@ -130,20 +129,20 @@ export function CreateEmail({
   const userEmail =
     activeAccount?.email || session?.activeConnection?.email || session?.user?.email || '';
 
-  const filteredContacts = React.useMemo(
-    () => filterContacts(contacts, toInput, toEmails),
-    [contacts, toInput, toEmails],
-  );
+  //   const filteredContacts = React.useMemo(
+  //     () => filterContacts(contacts, toInput, toEmails),
+  //     [contacts, toInput, toEmails],
+  //   );
 
-  const filteredCcContacts = React.useMemo(
-    () => filterContacts(contacts, ccInput, [...toEmails, ...ccEmails]),
-    [contacts, ccInput, toEmails, ccEmails],
-  );
+  //   const filteredCcContacts = React.useMemo(
+  //     () => filterContacts(contacts, ccInput, [...toEmails, ...ccEmails]),
+  //     [contacts, ccInput, toEmails, ccEmails],
+  //   );
 
-  const filteredBccContacts = React.useMemo(
-    () => filterContacts(contacts, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
-    [contacts, bccInput, toEmails, ccEmails, bccEmails],
-  );
+  //   const filteredBccContacts = React.useMemo(
+  //     () => filterContacts(contacts, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
+  //     [contacts, bccInput, toEmails, ccEmails, bccEmails],
+  //   );
 
   React.useEffect(() => {
     if (!draftId && !defaultValue) {
@@ -542,7 +541,7 @@ export function CreateEmail({
                   setEmails={setToEmails}
                   inputValue={toInput}
                   setInputValue={setToInput}
-                  filteredContacts={filteredContacts}
+                  filteredContacts={[]}
                   isLoading={isLoading}
                   onAddEmail={handleAddEmail}
                   hasUnsavedChanges={hasUnsavedChanges}
@@ -556,7 +555,7 @@ export function CreateEmail({
                     setEmails={setCcEmails}
                     inputValue={ccInput}
                     setInputValue={setCcInput}
-                    filteredContacts={filteredCcContacts}
+                    filteredContacts={[]}
                     isLoading={isLoading}
                     onAddEmail={handleAddEmail}
                     hasUnsavedChanges={hasUnsavedChanges}
@@ -571,7 +570,7 @@ export function CreateEmail({
                     setEmails={setBccEmails}
                     inputValue={bccInput}
                     setInputValue={setBccInput}
-                    filteredContacts={filteredBccContacts}
+                    filteredContacts={[]}
                     isLoading={isLoading}
                     onAddEmail={handleAddEmail}
                     hasUnsavedChanges={hasUnsavedChanges}
