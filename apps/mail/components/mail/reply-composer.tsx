@@ -254,10 +254,7 @@ export default function ReplyCompose() {
     [contactsList, bccInput, toEmails, ccEmails, bccEmails],
   );
 
-  const handleSendEmail = async (e?: React.MouseEvent<HTMLButtonElement>) => {
-    if (e) {
-      e.preventDefault();
-    }
+  const handleSendEmail = async (values: FormData) => {
     if (!emailData) return;
     try {
       const originalEmail = emailData.latest;
@@ -300,7 +297,7 @@ export default function ReplyCompose() {
 
       const messageId = originalEmail.messageId;
       const threadId = originalEmail.threadId;
-      const formattedMessage = getValues('messageContent');
+      const formattedMessage = values.messageContent;
       const originalDate = new Date(originalEmail.receivedOn || '').toLocaleString();
       const quotedMessage = originalEmail.decodedBody;
 
@@ -353,7 +350,11 @@ export default function ReplyCompose() {
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    await handleSendEmail();
+    if (composerState.isLoading) return;
+    composerDispatch({ type: 'SET_LOADING', payload: true });
+    await handleSendEmail(data).finally(() => {
+      composerDispatch({ type: 'SET_LOADING', payload: false });
+    });
   };
 
   const handleAttachment = (files: File[]) => {
@@ -482,23 +483,23 @@ export default function ReplyCompose() {
     [isResizing],
   );
 
-  // Add a function to handle starting the resize
-  const handleResizeStart = (e: React.MouseEvent) => {
-    setIsResizing(true);
-    resizeStartY.current = e.clientY;
-    startHeight.current = editorHeight;
-  };
+  //   // Add a function to handle starting the resize
+  //   const handleResizeStart = (e: React.MouseEvent) => {
+  //     setIsResizing(true);
+  //     resizeStartY.current = e.clientY;
+  //     startHeight.current = editorHeight;
+  //   };
 
-  // Handle keyboard shortcuts for sending email
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Check for Cmd/Ctrl + Enter
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault();
-      if (isFormValid) {
-        handleSubmit(onSubmit)();
-      }
-    }
-  };
+  //   // Handle keyboard shortcuts for sending email
+  //   const handleKeyDown = (e: React.KeyboardEvent) => {
+  //     // Check for Cmd/Ctrl + Enter
+  //     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+  //       e.preventDefault();
+  //       if (isFormValid) {
+  //         handleSubmit(onSubmit)();
+  //       }
+  //     }
+  //   };
 
   // Update onChange handler in Editor component
   const handleEditorChange = (content: string) => {
@@ -947,7 +948,7 @@ export default function ReplyCompose() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onSubmit={handleSubmit(onSubmit)}
-        onKeyDown={handleKeyDown}
+        // onKeyDown={handleKeyDown}
       >
         {/* Drag overlay */}
         {composerState.isDragging && <DragOverlay />}
@@ -960,6 +961,7 @@ export default function ReplyCompose() {
               type="button"
               variant="ghost"
               size="sm"
+              tabIndex={-1}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -980,6 +982,7 @@ export default function ReplyCompose() {
               type="button"
               variant="ghost"
               size="sm"
+              tabIndex={-1}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1184,7 +1187,7 @@ export default function ReplyCompose() {
                 'relative h-8 w-8 rounded-full',
                 composerState.isLoading && 'cursor-not-allowed',
               )}
-              onClick={handleSendEmail}
+              onClick={handleSubmit(onSubmit)}
               disabled={composerState.isLoading}
               type="button"
             >

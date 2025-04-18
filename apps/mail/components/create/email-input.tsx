@@ -38,6 +38,9 @@ export function EmailInput({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar' || e.key === 'Tab') {
+      if (e.key === 'Tab' && !inputValue.trim().length) {
+        return;
+      }
       e.preventDefault();
       if (filteredContacts.length > 0) {
         const selectedEmail = filteredContacts[selectedContactIndex]?.email;
@@ -67,7 +70,7 @@ export function EmailInput({
       <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
         {type === 'to' ? t('common.mailDisplay.to') : type.toUpperCase()}
       </div>
-      <div className="group relative left-[2px] flex w-full flex-wrap items-center rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
+      <div className="group relative flex w-full flex-wrap items-center gap-2 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
         {emails.map((email, index) => (
           <div
             key={index}
@@ -77,6 +80,7 @@ export function EmailInput({
               {email}
             </span>
             <button
+              tabIndex={-1}
               type="button"
               disabled={isLoading}
               className="text-muted-foreground hover:text-foreground ml-1 rounded-full"
