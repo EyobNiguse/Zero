@@ -84,7 +84,7 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
             </div>
           </ScrollArea>
           <div className="relative flex-shrink-0 md:top-1">
-            <ReplyCompose mode={mail.forwardComposerOpen ? 'forward' : 'reply'} />
+            <ReplyCompose />
           </div>
         </div>
       </div>
@@ -277,18 +277,6 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [handleClose]);
 
-  // Add effect to handle mode changes
-  useEffect(() => {
-    if (mode && threadId) {
-      setMail((prev) => ({
-        ...prev,
-        replyComposerOpen: mode === 'reply',
-        replyAllComposerOpen: mode === 'replyAll',
-        forwardComposerOpen: mode === 'forward',
-      }));
-    }
-  }, [mode, threadId, setMail]);
-
   if (!emailData || isLoading)
     return (
       <div
@@ -387,14 +375,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
               icon={Reply}
               label={t('common.threadDisplay.reply')}
               disabled={!emailData}
-              className={cn(mail.replyComposerOpen && 'bg-primary/10')}
+              className={cn(mode === 'reply' && 'bg-primary/10')}
               onClick={() => {
-                setMail((prev) => ({
-                  ...prev,
-                  replyComposerOpen: true,
-                  replyAllComposerOpen: false,
-                  forwardComposerOpen: false,
-                }));
+                setMode('reply');
               }}
             />
             {hasMultipleParticipants && (
@@ -402,14 +385,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 icon={ReplyAll}
                 label={t('common.threadDisplay.replyAll')}
                 disabled={!emailData}
-                className={cn(mail.replyAllComposerOpen && 'bg-primary/10')}
+                className={cn(mode === 'replyAll' && 'bg-primary/10')}
                 onClick={() => {
-                  setMail((prev) => ({
-                    ...prev,
-                    replyComposerOpen: false,
-                    replyAllComposerOpen: true,
-                    forwardComposerOpen: false,
-                  }));
+                  setMode('replyAll');
                 }}
               />
             )}
@@ -417,14 +395,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
               icon={Forward}
               label={t('common.threadDisplay.forward')}
               disabled={!emailData}
-              className={cn(mail.forwardComposerOpen && 'bg-primary/10')}
+              className={cn(mode === 'forward' && 'bg-primary/10')}
               onClick={() => {
-                setMail((prev) => ({
-                  ...prev,
-                  replyComposerOpen: false,
-                  replyAllComposerOpen: false,
-                  forwardComposerOpen: true,
-                }));
+                setMode('forward');
               }}
             />
           </div>
@@ -467,15 +440,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
             </div>
           </ScrollArea>
           <div className={cn('relative z-10 mt-3', isFullscreen ? 'mb-2' : '')}>
-            <ReplyCompose
-              mode={
-                mail.forwardComposerOpen
-                  ? 'forward'
-                  : mail.replyAllComposerOpen
-                    ? 'replyAll'
-                    : 'reply'
-              }
-            />
+            <ReplyCompose />
           </div>
         </div>
       </div>
