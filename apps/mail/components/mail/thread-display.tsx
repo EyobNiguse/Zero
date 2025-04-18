@@ -167,23 +167,18 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   useEffect(() => {
     if (!emailData || !id) return;
     const unreadEmails = emailData.messages.filter((e) => e.unread);
-    if (unreadEmails.length === 0) {
-      console.log('Marking email as read:', id);
-      markAsRead({ ids: [id] })
-        .catch((error) => {
-          console.error('Failed to mark email as read:', error);
-          toast.error(t('common.mail.failedToMarkAsRead'));
-        })
-        .then(() => Promise.all([mutateThread(), mutateStats()]));
-    } else {
-      console.log('Marking email as read:', id, ...unreadEmails.map((e) => e.id));
+    console.log({
+      totalReplies: emailData.totalReplies,
+      unreadEmails: unreadEmails.length,
+    });
+    if (unreadEmails.length > 0) {
       const ids = [id, ...unreadEmails.map((e) => e.id)];
       markAsRead({ ids })
         .catch((error) => {
           console.error('Failed to mark email as read:', error);
           toast.error(t('common.mail.failedToMarkAsRead'));
         })
-        .then(() => Promise.all([mutateThread(), mutateStats()]));
+        .then(() => Promise.allSettled([mutateThread(), mutateStats()]));
     }
   }, [emailData, id]);
 
@@ -232,7 +227,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       if (!result.success) throw new Error('Failed to mark as unread');
 
       setMail((prev) => ({ ...prev, bulkSelected: [] }));
-      await Promise.all([mutateStats(), mutateThread()]);
+      await Promise.allSettled([mutateStats(), mutateThread()]);
       handleClose();
     };
 
