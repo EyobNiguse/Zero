@@ -500,13 +500,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
       const messageThreadId = message.threadId ?? message.id;
 
-      // Update local state immediately for optimistic UI
-      setMail((prev) => ({
-        ...prev,
-        replyComposerOpen: false,
-        forwardComposerOpen: false,
-      }));
-
       // Update URL param without navigation
       void setThreadId(messageThreadId);
     },
