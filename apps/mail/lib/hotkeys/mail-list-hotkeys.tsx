@@ -1,7 +1,6 @@
 'use client';
 
 import { markAsUnread as markAsUnreadAction } from '@/actions/mail';
-import { useMailListHotkeys } from '@/hooks/use-mail-list-hotkeys';
 import { keyboardShortcuts } from '@/config/shortcuts';
 import { useCallback, useEffect, useRef } from 'react';
 import { useMail } from '@/components/mail/use-mail';
@@ -21,7 +20,6 @@ export function MailListHotkeys() {
   const { mutate: mutateStats } = useStats();
   const t = useTranslations();
   const hoveredEmailId = useRef<string | null>(null);
-  const [removingEmails, setRemovingEmails] = useMailListHotkeys();
 
   useEffect(() => {
     const handleEmailHover = (event: CustomEvent<{ id: string | null }>) => {
