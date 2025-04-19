@@ -308,10 +308,11 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       {/* Fixed input at bottom */}
       <div className="flex-shrink-0 bg-white dark:bg-black px-4 py-2">
         <div className="relative bg-offsetLight dark:bg-offsetDark rounded">
-        <VoiceChat />
-          
+        {/* <VoiceChat /> */}
+        <AITextarea />
         </div>
       </div>
     </div>
   );
 }
+1
