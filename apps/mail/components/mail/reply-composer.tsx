@@ -13,6 +13,7 @@ import {
   ReplyAll,
   MinusCircle,
   PlusCircle,
+  Minus,
 } from 'lucide-react';
 import {
   cleanEmailAddress,
@@ -520,9 +521,6 @@ export default function ReplyCompose() {
         ],
       });
 
-  // Check if form is valid for submission
-  const isFormValid = !isMessageEmpty || attachments.length > 0;
-
   const handleAIButtonClick = async () => {
     if (!emailData) return;
     aiDispatch({ type: 'SET_LOADING', payload: true });
@@ -956,7 +954,7 @@ export default function ReplyCompose() {
         {/* Header */}
         <div className="text-muted-foreground flex flex-shrink-0 items-start justify-between text-sm">
           {renderHeaderContent()}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <Button
               type="button"
               variant="ghost"
@@ -976,8 +974,7 @@ export default function ReplyCompose() {
               }}
               className="text-xs"
             >
-              {showCc ? <MinusCircle /> : <PlusCircle />}
-              <span>CC</span>
+              <span>Cc</span>
             </Button>
             <Button
               type="button"
@@ -998,8 +995,7 @@ export default function ReplyCompose() {
               }}
               className="text-xs"
             >
-              {showBcc ? <MinusCircle /> : <PlusCircle />}
-              <span>BCC</span>
+              <span>Bcc</span>
             </Button>
             <CloseButton onClick={toggleComposer} />
           </div>

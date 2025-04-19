@@ -514,8 +514,7 @@ export function CreateEmail({
                 }}
                 className="text-xs"
               >
-                {showCc ? <MinusCircle /> : <PlusCircle />}
-                <span>CC</span>
+                <span>Cc</span>
               </Button>
               <Button
                 type="button"
@@ -535,8 +534,7 @@ export function CreateEmail({
                 }}
                 className="text-xs"
               >
-                {showBcc ? <MinusCircle /> : <PlusCircle />}
-                <span>BCC</span>
+                <span>Bcc</span>
               </Button>
             </div>
             <div className="min-h-0 flex-1 space-y-12 overflow-y-auto overflow-x-hidden">
@@ -552,6 +550,7 @@ export function CreateEmail({
                   onAddEmail={handleAddEmail}
                   hasUnsavedChanges={hasUnsavedChanges}
                   setHasUnsavedChanges={setHasUnsavedChanges}
+                  className='w-24 text-right'
                 />
 
                 {showCc && (
@@ -566,6 +565,7 @@ export function CreateEmail({
                     onAddEmail={handleAddEmail}
                     hasUnsavedChanges={hasUnsavedChanges}
                     setHasUnsavedChanges={setHasUnsavedChanges}
+                    className='w-24 text-right'
                   />
                 )}
 
@@ -581,6 +581,7 @@ export function CreateEmail({
                     onAddEmail={handleAddEmail}
                     hasUnsavedChanges={hasUnsavedChanges}
                     setHasUnsavedChanges={setHasUnsavedChanges}
+                    className='w-24 text-right'
                   />
                 )}
 
