@@ -824,10 +824,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       }
     },
     createDraft: async (data: any) => {
-      // Generate a unique boundary for multipart messages
       const boundary = `boundary_${Date.now()}`;
 
-      // Start building MIME message parts
       const messageParts = [
         `From: me`,
         `To: ${data.to}`,
@@ -843,7 +841,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         data.message || '',
       ];
 
-      // Add attachments if present
       if (data.attachments?.length > 0) {
         for (const attachment of data.attachments) {
           const base64Data = await new Promise<string>((resolve, reject) => {
@@ -871,7 +868,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         }
       }
 
-      // Close the multipart message
       messageParts.push(`--${boundary}--`);
 
       const mimeMessage = messageParts.filter(Boolean).join('\n');
