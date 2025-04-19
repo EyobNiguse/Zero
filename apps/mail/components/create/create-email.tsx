@@ -255,12 +255,14 @@ export function CreateEmail({
 
   const saveDraft = React.useCallback(async () => {
     if (!hasUnsavedChanges) return;
-    if (!toEmails.length && !subjectInput && !messageContent) return;
+    if (!toEmails.length || !subjectInput || !messageContent) return;
 
     try {
       setIsLoading(true);
       const draftData = {
         to: toEmails.join(', '),
+        cc: ccEmails.join(', '),
+        bcc: bccEmails.join(', '),
         subject: subjectInput,
         message: messageContent || '',
         attachments: attachments,
