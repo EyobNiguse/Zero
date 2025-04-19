@@ -707,7 +707,7 @@ export default function ReplyCompose() {
 
     if (isEditingRecipients || mode === 'forward') {
       return (
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-2 ml-1.5">
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {icon}
