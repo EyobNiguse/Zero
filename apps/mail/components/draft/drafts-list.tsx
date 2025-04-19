@@ -57,7 +57,8 @@ const Draft = ({ message, onClick }: DraftProps) => {
               )}
             >
               <span className={cn(mail.selected && 'max-w-[120px] truncate')}>
-                {message.to.some(
+                {!message.to?.length ||
+                message.to.some(
                   (to: { name: string; email: string }) =>
                     to.name.includes('no-sender') || to.email.includes('no-sender'),
                 )
