@@ -8,7 +8,7 @@ import { useConversation } from "@11labs/react";
 // UI
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, Volume2, VolumeX, XIcon } from "lucide-react";
 
 // Auth
 import { useSession } from "@/lib/auth-client";
@@ -26,7 +26,11 @@ interface EmailContent {
   content: string;
 }
 
-const VoiceChat = () => {
+interface VoiceChatProps {
+  onClose?: () => void;
+}
+
+const VoiceChat = ({ onClose }: VoiceChatProps) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -161,11 +165,22 @@ Metadata:
         <CardTitle className="flex items-center justify-between">
           Voice Chat
           <div className="flex gap-2">
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="h-8 w-8 rounded-full hover:bg-muted"
+              >
+                <XIcon className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="outline"
               size="icon"
               onClick={toggleMute}
               disabled={status !== "connected"}
+              className="h-8 w-8 rounded-full"
             >
               {isMuted ? (
                 <VolumeX className="h-4 w-4" />

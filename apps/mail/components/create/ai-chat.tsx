@@ -1,28 +1,40 @@
 'use client';
 
-import { ArrowUpIcon, Mic, CheckIcon, XIcon } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus } from 'lucide-react';
+import { useSearchValue } from '@/hooks/use-search-value';
+import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useSession } from '@/lib/auth-client';
+import { CurvedArrow } from '../icons/icons';
 import { AITextarea } from './ai-textarea';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { toast } from 'sonner';
-import { nanoid } from 'nanoid';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSession } from '@/lib/auth-client';
-import { useConnections } from '@/hooks/use-connections';
 import VoiceChat from './voice';
+import { nanoid } from 'nanoid';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'email';
+  type?: 'email' | 'search';
   emailContent?: {
     subject?: string;
     content: string;
+  };
+  searchContent?: {
+    searchDisplay: string;
+    results: Array<{
+      id: string;
+      snippet: string;
+      historyId: string;
+      subject: string;
+      from: string;
+    }>;
   };
 }
 
@@ -35,10 +47,15 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
   const [value, setValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+  const [searchValue, setSearchValue] = useSearchValue();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { data: connections } = useConnections();
 
@@ -59,29 +76,6 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
     }
   }, [messages, onMessagesChange, scrollToBottom]);
 
-  const adjustHeight = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    
-    // Set a minimum height
-    const minHeight = 24; // 1.5rem
-    const maxHeight = 120; // Maximum height before scrolling
-
-    // Reset height to auto to get the correct scrollHeight
-    textarea.style.height = 'auto';
-    
-    // Get the scroll height and constrain it
-    const scrollHeight = Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight));
-    textarea.style.height = `${scrollHeight}px`;
-  }, []);
-
-  // Initialize height when component mounts
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = '24px';
-    }
-  }, []);
-
   const handleSendMessage = async () => {
     if (!value.trim() || isLoading) return;
 
@@ -89,30 +83,22 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       id: generateId(),
       role: 'user',
       content: value.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setValue('');
     setIsLoading(true);
 
-    // Reset textarea height after sending
-    if (textareaRef.current) {
-      textareaRef.current.style.height = '24px';
-    }
-
     try {
-      const response = await fetch('/api/chat', {
+      // Always treat messages as search requests for now
+      const response = await fetch('/api/ai-search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          context: {
-            path: pathname,
-            isEmailRequest: value.toLowerCase().includes('email') || pathname === '/create-email'
-          }
         }),
       });
 
@@ -121,30 +107,33 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       }
 
       const data = await response.json();
-      
-      // Create suggestion for any AI response
-      const suggestion = data.emailContent ? {
-        type: 'email' as const,
-        content: data.emailContent,
-        subject: data.subject
-      } : {
-        type: 'text' as const,
-        content: data.content
-      };
 
+      // Update the search value
+      setSearchValue({
+        value: data.searchQuery,
+        highlight: value.trim(),
+        isLoading: false,
+        isAISearching: false,
+        folder: searchValue.folder,
+      });
+
+      // Add assistant message with search results
       const assistantMessage: Message = {
         id: generateId(),
         role: 'assistant',
         content: data.content,
         timestamp: new Date(),
-        type: 'email',
-        emailContent: data.emailContent
+        type: 'search',
+        searchContent: {
+          searchDisplay: data.searchDisplay,
+          results: data.results,
+        },
       };
-      
-      setMessages(prev => [...prev, assistantMessage]);
+
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error:', error);
-      toast.error("Failed to generate response. Please try again.");
+      toast.error('Failed to generate response. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +141,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
 
   const handleAcceptSuggestion = (emailContent: { subject?: string; content: string }) => {
     if (!editor) {
-      toast.error("Editor not found");
+      toast.error('Editor not found');
       return;
     }
 
@@ -160,7 +149,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       // Format the content to preserve line breaks
       const formattedContent = emailContent.content
         .split('\n')
-        .map(line => `<p>${line}</p>`)
+        .map((line) => `<p>${line}</p>`)
         .join('');
 
       // Set the content in the editor
@@ -175,15 +164,15 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
         }
       }
 
-      toast.success("Email content applied successfully");
+      toast.success('Email content applied successfully');
     } catch (error) {
       console.error('Error applying suggestion:', error);
-      toast.error("Failed to apply email content");
+      toast.error('Failed to apply email content');
     }
   };
 
   const handleRejectSuggestion = (messageId: string) => {
-    toast.info("Email suggestion rejected");
+    toast.info('Email suggestion rejected');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -203,27 +192,51 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
     if (minutes < 1) return 'just now';
     if (minutes === 1) return '1 minute ago';
     if (minutes < 60) return `${minutes} minutes ago`;
-    
+
     const hours = Math.floor(minutes / 60);
     if (hours === 1) return '1 hour ago';
     if (hours < 24) return `${hours} hours ago`;
-    
+
     return date.toLocaleDateString();
+  };
+
+  const handleThreadClick = (threadId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('threadId', threadId);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const toggleExpandResults = (messageId: string) => {
+    setExpandedResults((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const sanitizeSnippet = (snippet: string) => {
+    return snippet
+      .replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
   };
 
   return (
     <div className="flex h-full flex-col">
       {/* Messages container */}
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
-        <div className="min-h-full space-y-4 p-4">
+        <div className="min-h-full space-y-4">
           {messages.map((message, index) => (
             <div
               key={message.id}
               className={cn(
-                "flex flex-col gap-2 rounded-lg p-4",
-                message.role === 'user' 
-                  ? "bg-background border border-border" 
-                  : "bg-muted"
+                'flex flex-col gap-2 rounded-lg',
+                message.role === 'user' ? 'bg-background border-border border p-4' : '',
               )}
             >
               <div className="flex items-center gap-2">
@@ -232,10 +245,13 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                     <Avatar className="size-6 rounded-lg">
                       <AvatarImage
                         className="rounded-lg"
-                        src={(activeAccount?.picture ?? undefined) || (session?.user.image ?? undefined)}
+                        src={
+                          (activeAccount?.picture ?? undefined) ||
+                          (session?.user.image ?? undefined)
+                        }
                         alt={activeAccount?.name || session?.user.name || 'User'}
                       />
-                      <AvatarFallback className="text-xs rounded-lg">
+                      <AvatarFallback className="rounded-lg text-xs">
                         {(activeAccount?.name || session?.user.name || 'User')
                           .split(' ')
                           .map((n) => n[0])
@@ -252,7 +268,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                   <>
                     <Avatar className="size-5">
                       <AvatarImage src="/white-icon.svg" alt="Zero" />
-                      <AvatarFallback className="text-xs rounded-lg">Zero</AvatarFallback>
+                      <AvatarFallback className="rounded-lg text-xs">Zero</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">Zero</span>
                   </>
@@ -261,21 +277,63 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                   {formatTimestamp(message.timestamp)}
                 </span>
               </div>
-              
-              <div className="prose dark:prose-invert max-w-none">
-                {message.content}
-              </div>
+
+              <div className="prose dark:prose-invert">{message.content}</div>
+
+              {message.type === 'search' && message.searchContent && (
+                <div className="bg-muted space-y-4 rounded-lg px-4 pt-3">
+                  {(expandedResults.has(message.id)
+                    ? message.searchContent.results
+                    : message.searchContent.results.slice(0, 5)
+                  ).map((result: any, i: number) => (
+                    <div key={i} className="border-t pt-4 first:border-t-0 first:pt-0">
+                      <div className="font-medium">
+                        <p className="max-w-sm truncate text-sm">
+                          {result.subject || 'No subject'}
+                        </p>
+                        <span className="text-muted-foreground text-sm">
+                          from {result.from || 'Unknown sender'}
+                        </span>
+                      </div>
+                      <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                        {sanitizeSnippet(result.snippet)}
+                      </div>
+                      <div className="text-muted-foreground mt-1 text-sm">
+                        <a
+                          href={`/mail/inbox?threadId=${result.id}`}
+                          className="text-blue-500 hover:underline"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleThreadClick(result.id);
+                          }}
+                        >
+                          Open email
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                  {message.searchContent.results.length > 5 && (
+                    <Button
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-foreground w-full"
+                      onClick={() => toggleExpandResults(message.id)}
+                    >
+                      {expandedResults.has(message.id)
+                        ? `Show less (${message.searchContent.results.length - 5} fewer results)`
+                        : `Show more (${message.searchContent.results.length - 5} more results)`}
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {message.type === 'email' && message.emailContent && (
-                <div className="mt-4 rounded border bg-background p-4 font-mono text-sm">
+                <div className="bg-background mt-4 rounded border p-4 font-mono text-sm">
                   {message.emailContent.subject && (
                     <div className="mb-2 text-blue-500">
                       Subject: {message.emailContent.subject}
                     </div>
                   )}
-                  <div className="whitespace-pre-wrap">
-                    {message.emailContent.content}
-                  </div>
+                  <div className="whitespace-pre-wrap">{message.emailContent.content}</div>
                   <div className="mt-4 flex gap-2">
                     <Button
                       variant="outline"
@@ -289,7 +347,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
+                      className="border-destructive/20 hover:bg-destructive/10 hover:text-destructive h-8"
                       onClick={() => handleRejectSuggestion(message.id)}
                     >
                       <XIcon className="mr-1 h-4 w-4" />
@@ -302,17 +360,73 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
           ))}
           {/* Invisible element to scroll to */}
           <div ref={messagesEndRef} />
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex flex-col gap-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-sm">zero is thinking...</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Fixed input at bottom */}
-      <div className="flex-shrink-0 bg-white dark:bg-black px-4 py-2">
-        <div className="relative bg-offsetLight dark:bg-offsetDark rounded">
-        {/* <VoiceChat /> */}
-        <AITextarea />
+      <div className="flex-shrink-0 bg-white dark:bg-black">
+        <div className="bg-offsetLight dark:bg-offsetDark border-border/50 relative rounded-lg border">
+          {showVoiceChat ? (
+            <VoiceChat onClose={() => setShowVoiceChat(false)} />
+          ) : (
+            <div className="flex flex-col p-2">
+              <div className="mb-2 w-full">
+                <AITextarea
+                  ref={textareaRef}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Message Zero..."
+                  className="placeholder:text-muted-foreground h-[44px] w-full resize-none rounded-md bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-muted h-8 w-8 rounded-full"
+                    onClick={() => setShowVoiceChat(true)}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-muted h-8 w-8 rounded-full"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button
+                  variant="default"
+                  className="inline-flex h-8 items-center justify-center gap-2 rounded-lg bg-black px-4 hover:bg-black/80 dark:bg-white dark:hover:bg-white/80"
+                  disabled={!value.trim() || isLoading}
+                  onClick={handleSendMessage}
+                >
+                  <span className="text-sm font-medium text-white dark:text-black">
+                    Send message
+                  </span>
+                  <div className="inline-flex h-5 items-center justify-center gap-2.5 rounded-sm bg-black/10 px-1">
+                    <div className="justify-start text-center font-['SF_Pro_Rounded'] text-sm font-semibold leading-none text-black">
+                      <CurvedArrow className="ml-0.5 mt-1.5 fill-white dark:fill-black" />
+                    </div>
+                  </div>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-1

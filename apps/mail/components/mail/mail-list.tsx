@@ -50,6 +50,7 @@ import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
+import Image from 'next/image';
 import { toast } from 'sonner';
 const HOVER_DELAY = 1000; // ms before prefetching
 
@@ -600,26 +601,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
             </div>
           ) : !items || items.length === 0 ? (
-            <div className="flex h-32 flex-col items-center justify-center gap-2 text-center">
-              <p className="text-muted-foreground text-sm">
-                {searchValue.value ? t('common.mail.noSearchResults') : t('common.mail.noEmails')}
-              </p>
-              {searchValue.value && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchValue({
-                      value: '',
-                      highlight: '',
-                      folder: '',
-                      isLoading: false,
-                    });
-                  }}
-                >
-                  {t('common.mail.clearSearch')}
-                </Button>
-              )}
+            <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
+              <div className="flex flex-col items-center justify-center gap-2 text-center">
+                <Image src="/empty-state.svg" alt="Empty Inbox" width={200} height={200} />
+                <div className='mt-5'>
+                  <p className='text-lg'>It's empty here</p>
+                  <p className='text-md mt-2 text-white/50'>Search for another email please</p>
+                </div>
+              </div>
             </div>
           ) : (
             <>
