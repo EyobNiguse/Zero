@@ -1,6 +1,15 @@
 'use client';
 
 import {
+  cn,
+  FOLDERS,
+  formatDate,
+  getEmailLogo,
+  getMainSearchTerm,
+  parseNaturalLanguageSearch,
+  parseNaturalLanguageDate,
+} from '@/lib/utils';
+import {
   AlertTriangle,
   Bell,
   Briefcase,
@@ -23,7 +32,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
 import { ThreadContextMenu } from '@/components/context/thread-context';
-import { cn, FOLDERS, formatDate, getEmailLogo, getMainSearchTerm, parseNaturalLanguageSearch, parseNaturalLanguageDate } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -117,11 +125,11 @@ const Thread = memo(
     useEffect(() => {
       if (semanticSearchQuery && semanticSearchQuery !== searchValue.value) {
         // Update the search value with our semantic query
-        setSearchValue(prev => ({
-          ...prev,
+        setSearchValue({
+          ...searchValue,
           value: semanticSearchQuery,
-          isAISearching: true
-        }));
+          isAISearching: true,
+        });
       }
     }, [semanticSearchQuery]);
 
@@ -275,13 +283,13 @@ const Thread = memo(
                     {highlightText(latestMessage.subject, searchValue.highlight)}
                   </p>
                   {emailContent && (
-                    <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                    <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
                       {highlightText(emailContent, searchValue.highlight)}
                     </div>
                   )}
                   {mainSearchTerm && (
-                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
+                    <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+                      <span className="bg-primary/10 text-primary rounded px-1.5 py-0.5">
                         {mainSearchTerm}
                       </span>
                     </div>
@@ -297,7 +305,10 @@ const Thread = memo(
 
     const content =
       latestMessage && getThreadData ? (
-        <div className="p-1 px-3 select-none" onClick={onClick ? onClick(latestMessage) : undefined}>
+        <div
+          className="select-none p-1 px-3"
+          onClick={onClick ? onClick(latestMessage) : undefined}
+        >
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             onMouseEnter={handleMouseEnter}
@@ -377,13 +388,13 @@ const Thread = memo(
                     <MailLabels labels={threadLabels} />
                   </div>
                   {emailContent && (
-                    <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                    <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
                       {highlightText(emailContent, searchValue.highlight)}
                     </div>
                   )}
                   {mainSearchTerm && (
-                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
+                    <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+                      <span className="bg-primary/10 text-primary rounded px-1.5 py-0.5">
                         {mainSearchTerm}
                       </span>
                     </div>
@@ -562,10 +573,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   useEffect(() => {
     if (isFiltering && !isLoading) {
       // Reset the search value when loading is complete
-      setSearchValue((prev) => ({
-        ...prev,
+      setSearchValue({
+        ...searchValue,
         isLoading: false,
-      }));
+      });
     }
   }, [isLoading, isFiltering, setSearchValue]);
 
@@ -591,9 +602,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           ) : !items || items.length === 0 ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2 text-center">
               <p className="text-muted-foreground text-sm">
-                {searchValue.value
-                  ? t('common.mail.noSearchResults')
-                  : t('common.mail.noEmails')}
+                {searchValue.value ? t('common.mail.noSearchResults') : t('common.mail.noEmails')}
               </p>
               {searchValue.value && (
                 <Button
@@ -614,24 +623,26 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             </div>
           ) : (
             <>
-              {items.filter((data) => data.id).map((data, index) => {
-                if (!data || !data.id) return null;
-                
-                return (
-                  <Thread
-                    onClick={handleMailClick}
-                    selectMode={getSelectMode()}
-                    isCompact={isCompact}
-                    sessionData={sessionData}
-                    message={data}
-                    key={`${data.id}-${index}`}
-                    isKeyboardFocused={focusedIndex === index && keyboardActive}
-                    isInQuickActionMode={isQuickActionMode && focusedIndex === index}
-                    selectedQuickActionIndex={quickActionIndex}
-                    resetNavigation={resetNavigation}
-                  />
-                );
-              })}
+              {items
+                .filter((data) => data.id)
+                .map((data, index) => {
+                  if (!data || !data.id) return null;
+
+                  return (
+                    <Thread
+                      onClick={handleMailClick}
+                      selectMode={getSelectMode()}
+                      isCompact={isCompact}
+                      sessionData={sessionData}
+                      message={data}
+                      key={`${data.id}-${index}`}
+                      isKeyboardFocused={focusedIndex === index && keyboardActive}
+                      isInQuickActionMode={isQuickActionMode && focusedIndex === index}
+                      selectedQuickActionIndex={quickActionIndex}
+                      resetNavigation={resetNavigation}
+                    />
+                  );
+                })}
               {items.length >= 9 && nextPageToken && !isValidating && (
                 <Button
                   variant={'ghost'}

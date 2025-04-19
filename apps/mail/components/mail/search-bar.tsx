@@ -1,6 +1,6 @@
 import { matchFilterPrefix, filterSuggestionsFunction, filterSuggestions } from '@/lib/filter';
+import { parseNaturalLanguageSearch, parseNaturalLanguageDate } from '@/lib/utils';
 import { cn, extractFilterValue, type FilterSuggestion } from '@/lib/utils';
-import { Search, X } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { Calendar } from '@/components/ui/calendar';
@@ -9,9 +9,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Input } from '@/components/ui/input';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
+import { Search, X } from 'lucide-react';
 import { format } from 'date-fns';
 import React from 'react';
-import { parseNaturalLanguageSearch, parseNaturalLanguageDate } from '@/lib/utils';
 
 const SEARCH_SUGGESTIONS = [
   '"Emails from last week..."',
@@ -90,7 +90,7 @@ type SearchForm = {
 
 export function SearchBar() {
   // const [popoverOpen, setPopoverOpen] = useState(false);
-  const [, setSearchValue] = useSearchValue();
+  const [searchValue, setSearchValue] = useSearchValue();
   const [isSearching, setIsSearching] = useState(false);
   const [value, setValue] = useState<SearchForm>({
     folder: '',
@@ -99,7 +99,7 @@ export function SearchBar() {
     to: '',
     cc: '',
     bcc: '',
-    q: '',
+    q: searchValue.value ?? '',
     dateRange: {
       from: undefined,
       to: undefined,
@@ -141,22 +141,6 @@ export function SearchBar() {
     [form.watch('q')],
   );
 
-  const filtering = useMemo(
-    () =>
-      value.q.length > 0 ||
-      value.from.length > 0 ||
-      value.to.length > 0 ||
-      value.dateRange.from ||
-      value.dateRange.to ||
-      value.category ||
-      value.folder ||
-      value.has ||
-      value.fileName ||
-      value.deliveredTo ||
-      value.unicorn,
-    [value],
-  );
-
   const [isFocused, setIsFocused] = useState(false);
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -192,7 +176,7 @@ export function SearchBar() {
       try {
         if (data.q.trim()) {
           const searchTerm = data.q.trim();
-          
+
           // Parse natural language date queries
           const dateRange = parseNaturalLanguageDate(searchTerm);
           if (dateRange) {
@@ -206,14 +190,17 @@ export function SearchBar() {
               const toDate = format(dateRange.to, 'yyyy/MM/dd');
               searchTerms.push(`before:${toDate}`);
             }
-            
+
             // For date queries, we don't want to search the content
             const cleanedQuery = searchTerm
               .replace(/emails?\s+from\s+/i, '')
               .replace(/\b\d{4}\b/g, '')
-              .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, '')
+              .replace(
+                /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi,
+                '',
+              )
               .trim();
-              
+
             if (cleanedQuery) {
               searchTerms.push(cleanedQuery);
             }
@@ -226,7 +213,9 @@ export function SearchBar() {
               if (searchTerm.includes('@')) {
                 searchTerms.push(`from:${searchTerm}`);
               } else {
-                searchTerms.push(`(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`);
+                searchTerms.push(
+                  `(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`,
+                );
               }
             }
           }
@@ -242,16 +231,21 @@ export function SearchBar() {
         let searchQuery = searchTerms.join(' ');
         searchQuery = extractMetaText(searchQuery) || '';
 
-        console.log('Final search query:', searchQuery);
-        
+        console.log('Final search query:', {
+          value: searchQuery,
+          highlight: data.q,
+          folder: data.folder ? data.folder.toUpperCase() : '',
+          isLoading: true,
+          isAISearching: false,
+        });
+
         setSearchValue({
           value: searchQuery,
           highlight: data.q,
           folder: data.folder ? data.folder.toUpperCase() : '',
           isLoading: true,
-          isAISearching: false
+          isAISearching: false,
         });
-
       } catch (error) {
         console.error('Search error:', error);
         if (data.q) {
@@ -263,7 +257,9 @@ export function SearchBar() {
             if (searchTerm.includes('@')) {
               searchTerms.push(`from:${searchTerm}`);
             } else {
-              searchTerms.push(`(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`);
+              searchTerms.push(
+                `(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`,
+              );
             }
           }
         }
@@ -272,7 +268,7 @@ export function SearchBar() {
           highlight: data.q,
           folder: data.folder ? data.folder.toUpperCase() : '',
           isLoading: true,
-          isAISearching: false
+          isAISearching: false,
         });
       } finally {
         setIsSearching(false);
@@ -284,7 +280,7 @@ export function SearchBar() {
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const inputValue = e.target.value;
-      
+
       if (!inputValue.trim()) {
         setSuggestionsState((prev) => ({ ...prev, show: false }));
         setDatePickerState((prev) => ({ ...prev, show: false }));
@@ -299,8 +295,9 @@ export function SearchBar() {
       // Check for exact phrase matching
       if (textBeforeCursor.includes('"')) {
         const lastQuoteIndex = textBeforeCursor.lastIndexOf('"');
-        const isOpeningQuote = textBeforeCursor.slice(0, lastQuoteIndex).split('"').length % 2 === 0;
-        
+        const isOpeningQuote =
+          textBeforeCursor.slice(0, lastQuoteIndex).split('"').length % 2 === 0;
+
         if (isOpeningQuote) {
           // Inside a quoted phrase, don't show suggestions
           setSuggestionsState((prev) => ({ ...prev, show: false }));
@@ -682,7 +679,7 @@ export function SearchBar() {
       highlight: '',
       folder: '',
       isLoading: false,
-      isAISearching: false
+      isAISearching: false,
     });
   }, [form, setSearchValue]);
 
@@ -692,9 +689,9 @@ export function SearchBar() {
         <Search className="text-muted-foreground absolute left-2.5 h-4 w-4" aria-hidden="true" />
         <div className="relative w-full">
           <Input
-            placeholder={isFocused ? "" : "Search..."}
+            placeholder={isFocused ? '' : 'Search...'}
             ref={inputRef}
-            className="bg-muted-foreground/20 dark:bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 h-8 w-full rounded-md border-none pl-9 pr-14 shadow-none transition-all duration-300 select-none"
+            className="bg-muted-foreground/20 dark:bg-muted/50 text-muted-foreground ring-muted placeholder:text-muted-foreground/70 h-8 w-full select-none rounded-md border-none pl-9 pr-14 shadow-none transition-all duration-300"
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
@@ -706,19 +703,19 @@ export function SearchBar() {
             <button
               type="button"
               onClick={resetSearch}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2 transition-colors"
               disabled={isSearching}
             >
               <X className="h-4 w-4" />
             </button>
           )}
           {isFocused && !formValues.q && (
-            <div 
+            <div
               className={cn(
-                "absolute left-9 right-0 bottom-[5.5px] -translate-y-1/2 text-muted-foreground/70 pointer-events-none text-sm",
-                isAnimating 
-                  ? "opacity-0 translate-y-2 transition-all duration-300 ease-out" 
-                  : "opacity-100 translate-y-0 transition-all duration-300 ease-in"
+                'text-muted-foreground/70 pointer-events-none absolute bottom-[5.5px] left-9 right-0 -translate-y-1/2 text-sm',
+                isAnimating
+                  ? 'translate-y-2 opacity-0 transition-all duration-300 ease-out'
+                  : 'translate-y-0 opacity-100 transition-all duration-300 ease-in',
               )}
             >
               {SEARCH_SUGGESTIONS[currentSuggestionIndex]}
@@ -947,7 +944,7 @@ function extractMetaText(text: string) {
     // Return just the content inside the quotes
     return quotedQueryMatch[1].trim();
   }
-  
+
   // Check for common patterns where the query is preceded by explanatory text
   const patternMatches = [
     // Match "Here is the converted query:" pattern
@@ -957,18 +954,18 @@ function extractMetaText(text: string) {
     // Match "I've converted your query to:" pattern
     text.match(/i('ve| have) converted your query to:?\s*["']?([^"']+)["']?/i),
     // Match "Converting to:" pattern
-    text.match(/converting to:?\s*["']?([^"']+)["']?/i)
+    text.match(/converting to:?\s*["']?([^"']+)["']?/i),
   ].filter(Boolean);
-  
+
   if (patternMatches.length > 0 && patternMatches[0]) {
     // Return the captured query part (last capture group)
     const match = patternMatches[0];
 
-    if (!match[match.length - 1]) return
+    if (!match[match.length - 1]) return;
 
     return match[match.length - 1]!.trim();
   }
-  
+
   // If no patterns match, remove common explanatory text and return
   let cleanedText = text
     // Remove "I focused on..." explanations
@@ -984,6 +981,6 @@ function extractMetaText(text: string) {
     // Remove extra whitespace
     .replace(/\s+/g, ' ')
     .trim();
-    
+
   return cleanedText;
 }

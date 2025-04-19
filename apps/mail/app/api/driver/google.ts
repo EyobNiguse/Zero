@@ -393,13 +393,13 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
   const normalizeSearch = (folder: string, q: string) => {
     // Handle special folders
     if (folder === 'bin') {
-      return { folder: undefined, q: `in:trash` };
+      return { folder: undefined, q: `in:trash ${q}` };
     }
     if (folder === 'archive') {
-      return { folder: undefined, q: `in:archive` };
+      return { folder: undefined, q: `in:archive ${q}` };
     }
     if (folder !== 'inbox') {
-      return { folder, q: `in:${folder}` };
+      return { folder, q: `in:${folder} ${q}` };
     }
     // Return the query as-is to preserve Gmail's native search syntax
     return { folder, q };
