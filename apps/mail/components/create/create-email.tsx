@@ -173,12 +173,24 @@ export function CreateEmail({
 
         if (draft.content) {
           try {
-            const json = generateJSON(draft.content, [Document, Paragraph, Text, Bold]);
-            setDefaultValue(json);
             setMessageContent(draft.content);
+            setResetEditorKey((prev) => prev + 1);
+            setTimeout(() => {
+              try {
+                const json = generateJSON(draft.content, [Document, Paragraph, Text, Bold]);
+                setDefaultValue(json);
+              } catch (error) {
+                console.error('Error parsing draft content:', error);
+                setDefaultValue(createEmptyDocContent());
+              }
+            }, 0);
           } catch (error) {
-            console.error('Error parsing draft content:', error);
+            console.error('Error setting draft content:', error);
+            setDefaultValue(createEmptyDocContent());
           }
+        } else {
+          setDefaultValue(createEmptyDocContent());
+          setMessageContent('');
         }
 
         setHasUnsavedChanges(false);
