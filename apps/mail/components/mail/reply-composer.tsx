@@ -507,19 +507,6 @@ export default function ReplyCompose() {
     setValue('messageContent', content);
   };
 
-  // Check if the message is empty
-  const isMessageEmpty =
-    !getValues('messageContent') ||
-    getValues('messageContent') ===
-      JSON.stringify({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [],
-          },
-        ],
-      });
 
   const handleAIButtonClick = async () => {
     if (!emailData) return;
@@ -1067,7 +1054,7 @@ export default function ReplyCompose() {
 
         <div className="mt-auto flex flex-shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">
-            {!aiState.showOptions ? (
+            {/* {!aiState.showOptions ? (
               <Button
                 variant="outline"
                 className="group relative w-40 overflow-hidden transition-all duration-200"
@@ -1111,7 +1098,7 @@ export default function ReplyCompose() {
                   Reject
                 </Button>
               </div>
-            )}
+            )} */}
             {/* Conditionally render the Popover only if attachments exist */}
             {attachments.length > 0 && (
               <Popover>

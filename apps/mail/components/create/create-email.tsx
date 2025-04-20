@@ -628,8 +628,8 @@ export function CreateEmail({
               </div>
             </div>
             <div className="sticky bottom-0 left-0 right-0 z-10 border-t px-2 py-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex items-center justify-end">
+                {/* <div className="flex items-center gap-4">
                   <div className="pb-2 pt-2">
                     <AIAssistant
                       currentContent={messageContent}
@@ -692,7 +692,7 @@ export function CreateEmail({
                       }}
                     />
                   </div>
-                </div>
+                </div> */}
                 <div className="flex justify-end gap-3">
                   {attachments.length > 0 && (
                     <Popover>
