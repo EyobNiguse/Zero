@@ -356,6 +356,7 @@ const Thread = memo(
                           <span className="size-2 rounded bg-[#006FFE]" />
                         ) : null}
                       </p>
+                       <MailLabels labels={threadLabels} />
                       {getThreadData.totalReplies > 1 ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -384,7 +385,7 @@ const Thread = memo(
                     <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
-                    <MailLabels labels={threadLabels} />
+                   
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
@@ -516,8 +517,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const handleNavigateToThread = useCallback(
     (threadId: string) => {
       setThreadId(threadId);
+      // Prevent default navigation
+      return false;
     },
-    [folder, router],
+    [setThreadId],
   );
 
   const {
@@ -583,7 +586,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     <>
       <div
         ref={parentRef}
-        className={cn('h-full w-full', getSelectMode() === 'range' && 'select-none')}
+        className={cn('h-full w-full hide-link-indicator', getSelectMode() === 'range' && 'select-none')}
         onMouseEnter={() => {
           console.log('[MailList] Mouse Enter - Enabling scope: mail-list');
           enableScope('mail-list');
@@ -736,8 +739,15 @@ const MailLabels = memo(
                   {getLabelIcon(label)}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="hidden px-1 py-0 text-xs" variant={style}>
-                {labelContent}
+              <TooltipContent className="px-2 py-1 text-xs" variant={style}>
+                {normalizedLabel === 'important' && 'Important'}
+                {normalizedLabel === 'promotions' && 'Promotions'}
+                {normalizedLabel === 'personal' && 'Personal'}
+                {normalizedLabel === 'updates' && 'Updates'} 
+                {normalizedLabel === 'work' && 'Work'}
+                {normalizedLabel === 'forums' && 'Forums'}
+                {normalizedLabel === 'notes' && 'Notes'}
+                {normalizedLabel === 'starred' && 'Starred'}
               </TooltipContent>
             </Tooltip>
           );

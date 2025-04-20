@@ -15,6 +15,7 @@ import { useState } from 'react';
 import VoiceChat from './voice';
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface Message {
   id: string;
@@ -333,7 +334,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
 
               <div className="prose dark:prose-invert">{message.content}</div>
 
-              {message.type === 'search' && message.searchContent && (
+              {message.type === 'search' && message.searchContent && message.searchContent.results.length > 0 && (
                 <div className="bg-muted space-y-4 rounded-lg px-4 pt-3">
                   {(expandedResults.has(message.id)
                     ? message.searchContent.results
@@ -342,7 +343,11 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                     <div key={i} className="border-t pt-4 first:border-t-0 first:pt-0">
                       <div className="font-medium">
                         <p className="max-w-sm truncate text-sm">
-                          {result.subject || 'No subject'}
+                          {result.subject.toLowerCase().includes('meeting') ? (
+                            <span className="text-blue-500">📅 {result.subject}</span>
+                          ) : (
+                            result.subject || 'No subject'
+                          )}
                         </p>
                         <span className="text-muted-foreground text-sm">
                           from {result.from || 'Unknown sender'}
@@ -352,16 +357,12 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                         {sanitizeSnippet(result.snippet)}
                       </div>
                       <div className="text-muted-foreground mt-1 text-sm">
-                        <a
-                          href={`/mail/inbox?threadId=${result.id}`}
-                          className="text-blue-500 hover:underline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleThreadClick(result.id);
-                          }}
+                        <button
+                          onClick={() => handleThreadClick(result.id)}
+                          className="text-blue-500 hover:underline bg-transparent border-none p-0 cursor-pointer"
                         >
                           Open email
-                        </a>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -427,7 +428,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
 
       {/* Fixed input at bottom */}
       <div className="flex-shrink-0 bg-white dark:bg-black">
-        <div className="bg-offsetLight dark:bg-offsetDark relative rounded-2xl border">
+        <div className="bg-offsetLight dark:bg-offsetDark relative rounded-2xl border border-border/50">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
           ) : (
@@ -439,7 +440,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                   onChange={(e) => setValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Message Zero..."
-                  className="placeholder:text-muted-foreground h-[44px] w-full resize-none rounded-[5px] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 "
+                  className="placeholder:text-muted-foreground h-[44px] w-full resize-none rounded-[5px] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -454,25 +455,29 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                   />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-gradient-to-b from-white/20 to-white/10 px-1.5 outline outline-1 outline-offset-[-1px] outline-white/5"
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-gradient-to-b from-black/5 to-black/10 dark:from-white/20 dark:to-white/10 px-1.5 outline outline-1 outline-offset-[-1px] outline-black/5 dark:outline-white/5 border border-border/50"
                     disabled={isLoading}
                   >
-                    <Plus className="relative h-4 w-4 overflow-hidden" />
+                    <Plus className="relative h-4 w-4 overflow-hidden text-black dark:text-white" />
                     <div className="flex items-center justify-center gap-2.5 px-0.5">
-                      <div className="justify-start text-center font-['Inter'] text-sm leading-none text-white">
+                      <div className="justify-start text-center text-sm leading-none text-black dark:text-white">
                         {isLoading ? 'Uploading...' : 'Add files'}
                       </div>
                     </div>
                   </button>
                 </div>
-                <button className="inline-flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-white pl-1.5 pr-1">
+                <button 
+                  className="inline-flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black dark:bg-white pl-1.5 pr-1 border border-border/50"
+                  disabled={!value.trim() || isLoading}
+                  onClick={handleSendMessage}
+                >
                   <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                    <div className="justify-start text-center font-['Inter'] text-sm leading-none text-neutral-800">
+                    <div className="justify-start text-centertext-sm leading-none text-white dark:text-neutral-800">
                       Generate email
                     </div>
                   </div>
-                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
-                  <Command className="h-3.5 w-3.5 text-black dark:text-black" />
+                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 dark:bg-black/10 px-1">
+                    <Command className="h-3.5 w-3.5 text-white dark:text-black" />
                     <CurvedArrow className="h-4 w-4 fill-white dark:fill-black mt-1.5" />
                   </div>
                 </button>

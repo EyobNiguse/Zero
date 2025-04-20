@@ -10,6 +10,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useEditor } from '@/components/providers/editor-provider';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
+import { getCookie } from '@/lib/utils';
 
 interface AISidebarProps {
   className?: string;
@@ -32,9 +34,23 @@ export function useAISidebar() {
 }
 
 export function AISidebarProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+  // Initialize state from cookie
+  const [open, setOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const aiSidebarCookie = getCookie(AI_SIDEBAR_COOKIE_NAME);
+      return aiSidebarCookie ? aiSidebarCookie === 'true' : false;
+    }
+    return false;
+  });
 
   const toggleOpen = () => setOpen((prev) => !prev);
+
+  // Save state to cookie when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.cookie = `${AI_SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+    }
+  }, [open]);
 
   return (
     <AISidebarContext.Provider value={{ open, setOpen, toggleOpen }}>
@@ -70,7 +86,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
         {open && (
           <>
             <ResizableHandle className='opacity-0 w-0.5' />
-            <ResizablePanel defaultSize={25} minSize={25} maxSize={40}>
+            <ResizablePanel defaultSize={25} minSize={20} maxSize={25}>
               <div className={cn(
                 'h-[calc(100vh-21px)]',
                 'flex flex-col',
@@ -78,7 +94,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                 className
               )}>
                 <div className="flex h-full flex-col">
-                  <div className="sticky top-0 z-10 mb-4 flex items-center justify-end bg-white dark:bg-black">
+                  <div className="sticky top-0 z-10 flex items-center justify-end bg-white dark:bg-black">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" className="md:h-fit md:p-2 w-8" onClick={() => setOpen(false)}>

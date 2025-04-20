@@ -305,8 +305,8 @@ export function MailLayout() {
         >
           <ResizablePanel
             className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}
-            defaultSize={isMobile ? 100 : 25}
-            minSize={isMobile ? 100 : 25}
+            defaultSize={isMobile ? 100 : 30}
+            minSize={isMobile ? 100 : 30}
           >
             <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm h-[calc(98vh)]">
               <div
@@ -362,11 +362,9 @@ export function MailLayout() {
                     <div className="flex flex-1 justify-center">
                       <SearchBar />
                     </div>
-                    {!threadId && (
-                      <div className="flex items-center">
+                    <div className="flex items-center">
                         <CategorySelect />
                       </div>
-                    )}
                   </>
                 )}
               </div>
@@ -382,50 +380,43 @@ export function MailLayout() {
             </div>
           </ResizablePanel>
           
-          {threadId && (
-            <ResizableHandle className="opacity-0" />
+          <ResizableHandle className="opacity-0" />
+
+          {isDesktop && (
+            <ResizablePanel
+              className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
+              defaultSize={30}
+              minSize={30}
+            >
+              <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
+                <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
+              </div>
+            </ResizablePanel>
           )}
 
-          {isDesktop ? (
-            <>
-              <ResizablePanel
-                className={cn(
-                  'bg-offsetLight dark:bg-offsetDark shadow-sm md:rounded-2xl md:border md:shadow-sm',
-                  threadId ? 'md:flex' : 'hidden',
-                )}
-                defaultSize={75}
-                minSize={35}
-              >
-                <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                  <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
+          {/* Mobile Drawer */}
+          {isMobile && (
+            <Drawer
+              open={!!threadId}
+              onOpenChange={(isOpen) => {
+                if (!isOpen) handleClose();
+              }}
+            >
+              <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-4rem)] overflow-hidden p-0">
+                <DrawerHeader className="sr-only">
+                  <DrawerTitle>Email Details</DrawerTitle>
+                </DrawerHeader>
+                <div className="flex h-full flex-col overflow-hidden">
+                  <div className="flex-1 overflow-hidden">
+                    {threadId ? (
+                      <ThreadDisplay onClose={handleClose} isMobile={true} id={threadId} />
+                    ) : null}
+                  </div>
                 </div>
-              </ResizablePanel>
-            </>
-          ) : null}
+              </DrawerContent>
+            </Drawer>
+          )}
         </ResizablePanelGroup>
-
-        {/* Mobile Drawer */}
-        {isMobile && (
-          <Drawer
-            open={!!threadId}
-            onOpenChange={(isOpen) => {
-              if (!isOpen) handleClose();
-            }}
-          >
-            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-4rem)] overflow-hidden p-0">
-              <DrawerHeader className="sr-only">
-                <DrawerTitle>Email Details</DrawerTitle>
-              </DrawerHeader>
-              <div className="flex h-full flex-col overflow-hidden">
-                <div className="flex-1 overflow-hidden">
-                  {threadId ? (
-                    <ThreadDisplay onClose={handleClose} isMobile={true} id={threadId} />
-                  ) : null}
-                </div>
-              </div>
-            </DrawerContent>
-          </Drawer>
-        )}
       </div>
     </TooltipProvider>
   );
