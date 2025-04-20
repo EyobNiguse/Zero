@@ -13,6 +13,7 @@ interface EmailInputProps {
   onAddEmail: (type: 'to' | 'cc' | 'bcc', email: string) => void;
   hasUnsavedChanges: boolean;
   setHasUnsavedChanges: (value: boolean) => void;
+  className?: string;
 }
 
 export function EmailInput({
@@ -24,7 +25,7 @@ export function EmailInput({
   filteredContacts,
   isLoading,
   onAddEmail,
-  hasUnsavedChanges,
+  className,
   setHasUnsavedChanges,
 }: EmailInputProps) {
   const t = useTranslations();
@@ -67,8 +68,12 @@ export function EmailInput({
 
   return (
     <div className="flex items-center">
-      <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
-        {type === 'to' ? t('common.mailDisplay.to') : type.toUpperCase()}
+      <div
+        className={`text-muted-foreground flex-shrink-0 pr-3 text-[1rem] font-[600] opacity-50 ${className}`}
+      >
+        {type === 'to'
+          ? t('common.mailDisplay.to')
+          : `${type.charAt(0).toUpperCase()}${type.slice(1)}`}
       </div>
       <div className="group relative flex w-full flex-wrap items-center gap-2 rounded-md border border-none bg-transparent p-1 transition-all focus-within:border-none focus:outline-none">
         {emails.map((email, index) => (
