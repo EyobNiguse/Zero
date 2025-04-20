@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus } from 'lucide-react';
+import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus, Command } from 'lucide-react';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
@@ -53,6 +53,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -226,6 +227,58 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       .replace(/&amp;/g, '&');
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      setIsLoading(true);
+      // Create FormData to send files
+      const formData = new FormData();
+      Array.from(files).forEach((file) => {
+        formData.append('files', file);
+      });
+
+      // Send files to your API endpoint
+      const response = await fetch('/api/upload-files', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload files');
+      }
+
+      const data = await response.json();
+
+      // Add a message with the uploaded files
+      const userMessage: Message = {
+        id: generateId(),
+        role: 'user',
+        content: `I've uploaded ${files.length} file(s)`,
+        timestamp: new Date(),
+        type: 'email',
+        emailContent: {
+          content: `Files uploaded: ${Array.from(files)
+            .map((f) => f.name)
+            .join(', ')}`,
+        },
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+      toast.success('Files uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast.error('Failed to upload files');
+    } finally {
+      setIsLoading(false);
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className="flex h-full flex-col">
       {/* Messages container */}
@@ -374,7 +427,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
 
       {/* Fixed input at bottom */}
       <div className="flex-shrink-0 bg-white dark:bg-black">
-        <div className="bg-offsetLight dark:bg-offsetDark border-border/50 relative rounded-lg border">
+        <div className="bg-offsetLight dark:bg-offsetDark relative rounded-2xl border">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
           ) : (
@@ -386,42 +439,43 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                   onChange={(e) => setValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Message Zero..."
-                  className="placeholder:text-muted-foreground h-[44px] w-full resize-none rounded-md bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="placeholder:text-muted-foreground h-[44px] w-full resize-none rounded-[5px] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 "
                 />
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-muted h-8 w-8 rounded-full"
-                    onClick={() => setShowVoiceChat(true)}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    multiple
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.txt,.md"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-gradient-to-b from-white/20 to-white/10 px-1.5 outline outline-1 outline-offset-[-1px] outline-white/5"
+                    disabled={isLoading}
                   >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-muted h-8 w-8 rounded-full"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                    <Plus className="relative h-4 w-4 overflow-hidden" />
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="justify-start text-center font-['Inter'] text-sm leading-none text-white">
+                        {isLoading ? 'Uploading...' : 'Add files'}
+                      </div>
+                    </div>
+                  </button>
                 </div>
-                <Button
-                  variant="default"
-                  className="inline-flex h-8 items-center justify-center gap-2 rounded-lg bg-black px-4 hover:bg-black/80 dark:bg-white dark:hover:bg-white/80"
-                  disabled={!value.trim() || isLoading}
-                  onClick={handleSendMessage}
-                >
-                  <span className="text-sm font-medium text-white dark:text-black">
-                    Send message
-                  </span>
-                  <div className="inline-flex h-5 items-center justify-center gap-2.5 rounded-sm bg-black/10 px-1">
-                    <div className="justify-start text-center font-['SF_Pro_Rounded'] text-sm font-semibold leading-none text-black">
-                      <CurvedArrow className="ml-0.5 mt-1.5 fill-white dark:fill-black" />
+                <button className="inline-flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-white pl-1.5 pr-1">
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                    <div className="justify-start text-center font-['Inter'] text-sm leading-none text-neutral-800">
+                      Generate email
                     </div>
                   </div>
-                </Button>
+                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
+                  <Command className="h-3.5 w-3.5 text-black dark:text-black" />
+                    <CurvedArrow className="h-4 w-4 fill-white dark:fill-black mt-1.5" />
+                  </div>
+                </button>
               </div>
             </div>
           )}

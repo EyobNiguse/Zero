@@ -72,7 +72,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
             <ResizableHandle className='opacity-0 w-0.5' />
             <ResizablePanel defaultSize={25} minSize={25} maxSize={40}>
               <div className={cn(
-                'h-[calc(100vh-1.5rem)]',
+                'h-[calc(100vh-21px)]',
                 'flex flex-col',
                 'my-3 mr-3',
                 className
