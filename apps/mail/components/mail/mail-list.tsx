@@ -307,7 +307,7 @@ const Thread = memo(
     const content =
       latestMessage && getThreadData ? (
         <div
-          className="select-none p-1 px-3"
+          className="select-none py-1 "
           onClick={onClick ? onClick(latestMessage) : undefined}
         >
           <div
@@ -316,11 +316,11 @@ const Thread = memo(
             onMouseLeave={handleMouseLeave}
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
+              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip border-transparent py-3 text-left text-sm transition-all hover:opacity-100',
              
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
-              isKeyboardFocused && 'ring-primary/50 ring-2',
+              isKeyboardFocused && 'ring-primary/50',
             )}
           >
             <div
@@ -329,7 +329,7 @@ const Thread = memo(
                 isMailBulkSelected && 'translate-x-0',
               )}
             />
-            <div className="flex w-full items-center justify-between gap-4">
+            <div className="flex w-full items-center justify-between gap-4 px-4">
               <Avatar className="h-8 w-8">
                 <AvatarImage
                   className="bg-muted-foreground/50 dark:bg-muted/50 p-2"
