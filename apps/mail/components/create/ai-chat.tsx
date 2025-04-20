@@ -472,7 +472,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                   onClick={handleSendMessage}
                 >
                   <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                    <div className="justify-start text-centertext-sm leading-none text-white dark:text-neutral-800">
+                    <div className="justify-start text-center text-sm leading-none text-white dark:text-neutral-800">
                       Generate email
                     </div>
                   </div>
