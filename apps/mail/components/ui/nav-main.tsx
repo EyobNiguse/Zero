@@ -57,6 +57,7 @@ export function NavMain({ items }: NavMainProps) {
   const searchParams = useSearchParams();
   const { data: session, isPending } = useSession();
   const [category] = useQueryState('category');
+  const { state } = useSidebar();
 
   /**
    * Validates URLs to prevent open redirect vulnerabilities.
@@ -150,7 +151,7 @@ export function NavMain({ items }: NavMainProps) {
   );
 
   return (
-    <SidebarGroup className="space-y-2.5 py-0">
+    <SidebarGroup className={`${state !== 'collapsed' ? 'mt-5' : 'mt-1'} space-y-2.5 py-0`}>
       <SidebarMenu>
         {items.map((section) => (
           <Collapsible
@@ -159,6 +160,13 @@ export function NavMain({ items }: NavMainProps) {
             className="group/collapsible"
           >
             <SidebarMenuItem>
+              {state !== 'collapsed' ? (
+                <p className="mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]">
+                  {section.title}
+                </p>
+              ) : (
+                <div className="mx-2 h-[0.5px] bg-[#262626] mb-4 mt-2" />
+              )}
               <div className="space-y-1 pb-2">
                 {section.items.map((item) => (
                   <NavItem
@@ -167,6 +175,7 @@ export function NavMain({ items }: NavMainProps) {
                     isActive={isUrlActive(item.url)}
                     href={getHref(item)}
                     target={item.target}
+                    title={item.title}
                   />
                 ))}
               </div>
@@ -209,8 +218,8 @@ function NavItem(item: NavItemProps & { href: string }) {
     <SidebarMenuButton
       tooltip={t(item.title as MessageKey)}
       className={cn(
-        'hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center',
-        item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-subtleBlack',
+        'hover:bg-subtleWhite dark:hover:bg-[#202020] flex items-center',
+        item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-[#202020]',
       )}
       onClick={() => setOpenMobile(false)}
     >
@@ -218,7 +227,7 @@ function NavItem(item: NavItemProps & { href: string }) {
       <p className="mt-0.5 min-w-0 flex-1 truncate text-[13px]">{t(item.title as MessageKey)}</p>
       {stats
         ? stats.find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase()) && (
-            <Badge className="ml-auto shrink-0 rounded-md" variant="outline">
+            <Badge className="ml-auto shrink-0 rounded-full text-muted-foreground dark:bg-[#2B2B2B]" variant="outline">
               {stats
                 .find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase())
                 ?.count?.toLocaleString() || '0'}

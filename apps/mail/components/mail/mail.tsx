@@ -42,9 +42,9 @@ import { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
-import { useParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { getMail, markAsRead } from '@/actions/mail';
@@ -52,9 +52,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
-import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
+import { ArrowCircle } from '../icons/icons';
+import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
@@ -297,7 +298,7 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit flex p-0 mt-1">
+      <div className="rounded-inherit mt-1 flex p-0">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
@@ -308,7 +309,7 @@ export function MailLayout() {
             defaultSize={isMobile ? 100 : 30}
             minSize={isMobile ? 100 : 30}
           >
-            <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm h-[calc(98vh+10px)]">
+            <div className="bg-offsetLight dark:bg-offsetDark h-[calc(98vh+10px)] flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors md:min-h-14',
@@ -316,23 +317,18 @@ export function MailLayout() {
               >
                 <div className="flex items-center gap-2">
                   <SidebarToggle className="h-fit px-2" />
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                          // Trigger a refresh of the mail list
-                          const event = new CustomEvent('refreshMailList');
-                          window.dispatchEvent(event);
-                        }}
-                      >
-                        <RotateCw className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t('common.actions.refresh')}</TooltipContent>
-                  </Tooltip>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      // Trigger a refresh of the mail list
+                      const event = new CustomEvent('refreshMailList');
+                      window.dispatchEvent(event);
+                    }}
+                  >
+                    <ArrowCircle className="dark:fill-iconDark fill-iconLight" />
+                  </Button>
                 </div>
 
                 {mail.bulkSelected.length > 0 ? (
@@ -363,8 +359,8 @@ export function MailLayout() {
                       <SearchBar />
                     </div>
                     <div className="flex items-center">
-                        <CategorySelect />
-                      </div>
+                      <CategorySelect />
+                    </div>
                   </>
                 )}
               </div>
@@ -379,7 +375,7 @@ export function MailLayout() {
               </div>
             </div>
           </ResizablePanel>
-          
+
           <ResizableHandle className="opacity-0" />
 
           {isDesktop && (
@@ -464,7 +460,7 @@ function BulkSelectActions() {
     try {
       const response = await markAsRead({ ids: mail.bulkSelected });
       if (response.success) {
-        // TODO: fix this, it needs useThread mutation 
+        // TODO: fix this, it needs useThread mutation
         await mutateThreads();
         await mutateStats();
         setMail((prev) => ({
@@ -650,7 +646,9 @@ function CategorySelect() {
   });
 
   // Skip category selection for drafts, spam, sent, archive, and bin pages
-  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
+  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(
+    folder || '',
+  );
 
   if (!shouldShowCategorySelect) return null;
 

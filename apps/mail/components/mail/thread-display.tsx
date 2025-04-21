@@ -16,6 +16,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useThread, useThreads } from '@/hooks/use-threads';
@@ -35,7 +41,6 @@ import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -281,7 +286,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     <div
       className={cn(
         'flex flex-col',
-        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100vh-2rem)]',
+        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100vh-19px)]',
       )}
     >
       <div
@@ -296,9 +301,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
               <Image src="/empty-state.svg" alt="Empty Thread" width={200} height={200} />
-              <div className='mt-5'>
-                <p className='text-lg'>It's empty here</p>
-                <p className='text-md mt-2 text-white/50'>Choose an email to view details</p>
+              <div className="mt-5">
+                <p className="text-lg">It's empty here</p>
+                <p className="text-md mt-2 text-white/50">Choose an email to view details</p>
               </div>
             </div>
           </div>
@@ -312,9 +317,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           </div>
         ) : (
           <>
-            <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2.5 md:pt-[10px]">
+            <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[14px]">
               <div className="flex flex-1 items-center gap-2">
-                <ThreadActionButton icon={X} label={t('common.actions.close')} onClick={handleClose} />
+                <ThreadActionButton
+                  icon={X}
+                  label={t('common.actions.close')}
+                  onClick={handleClose}
+                />
                 <ThreadSubject subject={emailData.latest?.subject} />
               </div>
               <div className="flex items-center md:gap-2">

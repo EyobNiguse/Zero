@@ -17,7 +17,10 @@ export default {
       colors: {
         offsetDark: '#0A0A0A',
         offsetLight: '#F5F5F5',
+        iconDark: '#898989',
+        iconLight: '#6D6D6D',
         logout: '#D93036',
+        mainBlue: '#437DFB',
         subtleWhite: '#EAEAEA',
         subtleBlack: '#1F1F1F',
         background: 'hsl(var(--background))',

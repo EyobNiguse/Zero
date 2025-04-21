@@ -108,7 +108,8 @@
       "documentation": "Documentation",
       "appTheme": "App Theme",
       "accounts": "Accounts",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "otherAccounts": "Other Accounts"
     },
     "mailCategories": {
       "primary": "Primary",
