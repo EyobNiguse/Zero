@@ -77,7 +77,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup direction="horizontal" className={cn(
-        'bg-white dark:bg-black p-0',
+        'bg-lightBackground dark:bg-darkBackground p-0',
       )}>
         <ResizablePanel>
           {children}
@@ -85,16 +85,16 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
         
         {open && (
           <>
-            <ResizableHandle className='opacity-0 w-0.5' />
-            <ResizablePanel defaultSize={25} minSize={20} maxSize={25}>
+            <ResizableHandle className='opacity-0 w-1.5' />
+            <ResizablePanel defaultSize={25} minSize={20} maxSize={25} className="bg-panelLight dark:bg-panelDark shadow-sm  md:rounded-2xl md:border md:shadow-sm h-[calc(98vh+6px)] mt-1 mr-1.5">
               <div className={cn(
                 'h-[calc(98vh+15px)]',
                 'flex flex-col',
-                'mr-1 ml-0.5',
+                'mr-1.5',
                 className
               )}>
                 <div className="flex h-full flex-col">
-                  <div className="sticky top-0 z-10 flex items-center justify-end bg-white dark:bg-black">
+                  {/* <div className="sticky top-0 z-10 flex items-center justify-end bg-panelLight dark:bg-panelDark">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" className="md:h-fit md:p-2 w-8" onClick={() => setOpen(false)}>
@@ -103,8 +103,8 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                       </TooltipTrigger>
                       <TooltipContent>Close</TooltipContent>
                     </Tooltip>
-                  </div>
-                  <div className="relative flex-1 overflow-hidden">
+                  </div> */}
+                  <div className="relative flex-1 overflow-hidden b">
                     {!hasMessages && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div className="relative h-20 w-20">

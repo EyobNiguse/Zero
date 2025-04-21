@@ -290,7 +290,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
               key={message.id}
               className={cn(
                 'flex flex-col gap-2 rounded-lg',
-                message.role === 'user' ? 'bg-background border-border border p-4' : '',
+                message.role === 'user' ? 'bg-[] border-border border p-4' : '',
               )}
             >
               <div className="flex items-center gap-2">
@@ -427,8 +427,8 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       </div>
 
       {/* Fixed input at bottom */}
-      <div className="flex-shrink-0 bg-white dark:bg-black">
-        <div className="bg-offsetLight dark:bg-offsetDark relative rounded-2xl border border-border/50">
+      <div className="flex-shrink-0 mb-[17px] ml-1.5">
+        <div className="bg-offsetLight dark:bg-[#333333] relative rounded-2xl border border-border/50">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
           ) : (

@@ -7,31 +7,15 @@ import {
   getEmailLogo,
   getMainSearchTerm,
   parseNaturalLanguageSearch,
-  parseNaturalLanguageDate,
 } from '@/lib/utils';
-import {
-  AlertTriangle,
-  Bell,
-  Briefcase,
-  ChevronDown,
-  Star,
-  StickyNote,
-  Tag,
-  User,
-  Users,
-} from 'lucide-react';
-import type {
-  ConditionalThreadProps,
-  InitialThread,
-  MailListProps,
-  MailSelectMode,
-  ParsedMessage,
-} from '@/types';
+import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Briefcase, ChevronDown, Star, StickyNote, Users } from 'lucide-react';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
 import { ThreadContextMenu } from '@/components/context/thread-context';
+import { Bell, ExclamationTriangle, Tag, User } from '../icons/icons';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -227,10 +211,10 @@ const Thread = memo(
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8">
                 <AvatarImage
-                  className="bg-muted-foreground/50 dark:bg-muted/50 p-2"
+                  className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
                   src={getEmailLogo(latestMessage.sender.email)}
                 />
-                <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50">
+                <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full">
                   {latestMessage.sender?.name[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -306,10 +290,7 @@ const Thread = memo(
 
     const content =
       latestMessage && getThreadData ? (
-        <div
-          className="select-none py-1 "
-          onClick={onClick ? onClick(latestMessage) : undefined}
-        >
+        <div className="select-none py-1" onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             onMouseEnter={handleMouseEnter}
@@ -317,7 +298,7 @@ const Thread = memo(
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
               'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip border-transparent py-3 text-left text-sm transition-all hover:opacity-100',
-             
+
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
               isKeyboardFocused && 'ring-primary/50',
@@ -330,38 +311,42 @@ const Thread = memo(
               )}
             />
             <div className="flex w-full items-center justify-between gap-4 px-4">
-              <Avatar className="h-8 w-8">
-                <AvatarImage
-                  className="bg-muted-foreground/50 dark:bg-muted/50 p-2"
-                  src={getEmailLogo(latestMessage.sender.email)}
-                />
-                <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50">
-                  {latestMessage.sender.name[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
+                    src={getEmailLogo(latestMessage.sender.email)}
+                  />
+                  <AvatarFallback className="rounded-full bg-[#FFFFFF] dark:bg-[#373737]">
+                    {latestMessage.sender.name[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="z-1 relative">
+                  {getThreadData.hasUnread && !isMailSelected ? (
+                    <span className="absolute -bottom-[1px] right-0.5 size-2 rounded bg-[#006FFE]" />
+                  ) : null}
+                </div>
+              </div>
+
               <div className="flex w-full justify-between">
                 <div className="w-full">
                   <div className="flex w-full flex-row items-center justify-between">
-                    <div className="flex flex-row items-center gap-1">
+                    <div className="flex flex-row items-center gap-[4px]">
                       <p
                         className={cn(
                           getThreadData.hasUnread && !isMailSelected ? 'font-bold' : 'font-medium',
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span className={cn('truncate', threadId ? 'max-w-[20ch] truncate' : '')}>
+                        <span className={cn('truncate', threadId ? 'max-w-[20ch]' : '')}>
                           {highlightText(latestMessage.sender.name, searchValue.highlight)}
                         </span>{' '}
-                        {getThreadData.hasUnread && !isMailSelected ? (
-                          <span className="size-2 rounded bg-[#006FFE]" />
-                        ) : null}
                       </p>
-                       <MailLabels labels={threadLabels} />
                       {getThreadData.totalReplies > 1 ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-                              {getThreadData.totalReplies}
+                            <span className="rounded-md text-xs opacity-70">
+                              [{getThreadData.totalReplies}]
                             </span>
                           </TooltipTrigger>
                           <TooltipContent className="px-1 py-0 text-xs">
@@ -373,7 +358,7 @@ const Thread = memo(
                     {latestMessage.receivedOn ? (
                       <p
                         className={cn(
-                          'text-nowrap text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
+                          'text-nowrap text-xs font-normal text-[#6D6D6D] opacity-70 transition-opacity group-hover:opacity-100 dark:text-[#8C8C8C]',
                           isMailSelected && 'opacity-100',
                         )}
                       >
@@ -385,7 +370,7 @@ const Thread = memo(
                     <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
-                   
+                    <MailLabels labels={threadLabels} />
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
@@ -586,7 +571,10 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     <>
       <div
         ref={parentRef}
-        className={cn('h-full w-full hide-link-indicator', getSelectMode() === 'range' && 'select-none')}
+        className={cn(
+          'hide-link-indicator h-full w-full',
+          getSelectMode() === 'range' && 'select-none',
+        )}
         onMouseEnter={() => {
           console.log('[MailList] Mouse Enter - Enabling scope: mail-list');
           enableScope('mail-list');
@@ -605,9 +593,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
                 <Image src="/empty-state.svg" alt="Empty Inbox" width={200} height={200} />
-                <div className='mt-5'>
-                  <p className='text-lg'>It's empty here</p>
-                  <p className='text-md mt-2 text-white/50'>Search for another email please</p>
+                <div className="mt-5">
+                  <p className="text-lg">It's empty here</p>
+                  <p className="text-md mt-2 text-white/50">Search for another email please</p>
                 </div>
               </div>
             </div>
@@ -682,7 +670,7 @@ const MailLabels = memo(
     if (!visibleLabels.length) return null;
 
     return (
-      <div className={cn('flex select-none items-center gap-1')}>
+      <div className={cn('flex select-none items-center')}>
         {visibleLabels.map((label) => {
           const style = getDefaultBadgeStyle(label);
           if (label.toLowerCase() === 'notes') {
@@ -733,23 +721,9 @@ const MailLabels = memo(
           }
 
           return (
-            <Tooltip key={label}>
-              <TooltipTrigger asChild>
-                <Badge className="rounded-md p-1" variant={style}>
-                  {getLabelIcon(label)}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent className="px-2 py-1 text-xs" variant={style}>
-                {normalizedLabel === 'important' && 'Important'}
-                {normalizedLabel === 'promotions' && 'Promotions'}
-                {normalizedLabel === 'personal' && 'Personal'}
-                {normalizedLabel === 'updates' && 'Updates'} 
-                {normalizedLabel === 'work' && 'Work'}
-                {normalizedLabel === 'forums' && 'Forums'}
-                {normalizedLabel === 'notes' && 'Notes'}
-                {normalizedLabel === 'starred' && 'Starred'}
-              </TooltipContent>
-            </Tooltip>
+            <Badge className="rounded-md p-1" variant={style}>
+              {getLabelIcon(label)}
+            </Badge>
           );
         })}
       </div>
@@ -774,21 +748,21 @@ function getLabelIcon(label: string) {
 
   switch (normalizedLabel) {
     case 'important':
-      return <AlertTriangle className="h-3 w-3" />;
+      return <ExclamationTriangle className="h-3.5 w-3.5 fill-[#F59E0D]" />;
     case 'promotions':
-      return <Tag className="h-3 w-3 rotate-90" />;
+      return <Tag className="h-3.5 w-3.5 fill-[#F43F5E]" />;
     case 'personal':
-      return <User className="h-3 w-3" />;
+      return <User className="h-3.5 w-3.5 fill-[#39AE4A]" />;
     case 'updates':
-      return <Bell className="h-3 w-3" />;
+      return <Bell className="h-3.5 w-3.5 fill-[#8B5CF6]" />;
     case 'work':
-      return <Briefcase className="h-3 w-3" />;
+      return <Briefcase className="h-3.5 w-3.5" />;
     case 'forums':
-      return <Users className="h-3 w-3" />;
+      return <Users className="h-3.5 w-3.5" />;
     case 'notes':
-      return <StickyNote className="h-3 w-3" />;
+      return <StickyNote className="h-3.5 w-3.5" />;
     case 'starred':
-      return <Star className="h-3 w-3" />;
+      return <Star className="h-3.5 w-3.5" />;
     default:
       return null;
   }

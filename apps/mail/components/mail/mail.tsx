@@ -309,7 +309,7 @@ export function MailLayout() {
             defaultSize={isMobile ? 100 : 30}
             minSize={isMobile ? 100 : 30}
           >
-            <div className="bg-offsetLight dark:bg-offsetDark h-[calc(98vh+10px)] flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
+            <div className="bg-panelLight dark:bg-panelDark  flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors md:min-h-14',
@@ -380,7 +380,7 @@ export function MailLayout() {
 
           {isDesktop && (
             <ResizablePanel
-              className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
+              className="bg-panelLight dark:bg-panelDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
               defaultSize={30}
               minSize={30}
             >
