@@ -828,22 +828,18 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       }
     },
     createDraft: async (data: any) => {
-      const boundary = `boundary_${Date.now()}`;
-
-      const messageParts = [
-        `From: me`,
-        `To: ${data.to}`,
-        data.cc ? `Cc: ${data.cc}` : '',
-        data.bcc ? `Bcc: ${data.bcc}` : '',
-        `Subject: ${data.subject}`,
-        `MIME-Version: 1.0`,
-        `Content-Type: multipart/mixed; boundary=${boundary}`,
-        '',
-        `--${boundary}`,
-        'Content-Type: text/html; charset=utf-8',
-        '',
-        data.message || '',
-      ];
+      const msg = createMimeMessage();
+      msg.setSender('me');
+      msg.setTo(data.to);
+      
+      if (data.cc) msg.setCc(data.cc);
+      if (data.bcc) msg.setBcc(data.bcc);
+      
+      msg.setSubject(data.subject);
+      msg.addMessage({
+        contentType: 'text/html',
+        data: data.message || ''
+      });
 
       if (data.attachments?.length > 0) {
         for (const attachment of data.attachments) {
@@ -861,21 +857,15 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             reader.readAsDataURL(attachment);
           });
 
-          messageParts.push(
-            `--${boundary}`,
-            `Content-Type: ${attachment.type}`,
-            `Content-Transfer-Encoding: base64`,
-            `Content-Disposition: attachment; filename="${attachment.name}"`,
-            '',
-            base64Data,
-          );
+          msg.addAttachment({
+            filename: attachment.name,
+            contentType: attachment.type,
+            data: base64Data
+          });
         }
       }
 
-      messageParts.push(`--${boundary}--`);
-
-      const mimeMessage = messageParts.filter(Boolean).join('\n');
-
+      const mimeMessage = msg.asRaw();
       const encodedMessage = Buffer.from(mimeMessage)
         .toString('base64')
         .replace(/\+/g, '-')
