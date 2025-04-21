@@ -41,7 +41,7 @@ const Sidebar = React.forwardRef<
       return (
         <div
           className={cn(
-            'text-sidebar-foreground flex h-full w-[--sidebar-width] flex-col bg-lightBackground dark:bg-darkBackground',
+            'text-sidebar-foreground bg-lightBackground dark:bg-darkBackground flex h-full w-[--sidebar-width] flex-col',
             className,
           )}
           ref={ref}
@@ -58,7 +58,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="text-sidebar-foreground w-[--sidebar-width] bg-lightBackground dark:bg-darkBackground [&>button]:hidden"
+            className="text-sidebar-foreground bg-lightBackground dark:bg-darkBackground w-[--sidebar-width] [&>button]:hidden"
             style={
               {
                 '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
@@ -112,7 +112,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col bg-lightBackground dark:bg-darkBackground group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow"
+            className="group-data-[variant=floating]:border-sidebar-border bg-lightBackground dark:bg-darkBackground flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow"
           >
             {children}
           </div>
@@ -437,10 +437,17 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent
           side="right"
-          align="center"
+          align="start"
+          variant="sidebar"
+          className="flex flex-col"
           hidden={state !== 'collapsed' || isMobile}
+          sideOffset={8}
           {...tooltip}
-        />
+        >
+          <div className="text-base-gray-950 text-sm font-medium leading-none dark:text-white">
+            {typeof tooltip === 'string' ? tooltip : tooltip.children}
+          </div>
+        </TooltipContent>
       </Tooltip>
     );
   },
