@@ -26,11 +26,15 @@ const connectionHandlerHook = async (account: Account) => {
   }
 
   const driver = await createDriver(account.providerId, {});
-  const userInfo = await driver.getUserInfo({
-    access_token: account.accessToken,
-    refresh_token: account.refreshToken,
-    email: '',
-  });
+  const userInfo = await driver
+    .getUserInfo({
+      access_token: account.accessToken,
+      refresh_token: account.refreshToken,
+      email: '',
+    })
+    .catch(() => {
+      throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
+    });
 
   if (!userInfo.data?.emailAddresses?.[0]?.value) {
     console.error('Missing email in user info:', { userInfo });
