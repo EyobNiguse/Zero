@@ -25,7 +25,6 @@ export const throwUnauthorizedGracefully = async () => {
   try {
     const headersList = await headers();
     await auth.api.signOut({ headers: headersList });
-    redirect('/login?error=unauthorized');
   } catch (error) {
     console.warn('Error signing out & redirecting to login:', error);
     throw error;

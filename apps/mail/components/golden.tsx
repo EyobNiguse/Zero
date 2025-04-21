@@ -116,7 +116,7 @@ export const GoldenTicketModal = () => {
               render={({ field }) => (
                 <FormItem>
                   
-                  <Input placeholder='nizzy@gmail.com' {...field} className='placeholder:opacity-60 dark:placeholder:opacity-20' />
+                  <Input placeholder='nizzy@gmail.com' {...field} className='placeholder:opacity-20' />
                 </FormItem>
               )}
             />
