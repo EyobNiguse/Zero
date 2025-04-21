@@ -2,9 +2,10 @@
 
 import type { InitialThread, ThreadProps, MailListProps, MailSelectMode } from '@/types';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { cn, defaultPageSize, formatDate } from '@/lib/utils';
+import { extractTextFromHTML } from '@/actions/extractText';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { highlightText } from '@/lib/email-utils.client';
@@ -28,6 +29,7 @@ interface DraftProps extends Omit<ThreadProps, 'message'> {
 const Draft = ({ message, onClick }: DraftProps) => {
   const [mail] = useMail();
   const [searchValue] = useSearchValue();
+  const [bodyText, setBodyText] = React.useState('');
 
   const isMailSelected = message.id === mail.selected;
   const isMailBulkSelected = mail.bulkSelected.includes(message.id);
@@ -93,6 +95,15 @@ const Draft = ({ message, onClick }: DraftProps) => {
           )}
         >
           {highlightText(message.subject, searchValue.highlight)}
+        </p>
+        <p
+          className={cn(
+            'mt-1 line-clamp-1 text-xs opacity-70 transition-opacity',
+            mail.selected ? 'line-clamp-1' : 'line-clamp-2',
+            isMailSelected && 'opacity-100',
+          )}
+        >
+          {highlightText(message.title || 'No content', searchValue.highlight)}
         </p>
       </div>
     </div>
