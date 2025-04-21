@@ -6,9 +6,11 @@ import { navigationConfig, bottomNavItems } from '@/config/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSession } from '@/lib/auth-client';
 import { PencilCompose } from '../icons/icons';
 import React, { useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { GoldenTicketModal } from '../golden';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { FOLDERS } from '@/lib/utils';
@@ -20,6 +22,7 @@ import Link from 'next/link';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
+  const { data: session, isPending } = useSession();
 
   const pathname = usePathname();
 
@@ -53,16 +56,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [pathname, stats]);
 
-  const showComposeButton = currentSection === 'mail';  
+  const showComposeButton = currentSection === 'mail';
   const { state } = useSidebar();
-
 
   return (
     <div>
       <Sidebar
         collapsible="icon"
         {...props}
-        className={`flex select-none flex-col items-center  ${state === 'collapsed' ? '' : ''}`}
+        className={`flex select-none flex-col items-center ${state === 'collapsed' ? '' : ''}`}
       >
         <div className="flex w-full flex-col">
           <SidebarHeader className="flex flex-col gap-2 pt-[18px]">
@@ -80,7 +82,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               )}
             </AnimatePresence>
           </SidebarHeader>
-          <SidebarContent className="py-0 pt-0">
+          <SidebarContent className={`py-0 pt-0 ${state !== 'collapsed' ? 'mt-5' : ''}`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentSection}
@@ -97,6 +99,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
 
         <div className="mt-auto flex w-full flex-col">
+          <div className='mx-2'>
+            <GoldenTicketModal />
+          </div>
           <SidebarContent className="py-0 pt-0">
             <NavMain items={bottomNavItems} />
           </SidebarContent>
@@ -112,16 +117,14 @@ function ComposeButton() {
   const isMobile = useIsMobile();
   const t = useTranslations();
   return (
-    <button className="inline-flex h-8 items-center justify-center gap-1 self-stretch overflow-hidden rounded-md dark:bg-gradient-to-b dark:from-white/20 dark:to-white/10 dark:outline dark:outline-1 dark:outline-offset-[-1px] dark:outline-white/5 border dark:border-none border-gray-200 bg-transparent text-black dark:text-white w-full">
+    <button className="inline-flex h-8 w-full items-center justify-center gap-1 self-stretch overflow-hidden rounded-md border border-gray-200 bg-transparent text-black dark:border-none dark:bg-gradient-to-b dark:from-white/20 dark:to-white/10 dark:text-white dark:outline dark:outline-1 dark:outline-offset-[-1px] dark:outline-white/5">
       <Link prefetch shallow href="/mail/create">
         {state === 'collapsed' && !isMobile ? (
           <PencilCompose className="fill-iconLight dark:fill-iconDark mt-0.5 text-black" />
         ) : (
           <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
             <PencilCompose className="fill-iconLight dark:fill-iconDark" />
-            <div className="justify-start text-sm leading-none">
-              New email
-            </div>
+            <div className="justify-start text-sm leading-none">New email</div>
           </div>
         )}
       </Link>
