@@ -157,8 +157,6 @@ export function ThreadContextMenu({
         success: successMessage,
         error: t('common.actions.failedToMove'),
       });
-
-      await promise;
     } catch (error) {
       console.error(`Error moving ${threadId ? 'email' : 'thread'}:`, error);
     }
