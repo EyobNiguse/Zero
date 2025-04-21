@@ -131,7 +131,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     process.env.GOOGLE_REDIRECT_URI as string,
   );
 
-  const getScope = () => ['https://www.googleapis.com/auth/gmail.modify'].join(' ');
+  const getScope = () =>
+    [
+      'https://www.googleapis.com/auth/gmail.modify',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+    ].join(' ');
   if (config.auth) {
     auth.setCredentials({
       refresh_token: config.auth.refresh_token,
