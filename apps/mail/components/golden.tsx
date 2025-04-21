@@ -97,8 +97,7 @@ export const GoldenTicketModal = () => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className='flex flex-col gap-4'>
-            <Image src='/white-icon.svg' alt='Zero' width={32} height={32} className='hidden dark:block'/>
-            <Image src='/black-icon.svg' alt='Zero' width={32} height={32} className='block dark:hidden'/>
+            <Image src='/white-icon.svg' alt='Zero' width={32} height={32} />
             <span>Welcome to Zero! 🎉 ✨</span>
           </DialogTitle>
           <DialogDescription className='pt-3 flex flex-col gap-3'>
@@ -116,7 +115,7 @@ export const GoldenTicketModal = () => {
               render={({ field }) => (
                 <FormItem>
                   
-                  <Input placeholder='nizzy@gmail.com' {...field} className='placeholder:opacity-60 dark:placeholder:opacity-20' />
+                  <Input placeholder='nizzy@gmail.com' {...field} className='placeholder:opacity-20' />
                 </FormItem>
               )}
             />

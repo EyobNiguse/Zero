@@ -121,14 +121,7 @@ export default function Hero({ title }: { title: ReactNode }) {
                     alt="Email"
                     width={15}
                     height={15}
-                    className="hidden dark:block"
-                  />
-                  <Image
-                    src="/black-icon.svg"
-                    alt="Email"
-                    width={15}
-                    height={15}
-                    className="block dark:hidden"
+                    className="invert dark:invert-0"
                   />
                   Start Emailing
                 </Link>
