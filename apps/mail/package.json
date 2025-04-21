@@ -7,11 +7,7 @@
     "dev:turbo": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --cache --cache-location ./node_modules/.cache/eslint",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "lint": "eslint . --cache --cache-location ./node_modules/.cache/eslint"
   },
   "dependencies": {
     "@better-fetch/fetch": "^1.1.18",
