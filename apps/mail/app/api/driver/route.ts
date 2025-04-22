@@ -44,7 +44,6 @@ export const GET = async (req: NextRequest) => {
     });
   } catch (error) {
     console.warn('Error getting threads:', error);
-    await throwUnauthorizedGracefully();
-    return NextResponse.json({ messages: [], nextPageToken: null });
+    return throwUnauthorizedGracefully();
   }
 };

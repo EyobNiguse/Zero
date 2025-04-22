@@ -39,7 +39,6 @@ export const GET = async (req: NextRequest) => {
     });
   } catch (error) {
     console.warn('Error getting thread notes:', error);
-    await throwUnauthorizedGracefully();
-    return NextResponse.json([]);
+    return throwUnauthorizedGracefully(req);
   }
 };

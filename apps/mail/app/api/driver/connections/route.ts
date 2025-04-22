@@ -45,7 +45,6 @@ export const GET = async (req: NextRequest) => {
     });
   } catch (error) {
     console.warn('Error getting connections:', error);
-    await throwUnauthorizedGracefully();
-    return NextResponse.json([]);
+    return throwUnauthorizedGracefully(req);
   }
 };
