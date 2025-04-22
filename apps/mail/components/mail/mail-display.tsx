@@ -18,6 +18,7 @@ import {
   Lightning,
   PDF,
   Reply,
+  ReplyAll,
   Tag,
   User,
 } from '../icons/icons';
@@ -693,7 +694,7 @@ const [mode, setMode] = useQueryState('mode');
                   ))}
                 </div>
               ) : null}
-              <div className="flex gap-2 px-4">
+              <div className="flex gap-2 px-4 mb-4">
                 <button
                   onClick={() => {
                     setMode('reply');
@@ -704,6 +705,19 @@ const [mode, setMode] = useQueryState('mode');
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
                     <div className="justify-start font-['Inter'] text-sm leading-none text-white">
                       Reply
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setMode('reply');
+                  }}
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                >
+                  <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                    <div className="justify-start font-['Inter'] text-sm leading-none text-white">
+                      Reply All
                     </div>
                   </div>
                 </button>

@@ -684,6 +684,20 @@ export const Reply = ({ className }: { className?: string }) => (
   </svg>
 );
 
+export const ReplyAll = ({ className }: { className?: string }) => (
+  <svg
+    width="17"
+    height="17"
+    viewBox="0 0 25 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M12.5364 0.263604C12.8879 0.615076 12.8879 1.18492 12.5364 1.5364L8.07279 6H17.9C21.7108 6 24.8 9.08923 24.8 12.9C24.8 16.7108 21.7108 19.8 17.9 19.8H14.9C14.4029 19.8 14 19.3971 14 18.9C14 18.4029 14.4029 18 14.9 18H17.9C20.7167 18 23 15.7167 23 12.9C23 10.0833 20.7167 7.8 17.9 7.8H8.07279L12.5364 12.2636C12.8879 12.6151 12.8879 13.1849 12.5364 13.5364C12.1849 13.8879 11.6151 13.8879 11.2636 13.5364L5.2636 7.5364C4.91213 7.18492 4.91213 6.61508 5.2636 6.2636L11.2636 0.263604C11.6151 -0.087868 12.1849 -0.087868 12.5364 0.263604Z" />
+    <path d="M0.226756 7.53033C-0.0755853 7.23744 -0.0755853 6.76256 0.226756 6.46967L6.67837 0.21967C6.98071 -0.0732234 7.4709 -0.0732234 7.77324 0.21967C8.07558 0.512563 8.07558 0.987437 7.77324 1.28033L1.86907 7L7.77324 12.7197C8.07558 13.0126 8.07558 13.4874 7.77324 13.7803C7.4709 14.0732 6.98071 14.0732 6.67837 13.7803L0.226756 7.53033Z" />
+  </svg>
+);
+
 export const Forward = ({ className }: { className?: string }) => (
   <svg
     width="12"
@@ -872,7 +886,14 @@ export const Figma = ({ className }: { className?: string }) => (
 );
 
 export const Docx = ({ className }: { className?: string }) => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 12 12"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
     <path
       fill-rule="evenodd"
       clip-rule="evenodd"
