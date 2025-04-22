@@ -32,6 +32,7 @@ export const GET = async (req: NextRequest) => {
     });
   } catch (error) {
     console.warn('Error getting count:', error);
-    return throwUnauthorizedGracefully(req);
+  } finally {
+    throwUnauthorizedGracefully(req);
   }
 };
