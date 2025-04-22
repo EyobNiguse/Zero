@@ -27,7 +27,7 @@ export const throwUnauthorizedGracefully = async (
   const headersList = await headers();
   await auth.api.signOut({ headers: headersList });
   if (req) {
-    return NextResponse.redirect('/');
+    return NextResponse.redirect(req.nextUrl.hostname);
   }
   throw redirect('/err');
 };
