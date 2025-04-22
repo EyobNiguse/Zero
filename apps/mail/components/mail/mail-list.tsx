@@ -9,13 +9,13 @@ import {
   parseNaturalLanguageSearch,
 } from '@/lib/utils';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
+import { Bell, ExclamationTriangle, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Briefcase, ChevronDown, Star, StickyNote, Users } from 'lucide-react';
 import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
 import { ThreadContextMenu } from '@/components/context/thread-context';
-import { Bell, ExclamationTriangle, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -226,7 +226,7 @@ const Thread = memo(
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8">
                 {isGroupThread ? (
-                  <div className="flex h-full w-full items-center justify-center bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2">
+                  <div className="bg-muted-foreground/50 dark:bg-muted/50 flex h-full w-full items-center justify-center rounded-full p-2">
                     <Users className="h-4 w-4" />
                   </div>
                 ) : (
@@ -252,7 +252,10 @@ const Thread = memo(
                         )}
                       >
                         <span className={cn(threadId ? 'max-w-[3ch] truncate' : '')}>
-                          {highlightText(cleanNameDisplay(latestMessage.sender.name) || '', searchValue.highlight)}
+                          {highlightText(
+                            cleanNameDisplay(latestMessage.sender.name) || '',
+                            searchValue.highlight,
+                          )}
                         </span>{' '}
                         {latestMessage.unread && !isMailSelected ? (
                           <span className="size-2 rounded bg-[#006FFE]" />
@@ -320,7 +323,7 @@ const Thread = memo(
             onMouseLeave={handleMouseLeave}
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip border-transparent py-3 text-left text-sm transition-all hover:opacity-100 mx-[8px] rounded-[10px]',
+              'hover:bg-offsetLight hover:bg-primary/5 group relative mx-[8px] flex cursor-pointer flex-col items-start overflow-clip rounded-[10px] border-transparent py-3 text-left text-sm transition-all hover:opacity-100',
 
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
@@ -337,7 +340,7 @@ const Thread = memo(
               <div>
                 <Avatar className="h-8 w-8">
                   {isGroupThread ? (
-                    <div className="flex h-full w-full items-center justify-center bg-[#FFFFFF] dark:bg-[#373737] rounded-full p-2">
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">
                       <GroupPeople className="h-4 w-4" />
                     </div>
                   ) : (
@@ -346,7 +349,7 @@ const Thread = memo(
                         className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
                         src={getEmailLogo(latestMessage.sender.email)}
                       />
-                      <AvatarFallback className="rounded-full bg-[#FFFFFF] dark:bg-[#373737] font-bold text-[#9F9F9F]">
+                      <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
                         {cleanName[0]?.toUpperCase()}
                       </AvatarFallback>
                     </>
@@ -369,8 +372,11 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span className={cn('truncate text-sm', threadId ? 'max-w-[20ch]' : 'max-w-[20ch]')}>
-                          {highlightText(cleanNameDisplay(latestMessage.sender.name) || '', searchValue.highlight)}
+                        <span className={cn('max-w-[10ch] truncate text-sm')}>
+                          {highlightText(
+                            cleanNameDisplay(latestMessage.sender.name) || '',
+                            searchValue.highlight,
+                          )}
                         </span>{' '}
                       </p>
                       {getThreadData.totalReplies > 1 ? (
@@ -398,7 +404,7 @@ const Thread = memo(
                     ) : null}
                   </div>
                   <div className="flex justify-between">
-                    <p className={cn('mt-1 line-clamp-1 text-sm text-[#8C8C8C] max-w-[20ch]')}>
+                    <p className={cn('mt-1 line-clamp-1 text-sm text-[#8C8C8C]')}>
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
                     <MailLabels labels={threadLabels} />

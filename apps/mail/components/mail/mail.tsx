@@ -294,7 +294,6 @@ export function MailLayout() {
           autoSaveId="mail-panel-layout"
           className="rounded-inherit gap-1 overflow-hidden"
         >
-         
           <div className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}>
             <div className="bg-panelLight dark:bg-panelDark flex-1 flex-col overflow-y-auto border-[#E7E7E7] shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
               <div
@@ -371,13 +370,13 @@ export function MailLayout() {
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
-              <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-165px)]">
+              <div className="h-[calc(100dvh-56px)] max-w-[33ch] overflow-hidden pt-0 md:h-[calc(100dvh-165px)]">
                 <MailList isCompact={true} />
               </div>
             </div>
           </div>
 
-          <ResizableHandle className="opacity-0 hidden" />
+          <ResizableHandle className="hidden opacity-0" />
 
           {isDesktop && (
             <ResizablePanel

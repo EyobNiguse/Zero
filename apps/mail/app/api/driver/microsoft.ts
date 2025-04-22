@@ -179,6 +179,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
   return {
     get: async (id: string) => {
       const client = getClient(config.auth?.access_token || '');
+      console.log('get', id);
       const message: Message = await client.api(`/me/messages/${id}`).get();
       console.log('message', message);
 
@@ -301,7 +302,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const response = await client
         .api('/me/messages')
         // .filter(searchQuery)
-        .top(maxResults)
+        .top(3)
         // .skip(pageToken ? parseInt(pageToken.toString()) : 0)
         .get();
 
