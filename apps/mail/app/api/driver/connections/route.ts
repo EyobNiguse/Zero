@@ -44,8 +44,7 @@ export const GET = async (req: NextRequest) => {
       headers,
     });
   } catch (error) {
-    console.warn('Error getting connections:', error);
-  } finally {
-    throwUnauthorizedGracefully(req);
+    console.log('Error getting connections:', error);
+    return NextResponse.redirect(`https://${req.nextUrl.hostname}`);
   }
 };

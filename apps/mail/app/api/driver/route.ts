@@ -43,7 +43,7 @@ export const GET = async (req: NextRequest) => {
       headers,
     });
   } catch (error) {
-    console.warn('Error getting threads:', error);
-    return throwUnauthorizedGracefully();
+    console.log('Error getting threads:', error);
+    return NextResponse.redirect(`https://${req.nextUrl.hostname}`);
   }
 };
