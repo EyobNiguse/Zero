@@ -63,7 +63,7 @@ export const authProviders: ProviderConfig[] = [
         'offline_access',
       ],
     },
-    required: true,
+    required: false,
   },
   // Commented out GitHub provider
   // {
