@@ -20,16 +20,14 @@ export const getRatelimitModule = (config: {
   return ratelimit;
 };
 
-export const throwUnauthorizedGracefully = async (
-  req?: NextRequest,
-): Promise<NextResponse | never> => {
+export const throwUnauthorizedGracefully = async (req?: NextRequest) => {
   console.warn('Unauthorized, redirecting to login');
-  const headersList = await headers();
-  await auth.api.signOut({ headers: headersList });
-  if (req) {
-    return NextResponse.redirect(`https://${req.nextUrl.hostname}`);
-  }
-  throw redirect('/err');
+  //   const headersList = await headers();
+  //   await auth.api.signOut({ headers: headersList });
+  //   if (req) {
+  //     return NextResponse.redirect(`https://${req.nextUrl.hostname}`);
+  //   }
+  //   throw redirect('/err');
 };
 
 export async function getAuthenticatedUserId(): Promise<string> {
