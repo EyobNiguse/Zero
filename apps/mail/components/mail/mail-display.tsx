@@ -308,11 +308,12 @@ const [mode, setMode] = useQueryState('mode');
     <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}>
       <div className="relative h-full overflow-y-auto">
         <div
-          className="flex flex-col p-4 pb-2 transition-all duration-200"
+          className="flex flex-col py-4 pb-2 transition-all duration-200 "
           // onClick={() => setIsCollapsed(!isCollapsed)}
         >
+          
           {index === 0 && (
-            <div className="mb-2">
+            <div className="mb-2 border-b px-4 pb-4">
               <p className="font-medium text-black dark:text-white">
                 {emailData.subject}{' '}
                 <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
@@ -352,7 +353,7 @@ const [mode, setMode] = useQueryState('mode');
                     const renderPerson = (person: Person) => (
                       <div
                         key={person.email}
-                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-[#F5F5F5] py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border  bg-[#F5F5F5] py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] border-[#DBDBDB] dark:bg-[#1A1A1A]"
                       >
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
@@ -391,14 +392,14 @@ const [mode, setMode] = useQueryState('mode');
             </div>
           )}
 
-          <div className="mt-3 flex w-full items-start justify-between gap-4">
+          <div className="mt-3 flex w-full items-start justify-between gap-4 px-4">
             <div className="flex w-full justify-center gap-4">
-              <Avatar className="h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8 rounded-full mt-1.5">
                 <AvatarImage
                   className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
                   src={getEmailLogo(emailData?.sender?.email)}
                 />
-                <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold dark:bg-[#373737]">
+                <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold dark:bg-[#373737] text-[#9F9F9F]">
                   {getFirstLetterCharacter(emailData?.sender?.name)}
                 </AvatarFallback>
               </Avatar>
@@ -694,7 +695,7 @@ const [mode, setMode] = useQueryState('mode');
                   ))}
                 </div>
               ) : null}
-              <div className="flex gap-2 px-4 mb-4">
+              <div className="flex gap-2 px-4 mb-4 mt-3">
                 <button
                   onClick={() => {
                     setMode('reply');

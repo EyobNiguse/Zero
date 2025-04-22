@@ -13,6 +13,8 @@ import {
   Trash,
   Expand,
   ArchiveX,
+  Forward,
+  ReplyAll,
 } from '../icons/icons';
 import {
   DropdownMenu,
@@ -40,6 +42,7 @@ import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
+import { useMailNavigation } from '@/hooks/use-mail-navigation';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -152,6 +155,40 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const { folder } = useParams<{ folder: string }>();
   const [threadId, setThreadId] = useQueryState('threadId');
   const [mode, setMode] = useQueryState('mode');
+  const parentRef = useRef<HTMLDivElement>(null);
+  const {
+    data: { threads: items = [] },
+  } = useThreads();
+
+  const handleNavigateToThread = useCallback(
+    (threadId: string) => {
+      setThreadId(threadId);
+      return false;
+    },
+    [setThreadId],
+  );
+
+  const handlePrevious = useCallback(() => {
+    if (!id || !items.length) return;
+    const currentIndex = items.findIndex(item => item.id === id);
+    if (currentIndex > 0) {
+      const prevThread = items[currentIndex - 1];
+      if (prevThread) {
+        setThreadId(prevThread.id);
+      }
+    }
+  }, [items, id, setThreadId]);
+
+  const handleNext = useCallback(() => {
+    if (!id || !items.length) return;
+    const currentIndex = items.findIndex(item => item.id === id);
+    if (currentIndex < items.length - 1) {
+      const nextThread = items[currentIndex + 1];
+      if (nextThread) {
+        setThreadId(nextThread.id);
+      }
+    }
+  }, [items, id, setThreadId]);
 
   // Check if thread contains any images (excluding sender avatars)
   const hasImages = useMemo(() => {
@@ -330,29 +367,39 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   <ThreadActionButton
                     icon={ChevronLeft}
                     label="Previous email"
-                    onClick={handleClose}
+                    onClick={handlePrevious}
                   />
                   <ThreadActionButton
                     icon={ChevronRight}
                     label="Next email"
-                    onClick={handleClose}
+                    onClick={handleNext}
                   />
                 </div>
               </div>
               <div className="flex items-center md:gap-2">
                 <button
                   onClick={() => {
-                    setMode('replyAll');
+                    setMode('reply');
                   }}
                   className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
                 >
                   <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-white">Reply all</div>
+                    <div className="justify-start text-sm leading-none text-white">Reply</div>
                   </div>
                 </button>
-
-                {/* <button
+                <button
+                  onClick={() => {
+                    setMode('replyAll');
+                  }}
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                >
+                  <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                    <div className="justify-start text-sm leading-none text-white">Reply All</div>
+                  </div>
+                </button>
+                <button
                   onClick={() => {
                     setMode('forward');
                   }}
@@ -360,45 +407,12 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 >
                   <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start font-['Inter'] text-sm leading-none text-white">
-                      Forward
-                    </div>
+                    <div className="justify-start text-sm leading-none text-white">Forward</div>
                   </div>
-                </button> */}
-
-                <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]">
-                  <Archive className="fill-iconLight dark:fill-iconDark" />
                 </button>
-
-                {/* <ThreadActionButton
-                  icon={Reply}
-                  label={t('common.threadDisplay.reply')}
-                  disabled={!emailData}
-                  className={cn(mode === 'reply' && 'bg-primary/10')}
-                  onClick={() => {
-                    setMode('reply');
-                  }}
-                /> */}
-                {/* {hasMultipleParticipants && (
-                  <ThreadActionButton
-                    icon={ReplyAll}
-                    label={t('common.threadDisplay.replyAll')}
-                    disabled={!emailData}
-                    className={cn(mode === 'replyAll' && 'bg-primary/10')}
-                    onClick={() => {
-                      setMode('replyAll');
-                    }}
-                  />
-                )} */}
-                {/* <ThreadActionButton
-                  icon={Forward}
-                  label={t('common.threadDisplay.forward')}
-                  disabled={!emailData}
-                  className={cn(mode === 'forward' && 'bg-primary/10')}
-                  onClick={() => {
-                    setMode('forward');
-                  }}
-                /> */}
+                <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]">
+                  <Trash className="fill-[#F43F5E]" />
+                </button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]">
@@ -423,6 +437,10 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                           : t('common.threadDisplay.enterFullscreen')}
                       </span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Archive className="fill-iconLight dark:fill-iconDark" />
+                      <span>{t('common.threadDisplay.archive')}</span>
+                    </DropdownMenuItem>
                     {isInSpam || isInArchive || isInBin ? (
                       <DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
                         <Inbox className="mr-2 h-4 w-4" />
@@ -438,9 +456,6 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]">
-                  <Trash className="fill-[#F43F5E]" />
-                </button>
               </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col">
