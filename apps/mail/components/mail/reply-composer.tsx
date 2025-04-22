@@ -998,7 +998,7 @@ export default function ReplyCompose() {
 
     return (
       <div className="bg-offsetLight dark:bg-offsetDark flex w-full gap-2 px-2">
-        <Button
+        {/* <Button
           onClick={() => {
             setMode('reply');
           }}
@@ -1029,7 +1029,7 @@ export default function ReplyCompose() {
         >
           <Forward className="h-4 w-4" />
           <span>{t('common.threadDisplay.forward')}</span>
-        </Button>
+        </Button> */}
       </div>
     );
   }

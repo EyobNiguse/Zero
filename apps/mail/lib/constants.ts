@@ -71,14 +71,14 @@ export const EMAIL_HTML_TEMPLATE = `
         body {
           margin: 0;
           padding: 16px;
-          font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+          font-family: 'Inter' !important;
           line-height: 1.5;
           height: fit-content;
-          background-color: rgb(245, 245, 245) !important;
+          background-color: white !important;
         }
         @media (prefers-color-scheme: dark) {
           body {
-            background-color: rgb(10, 10, 10) !important;
+            background-color: #1A1A1A !important;
           }
         }
         .auto-details summary::marker {

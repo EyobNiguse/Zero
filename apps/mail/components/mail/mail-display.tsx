@@ -8,9 +8,29 @@ import {
   DialogHeader,
   DialogClose,
 } from '../ui/dialog';
-import { BellOff, Check, ChevronDown, LoaderCircleIcon, Lock } from 'lucide-react';
+import {
+  Bell,
+  Calendar,
+  Docx,
+  Figma,
+  Forward,
+  ImageFile,
+  Lightning,
+  PDF,
+  Reply,
+  Tag,
+  User,
+} from '../icons/icons';
+import {
+  BellOff,
+  Check,
+  ChevronDown,
+  LoaderCircleIcon,
+  Lock,
+  FileText,
+  ImageIcon,
+} from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Bell, Calendar, Lightning, Tag, User } from '../icons/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { memo, useEffect, useMemo, useState, useRef } from 'react';
 import { Briefcase, Star, StickyNote, Users } from 'lucide-react';
@@ -31,6 +51,40 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { useQueryState } from 'nuqs';
+import ReplyCompose from './reply-composer';
+
+// Add formatFileSize utility function
+const formatFileSize = (size: number) => {
+  const sizeInMB = (size / (1024 * 1024)).toFixed(2);
+  return sizeInMB === '0.00' ? '' : `${sizeInMB} MB`;
+};
+
+// Add getFileIcon utility function
+const getFileIcon = (filename: string) => {
+  const extension = filename.split('.').pop()?.toLowerCase();
+
+  switch (extension) {
+    case 'pdf':
+      return <PDF className="fill-[#F43F5E]" />;
+    case 'jpg':
+      return <ImageFile />;
+    case 'jpeg':
+      return <ImageFile />;
+    case 'png':
+      return <ImageFile />;
+    case 'gif':
+      return <ImageFile />;
+    case 'docx':
+      return <Docx />;
+    case 'fig':
+      return <Figma />;
+    case 'webp':
+      return <ImageFile />;
+    default:
+      return <FileText className="h-4 w-4 text-[#8B5CF6]" />;
+  }
+};
 
 const StreamingText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState('');
@@ -209,16 +263,14 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
 
   useEffect(() => {
     if (!demo) {
+      setIsCollapsed(false);
       if (totalEmails && index === totalEmails - 1) {
-        setIsCollapsed(false);
         if (totalEmails > 5) {
           setTimeout(() => {
             const element = document.getElementById(`mail-${emailData.id}`);
             element?.scrollIntoView({ behavior: 'smooth' });
           }, 100);
         }
-      } else {
-        setIsCollapsed(true);
       }
     }
   }, [index, emailData.id, totalEmails, demo]);
@@ -248,12 +300,15 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
     }
   };
 
+const [mode, setMode] = useQueryState('mode');
+
+
   return (
     <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}>
       <div className="relative h-full overflow-y-auto">
         <div
-          className="flex cursor-pointer flex-col p-4 pb-2 transition-all duration-200"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="flex flex-col p-4 pb-2 transition-all duration-200"
+          // onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {index === 0 && (
             <div className="mb-2">
@@ -335,8 +390,8 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
             </div>
           )}
 
-          <div className="flex items-start justify-between gap-4 w-full mt-3">
-            <div className="flex justify-center gap-4 w-full ">
+          <div className="mt-3 flex w-full items-start justify-between gap-4">
+            <div className="flex w-full justify-center gap-4">
               <Avatar className="h-8 w-8 rounded-full">
                 <AvatarImage
                   className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
@@ -348,17 +403,64 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
               </Avatar>
 
               <div className="flex w-full items-center justify-between">
-                <div className="flex items-center justify-start gap-2 w-full">
-                  <div className="flex flex-col w-full">
-                    <div className="flex items-center justify-between w-full">
+                <div className="flex w-full items-center justify-start gap-2">
+                  <div className="flex w-full flex-col">
+                    <div className="flex w-full items-center justify-between">
                       <span className="font-semibold">
                         {cleanNameDisplay(emailData?.sender?.name)}
                       </span>
-                      <time className="text-sm dark:text-[#8C8C8C] text-[#6D6D6D] font-medium">
+                      <time className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
                         {formatDate(emailData?.receivedOn)}
                       </time>
                     </div>
-                    {/* <p className="text-sm dark:text-[#8C8C8C] text-[#6D6D6D] font-medium">To: get</p> */}
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
+                        To:{' '}
+                        {(() => {
+                          // Combine to and cc recipients
+                          const allRecipients = [
+                            ...(emailData?.to || []),
+                            ...(emailData?.cc || []),
+                          ];
+
+                          // If you're the only recipient
+                          if (allRecipients.length === 1 && folder !== 'sent') {
+                            return <span key="you">You</span>;
+                          }
+
+                          // Show first 3 recipients + count of others
+                          const visibleRecipients = allRecipients.slice(0, 3);
+                          const remainingCount = allRecipients.length - 3;
+
+                          return (
+                            <>
+                              {visibleRecipients.map((recipient, index) => (
+                                <span key={recipient.email}>
+                                  {cleanNameDisplay(recipient.name) ||
+                                    cleanEmailDisplay(recipient.email)}
+                                  {index < visibleRecipients.length - 1 ? ', ' : ''}
+                                </span>
+                              ))}
+                              {remainingCount > 0 && (
+                                <span key="others">{`, +${remainingCount} others`}</span>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </p>
+                      {emailData?.bcc?.length > 0 && (
+                        <p className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
+                          Bcc:{' '}
+                          {emailData?.bcc?.map((recipient, index) => (
+                            <span key={recipient.email}>
+                              {cleanNameDisplay(recipient.name) ||
+                                cleanEmailDisplay(recipient.email)}
+                              {index < (emailData?.bcc?.length || 0) - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <span className="text-muted-foreground flex grow-0 items-center gap-2 text-sm">
                     {/* <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -528,9 +630,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
             'h-0 overflow-hidden transition-all duration-200',
             !isCollapsed && 'h-[1px]',
           )}
-        >
-          <Separator />
-        </div>
+        ></div>
 
         <div
           className={cn(
@@ -539,16 +639,6 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
           )}
         >
           <div className="min-h-0 overflow-hidden">
-            {emailData?.attachments && emailData?.attachments.length > 0 ? (
-              <>
-                <AttachmentsAccordion
-                  attachments={emailData?.attachments}
-                  setSelectedAttachment={setSelectedAttachment}
-                />
-                <Separator />
-              </>
-            ) : null}
-
             <div className="h-fit w-full p-0">
               {emailData?.decodedBody ? (
                 <MailIframe html={emailData?.decodedBody} senderEmail={emailData.sender.email} />
@@ -560,15 +650,82 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   <div className="bg-secondary h-32 w-32 animate-pulse rounded-full" />
                 </div>
               )}
+              {emailData?.attachments && emailData?.attachments.length > 0 ? (
+                <div className="mb-4 flex flex-col gap-2 px-4">
+                  {emailData?.attachments.map((attachment, index) => (
+                    <div key={index}>
+                      <button
+                        className="flex h-7 items-center gap-1 rounded-[5px] bg-[#FAFAFA] px-4 text-sm font-medium hover:bg-[#F0F0F0] dark:bg-[#262626] dark:hover:bg-[#303030]"
+                        onClick={() => {
+                          try {
+                            // Convert base64 to blob
+                            const byteCharacters = atob(attachment.body);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                              byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], { type: attachment.mimeType });
+
+                            // Create object URL and trigger download
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = attachment.filename;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(url);
+                          } catch (error) {
+                            console.error('Error downloading attachment:', error);
+                          }
+                        }}
+                      >
+                        {getFileIcon(attachment.filename)}
+                        <span className="text-black dark:text-white">
+                          {attachment.filename}
+                        </span>{' '}
+                        <span className="text-[#6D6D6D] dark:text-[#929292]">
+                          {formatFileSize(attachment.size)}
+                        </span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              <div className="flex gap-2 px-4">
+                <button
+                  onClick={() => {
+                    setMode('reply');
+                  }}
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                >
+                  <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                    <div className="justify-start font-['Inter'] text-sm leading-none text-white">
+                      Reply
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setMode('forward');
+                  }}
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                >
+                  <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                    <div className="justify-start font-['Inter'] text-sm leading-none text-white">
+                      Forward
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
+        <ReplyCompose />
       </div>
-
-      <AttachmentDialog
-        selectedAttachment={selectedAttachment}
-        setSelectedAttachment={setSelectedAttachment}
-      />
     </div>
   );
 };

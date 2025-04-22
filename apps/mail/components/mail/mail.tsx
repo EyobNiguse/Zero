@@ -292,8 +292,9 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-0.5 overflow-hidden"
+          className="rounded-inherit gap-1 overflow-hidden"
         >
+         
           <div className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}>
             <div className="bg-panelLight dark:bg-panelDark flex-1 flex-col overflow-y-auto border-[#E7E7E7] shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
               <div
@@ -376,7 +377,7 @@ export function MailLayout() {
             </div>
           </div>
 
-          {/* <ResizableHandle className="opacity-0" /> */}
+          <ResizableHandle className="opacity-0 hidden" />
 
           {isDesktop && (
             <ResizablePanel
