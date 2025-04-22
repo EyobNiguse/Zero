@@ -27,7 +27,7 @@ export const throwUnauthorizedGracefully = async (
   const headersList = await headers();
   await auth.api.signOut({ headers: headersList });
   if (req) {
-    return NextResponse.redirect(req.nextUrl.hostname);
+    return NextResponse.redirect(`https://${req.nextUrl.hostname}`);
   }
   throw redirect('/err');
 };
@@ -37,6 +37,7 @@ export async function getAuthenticatedUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: headersList });
 
   if (!session?.user?.id) {
+    console.log('No user ID found', session);
     return throwUnauthorizedGracefully() as never;
   }
 
