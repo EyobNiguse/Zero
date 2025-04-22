@@ -252,7 +252,7 @@ const Thread = memo(
                         )}
                       >
                         <span className={cn(threadId ? 'max-w-[3ch] truncate' : '')}>
-                          {highlightText(latestMessage.sender.name, searchValue.highlight)}
+                          {highlightText(cleanNameDisplay(latestMessage.sender.name) || '', searchValue.highlight)}
                         </span>{' '}
                         {latestMessage.unread && !isMailSelected ? (
                           <span className="size-2 rounded bg-[#006FFE]" />
@@ -370,7 +370,7 @@ const Thread = memo(
                         )}
                       >
                         <span className={cn('truncate text-sm', threadId ? 'max-w-[20ch]' : 'max-w-[20ch]')}>
-                          {highlightText(latestMessage.sender.name, searchValue.highlight)}
+                          {highlightText(cleanNameDisplay(latestMessage.sender.name) || '', searchValue.highlight)}
                         </span>{' '}
                       </p>
                       {getThreadData.totalReplies > 1 ? (
@@ -688,7 +688,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   );
 });
 
-const MailLabels = memo(
+MailList.displayName = 'MailList';
+
+export const MailLabels = memo(
   ({ labels }: { labels: string[] }) => {
     const t = useTranslations();
 
@@ -822,3 +824,10 @@ function getDefaultBadgeStyle(label: string): ComponentProps<typeof Badge>['vari
       return 'secondary';
   }
 }
+
+// Helper function to clean name display
+const cleanNameDisplay = (name?: string) => {
+  if (!name) return '';
+  const match = name.match(/^[^a-zA-Z]*(.*?)[^a-zA-Z]*$/);
+  return match ? match[1] : name;
+};

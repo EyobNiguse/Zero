@@ -1,16 +1,3 @@
-import {
-  Archive,
-  ArchiveX,
-  Expand,
-  Forward,
-  MailOpen,
-  Reply,
-  ReplyAll,
-  X,
-  Trash,
-  MoreVertical,
-  StickyNote,
-} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useParams } from 'next/navigation';
@@ -22,6 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Reply,
+  Archive,
+  ThreeDots,
+  Trash,
+  Expand,
+  ArchiveX
+} from '../icons/icons';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useThread, useThreads } from '@/hooks/use-threads';
@@ -32,6 +30,7 @@ import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
 import ReplyCompose from './reply-composer';
+import { Separator } from '../ui/separator';
 import { useTranslations } from 'next-intl';
 import { useMail } from '../mail/use-mail';
 import { NotesPanel } from './note-panel';
@@ -131,11 +130,11 @@ function ThreadActionButton({
             onMouseEnter={() => iconRef.current?.startAnimation?.()}
             onMouseLeave={() => iconRef.current?.stopAnimation?.()}
           >
-            <Icon ref={iconRef} className="h-4 w-4" />
+            <Icon ref={iconRef} className="dark:fill-iconDark fill-iconLight" />
             <span className="sr-only">{label}</span>
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
+        {/* <TooltipContent>{label}</TooltipContent> */}
       </Tooltip>
     </TooltipProvider>
   );
@@ -229,48 +228,48 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     [threadId, folder, mutateStats, mutateThreads, handleClose, t],
   );
 
-  const handleMarkAsUnread = useCallback(async () => {
-    if (!emailData || !threadId) return;
+  // const handleMarkAsUnread = useCallback(async () => {
+  //   if (!emailData || !threadId) return;
 
-    const promise = async () => {
-      const result = await markAsUnread({ ids: [threadId] });
-      if (!result.success) throw new Error('Failed to mark as unread');
+  //   const promise = async () => {
+  //     const result = await markAsUnread({ ids: [threadId] });
+  //     if (!result.success) throw new Error('Failed to mark as unread');
 
-      setMail((prev) => ({ ...prev, bulkSelected: [] }));
-      await Promise.allSettled([mutateStats(), mutateThread()]);
-      handleClose();
-    };
+  //     setMail((prev) => ({ ...prev, bulkSelected: [] }));
+  //     await Promise.allSettled([mutateStats(), mutateThread()]);
+  //     handleClose();
+  //   };
 
-    toast.promise(promise(), {
-      loading: t('common.actions.markingAsUnread'),
-      success: t('common.mail.markedAsUnread'),
-      error: t('common.mail.failedToMarkAsUnread'),
-    });
-  }, [emailData, threadId, t]);
+  //   toast.promise(promise(), {
+  //     loading: t('common.actions.markingAsUnread'),
+  //     success: t('common.mail.markedAsUnread'),
+  //     error: t('common.mail.failedToMarkAsUnread'),
+  //   });
+  // }, [emailData, threadId, t]);
 
-  const handleFavourites = async () => {
-    if (!emailData || !threadId) return;
-    const done = Promise.all([mutateThreads()]);
-    if (emailData.latest?.tags?.includes('STARRED')) {
-      toast.promise(
-        modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }).then(() => done),
-        {
-          success: t('common.actions.removedFromFavorites'),
-          loading: t('common.actions.removingFromFavorites'),
-          error: t('common.actions.failedToRemoveFromFavorites'),
-        },
-      );
-    } else {
-      toast.promise(
-        modifyLabels({ threadId: [threadId], addLabels: ['STARRED'] }).then(() => done),
-        {
-          success: t('common.actions.addedToFavorites'),
-          loading: t('common.actions.addingToFavorites'),
-          error: t('common.actions.failedToAddToFavorites'),
-        },
-      );
-    }
-  };
+  // const handleFavourites = async () => {
+  //   if (!emailData || !threadId) return;
+  //   const done = Promise.all([mutateThreads()]);
+  //   if (emailData.latest?.tags?.includes('STARRED')) {
+  //     toast.promise(
+  //       modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }).then(() => done),
+  //       {
+  //         success: t('common.actions.removedFromFavorites'),
+  //         loading: t('common.actions.removingFromFavorites'),
+  //         error: t('common.actions.failedToRemoveFromFavorites'),
+  //       },
+  //     );
+  //   } else {
+  //     toast.promise(
+  //       modifyLabels({ threadId: [threadId], addLabels: ['STARRED'] }).then(() => done),
+  //       {
+  //         success: t('common.actions.addedToFavorites'),
+  //         loading: t('common.actions.addingToFavorites'),
+  //         error: t('common.actions.failedToAddToFavorites'),
+  //       },
+  //     );
+  //   }
+  // };
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -297,6 +296,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           isFullscreen ? 'fixed inset-0 z-50' : '',
         )}
       >
+        <div>
+          
+        </div>
         {!id ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -317,17 +319,63 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           </div>
         ) : (
           <>
-            <div className="flex flex-shrink-0 items-center border-b px-1 pb-1 md:px-3 md:pb-2 md:pt-[14px]">
+            <div className="flex flex-shrink-0 items-center border-b border-[#E7E7E7] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px] dark:border-[#252525]">
               <div className="flex flex-1 items-center gap-2">
                 <ThreadActionButton
                   icon={X}
                   label={t('common.actions.close')}
                   onClick={handleClose}
+                  
                 />
-                <ThreadSubject subject={emailData.latest?.subject} />
+                {/* <ThreadSubject subject={emailData.latest?.subject} /> */}
+                <div className="bg-iconLight dark:bg-iconDark/20 relative  h-3 w-0.5 rounded-full" />{' '}
+                <div>
+                  <ThreadActionButton
+                    icon={ChevronLeft}
+                    label="Previous email"
+                    onClick={handleClose}
+                  />
+                  <ThreadActionButton
+                    icon={ChevronRight}
+                    label="Next email"
+                    onClick={handleClose}
+                  />
+                </div>
               </div>
               <div className="flex items-center md:gap-2">
-                <ThreadActionButton
+                <button
+                  onClick={() => {
+                    setMode('replyAll');
+                  }}
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                >
+                  <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                    <div className="justify-start font-['Inter'] text-sm leading-none text-white">
+                      Reply all
+                    </div>
+                  </div>
+                </button>
+
+                {/* <button
+                  onClick={() => {
+                    setMode('forward');
+                  }}
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                >
+                  <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                    <div className="justify-start font-['Inter'] text-sm leading-none text-white">
+                      Forward
+                    </div>
+                  </div>
+                </button> */}
+
+                <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]">
+                  <Archive className="fill-iconLight dark:fill-iconDark" />
+                </button>
+
+                {/* <ThreadActionButton
                   icon={Reply}
                   label={t('common.threadDisplay.reply')}
                   disabled={!emailData}
@@ -335,8 +383,8 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   onClick={() => {
                     setMode('reply');
                   }}
-                />
-                {hasMultipleParticipants && (
+                /> */}
+                {/* {hasMultipleParticipants && (
                   <ThreadActionButton
                     icon={ReplyAll}
                     label={t('common.threadDisplay.replyAll')}
@@ -346,8 +394,8 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       setMode('replyAll');
                     }}
                   />
-                )}
-                <ThreadActionButton
+                )} */}
+                {/* <ThreadActionButton
                   icon={Forward}
                   label={t('common.threadDisplay.forward')}
                   disabled={!emailData}
@@ -355,15 +403,14 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   onClick={() => {
                     setMode('forward');
                   }}
-                />
+                /> */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreVertical className="h-4 w-4" />
-                      <span className="sr-only">More actions</span>
-                    </Button>
+                    <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]">
+                      <ThreeDots className="fill-iconLight dark:fill-iconDark" />
+                    </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className='bg-white dark:bg-[#313131]'>
                     {/* {threadId && (
                       <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         <StickyNote className="mr-2 h-4 w-4" />
@@ -374,7 +421,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       </DropdownMenuItem>
                     )} */}
                     <DropdownMenuItem onClick={() => setIsFullscreen(!isFullscreen)}>
-                      <Expand className="mr-2 h-4 w-4" />
+                      <Expand className="fill-iconLight dark:fill-iconDark mr-2" />
                       <span>
                         {isFullscreen
                           ? t('common.threadDisplay.exitFullscreen')
@@ -388,22 +435,19 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       </DropdownMenuItem>
                     ) : (
                       <>
-                        <DropdownMenuItem onClick={() => moveThreadTo('archive')}>
-                          <Archive className="mr-2 h-4 w-4" />
-                          <span>{t('common.threadDisplay.archive')}</span>
-                        </DropdownMenuItem>
+                        
                         <DropdownMenuItem onClick={() => moveThreadTo('spam')}>
-                          <ArchiveX className="mr-2 h-4 w-4" />
+                          <ArchiveX className="fill-iconLight dark:fill-iconDark mr-2" />
                           <span>{t('common.threadDisplay.moveToSpam')}</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => moveThreadTo('bin')}>
-                          <Trash className="mr-2 h-4 w-4" />
-                          <span>{t('common.mail.moveToBin')}</span>
-                        </DropdownMenuItem>
+                        
                       </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]">
+                  <Trash className="fill-[#F43F5E]" />
+                </button>
               </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col">

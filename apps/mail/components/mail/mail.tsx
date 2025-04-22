@@ -25,12 +25,12 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { moveThreadsTo, ThreadDestination, getAvailableActions } from '@/lib/thread-actions';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
-import { Filter, Lightning, Mail } from '../icons/icons';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { Filter, Lightning, Mail, X } from '../icons/icons';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
@@ -123,6 +123,7 @@ export function DemoMailLayout() {
                 )}
               >
                 <SidebarToggle className="h-fit px-2" />
+               
                 <div>
                   <MailCategoryTabs
                     iconsOnly={true}
@@ -163,7 +164,7 @@ export function DemoMailLayout() {
 
           {isDesktop && mail.selected && (
             <>
-              <ResizableHandle className="opacity-0" />
+              <div className="opacity-0" />
               <ResizablePanel
                 className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
                 defaultSize={75}
@@ -293,15 +294,11 @@ export function MailLayout() {
           autoSaveId="mail-panel-layout"
           className="rounded-inherit gap-0.5 overflow-hidden"
         >
-          <ResizablePanel
-            className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}
-            defaultSize={isMobile ? 100 : 33}
-            minSize={isMobile ? 100 : 33}
-          >
+          <div className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}>
             <div className="bg-panelLight dark:bg-panelDark flex-1 flex-col overflow-y-auto border-[#E7E7E7] shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
               <div
                 className={cn(
-                  'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
+                  'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] dark:border-[#252525] p-2 px-[20px] transition-colors md:min-h-14 ',
                 )}
               >
                 <div className="flex w-full items-center justify-between gap-2">
@@ -373,11 +370,11 @@ export function MailLayout() {
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
-              <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-170px)]">
+              <div className="h-[calc(100dvh-56px)] overflow-hidden pt-0 md:h-[calc(100dvh-165px)]">
                 <MailList isCompact={true} />
               </div>
             </div>
-          </ResizablePanel>
+          </div>
 
           <ResizableHandle className="opacity-0" />
 
@@ -615,7 +612,8 @@ export const Categories = () => {
           )}
         />
       ),
-      colors: 'border-0 bg-[#006FFE] text-white dark:bg-[#006FFE] dark:text-white dark:hover:bg-[#006FFE]/90',
+      colors:
+        'border-0 bg-[#006FFE] text-white dark:bg-[#006FFE] dark:text-white dark:hover:bg-[#006FFE]/90',
     },
     {
       id: 'Personal',
@@ -883,7 +881,7 @@ function MailCategoryTabs({
                   className={cn(
                     'flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-medium transition-all duration-200',
                     activeCategory === category.id
-                      ? 'text-white bg-primary'
+                      ? 'bg-primary text-white'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
                   )}
                 >
@@ -914,9 +912,7 @@ function MailCategoryTabs({
                 onClick={() => {
                   setActiveCategory(category.id);
                 }}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-2 text-xs font-medium',
-                )}
+                className={cn('flex items-center gap-1.5 rounded-full px-2 text-xs font-medium')}
                 tabIndex={-1}
               >
                 <p>{category.icon}</p>
