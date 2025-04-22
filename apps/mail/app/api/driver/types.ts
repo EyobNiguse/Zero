@@ -38,6 +38,7 @@ export interface MailManager {
     options: { addLabels: string[]; removeLabels: string[] },
   ): Promise<void>;
   getAttachment(messageId: string, attachmentId: string): Promise<string | undefined>;
+  getEmailAliases(): Promise<{ email: string; name?: string; primary?: boolean }[]>;
 }
 
 export interface IConfig {
