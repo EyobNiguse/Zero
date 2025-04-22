@@ -376,11 +376,11 @@ export function MailLayout() {
             </div>
           </div>
 
-          <ResizableHandle className="opacity-0" />
+          {/* <ResizableHandle className="opacity-0" /> */}
 
           {isDesktop && (
             <ResizablePanel
-              className="bg-panelLight dark:bg-panelDark border-[#E7E7E7] shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+              className="bg-panelLight dark:bg-panelDark w-fit border-[#E7E7E7] shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
               defaultSize={30}
               minSize={30}
             >
