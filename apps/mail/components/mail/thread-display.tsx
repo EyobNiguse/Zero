@@ -4,12 +4,6 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   ChevronLeft,
   ChevronRight,
   X,
@@ -18,8 +12,14 @@ import {
   ThreeDots,
   Trash,
   Expand,
-  ArchiveX
+  ArchiveX,
 } from '../icons/icons';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useThread, useThreads } from '@/hooks/use-threads';
@@ -296,9 +296,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           isFullscreen ? 'fixed inset-0 z-50' : '',
         )}
       >
-        <div>
-          
-        </div>
+        <div></div>
         {!id ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -325,10 +323,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   icon={X}
                   label={t('common.actions.close')}
                   onClick={handleClose}
-                  
                 />
                 {/* <ThreadSubject subject={emailData.latest?.subject} /> */}
-                <div className="bg-iconLight dark:bg-iconDark/20 relative  h-3 w-0.5 rounded-full" />{' '}
+                <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />{' '}
                 <div>
                   <ThreadActionButton
                     icon={ChevronLeft}
@@ -351,9 +348,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 >
                   <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start font-['Inter'] text-sm leading-none text-white">
-                      Reply all
-                    </div>
+                    <div className="justify-start text-sm leading-none text-white">Reply all</div>
                   </div>
                 </button>
 
@@ -410,7 +405,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       <ThreeDots className="fill-iconLight dark:fill-iconDark" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className='bg-white dark:bg-[#313131]'>
+                  <DropdownMenuContent align="end" className="bg-white dark:bg-[#313131]">
                     {/* {threadId && (
                       <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         <StickyNote className="mr-2 h-4 w-4" />
@@ -435,12 +430,10 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       </DropdownMenuItem>
                     ) : (
                       <>
-                        
                         <DropdownMenuItem onClick={() => moveThreadTo('spam')}>
                           <ArchiveX className="fill-iconLight dark:fill-iconDark mr-2" />
                           <span>{t('common.threadDisplay.moveToSpam')}</span>
                         </DropdownMenuItem>
-                        
                       </>
                     )}
                   </DropdownMenuContent>

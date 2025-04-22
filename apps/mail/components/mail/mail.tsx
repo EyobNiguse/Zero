@@ -29,8 +29,8 @@ import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { useSearchValue } from '@/hooks/use-search-value';
 import { Filter, Lightning, Mail, X } from '../icons/icons';
+import { useSearchValue } from '@/hooks/use-search-value';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
@@ -123,7 +123,7 @@ export function DemoMailLayout() {
                 )}
               >
                 <SidebarToggle className="h-fit px-2" />
-               
+
                 <div>
                   <MailCategoryTabs
                     iconsOnly={true}
@@ -298,7 +298,7 @@ export function MailLayout() {
             <div className="bg-panelLight dark:bg-panelDark flex-1 flex-col overflow-y-auto border-[#E7E7E7] shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
               <div
                 className={cn(
-                  'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] dark:border-[#252525] p-2 px-[20px] transition-colors md:min-h-14 ',
+                  'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
                 )}
               >
                 <div className="flex w-full items-center justify-between gap-2">
@@ -727,7 +727,7 @@ function CategorySelect() {
         <div className="relative overflow-hidden">{cat.icon}</div>
         {isSelected && (
           <div className="flex items-center justify-center gap-2.5 px-0.5">
-            <div className="animate-in fade-in-0 slide-in-from-right-4 justify-start font-['Inter'] text-sm leading-none text-white duration-300">
+            <div className="animate-in fade-in-0 slide-in-from-right-4 justify-start text-sm leading-none text-white duration-300">
               {cat.name}
             </div>
           </div>

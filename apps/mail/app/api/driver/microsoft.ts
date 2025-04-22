@@ -12,62 +12,6 @@ import { EnableBrain } from '@/actions/brain';
 import { createMimeMessage } from 'mimetext';
 import * as he from 'he';
 
-interface MicrosoftGraphMessage {
-  id: string;
-  conversationId: string;
-  subject: string;
-  body: {
-    contentType: string;
-    content: string;
-  };
-  bodyPreview: string;
-  receivedDateTime: string;
-  sentDateTime: string;
-  isRead: boolean;
-  isDraft: boolean;
-  internetMessageHeaders: Array<{
-    name: string;
-    value: string;
-  }>;
-  categories: string[];
-  sender: {
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  };
-  from: {
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  };
-  toRecipients: Array<{
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  }>;
-  ccRecipients: Array<{
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  }>;
-  bccRecipients: Array<{
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  }>;
-  replyTo: Array<{
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  }>;
-}
-
 export const driver = async (config: IConfig): Promise<MailManager> => {
   const getClient = (accessToken: string) => {
     return Client.initWithMiddleware({
