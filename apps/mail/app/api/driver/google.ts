@@ -1,5 +1,7 @@
 import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
+import { fromBinary, fromBase64Url, findHtmlBody } from '@/actions/utils';
 import { IOutgoingMessage, Sender, type ParsedMessage } from '@/types';
+import { delay, withExponentialBackoff } from '../utils';
 import { type IConfig, type MailManager } from './types';
 import { type gmail_v1, google } from 'googleapis';
 import { filterSuggestions } from '@/lib/filter';
@@ -7,36 +9,6 @@ import { cleanSearchValue } from '@/lib/utils';
 import { EnableBrain } from '@/actions/brain';
 import { createMimeMessage } from 'mimetext';
 import * as he from 'he';
-
-function fromBase64Url(str: string) {
-  return str.replace(/-/g, '+').replace(/_/g, '/');
-}
-
-function fromBinary(str: string) {
-  return decodeURIComponent(
-    atob(str.replace(/-/g, '+').replace(/_/g, '/'))
-      .split('')
-      .map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      })
-      .join(''),
-  );
-}
-
-const findHtmlBody = (parts: any[]): string => {
-  for (const part of parts) {
-    if (part.mimeType === 'text/html' && part.body?.data) {
-      console.log('✓ Driver: Found HTML content in message part');
-      return part.body.data;
-    }
-    if (part.parts) {
-      const found = findHtmlBody(part.parts);
-      if (found) return found;
-    }
-  }
-  console.log('⚠️ Driver: No HTML content found in message parts');
-  return '';
-};
 
 interface ParsedDraft {
   id: string;
@@ -79,49 +51,6 @@ const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
     content,
     rawMessage: draft.message,
   };
-};
-
-// Helper function for delays
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Exponential backoff helper function
-const withExponentialBackoff = async <T>(
-  operation: () => Promise<T>,
-  maxRetries = 3,
-  initialDelay = 1000,
-  maxDelay = 10000,
-): Promise<T> => {
-  let retries = 0;
-  let delayMs = initialDelay;
-
-  while (true) {
-    try {
-      return await operation();
-    } catch (error: any) {
-      if (retries >= maxRetries) {
-        throw error;
-      }
-
-      // Check if error is rate limit related
-      const isRateLimit =
-        error?.code === 429 ||
-        error?.errors?.[0]?.reason === 'rateLimitExceeded' ||
-        error?.errors?.[0]?.reason === 'userRateLimitExceeded';
-
-      if (!isRateLimit) {
-        throw error;
-      }
-
-      console.log(
-        `Rate limit hit, retrying in ${delayMs}ms (attempt ${retries + 1}/${maxRetries})`,
-      );
-      await delay(delayMs);
-
-      // Exponential backoff with jitter
-      delayMs = Math.min(delayMs * 2 + Math.random() * 1000, maxDelay);
-      retries++;
-    }
-  }
 };
 
 export const driver = async (config: IConfig): Promise<MailManager> => {
@@ -493,7 +422,14 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       auth.setCredentials({ ...tokens, scope: getScope() });
       return google
         .people({ version: 'v1', auth })
-        .people.get({ resourceName: 'people/me', personFields: 'names,photos,emailAddresses' });
+        .people.get({ resourceName: 'people/me', personFields: 'names,photos,emailAddresses' })
+        .then((res) => {
+          return {
+            address: res.data.emailAddresses?.[0]?.value ?? null,
+            name: res.data.names?.[0]?.displayName ?? null,
+            photo: res.data.photos?.[0]?.url ?? null,
+          };
+        });
     },
     getTokens: async <T>(code: string) => {
       try {
@@ -509,7 +445,6 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         access_type: 'offline',
         scope: getScope(),
         include_granted_scopes: true,
-        prompt: 'consent',
         state: userId,
       });
     },
@@ -836,14 +771,14 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const msg = createMimeMessage();
       msg.setSender('me');
       msg.setTo(data.to);
-      
+
       if (data.cc) msg.setCc(data.cc);
       if (data.bcc) msg.setBcc(data.bcc);
-      
+
       msg.setSubject(data.subject);
       msg.addMessage({
         contentType: 'text/html',
-        data: data.message || ''
+        data: data.message || '',
       });
 
       if (data.attachments?.length > 0) {
@@ -865,7 +800,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           msg.addAttachment({
             filename: attachment.name,
             contentType: attachment.type,
-            data: base64Data
+            data: base64Data,
           });
         }
       }

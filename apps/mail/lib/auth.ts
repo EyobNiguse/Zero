@@ -36,14 +36,14 @@ const connectionHandlerHook = async (account: Account) => {
       throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
     });
 
-  if (!userInfo.data?.emailAddresses?.[0]?.value) {
+  if (!userInfo?.address) {
     console.error('Missing email in user info:', { userInfo });
     throw new APIError('BAD_REQUEST', { message: 'Missing "email" in user info' });
   }
 
   const updatingInfo = {
-    name: userInfo.data.names?.[0]?.displayName || 'Unknown',
-    picture: userInfo.data.photos?.[0]?.url || '',
+    name: userInfo.name || 'Unknown',
+    picture: userInfo.photo || '',
     accessToken: account.accessToken,
     refreshToken: account.refreshToken,
     scope: driver.getScope(),
@@ -55,7 +55,7 @@ const connectionHandlerHook = async (account: Account) => {
     .values({
       providerId: account.providerId,
       id: crypto.randomUUID(),
-      email: userInfo.data.emailAddresses[0].value,
+      email: userInfo.address,
       userId: account.userId,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -86,7 +86,7 @@ const options = {
     accountLinking: {
       enabled: true,
       allowDifferentEmails: true,
-      trustedProviders: ['google'],
+      trustedProviders: ['google', 'microsoft'],
     },
   },
   databaseHooks: {

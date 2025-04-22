@@ -76,3 +76,33 @@ export const getActiveConnection = async () => {
 
   return _connection;
 };
+
+export function fromBase64Url(str: string) {
+  return str.replace(/-/g, '+').replace(/_/g, '/');
+}
+
+export function fromBinary(str: string) {
+  return decodeURIComponent(
+    atob(str.replace(/-/g, '+').replace(/_/g, '/'))
+      .split('')
+      .map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join(''),
+  );
+}
+
+export const findHtmlBody = (parts: any[]): string => {
+  for (const part of parts) {
+    if (part.mimeType === 'text/html' && part.body?.data) {
+      console.log('✓ Driver: Found HTML content in message part');
+      return part.body.data;
+    }
+    if (part.parts) {
+      const found = findHtmlBody(part.parts);
+      if (found) return found;
+    }
+  }
+  console.log('⚠️ Driver: No HTML content found in message parts');
+  return '';
+};

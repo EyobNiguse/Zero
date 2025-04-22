@@ -1,7 +1,7 @@
 'use client';
 
-import { CommandPaletteProvider } from '@/components/context/command-palette-context';
 import { HotkeyProviderWrapper } from '@/components/providers/hotkey-provider-wrapper';
+import { CommandPaletteProvider } from '@/components/context/command-palette-context';
 import { dexieStorageProvider } from '@/lib/idb';
 import { SWRConfig } from 'swr';
 

@@ -26,7 +26,9 @@ export interface MailManager {
   getTokens(
     code: string,
   ): Promise<{ tokens: { access_token?: any; refresh_token?: any; expiry_date?: number } }>;
-  getUserInfo(tokens: IConfig['auth']): Promise<any>;
+  getUserInfo(
+    tokens: IConfig['auth'],
+  ): Promise<{ address: string | null; name: string | null; photo: string | null }>;
   getScope(): string;
   markAsRead(id: string[]): Promise<void>;
   markAsUnread(id: string[]): Promise<void>;
