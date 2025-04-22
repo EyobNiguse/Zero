@@ -22,8 +22,9 @@ export const getRatelimitModule = (config: {
 
 export const throwUnauthorizedGracefully = async (req?: NextRequest) => {
   console.warn('Unauthorized, redirecting to login');
-  //   const headersList = await headers();
-  //   await auth.api.signOut({ headers: headersList });
+  await deleteActiveConnection();
+  const headersList = await headers();
+  await auth.api.signOut({ headers: headersList });
   //   if (req) {
   //     return NextResponse.redirect(`https://${req.nextUrl.hostname}`);
   //   }

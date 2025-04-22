@@ -31,8 +31,8 @@ export const GET = async (req: NextRequest) => {
       headers,
     });
   } catch (error) {
-    console.warn('Error getting count:', error);
-  } finally {
-    throwUnauthorizedGracefully(req);
+    console.log('Error getting connections:', error);
+    await throwUnauthorizedGracefully(req);
+    return NextResponse.redirect(`https://${req.nextUrl.hostname}`);
   }
 };
