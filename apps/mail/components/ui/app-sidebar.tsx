@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
-import { PencilCompose } from '../icons/icons';
+import { PencilCompose, X } from '../icons/icons';
 import React, { useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { GoldenTicketModal } from '../golden';
@@ -19,6 +19,8 @@ import { NavUser } from './nav-user';
 import { Button } from './button';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Dialog, DialogClose, DialogContent, DialogOverlay, DialogTrigger } from '@/components/ui/dialog';
+import { CreateEmail } from '../create/create-email';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
@@ -117,17 +119,26 @@ function ComposeButton() {
   const isMobile = useIsMobile();
   const t = useTranslations();
   return (
-    <button className="inline-flex h-8 w-full items-center justify-center gap-1 self-stretch overflow-hidden rounded-md border border-gray-200 bg-transparent text-black dark:border-none dark:bg-gradient-to-b dark:from-white/20 dark:to-white/10 dark:text-white dark:outline dark:outline-1 dark:outline-offset-[-1px] dark:outline-white/5">
-      <Link prefetch shallow href="/mail/create">
-        {state === 'collapsed' && !isMobile ? (
-          <PencilCompose className="fill-iconLight dark:fill-iconDark mt-0.5 text-black" />
-        ) : (
-          <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-            <PencilCompose className="fill-iconLight dark:fill-iconDark" />
-            <div className="justify-start text-sm leading-none">New email</div>
-          </div>
-        )}
-      </Link>
-    </button>
+    <Dialog>
+
+
+
+      <DialogTrigger asChild>
+        <button className="inline-flex h-8 w-full items-center justify-center gap-1 self-stretch overflow-hidden rounded-md border border-gray-200 bg-transparent text-black dark:border-none dark:bg-gradient-to-b dark:from-white/20 dark:to-white/10 dark:text-white dark:outline dark:outline-1 dark:outline-offset-[-1px] dark:outline-white/5">
+          {state === 'collapsed' && !isMobile ? (
+            <PencilCompose className="fill-iconLight dark:fill-iconDark mt-0.5 text-black" />
+          ) : (
+            <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+              <PencilCompose className="fill-iconLight dark:fill-iconDark" />
+              <div className="justify-start text-sm leading-none">New email</div>
+            </div>
+          )}
+        </button>
+      </DialogTrigger>
+ 
+      <DialogContent className="max-w-[750px] p-0 border-none">
+        <CreateEmail />
+      </DialogContent>
+    </Dialog>
   );
 }

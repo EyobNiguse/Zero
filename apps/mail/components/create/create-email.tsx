@@ -5,7 +5,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowUpIcon, MinusCircle, Paperclip, PlusCircle, X, ChevronDown } from 'lucide-react';
+import {
+  CurvedArrow,
+  Lightning,
+  MediumStack,
+  ShortStack,
+  LongStack,
+  Smile,
+  ThreeDots,
+  X,
+} from '../icons/icons';
+import {
+  ArrowUpIcon,
+  MinusCircle,
+  Paperclip,
+  PlusCircle,
+  ChevronDown,
+  Plus,
+  Command,
+} from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
 import { useEmailAliases } from '@/hooks/use-email-aliases';
@@ -31,13 +49,13 @@ import Text from '@tiptap/extension-text';
 import Bold from '@tiptap/extension-bold';
 import { type JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
-import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
 import posthog from 'posthog-js';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
+import { DialogClose } from '@/components/ui/dialog';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -102,6 +120,7 @@ export function CreateEmail({
   const { enableScope, disableScope } = useHotkeysContext();
   const [isCardHovered, setIsCardHovered] = React.useState(false);
   const dragCounter = React.useRef(0);
+  const [messageLength, setMessageLength] = React.useState(0);
 
   const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(() => {
     if (initialBody) {
@@ -490,27 +509,66 @@ export function CreateEmail({
     };
   }, [enableScope, disableScope]);
 
+  const getLengthType = (length: number) => {
+    if (length < 100) return { icon: 'ShortStack', text: 'short-length' };
+    if (length < 500) return { icon: 'MediumStack', text: 'medium-length' };
+    return { icon: 'LongStack', text: 'long-length' };
+  };
+
+  // Add effect to handle ESC key
+  React.useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // If there are unsaved changes, show a confirmation dialog
+        if (hasUnsavedChanges) {
+          if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
+            const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
+            closeButton?.click();
+          }
+        } else {
+          const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
+          closeButton?.click();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [hasUnsavedChanges]);
+
   return (
     <div
-      className="bg-offsetLight dark:bg-offsetDark relative flex h-[calc(98vh+10px)] mt-1 flex-col overflow-hidden shadow-inner md:rounded-2xl md:border md:shadow-sm"
+      className="bg-panelLight relative flex flex-col overflow-hidden shadow-inner dark:bg-[#141414]"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-1.5 p-2 transition-colors">
-        <SidebarToggle className="h-fit px-2" />
-      </div>
+      {/* <div className="sticky top-0 z-10 flex items-center justify-between gap-1 border-b border-[#1D1D1D] p-2 transition-colors">
+        <DialogClose asChild>
+          <button className="flex items-center gap-1 rounded-[5px] bg-white px-2 py-0.5 dark:bg-[#262626]">
+            <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#929292]" />{' '}
+            <span className="text-sm text-black dark:text-[#929292]">esc</span>
+          </button>
+        </DialogClose>
+      </div> */}
+      
 
-      <div className="relative flex h-full flex-col">
+
+
+
+{/* <div className="relative flex h-full flex-col">
         <div className="flex-1">
           <div
-            className="bg-sidebar relative mx-auto flex max-h-[80vh] w-full max-w-[500px] flex-col rounded-lg border pt-4 sm:max-w-[720px]"
+            className="bg-sidebar relative mx-auto flex max-h-[80vh] w-full max-w-[500px] flex-col rounded-lg border pt-4 
+            sm:max-w-[720px]"
             style={{ height: '' }}
             onDragEnter={handleDragEnterCard}
             onDragLeave={handleDragLeaveCard}
           >
             {isDragging && isCardHovered && (
-              <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm">
+              <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center 
+              rounded-2xl border-2 
+              border-dashed backdrop-blur-sm">
                 <div className="text-muted-foreground flex flex-col items-center gap-2">
                   <Paperclip className="text-muted-foreground h-12 w-12" />
                   <p className="text-lg font-medium">{t('pages.createEmail.dropFilesToAttach')}</p>
@@ -608,7 +666,8 @@ export function CreateEmail({
                 )}
 
                 <div className="flex items-center">
-                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 
+                  md:w-24">
                     {t('common.searchBar.from')}
                   </div>
                   <DropdownMenu>
@@ -647,14 +706,16 @@ export function CreateEmail({
                 </div>
 
                 <div className="flex items-center">
-                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 md:w-24">
+                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 
+                  md:w-24">
                     {t('common.searchBar.subject')}
                   </div>
                   <input
                     ref={subjectInputRef}
                     disabled={isLoading}
                     type="text"
-                    className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] placeholder:opacity-50 focus:outline-none"
+                    className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] 
+                    placeholder:opacity-50 focus:outline-none"
                     placeholder={t('common.searchBar.subject')}
                     value={subjectInput}
                     onChange={(e) => {
@@ -665,7 +726,9 @@ export function CreateEmail({
                 </div>
 
                 <div className="flex">
-                  <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right font-[600] opacity-50 md:w-24">
+                  <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right 
+                  font-[600] opacity-50 
+                  md:w-24">
                     {t('pages.createEmail.body')}
                   </div>
                   <div className="w-full">
@@ -690,7 +753,7 @@ export function CreateEmail({
             </div>
             <div className="sticky bottom-0 left-0 right-0 z-10 border-t px-2 py-2">
               <div className="flex items-center justify-end">
-                {/* <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
                   <div className="pb-2 pt-2">
                     <AIAssistant
                       currentContent={messageContent}
@@ -753,7 +816,7 @@ export function CreateEmail({
                       }}
                     />
                   </div>
-                </div> */}
+                </div>
                 <div className="flex justify-end gap-3">
                   {attachments.length > 0 && (
                     <Popover>
@@ -844,6 +907,118 @@ export function CreateEmail({
                     <ArrowUpIcon className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> */}
+
+
+
+
+
+
+
+
+
+
+      
+      <div className="flex  items-center justify-center">
+        <div className="w-full max-w-[750px] rounded-lg bg-white dark:bg-[#1A1A1A]">
+          <div className="border-b border-[#252525] pb-2">
+            <div className="flex justify-between px-3 pt-3">
+              <p className="text-sm font-medium text-[#8C8C8C]">To:</p>
+              <div className="flex gap-2">
+                <button
+                  className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
+                  onClick={() => setShowCc(!showCc)}
+                >
+                  Cc
+                </button>
+                <button
+                  className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
+                  onClick={() => setShowBcc(!showBcc)}
+                >
+                  Bcc
+                </button>
+              </div>
+            </div>
+            <div className={`flex flex-col gap-2 ${showCc || showBcc ? 'pt-2' : ''}`}>
+              {showCc && (
+                <div className="px-3">
+                  <p className="text-sm font-medium text-[#8C8C8C]">Cc:</p>
+                </div>
+              )}
+              {showBcc && (
+                <div className="px-3">
+                  <p className="text-sm font-medium text-[#8C8C8C]">Bcc:</p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div>
+            <p className="p-3 text-sm font-medium text-[#8C8C8C]">Subject:</p>
+          </div>
+          <div className="mb-6 flex flex-col items-start justify-start gap-2 self-stretch rounded-2xl bg-[#202020] px-4 py-3 outline outline-[0.50px] outline-white/5">
+            <div className="flex flex-col items-center justify-center gap-2.5 self-stretch">
+              <div className="flex flex-col items-start justify-start gap-3 self-stretch">
+                <textarea
+                  className="resize-none self-stretch bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
+                  placeholder="Write your email..."
+                  rows={10}
+                  onChange={(e) => {
+                    setMessageContent(e.target.value);
+                    setMessageLength(e.target.value.length);
+                  }}
+                />
+              </div>
+            </div>
+            <div className="inline-flex items-center justify-between self-stretch">
+              <div className="flex items-center justify-start gap-3">
+                <div className="flex items-center justify-start">
+                  <button className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white">
+                    <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                      <div className="text-center text-sm leading-none text-white dark:text-black">
+                        Send now
+                      </div>
+                    </div>
+
+                    <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
+                      <Command className="h-3.5 w-3.5 text-white dark:text-black" />
+                      <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-black" />
+                    </div>
+                  </button>
+                  <button className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
+                    <Plus className="h-3 w-3 fill-[#9A9A9A]" />
+                    <span className="px-0.5 text-sm">Add files</span>
+                  </button>
+                  {/* <div className="self-stretch pl-2 bg-[#006FFE] flex justify-start items-center">
+                    <div className="w-px h-3 bg-white/20 rounded-full" />
+                  </div>
+                  <div className="h-7 px-2 bg-[#006FFE] rounded-tr-md rounded-br-md flex justify-center items-center gap-1.5 overflow-hidden">
+                    <div className="w-4 h-4 relative overflow-hidden" />
+                  </div> */}
+                </div>
+              </div>
+              <div className="flex items-start justify-start gap-3">
+                <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
+                  <Smile className="h-3 w-3 fill-[#9A9A9A]" />
+                  <span className="px-0.5 text-sm">Casual</span>
+                </button>
+                <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
+                  {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                  {messageLength >= 50 && messageLength < 200 && (
+                    <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
+                  )}
+                  {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                  <span className="px-0.5 text-sm">
+                    {messageLength < 50
+                      ? 'short-length'
+                      : messageLength < 200
+                        ? 'medium-length'
+                        : 'long-length'}
+                  </span>
+                </button>
               </div>
             </div>
           </div>
