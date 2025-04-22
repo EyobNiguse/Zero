@@ -21,7 +21,8 @@ export const deleteActiveConnection = async () => {
       .delete(connection)
       .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
     console.log('Server: Successfully deleted connection, please reload');
-    return revalidatePath('/mail');
+    await auth.api.signOut({ headers: headersList });
+    // return revalidatePath('/mail');
   } catch (error) {
     console.error('Server: Error deleting connection:', error);
     throw error;
