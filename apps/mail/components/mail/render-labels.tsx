@@ -7,12 +7,12 @@ export const RenderLabels = ({ ids }: { ids: string[] }) => {
   const { data: labels = [] } = useThreadLabels(ids);
 
   return labels.map((label: Label) => (
-    <span
+    <p
       key={label.id}
-      className="bg-primary/10 text-primary rounded px-1.5 py-0.5"
+      className="bg-primary/10 text-primary rounded px-1.5 py-0.5 max-w-[10ch] truncate "
       style={{ backgroundColor: label.color?.backgroundColor, color: label.color?.textColor }}
     >
       {label.name}
-    </span>
+    </p>
   ));
 };

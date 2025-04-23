@@ -766,7 +766,7 @@ export const MailLabels = memo(
           }
 
           return (
-            <Badge className="rounded-md p-1" variant={style}>
+            <Badge key={label} className="rounded-md p-1" variant={style}>
               {getLabelIcon(label)}
             </Badge>
           );

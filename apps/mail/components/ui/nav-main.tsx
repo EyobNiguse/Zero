@@ -177,6 +177,8 @@ export function NavMain({ items }: NavMainProps) {
     });
   };
 
+  
+
   return (
     <SidebarGroup className={`${state !== 'collapsed' ? '' : 'mt-1'} space-y-2.5 py-0`}>
       <SidebarMenu>
@@ -209,37 +211,37 @@ export function NavMain({ items }: NavMainProps) {
             </SidebarMenuItem>
           </Collapsible>
         ))}
-        {!pathname.includes('/settings') && !isBottomNav && (
+        {!pathname.includes('/settings') && !isBottomNav && state !== 'collapsed' && (
           <Collapsible defaultOpen={true} className="group/collapsible">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
-              <SidebarMenuItem className="mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]">
+              <div className="mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]">
                 Labels
-              </SidebarMenuItem>
+              </div>
 
               <div style={{ height: 'auto' }} className="mr-0 pr-0">
                 <div
-                  className="space-y-1 overflow-y-auto pb-2"
+                  className="space-y-3 overflow-y-auto pb-2"
                   style={{
                     height: 'auto',
-                    maxHeight: labels.length > 5 ? '250px' : undefined,
+                    maxHeight: labels.length > 5 ? '270px' : undefined,
                   }}
                 >
                   {labels.map((label) => (
                     <div
                       onClick={handleFilterByLabel(label)}
                       key={label.id}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-sm mx-2"
                     >
                       <div
-                        className="size-2 rounded-md"
+                        className="size-4 rounded-md mr-2 "
                         style={{ backgroundColor: label.color?.backgroundColor || '#E2E2E2' }}
                       />
                       <span
                         className={cn(
-                          searchValue.value.includes(`label:${label.name}`) ? 'font-bold' : '',
+                          searchValue.value.includes(`label:${label.name}`) ? 'font-bold ' : '',
                         )}
                       >
-                        {label.name}
+                        <p className="max-w-[15ch] truncate">{label.name}</p>
                       </span>
                     </div>
                   ))}
