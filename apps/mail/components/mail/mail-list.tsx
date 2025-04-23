@@ -404,7 +404,7 @@ const Thread = memo(
                     ) : null}
                   </div>
                   <div className="flex justify-between">
-                    <p className={cn('mt-1 line-clamp-1 text-sm text-[#8C8C8C] max-w-[20ch]')}>
+                    <p className={cn('mt-1 line-clamp-1 max-w-[20ch] text-sm text-[#8C8C8C]')}>
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
                     <MailLabels labels={threadLabels} />
@@ -512,7 +512,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
     const currentCategory = category
       ? allCategories.find((cat) => cat.id === category)
-      : allCategories.find((cat) => cat.id === 'Primary');
+      : allCategories.find((cat) => cat.id === 'Important');
 
     if (currentCategory && searchValue.value === '') {
       setSearchValue({
