@@ -684,7 +684,7 @@ function CategorySelect() {
   const router = useRouter();
   const { folder } = useParams<{ folder: string }>();
   const [category, setCategory] = useQueryState('category', {
-    defaultValue: 'Important ',
+    defaultValue: 'Important',
   });
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
