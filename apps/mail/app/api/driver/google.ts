@@ -7,6 +7,21 @@ import { cleanSearchValue } from '@/lib/utils';
 import { createMimeMessage } from 'mimetext';
 import * as he from 'he';
 
+class StandardizedError extends Error {
+  code: string;
+  operation: string;
+  context?: Record<string, any>;
+  originalError: unknown;
+  constructor(error: Error & { code: string }, operation: string, context?: Record<string, any>) {
+    super(error?.message || 'An unknown error occurred');
+    this.name = 'StandardizedError';
+    this.code = error?.code || 'UNKNOWN_ERROR';
+    this.operation = operation;
+    this.context = context;
+    this.originalError = error;
+  }
+}
+
 function fromBase64Url(str: string) {
   return str.replace(/-/g, '+').replace(/_/g, '/');
 }
@@ -130,18 +145,8 @@ const withErrorHandler = async <T>(
       stack: error.stack,
       isFatal,
     });
-
-    const standardizedError = {
-      message: error.message || 'An unknown error occurred',
-      code: error.code || 'UNKNOWN_ERROR',
-      operation,
-      context,
-      originalError: error,
-    };
-
     if (isFatal) await deleteActiveConnection();
-
-    throw standardizedError;
+    throw new StandardizedError(error, operation, context);
   }
 };
 
@@ -153,22 +158,16 @@ const withSyncErrorHandler = <T>(
   try {
     return fn();
   } catch (error: any) {
+    const isFatal = FatalErrors.includes(error.message);
     console.error(`[Gmail Driver Error] Operation: ${operation}`, {
       error: error.message,
       code: error.code,
       context,
       stack: error.stack,
+      isFatal,
     });
-
-    const standardizedError = {
-      message: error.message || 'An unknown error occurred',
-      code: error.code || 'UNKNOWN_ERROR',
-      operation,
-      context,
-      originalError: error,
-    };
-
-    throw standardizedError;
+    if (isFatal) void deleteActiveConnection();
+    throw new StandardizedError(error, operation, context);
   }
 };
 
