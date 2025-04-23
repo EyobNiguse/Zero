@@ -37,33 +37,16 @@ export const authProviders: ProviderConfig[] = [
     ],
     config: {
       // TODO: Remove this before going to prod, it's to force to get `refresh_token` from google, some users don't have it yet.
-      prompt: process.env.NODE_ENV === 'production' ? undefined : 'consent',
+      //   prompt:
+      //     process.env.NODE_ENV === 'production' && !process.env.FORCE_GMAIL_CONSENT
+      //       ? undefined
+      //       : 'consent',
       accessType: 'offline',
       scope: ['https://www.googleapis.com/auth/gmail.modify'],
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
     required: true,
-  },
-  {
-    id: 'microsoft',
-    name: 'Microsoft',
-    requiredEnvVars: ['MICROSOFT_CLIENT_ID', 'MICROSOFT_CLIENT_SECRET'],
-    envVarInfo: [
-      { name: 'MICROSOFT_CLIENT_ID', source: 'Microsoft Azure Portal' },
-      { name: 'MICROSOFT_CLIENT_SECRET', source: 'Microsoft Azure Portal' },
-    ],
-    config: {
-      clientId: process.env.MICROSOFT_CLIENT_ID!,
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-      scope: [
-        'https://graph.microsoft.com/User.Read',
-        'https://graph.microsoft.com/Mail.ReadWrite',
-        'https://graph.microsoft.com/Mail.Send',
-        'offline_access',
-      ],
-    },
-    required: false,
   },
   // Commented out GitHub provider
   // {
