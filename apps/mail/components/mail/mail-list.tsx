@@ -29,10 +29,8 @@ import type { VirtuosoHandle } from 'react-virtuoso';
 import { useKeyState } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { RenderLabels } from './render-labels';
-import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
-import { Label } from '@/hooks/use-labels';
 import { Label } from '@/hooks/use-labels';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
@@ -370,7 +368,7 @@ const Thread = memo(
                 <div className="w-full">
                   <div className="flex w-full flex-row items-center justify-between">
                     <div className="flex flex-row items-center gap-[4px]">
-                      <p
+                      <span
                         className={cn(
                           getThreadData.hasUnread && !isMailSelected ? 'font-bold' : 'font-medium',
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
@@ -382,10 +380,10 @@ const Thread = memo(
                             searchValue.highlight,
                           )}
                         </span>{' '}
-                        <span className="space-x-2">
+                        <span className="space-x-2 flex items-center">
                           <RenderLabels ids={threadLabels} />
                         </span>
-                      </p>
+                      </span>
                       {getThreadData.totalReplies > 1 ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
