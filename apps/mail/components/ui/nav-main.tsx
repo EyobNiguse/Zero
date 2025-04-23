@@ -7,7 +7,9 @@ import {
   SidebarMenuButton,
   useSidebar,
   SidebarMenuSub,
+  SidebarMenuSub,
 } from './sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -15,10 +17,12 @@ import { clearBulkSelectionAtom } from '../mail/use-mail';
 import { type MessageKey } from '@/config/navigation';
 import { Label, useLabels } from '@/hooks/use-labels';
 import { type NavItem } from '@/config/navigation';
+import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { GoldenTicketModal } from '../golden';
 import { useStats } from '@/hooks/use-stats';
+import { SettingsIcon } from 'lucide-react';
 import { SettingsIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRef, useCallback } from 'react';

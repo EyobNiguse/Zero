@@ -29,8 +29,10 @@ import type { VirtuosoHandle } from 'react-virtuoso';
 import { useKeyState } from '@/hooks/use-hot-key';
 import { useSession } from '@/lib/auth-client';
 import { RenderLabels } from './render-labels';
+import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
+import { Label } from '@/hooks/use-labels';
 import { Label } from '@/hooks/use-labels';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
@@ -413,7 +415,7 @@ const Thread = memo(
                     <p className={cn('mt-1 line-clamp-1 max-w-[20ch] text-sm text-[#8C8C8C]')}>
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
-                    <MailLabels labels={threadLabels} />
+                    {/* <MailLabels labels={threadLabels} /> */}
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
