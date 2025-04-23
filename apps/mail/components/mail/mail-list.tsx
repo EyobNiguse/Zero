@@ -413,7 +413,7 @@ const Thread = memo(
                     <p className={cn('mt-1 line-clamp-1 max-w-[20ch] text-sm text-[#8C8C8C]')}>
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
-                    {/* <MailLabels labels={threadLabels} /> */}
+                    <MailLabels labels={threadLabels} />
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
