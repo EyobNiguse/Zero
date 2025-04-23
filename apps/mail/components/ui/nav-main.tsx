@@ -6,16 +6,19 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   useSidebar,
+  SidebarMenuSub,
 } from './sidebar';
-import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clearBulkSelectionAtom } from '../mail/use-mail';
 import { type MessageKey } from '@/config/navigation';
 import { type NavItem } from '@/config/navigation';
+import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { GoldenTicketModal } from '../golden';
 import { useStats } from '@/hooks/use-stats';
+import { SettingsIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRef, useCallback } from 'react';
 import { BASE_URL } from '@/lib/constants';
@@ -56,7 +59,12 @@ export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [category] = useQueryState('category');
+
+  const { labels } = useLabels();
   const { state } = useSidebar();
+
+  // Check if these are bottom navigation items by looking at the first section's title
+  const isBottomNav = items[0]?.title === '';
 
   /**
    * Validates URLs to prevent open redirect vulnerabilities.
@@ -181,6 +189,39 @@ export function NavMain({ items }: NavMainProps) {
             </SidebarMenuItem>
           </Collapsible>
         ))}
+        {!pathname.includes('/settings') && !isBottomNav && (
+          <Collapsible defaultOpen={true} className="group/collapsible">
+            <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
+              <SidebarMenuItem className='mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]'>Labels</SidebarMenuItem>
+              
+
+              <div style={{ height: 'auto' }} className="mr-0 pr-0">
+                <div
+                  className="space-y-1 overflow-y-auto pb-2"
+                  style={{
+                    height: 'auto',
+                    maxHeight: labels.length > 5 ? '250px' : undefined,
+                  }}
+                >
+                  {labels.map((label) => (
+                    <NavItem
+                      key={label.id}
+                      title={label.name}
+                      href={`/mail/inbox?q=${encodeURIComponent(label.name.toLocaleLowerCase())}`}
+                      icon={() => (
+                        <div
+                          className="size-4 rounded-md"
+                          style={{ backgroundColor: label.color?.backgroundColor || '#E2E2E2' }}
+                        />
+                      )}
+                      url={`/mail/inbox?q=${encodeURIComponent(label.name.toLocaleLowerCase())}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </SidebarMenuItem>
+          </Collapsible>
+        )}
       </SidebarMenu>
     </SidebarGroup>
   );
@@ -194,7 +235,7 @@ function NavItem(item: NavItemProps & { href: string }) {
   if (item.disabled) {
     return (
       <SidebarMenuButton
-        tooltip={t(item.title as MessageKey)}
+        tooltip={item.title as MessageKey}
         className="flex cursor-not-allowed items-center opacity-50"
       >
         {item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
