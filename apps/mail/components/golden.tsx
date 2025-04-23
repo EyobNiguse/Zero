@@ -21,7 +21,6 @@ import { Ticket } from './icons/icons';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import Image from 'next/image';
-import Image from 'next/image';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -110,21 +109,6 @@ export const GoldenTicketModal = () => {
               height={32}
               className="block dark:hidden"
             />
-          <DialogTitle className="flex flex-col gap-4">
-            <Image
-              src="/white-icon.svg"
-              alt="Zero"
-              width={32}
-              height={32}
-              className="hidden dark:block"
-            />
-            <Image
-              src="/black-icon.svg"
-              alt="Zero"
-              width={32}
-              height={32}
-              className="block dark:hidden"
-            />
             <span>Welcome to Zero! 🎉 ✨</span>
           </DialogTitle>
           <DialogDescription className="flex flex-col gap-3 pt-3">
@@ -132,12 +116,6 @@ export const GoldenTicketModal = () => {
               Zero is still in early beta 🚀 and will continue to grow and improve from this point
               on. If you know a friend who wants to test and try out Zero, send them an invite! 💌
             </span>
-          <DialogDescription className="flex flex-col gap-3 pt-3">
-            <span>
-              Zero is still in early beta 🚀 and will continue to grow and improve from this point
-              on. If you know a friend who wants to test and try out Zero, send them an invite! 💌
-            </span>
-
             <span>You can only invite one person, so make it count! 🎯 ⭐️</span>
           </DialogDescription>
         </DialogHeader>
@@ -153,15 +131,9 @@ export const GoldenTicketModal = () => {
                     {...field}
                     className="placeholder:opacity-20"
                   />
-                  <Input
-                    placeholder="nizzy@gmail.com"
-                    {...field}
-                    className="placeholder:opacity-20"
-                  />
                 </FormItem>
               )}
             />
-            <div className="flex justify-end gap-2 pt-3">
             <div className="flex justify-end gap-2 pt-3">
               <Button onClick={handleMaybeLater} type="button" variant="outline" className="">
                 Maybe Later

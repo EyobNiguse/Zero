@@ -404,7 +404,7 @@ const Thread = memo(
                     ) : null}
                   </div>
                   <div className="flex justify-between">
-                    <p className={cn('mt-1 line-clamp-1 text-sm text-[#8C8C8C]')}>
+                    <p className={cn('mt-1 line-clamp-1 text-sm text-[#8C8C8C] max-w-[20ch]')}>
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
                     <MailLabels labels={threadLabels} />

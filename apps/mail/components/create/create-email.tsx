@@ -32,6 +32,7 @@ import { useConnections } from '@/hooks/use-connections';
 import { createDraft, getDraft } from '@/actions/drafts';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { Separator } from '@/components/ui/separator';
+import { DialogClose } from '@/components/ui/dialog';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import Paragraph from '@tiptap/extension-paragraph';
 import { useSettings } from '@/hooks/use-settings';
@@ -55,7 +56,6 @@ import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
-import { DialogClose } from '@/components/ui/dialog';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -551,12 +551,8 @@ export function CreateEmail({
           </button>
         </DialogClose>
       </div> */}
-      
 
-
-
-
-{/* <div className="relative flex h-full flex-col">
+      {/* <div className="relative flex h-full flex-col">
         <div className="flex-1">
           <div
             className="bg-sidebar relative mx-auto flex max-h-[80vh] w-full max-w-[500px] flex-col rounded-lg border pt-4 
@@ -884,14 +880,13 @@ export function CreateEmail({
                       style={{ display: 'none' }}
                       ref={fileInputRef}
                     />
-                    <Button
-                      variant="outline"
-                      className="hover:bg-muted -ml-1 h-9 w-9 cursor-pointer rounded-full transition-transform"
-                      tabIndex={-1}
+                    <button 
+                      className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
                       onClick={() => fileInputRef.current && fileInputRef.current.click()}
                     >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                      <Plus className="h-3 w-3 fill-[#9A9A9A]" />
+                      <span className="px-0.5 text-sm">Add files</span>
+                    </button>
                   </div>
                   <Button
                     variant="default"
@@ -913,21 +908,18 @@ export function CreateEmail({
         </div>
       </div> */}
 
-
-
-
-
-
-
-
-
-
-      
-      <div className="flex  items-center justify-center">
-        <div className="w-full max-w-[750px] rounded-lg bg-white dark:bg-[#1A1A1A]">
+      <div className="flex items-center justify-center">
+        <div className="w-full max-w-[750px] bg-white dark:bg-[#1A1A1A]">
           <div className="border-b border-[#252525] pb-2">
             <div className="flex justify-between px-3 pt-3">
-              <p className="text-sm font-medium text-[#8C8C8C]">To:</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-[#8C8C8C]">To:</p>
+                <input
+                  className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
+                  placeholder="Enter email"
+                />
+              </div>
+
               <div className="flex gap-2">
                 <button
                   className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
@@ -935,6 +927,7 @@ export function CreateEmail({
                 >
                   Cc
                 </button>
+
                 <button
                   className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
                   onClick={() => setShowBcc(!showBcc)}
@@ -945,19 +938,31 @@ export function CreateEmail({
             </div>
             <div className={`flex flex-col gap-2 ${showCc || showBcc ? 'pt-2' : ''}`}>
               {showCc && (
-                <div className="px-3">
+                <div className="flex items-center gap-2 px-3">
                   <p className="text-sm font-medium text-[#8C8C8C]">Cc:</p>
+                  <input
+                    className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
+                    placeholder="Enter email"
+                  />
                 </div>
               )}
               {showBcc && (
-                <div className="px-3">
+                <div className="flex items-center gap-2 px-3">
                   <p className="text-sm font-medium text-[#8C8C8C]">Bcc:</p>
+                  <input
+                    className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
+                    placeholder="Enter email"
+                  />
                 </div>
               )}
             </div>
           </div>
-          <div>
-            <p className="p-3 text-sm font-medium text-[#8C8C8C]">Subject:</p>
+          <div className="flex items-center gap-2 p-3">
+            <p className="text-sm font-medium text-[#8C8C8C]">Subject:</p>
+            <input
+              className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
+              placeholder="Re: Design review feedback"
+            />
           </div>
           <div className="mb-6 flex flex-col items-start justify-start gap-2 self-stretch rounded-2xl bg-[#202020] px-4 py-3 outline outline-[0.50px] outline-white/5">
             <div className="flex flex-col items-center justify-center gap-2.5 self-stretch">
@@ -976,7 +981,16 @@ export function CreateEmail({
             <div className="inline-flex items-center justify-between self-stretch">
               <div className="flex items-center justify-start gap-3">
                 <div className="flex items-center justify-start">
-                  <button className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white">
+                  <button
+                    className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
+                    onClick={handleSendEmail}
+                    disabled={
+                      isLoading ||
+                      !toEmails.length ||
+                      !messageContent.trim() ||
+                      !subjectInput.trim()
+                    }
+                  >
                     <div className="flex items-center justify-center gap-2.5 pl-0.5">
                       <div className="text-center text-sm leading-none text-white dark:text-black">
                         Send now
@@ -988,16 +1002,22 @@ export function CreateEmail({
                       <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-black" />
                     </div>
                   </button>
-                  <button className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
+                  <button 
+                    className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                  >
                     <Plus className="h-3 w-3 fill-[#9A9A9A]" />
                     <span className="px-0.5 text-sm">Add files</span>
                   </button>
-                  {/* <div className="self-stretch pl-2 bg-[#006FFE] flex justify-start items-center">
-                    <div className="w-px h-3 bg-white/20 rounded-full" />
-                  </div>
-                  <div className="h-7 px-2 bg-[#006FFE] rounded-tr-md rounded-br-md flex justify-center items-center gap-1.5 overflow-hidden">
-                    <div className="w-4 h-4 relative overflow-hidden" />
-                  </div> */}
+                  <Input
+                    type="file"
+                    id="attachment-input"
+                    className="hidden"
+                    onChange={handleAttachment}
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                    ref={fileInputRef}
+                  />
                 </div>
               </div>
               <div className="flex items-start justify-start gap-3">

@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { HelpCircle, LogIn, LogOut, MoonIcon, Settings, Plus } from 'lucide-react';
-import { CircleCheck } from '../icons/icons';
+import { CircleCheck, ThreeDots } from '../icons/icons';
 
 import {
   DropdownMenu,
@@ -104,12 +104,13 @@ export function NavUser() {
                       .slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
+                
               </div>
             </div>
           )
         ) : (
-          <>
-            {connections?.map((connection) => (
+          <div className='flex items-center justify-between w-full mr-2 mt-0.5'>
+            <div className='flex items-center gap-2'>{connections?.map((connection) => (
               <div
                 key={connection.id}
                 onClick={handleAccountSwitch(connection)}
@@ -138,15 +139,20 @@ export function NavUser() {
                   {connection.id === session?.connectionId && connections.length > 1 && (
                     <CircleCheck className="absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black fill-mainBlue" />
                   )}
+                  
                 </div>
               </div>
             ))}
+            
             <AddConnectionDialog>
               <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] dark:bg-[#262626] dark:text-[#929292] border border-dashed">
                 <Plus className="size-4" />
               </button>
-            </AddConnectionDialog>
-          </>
+            </AddConnectionDialog></div>
+            <div>
+              <ThreeDots className='fill-iconLight dark:fill-iconDark' />
+            </div>
+          </div>
         )}
       </div>
       {state !== 'collapsed' && (
