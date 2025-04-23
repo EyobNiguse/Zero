@@ -357,9 +357,9 @@ export function MailLayout() {
                   </>
                 )} */}
               </div>
-              <div className="p-2 px-[20px]">
+              <div className="p-2 px-2">
                 <SearchBar />
-                <div className="mt-4">
+                <div className="mt-2">
                   <CategorySelect />
                 </div>
               </div>
@@ -370,13 +370,11 @@ export function MailLayout() {
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
-              <div className="h-[calc(100dvh-56px)] max-w-[33ch] overflow-hidden pt-0 md:h-[calc(100dvh-165px)]">
+              <div className="h-[calc(100dvh-56px)] w-[33ch] overflow-hidden pt-0 md:h-[calc(100dvh-165px)]">
                 <MailList isCompact={true} />
               </div>
             </div>
           </div>
-
-          <ResizableHandle className="hidden opacity-0" />
 
           {isDesktop && (
             <ResizablePanel

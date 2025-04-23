@@ -1,17 +1,17 @@
 'use client';
 
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
+import { useState, useEffect, useContext, createContext } from 'react';
+import { useEditor } from '@/components/providers/editor-provider';
+import { X, MessageSquare, PanelLeftOpen } from 'lucide-react';
 import { AIChat } from '@/components/create/ai-chat';
 import { Button } from '@/components/ui/button';
-import { X, MessageSquare, PanelLeftOpen } from 'lucide-react';
-import { useState, useEffect, useContext, createContext } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { getCookie } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
-import { useEditor } from '@/components/providers/editor-provider';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
-import { getCookie } from '@/lib/utils';
 
 interface AISidebarProps {
   className?: string;
@@ -54,9 +54,7 @@ export function AISidebarProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AISidebarContext.Provider value={{ open, setOpen, toggleOpen }}>
-      <AISidebar>
-        {children}
-      </AISidebar>
+      <AISidebar>{children}</AISidebar>
     </AISidebarContext.Provider>
   );
 }
@@ -76,23 +74,21 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
 
   return (
     <TooltipProvider delayDuration={0}>
-      <ResizablePanelGroup direction="horizontal" className={cn(
-        'bg-lightBackground dark:bg-darkBackground p-0',
-      )}>
-        <ResizablePanel>
-          {children}
-        </ResizablePanel>
-        
+      <ResizablePanelGroup
+        direction="horizontal"
+        className={cn('bg-lightBackground dark:bg-darkBackground p-0')}
+      >
+        <ResizablePanel>{children}</ResizablePanel>
+
         {open && (
           <>
-            <ResizableHandle className='opacity-0 w-1.5' />
-            <ResizablePanel defaultSize={25} minSize={20} maxSize={45} className="bg-panelLight dark:bg-panelDark shadow-sm dark:border-[#252525] border-[#E7E7E7]  md:rounded-2xl md:border md:shadow-sm h-[calc(98vh+9px)] mt-1 mr-1.5">
-              <div className={cn(
-                'h-[calc(98vh+15px)]',
-                'flex flex-col',
-                'mr-1.5',
-                className
-              )}>
+            <ResizablePanel
+              defaultSize={25}
+              minSize={20}
+              maxSize={45}
+              className="bg-panelLight dark:bg-panelDark ml-1 mr-1.5 mt-1 h-[calc(98vh+9px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+            >
+              <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', 'mr-1.5', className)}>
                 <div className="flex h-full flex-col">
                   {/* <div className="sticky top-0 z-10 flex items-center justify-end bg-panelLight dark:bg-panelDark">
                     <Tooltip>
@@ -104,19 +100,32 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                       <TooltipContent>Close</TooltipContent>
                     </Tooltip>
                   </div> */}
-                  <div className="relative flex-1 overflow-hidden b">
+                  <div className="b relative flex-1 overflow-hidden">
                     {!hasMessages && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div className="relative h-20 w-20">
-                          <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
-                          <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
+                          <Image
+                            src="/black-icon.svg"
+                            alt="Zero Logo"
+                            fill
+                            className="dark:hidden"
+                          />
+                          <Image
+                            src="/white-icon.svg"
+                            alt="Zero Logo"
+                            fill
+                            className="hidden dark:block"
+                          />
                         </div>
                         <p className="animate-shine mt-2 hidden bg-gradient-to-r from-neutral-500 via-neutral-300 to-neutral-500 bg-[length:200%_100%] bg-clip-text text-lg text-transparent opacity-50 md:block">
                           Ask Zero a question...
                         </p>
                       </div>
                     )}
-                    <AIChat editor={editor} onMessagesChange={(messages) => setHasMessages(messages.length > 0)} />
+                    <AIChat
+                      editor={editor}
+                      onMessagesChange={(messages) => setHasMessages(messages.length > 0)}
+                    />
                   </div>
                 </div>
               </div>
