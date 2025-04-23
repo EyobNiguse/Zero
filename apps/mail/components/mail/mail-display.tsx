@@ -653,7 +653,7 @@ const [mode, setMode] = useQueryState('mode');
                 </div>
               )}
               {emailData?.attachments && emailData?.attachments.length > 0 ? (
-                <div className="mb-4 flex flex-col gap-2 px-4">
+                <div className="mb-4 flex items-center gap-2 px-4 pt-4">
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button

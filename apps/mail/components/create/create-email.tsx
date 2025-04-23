@@ -49,6 +49,7 @@ import { EmailInput } from './email-input';
 import Text from '@tiptap/extension-text';
 import Bold from '@tiptap/extension-bold';
 import { type JSONContent } from 'novel';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useQueryState } from 'nuqs';
 import { useEffect } from 'react';
 import posthog from 'posthog-js';
@@ -887,6 +888,42 @@ export function CreateEmail({
                       <Plus className="h-3 w-3 fill-[#9A9A9A]" />
                       <span className="px-0.5 text-sm">Add files</span>
                     </button>
+                    {attachments.length > 0 && (
+                      <div className="flex items-center gap-2 ml-2">
+                        {attachments.slice(0, 3).map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-sm"
+                          >
+                            <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
+                            <span className="max-w-[100px] truncate">{file.name}</span>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                removeAttachment(index);
+                              }}
+                              className="ml-1 rounded-sm hover:bg-white/10"
+                            >
+                              <X className="h-3 w-3 fill-[#9A9A9A]" />
+                            </button>
+                          </div>
+                        ))}
+                        {attachments.length > 3 && (
+                          <span className="text-sm text-[#9A9A9A]">
+                            +{attachments.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <Input
+                      type="file"
+                      id="attachment-input"
+                      className="hidden"
+                      onChange={handleAttachment}
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                      ref={fileInputRef}
+                    />
                   </div>
                   <Button
                     variant="default"
@@ -918,19 +955,26 @@ export function CreateEmail({
                   {toEmails.map((email, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-0.5"
+                      className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-1 pr-2 py-0.5"
                     >
-                      <span className="text-sm text-white/90">{email}</span>
+                      <span className="text-sm text-black dark:text-white flex gap-1 py-0.5">
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                            {email.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {email}
+                      </span>
                       <button
                         onClick={() => setToEmails(toEmails.filter((_, i) => i !== index))}
                         className="text-white/50 hover:text-white/90"
                       >
-                        <X className="h-3 w-3 fill-black dark:fill-[#9A9A9A]" />
+                        <X className="h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A] mt-0.5" />
                       </button>
                     </div>
                   ))}
                   <input
-                    className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black dark:text-white placeholder:text-[#797979] focus:outline-none"
+                    className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
                     placeholder="Enter email"
                     value={toInput}
                     onChange={(e) => {
@@ -976,19 +1020,105 @@ export function CreateEmail({
               {showCc && (
                 <div className="flex items-center gap-2 px-3">
                   <p className="text-sm font-medium text-[#8C8C8C]">Cc:</p>
-                  <input
-                    className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
-                    placeholder="Enter email"
-                  />
+                  <div className="flex flex-wrap items-center gap-2 flex-1">
+                    {ccEmails.map((email, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
+                      >
+                        <span className="text-sm text-black dark:text-white flex gap-1 py-0.5">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                              {email.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {email}
+                        </span>
+                        <button
+                          onClick={() => setCcEmails(ccEmails.filter((_, i) => i !== index))}
+                          className="text-white/50 hover:text-white/90"
+                        >
+                          <X className="h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A] mt-0.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <input
+                      className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
+                      placeholder="Enter email"
+                      value={ccInput}
+                      onChange={(e) => {
+                        setCcInput(e.target.value);
+                        setHasUnsavedChanges(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && ccInput.trim()) {
+                          e.preventDefault();
+                          if (isValidEmail(ccInput.trim())) {
+                            setCcEmails([...ccEmails, ccInput.trim()]);
+                            setCcInput('');
+                            setHasUnsavedChanges(true);
+                          } else {
+                            toast.error('Please enter a valid email address');
+                          }
+                        } else if (e.key === 'Backspace' && !ccInput && ccEmails.length > 0) {
+                          setCcEmails(ccEmails.slice(0, -1));
+                          setHasUnsavedChanges(true);
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               )}
               {showBcc && (
                 <div className="flex items-center gap-2 px-3">
                   <p className="text-sm font-medium text-[#8C8C8C]">Bcc:</p>
-                  <input
-                    className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
-                    placeholder="Enter email"
-                  />
+                  <div className="flex flex-wrap items-center gap-2 flex-1">
+                    {bccEmails.map((email, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
+                      >
+                        <span className="text-sm text-black dark:text-white flex gap-1 py-0.5">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                              {email.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {email}
+                        </span>
+                        <button
+                          onClick={() => setBccEmails(bccEmails.filter((_, i) => i !== index))}
+                          className="text-white/50 hover:text-white/90"
+                        >
+                          <X className="h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A] mt-0.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <input
+                      className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
+                      placeholder="Enter email"
+                      value={bccInput}
+                      onChange={(e) => {
+                        setBccInput(e.target.value);
+                        setHasUnsavedChanges(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && bccInput.trim()) {
+                          e.preventDefault();
+                          if (isValidEmail(bccInput.trim())) {
+                            setBccEmails([...bccEmails, bccInput.trim()]);
+                            setBccInput('');
+                            setHasUnsavedChanges(true);
+                          } else {
+                            toast.error('Please enter a valid email address');
+                          }
+                        } else if (e.key === 'Backspace' && !bccInput && bccEmails.length > 0) {
+                          setBccEmails(bccEmails.slice(0, -1));
+                          setHasUnsavedChanges(true);
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -1018,7 +1148,7 @@ export function CreateEmail({
               <div className="flex items-center justify-start gap-3">
                 <div className="flex items-center justify-start">
                   <button
-                    className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white cursor-pointer"
+                    className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
                     onClick={handleSendEmail}
                     disabled={
                       isLoading ||
@@ -1038,13 +1168,40 @@ export function CreateEmail({
                       <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-black" />
                     </div>
                   </button>
-                  <button 
+                  <button
                     className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
                     onClick={() => fileInputRef.current && fileInputRef.current.click()}
                   >
                     <Plus className="h-3 w-3 fill-[#9A9A9A]" />
                     <span className="px-0.5 text-sm">Add files</span>
                   </button>
+                  {attachments.length > 0 && (
+                    <div className="flex items-center gap-2 ml-2">
+                      {attachments.slice(0, 3).map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-sm"
+                        >
+                          <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
+                          <span className="max-w-[100px] truncate">{file.name}</span>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              removeAttachment(index);
+                            }}
+                            className="ml-1 rounded-sm hover:bg-white/10"
+                          >
+                            <X className="h-3 w-3 fill-[#9A9A9A]" />
+                          </button>
+                        </div>
+                      ))}
+                      {attachments.length > 3 && (
+                        <span className="text-sm text-[#9A9A9A]">
+                          +{attachments.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <Input
                     type="file"
                     id="attachment-input"
