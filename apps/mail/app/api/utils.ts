@@ -19,8 +19,6 @@ export const getRatelimitModule = (config: {
   return ratelimit;
 };
 
-export const throwUnauthorizedGracefully = async (req?: NextRequest) => {};
-
 export async function getAuthenticatedUserId(): Promise<string | null> {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });

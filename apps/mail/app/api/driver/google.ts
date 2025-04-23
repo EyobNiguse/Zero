@@ -129,6 +129,18 @@ const withExponentialBackoff = async <T>(
   }
 };
 
+function sanitizeContext(context?: Record<string, any>) {
+  if (!context) return undefined;
+  const sanitized = { ...context };
+  const sensitive = ['tokens', 'refresh_token', 'code', 'message', 'raw', 'data'];
+  for (const key of sensitive) {
+    if (key in sanitized) {
+      sanitized[key] = '[REDACTED]';
+    }
+  }
+  return sanitized;
+}
+
 const withErrorHandler = async <T>(
   operation: string,
   fn: () => Promise<T> | T,
@@ -141,7 +153,7 @@ const withErrorHandler = async <T>(
     console.error(`[${isFatal ? 'FATAL_ERROR' : 'ERROR'}] [Gmail Driver] Operation: ${operation}`, {
       error: error.message,
       code: error.code,
-      context,
+      context: sanitizeContext(context),
       stack: error.stack,
       isFatal,
     });
@@ -162,7 +174,7 @@ const withSyncErrorHandler = <T>(
     console.error(`[Gmail Driver Error] Operation: ${operation}`, {
       error: error.message,
       code: error.code,
-      context,
+      context: sanitizeContext(context),
       stack: error.stack,
       isFatal,
     });
@@ -914,20 +926,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
           if (data.attachments?.length > 0) {
             for (const attachment of data.attachments) {
-              const base64Data = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const base64 = (reader.result as string).split(',')[1];
-                  if (base64) {
-                    resolve(base64);
-                  } else {
-                    reject(new Error('Failed to read file as base64'));
-                  }
-                };
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.readAsDataURL(attachment);
-              });
-
+              const arrayBuffer = await attachment.arrayBuffer();
+              const base64Data = Buffer.from(arrayBuffer).toString('base64');
               msg.addAttachment({
                 filename: attachment.name,
                 contentType: attachment.type,
