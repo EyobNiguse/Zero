@@ -10,10 +10,11 @@ import {
 } from './sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useSearchValue } from '@/hooks/use-search-value';
 import { clearBulkSelectionAtom } from '../mail/use-mail';
 import { type MessageKey } from '@/config/navigation';
+import { Label, useLabels } from '@/hooks/use-labels';
 import { type NavItem } from '@/config/navigation';
-import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { GoldenTicketModal } from '../golden';
@@ -59,6 +60,7 @@ export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [category] = useQueryState('category');
+  const [searchValue, setSearchValue] = useSearchValue();
 
   const { labels } = useLabels();
   const { state } = useSidebar();
@@ -157,6 +159,24 @@ export function NavMain({ items }: NavMainProps) {
     [pathname, searchParams],
   );
 
+  const handleFilterByLabel = (label: Label) => () => {
+    const existingValue = searchValue.value;
+    if (existingValue.includes(`label:${label.name}`)) {
+      setSearchValue({
+        value: existingValue.replace(`label:${label.name}`, ''),
+        highlight: '',
+        folder: '',
+      });
+      return;
+    }
+    const newValue = existingValue ? `${existingValue} label:${label.name}` : `label:${label.name}`;
+    setSearchValue({
+      value: newValue,
+      highlight: '',
+      folder: '',
+    });
+  };
+
   return (
     <SidebarGroup className={`${state !== 'collapsed' ? '' : 'mt-1'} space-y-2.5 py-0`}>
       <SidebarMenu>
@@ -192,8 +212,9 @@ export function NavMain({ items }: NavMainProps) {
         {!pathname.includes('/settings') && !isBottomNav && (
           <Collapsible defaultOpen={true} className="group/collapsible">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
-              <SidebarMenuItem className='mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]'>Labels</SidebarMenuItem>
-              
+              <SidebarMenuItem className="mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]">
+                Labels
+              </SidebarMenuItem>
 
               <div style={{ height: 'auto' }} className="mr-0 pr-0">
                 <div
@@ -204,18 +225,23 @@ export function NavMain({ items }: NavMainProps) {
                   }}
                 >
                   {labels.map((label) => (
-                    <NavItem
+                    <div
+                      onClick={handleFilterByLabel(label)}
                       key={label.id}
-                      title={label.name}
-                      href={`/mail/inbox?q=${encodeURIComponent(label.name.toLocaleLowerCase())}`}
-                      icon={() => (
-                        <div
-                          className="size-4 rounded-md"
-                          style={{ backgroundColor: label.color?.backgroundColor || '#E2E2E2' }}
-                        />
-                      )}
-                      url={`/mail/inbox?q=${encodeURIComponent(label.name.toLocaleLowerCase())}`}
-                    />
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="size-2 rounded-md"
+                        style={{ backgroundColor: label.color?.backgroundColor || '#E2E2E2' }}
+                      />
+                      <span
+                        className={cn(
+                          searchValue.value.includes(`label:${label.name}`) ? 'font-bold' : '',
+                        )}
+                      >
+                        {label.name}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
