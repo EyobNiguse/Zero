@@ -914,10 +914,46 @@ export function CreateEmail({
             <div className="flex justify-between px-3 pt-3">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-medium text-[#8C8C8C]">To:</p>
-                <input
-                  className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
-                  placeholder="Enter email"
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  {toEmails.map((email, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-0.5"
+                    >
+                      <span className="text-sm text-white/90">{email}</span>
+                      <button
+                        onClick={() => setToEmails(toEmails.filter((_, i) => i !== index))}
+                        className="text-white/50 hover:text-white/90"
+                      >
+                        <X className="h-3 w-3 fill-black dark:fill-[#9A9A9A]" />
+                      </button>
+                    </div>
+                  ))}
+                  <input
+                    className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black dark:text-white placeholder:text-[#797979] focus:outline-none"
+                    placeholder="Enter email"
+                    value={toInput}
+                    onChange={(e) => {
+                      setToInput(e.target.value);
+                      setHasUnsavedChanges(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && toInput.trim()) {
+                        e.preventDefault();
+                        if (isValidEmail(toInput.trim())) {
+                          setToEmails([...toEmails, toInput.trim()]);
+                          setToInput('');
+                          setHasUnsavedChanges(true);
+                        } else {
+                          toast.error('Please enter a valid email address');
+                        }
+                      } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
+                        setToEmails(toEmails.slice(0, -1));
+                        setHasUnsavedChanges(true);
+                      }
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-2">
@@ -982,7 +1018,7 @@ export function CreateEmail({
               <div className="flex items-center justify-start gap-3">
                 <div className="flex items-center justify-start">
                   <button
-                    className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
+                    className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white cursor-pointer"
                     onClick={handleSendEmail}
                     disabled={
                       isLoading ||
