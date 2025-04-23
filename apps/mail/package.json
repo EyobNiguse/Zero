@@ -58,6 +58,7 @@
     "@vercel/functions": "2.0.0",
     "@zero/db": "workspace:*",
     "@zero/eslint-config": "workspace:*",
+    "ai": "^4.3.9",
     "axios": "1.8.1",
     "better-auth": "1.2.7",
     "canvas-confetti": "1.9.3",
