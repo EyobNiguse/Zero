@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useThread, useThreads } from '@/hooks/use-threads';
@@ -94,9 +95,6 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
               ))}
             </div>
           </ScrollArea>
-          <div className="relative flex-shrink-0 md:top-1">
-            <ReplyCompose />
-          </div>
         </div>
       </div>
     </div>
