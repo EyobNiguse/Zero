@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@11labs/react": "^0.1.3",
+    "@ai-sdk/openai": "^1.3.17",
     "@better-fetch/fetch": "^1.1.18",
     "@coinbase/cookie-manager": "1.1.8",
     "@dnd-kit/core": "6.3.1",
