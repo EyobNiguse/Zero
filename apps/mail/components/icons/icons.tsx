@@ -998,7 +998,14 @@ export const LongStack = ({ className }: { className?: string }) => (
 );
 
 export const Suitcase = ({ className }: { className?: string }) => (
-  <svg width="12" height="13" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+  <svg
+    width="12"
+    height="13"
+    viewBox="0 0 12 13"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
     <path
       fillRule="evenodd"
       clipRule="evenodd"
@@ -1007,3 +1014,14 @@ export const Suitcase = ({ className }: { className?: string }) => (
     <path d="M1 10.8291V10.9998C1 12.1044 1.89543 12.9998 3 12.9998H9C10.1046 12.9998 11 12.1044 11 10.9998V10.8291C10.6872 10.9397 10.3506 10.9998 10 10.9998H2C1.64936 10.9998 1.31278 10.9397 1 10.8291Z" />
   </svg>
 );
+
+// export const CircleCheck = ({ className }: { className?: string }) => (
+//   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+//     <path
+//       fillRule="evenodd"
+//       clipRule="evenodd"
+//       d="M7 14C10.866 14 14 10.866 14 7C14 3.13401 10.866 0 7 0C3.13401 0 0 3.13401 0 7C0 10.866 3.13401 14 7 14ZM10.8435 5.20859C11.0967 4.88082 11.0363 4.40981 10.7086 4.15654C10.3808 3.90327 9.90981 3.96365 9.65654 4.29141L5.95615 9.08014L4.30747 7.24828C4.03038 6.94039 3.55616 6.91543 3.24828 7.19253C2.94039 7.46962 2.91544 7.94384 3.19253 8.25172L5.44253 10.7517C5.59132 10.917 5.80582 11.0078 6.02809 10.9995C6.25036 10.9911 6.45746 10.8846 6.59346 10.7086L10.8435 5.20859Z"
+      
+//     />
+//   </svg>
+// );

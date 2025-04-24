@@ -424,6 +424,7 @@
       "addMore": "Add more",
       "dropFilesToAttach": "Drop files to attach",
       "writeYourMessageHere": "Write your message here...",
+      "emailSent": "Email sent",
       "emailSentSuccessfully": "Email sent successfully",
       "failedToSendEmail": "Failed to send email. Please try again.",
       "signature": {
