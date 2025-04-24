@@ -86,7 +86,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
               defaultSize={25}
               minSize={20}
               maxSize={45}
-              className="bg-panelLight dark:bg-panelDark ml-1 mr-1.5 mt-1 h-[calc(98vh+9px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+              className="bg-panelLight dark:bg-panelDark ml- mr-1.5 mt-1 h-[calc(98vh+9px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', 'mr-1.5', className)}>
                 <div className="flex h-full flex-col">
