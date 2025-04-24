@@ -252,11 +252,12 @@ function NavItem(item: NavItemProps & { href: string }) {
   const iconRef = useRef<IconRefType>(null);
   const { data: stats } = useStats();
   const t = useTranslations();
+  const { state } = useSidebar();
 
   if (item.disabled) {
     return (
       <SidebarMenuButton
-        tooltip={item.title as MessageKey}
+        tooltip={state === 'collapsed' ? t(item.title as MessageKey) : undefined}
         className="flex cursor-not-allowed items-center opacity-50"
       >
         {item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
@@ -276,7 +277,7 @@ function NavItem(item: NavItemProps & { href: string }) {
 
   const buttonContent = (
     <SidebarMenuButton
-      tooltip={t(item.title as MessageKey)}
+      tooltip={state === 'collapsed' ? t(item.title as MessageKey) : undefined}
       className={cn(
         'hover:bg-subtleWhite flex items-center dark:hover:bg-[#202020]',
         item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-[#202020]',

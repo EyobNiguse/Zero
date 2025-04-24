@@ -291,18 +291,16 @@ export function EmailComposer({
 
           <div className="flex gap-2">
             <button
-              className="flex h-full items-center gap-2 rounded-xl border p-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
+              className="flex h-full items-center gap-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
               onClick={() => setShowCc(!showCc)}
             >
-              {showCc ? <MinusCircle className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}{' '}
-              <span>CC</span>
+              <span>Cc</span>
             </button>
             <button
-              className="flex h-full items-center gap-2 rounded-xl border p-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
+              className="flex h-full items-center gap-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
               onClick={() => setShowBcc(!showBcc)}
             >
-              {showBcc ? <MinusCircle className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}{' '}
-              <span>BCC</span>
+              <span>Bcc</span>
             </button>
           </div>
         </div>

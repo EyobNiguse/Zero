@@ -28,6 +28,7 @@ import { NavUser } from './nav-user';
 import { Button } from './button';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useQueryState } from 'nuqs';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
@@ -125,8 +126,13 @@ function ComposeButton() {
   const { state } = useSidebar();
   const isMobile = useIsMobile();
   const t = useTranslations();
+
+  const [dialogOpen, setDialogOpen] = useQueryState('isComposeOpen');
+  const handleOpenChange = (open: boolean) => {
+    setDialogOpen(open ? 'true' : null);
+  };
   return (
-    <Dialog>
+    <Dialog open={!!dialogOpen} onOpenChange={handleOpenChange}>
       <DialogTitle></DialogTitle>
 
       <DialogTrigger asChild>
