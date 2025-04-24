@@ -404,7 +404,10 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                     <div className="justify-start text-sm leading-none text-white">Forward</div>
                   </div>
                 </button>
-                <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]">
+                <button 
+                  onClick={() => moveThreadTo('bin')}
+                  className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
+                >
                   <Trash className="fill-[#F43F5E]" />
                 </button>
                 <DropdownMenu>
