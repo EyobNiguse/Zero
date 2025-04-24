@@ -69,12 +69,7 @@ export const EMAIL_HTML_TEMPLATE = `
       <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
       <style>
         body {
-          margin: 0;
-          padding: 16px;
-          font-family: 'Inter' !important;
-          line-height: 1.5;
-          height: fit-content;
-          background-color: white !important;
+        font-family: 'Inter', sans-serif;
         }
         @media (prefers-color-scheme: dark) {
           body {
@@ -84,12 +79,6 @@ export const EMAIL_HTML_TEMPLATE = `
         .auto-details summary::marker {
            content: "...";
            cursor: pointer;
-        }
-        .geist-400 {
-          font-family: "Geist", serif;
-          font-optical-sizing: auto;
-          font-weight: 400;
-          font-style: normal;
         }
       </style>
     </head>

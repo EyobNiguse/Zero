@@ -25,6 +25,7 @@ import {
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
+import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { MailDisplaySkeleton } from './mail-skeleton';
@@ -43,7 +44,6 @@ import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
-import { useMailNavigation } from '@/hooks/use-mail-navigation';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -168,7 +168,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
 
   const handlePrevious = useCallback(() => {
     if (!id || !items.length) return;
-    const currentIndex = items.findIndex(item => item.id === id);
+    const currentIndex = items.findIndex((item) => item.id === id);
     if (currentIndex > 0) {
       const prevThread = items[currentIndex - 1];
       if (prevThread) {
@@ -179,7 +179,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
 
   const handleNext = useCallback(() => {
     if (!id || !items.length) return;
-    const currentIndex = items.findIndex(item => item.id === id);
+    const currentIndex = items.findIndex((item) => item.id === id);
     if (currentIndex < items.length - 1) {
       const nextThread = items[currentIndex + 1];
       if (nextThread) {
@@ -338,7 +338,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
               <Image src="/empty-state.svg" alt="Empty Thread" width={200} height={200} />
               <div className="mt-5">
                 <p className="text-lg">It's empty here</p>
-                <p className="text-md mt-2 text-white/50">Choose an email to view details</p>
+                <p className="text-md text-white/50">Choose an email to view details</p>
               </div>
             </div>
           </div>
@@ -367,11 +367,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                     label="Previous email"
                     onClick={handlePrevious}
                   />
-                  <ThreadActionButton
-                    icon={ChevronRight}
-                    label="Next email"
-                    onClick={handleNext}
-                  />
+                  <ThreadActionButton icon={ChevronRight} label="Next email" onClick={handleNext} />
                 </div>
               </div>
               <div className="flex items-center md:gap-2">

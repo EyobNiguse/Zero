@@ -295,7 +295,7 @@ export function MailLayout() {
           className="rounded-inherit gap-1 overflow-hidden"
         >
           <div className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}>
-            <div className="bg-panelLight dark:bg-panelDark flex-1 flex-col overflow-y-auto border-[#E7E7E7] shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525] w-screen md:max-w-[400px]">
+            <div className="bg-panelLight dark:bg-panelDark w-screen flex-1 flex-col overflow-y-auto border-[#E7E7E7] shadow-inner md:flex md:max-w-[400px] md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -370,7 +370,7 @@ export function MailLayout() {
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
-              <div className=" md:w-[39ch] overflow-hidden pt-0 h-[calc(100vh-9.8rem)]">
+              <div className="h-[calc(100vh-9.8rem)] overflow-hidden pt-0">
                 <MailList isCompact={true} />
               </div>
             </div>
@@ -378,7 +378,7 @@ export function MailLayout() {
 
           {isDesktop && (
             <ResizablePanel
-              className="bg-panelLight dark:bg-panelDark w-fit border-[#E7E7E7] shadow-sm hidden md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525] mr-1"
+              className="bg-panelLight dark:bg-panelDark mr-1 hidden w-fit border-[#E7E7E7] shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
               defaultSize={30}
               minSize={30}
             >
@@ -692,7 +692,7 @@ function CategorySelect() {
     folder || '',
   );
 
-  if (!shouldShowCategorySelect) return null;
+  if (!shouldShowCategorySelect) return <div className="h-8"></div>;
 
   // Primary category is always the first one
   const primaryCategory = categories[0];

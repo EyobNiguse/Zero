@@ -380,7 +380,7 @@ const Thread = memo(
                             searchValue.highlight,
                           )}
                         </span>{' '}
-                        <span className="space-x-2 flex items-center">
+                        <span className="flex items-center space-x-2">
                           <RenderLabels ids={threadLabels} />
                         </span>
                       </span>
@@ -407,10 +407,13 @@ const Thread = memo(
                         {formatDate(latestMessage.receivedOn.split('.')[0] || '')}
                       </p>
                     ) : null}
-                    
                   </div>
                   <div className="flex justify-between">
-                    <p className={cn('mt-1 line-clamp-1 max-w-[50ch] md:max-w-[25ch] text-sm text-[#8C8C8C]')}>
+                    <p
+                      className={cn(
+                        'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[25ch]',
+                      )}
+                    >
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
                     <MailLabels labels={threadLabels} />
@@ -610,6 +613,15 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     }
   }, [isLoading, isFiltering, setSearchValue]);
 
+  const clearFilters = () => {
+    setCategory(null);
+    setSearchValue({
+      value: '',
+      highlight: '',
+      folder: '',
+    });
+  };
+
   return (
     <>
       <div
@@ -638,7 +650,12 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
                 <Image src="/empty-state.svg" alt="Empty Inbox" width={200} height={200} />
                 <div className="mt-5">
                   <p className="text-lg">It's empty here</p>
-                  <p className="text-md mt-2 text-white/50">Search for another email please</p>
+                  <p className="text-md text-white/50">
+                    Search for another email or{' '}
+                    <button className="underline" onClick={clearFilters}>
+                      clear filters
+                    </button>
+                  </p>
                 </div>
               </div>
             </div>
