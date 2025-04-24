@@ -217,7 +217,7 @@ export function NavMain({ items }: NavMainProps) {
               <div className="mr-0 pr-0">
                 <div
                   className={cn(
-                    'hide-scrollbar flex h-full max-h-[26vh] flex-row flex-wrap gap-2 overflow-auto',
+                    'hide-scrollbar mx-2 flex h-full max-h-[30vh] flex-row flex-wrap gap-2 overflow-auto',
                   )}
                 >
                   {labels.map((label) => (
@@ -228,7 +228,7 @@ export function NavMain({ items }: NavMainProps) {
                     >
                       <span
                         className={cn(
-                          'max-w-[15ch] truncate rounded border px-1.5 py-0.5 text-xs',
+                          'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
                           searchValue.value.includes(`label:${label.name}`)
                             ? 'border-purple-800 bg-purple-800/30'
                             : 'bg-subtleBlack',

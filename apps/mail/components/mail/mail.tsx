@@ -357,7 +357,7 @@ export function MailLayout() {
                   </>
                 )} */}
               </div>
-              <div className="p-2 px-2">
+              <div className="p-2 px-[22px]">
                 <SearchBar />
                 <div className="mt-2">
                   <CategorySelect />
