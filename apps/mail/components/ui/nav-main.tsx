@@ -194,7 +194,7 @@ export function NavMain({ items }: NavMainProps) {
               ) : (
                 <div className="mx-2 mb-4 mt-2 h-[0.5px] bg-[#262626]" />
               )}
-              <div className="space-y-1 pb-2">
+              <div className="space-y-1 pb-2 z-20">
                 {section.items.map((item) => (
                   <NavItem
                     key={item.url}

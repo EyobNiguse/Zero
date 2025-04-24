@@ -370,40 +370,64 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   <ThreadActionButton icon={ChevronRight} label="Next email" onClick={handleNext} />
                 </div>
               </div>
-              <div className="flex items-center md:gap-2">
-                <button
-                  onClick={() => {
-                    setMode('reply');
-                  }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
-                >
-                  <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-white">Reply</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    setMode('replyAll');
-                  }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
-                >
-                  <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-white">Reply All</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    setMode('forward');
-                  }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
-                >
-                  <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-white">Forward</div>
-                  </div>
-                </button>
+              <div className="flex items-center gap-2">
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          setMode('reply');
+                        }}
+                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                      >
+                        <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                        <div className="hidden md:flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                          <div className="justify-start text-sm leading-none text-white">Reply</div>
+                        </div>
+                        <span className="sr-only md:hidden">Reply</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="md:hidden">Reply</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          setMode('replyAll');
+                        }}
+                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                      >
+                        <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                        <div className="hidden md:flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                          <div className="justify-start text-sm leading-none text-white">Reply All</div>
+                        </div>
+                        <span className="sr-only md:hidden">Reply All</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="md:hidden">Reply All</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          setMode('forward');
+                        }}
+                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                      >
+                        <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                        <div className="hidden md:flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                          <div className="justify-start text-sm leading-none text-white">Forward</div>
+                        </div>
+                        <span className="sr-only md:hidden">Forward</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="md:hidden">Forward</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <button 
                   onClick={() => moveThreadTo('bin')}
                   className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
