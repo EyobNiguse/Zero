@@ -441,7 +441,7 @@ export function EmailComposer({
       </div>
 
       {/* Message Content */}
-      <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch bg-[#202020] px-4 py-3 outline-white/5">
+      <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch bg-[#202020] px-3 py-3 outline-white/5">
         <div className="flex flex-col gap-2.5 self-stretch">
           <Editor
             initialValue={editorContent}
