@@ -1,13 +1,22 @@
 'use client';
 
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogOverlay,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { SquarePenIcon, type SquarePenIconHandle } from '../icons/animated/square-pen';
 import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
 import { navigationConfig, bottomNavItems } from '@/config/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSidebar } from '@/components/ui/sidebar';
+import { CreateEmail } from '../create/create-email';
+import { PencilCompose, X } from '../icons/icons';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
-import { PencilCompose, X } from '../icons/icons';
 import React, { useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { GoldenTicketModal } from '../golden';
@@ -19,8 +28,6 @@ import { NavUser } from './nav-user';
 import { Button } from './button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Dialog, DialogClose, DialogContent, DialogOverlay, DialogTrigger } from '@/components/ui/dialog';
-import { CreateEmail } from '../create/create-email';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
@@ -101,7 +108,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
 
         <div className="mt-auto flex w-full flex-col">
-          <div className='mx-2'>
+          <div className="mx-2">
             <GoldenTicketModal />
           </div>
           <SidebarContent className="py-0 pt-0">
@@ -120,8 +127,7 @@ function ComposeButton() {
   const t = useTranslations();
   return (
     <Dialog>
-
-
+      <DialogTitle></DialogTitle>
 
       <DialogTrigger asChild>
         <button className="inline-flex h-8 w-full items-center justify-center gap-1 self-stretch overflow-hidden rounded-md border border-gray-200 bg-transparent text-black dark:border-none dark:bg-gradient-to-b dark:from-white/20 dark:to-white/10 dark:text-white dark:outline dark:outline-1 dark:outline-offset-[-1px] dark:outline-white/5">
@@ -135,8 +141,8 @@ function ComposeButton() {
           )}
         </button>
       </DialogTrigger>
- 
-      <DialogContent className="max-w-[750px] p-0 border-none">
+
+      <DialogContent className="max-w-screen h-screen border-none bg-white p-0 bg-transparent shadow-none ">
         <CreateEmail />
       </DialogContent>
     </Dialog>

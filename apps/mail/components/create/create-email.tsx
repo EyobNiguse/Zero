@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useEmailAliases } from '@/hooks/use-email-aliases';
 import { generateHTML, generateJSON } from '@tiptap/core';
 import { useConnections } from '@/hooks/use-connections';
@@ -49,7 +50,6 @@ import { EmailInput } from './email-input';
 import Text from '@tiptap/extension-text';
 import Bold from '@tiptap/extension-bold';
 import { type JSONContent } from 'novel';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useQueryState } from 'nuqs';
 import { useEffect } from 'react';
 import posthog from 'posthog-js';
@@ -288,50 +288,50 @@ export function CreateEmail({
     }
   };
 
-  const saveDraft = React.useCallback(async () => {
-    if (!hasUnsavedChanges) return;
-    if (!toEmails.length || !subjectInput || !messageContent) return;
+  // const saveDraft = React.useCallback(async () => {
+  //   if (!hasUnsavedChanges) return;
+  //   if (!toEmails.length || !subjectInput || !messageContent) return;
 
-    try {
-      setIsLoading(true);
-      const draftData = {
-        to: toEmails.join(', '),
-        cc: ccEmails.join(', '),
-        bcc: bccEmails.join(', '),
-        subject: subjectInput,
-        message: messageContent || '',
-        attachments: attachments,
-        id: draftId,
-      };
+  //   try {
+  //     setIsLoading(true);
+  //     const draftData = {
+  //       to: toEmails.join(', '),
+  //       cc: ccEmails.join(', '),
+  //       bcc: bccEmails.join(', '),
+  //       subject: subjectInput,
+  //       message: messageContent || '',
+  //       attachments: attachments,
+  //       id: draftId,
+  //     };
 
-      const response = await createDraft(draftData);
+  //     const response = await createDraft(draftData);
 
-      if (response?.id && response.id !== draftId) {
-        setDraftId(response.id);
-      }
+  //     if (response?.id && response.id !== draftId) {
+  //       setDraftId(response.id);
+  //     }
 
-      setHasUnsavedChanges(false);
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      toast.error('Failed to save draft');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
+  //     setHasUnsavedChanges(false);
+  //   } catch (error) {
+  //     console.error('Error saving draft:', error);
+  //     toast.error('Failed to save draft');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
 
-  React.useEffect(() => {
-    if (!hasUnsavedChanges) return;
+  // React.useEffect(() => {
+  //   if (!hasUnsavedChanges) return;
 
-    const autoSaveTimer = setTimeout(() => {
-      saveDraft();
-    }, 3000);
+  //   const autoSaveTimer = setTimeout(() => {
+  //     saveDraft();
+  //   }, 3000);
 
-    return () => clearTimeout(autoSaveTimer);
-  }, [hasUnsavedChanges, saveDraft]);
+  //   return () => clearTimeout(autoSaveTimer);
+  // }, [hasUnsavedChanges, saveDraft]);
 
-  React.useEffect(() => {
-    setHasUnsavedChanges(true);
-  }, [messageContent]);
+  // React.useEffect(() => {
+  //   setHasUnsavedChanges(true);
+  // }, [messageContent]);
 
   const handleSendEmail = async () => {
     if (!toEmails.length) {
@@ -380,9 +380,7 @@ export function CreateEmail({
         console.log(posthog.capture('Create Email Sent'));
       }
 
-      setIsLoading(false);
-      toast.success(t('pages.createEmail.emailSentSuccessfully'));
-
+      // Clear all input fields and reset state
       setToInput('');
       setToEmails([]);
       setCcInput('');
@@ -394,11 +392,14 @@ export function CreateEmail({
       setSubjectInput('');
       setAttachments([]);
       setMessageContent('');
-
+      setMessageLength(0);
       setDefaultValue(createEmptyDocContent());
       setResetEditorKey((prev) => prev + 1);
-
       setHasUnsavedChanges(false);
+      setSelectedFromEmail(null);
+
+      setIsLoading(false);
+      toast.success(t('pages.createEmail.emailSentSuccessfully'));
     } catch (error) {
       console.error('Error sending email:', error);
       setIsLoading(false);
@@ -538,12 +539,10 @@ export function CreateEmail({
   }, [hasUnsavedChanges]);
 
   return (
-    <div
-      className="bg-panelLight relative flex flex-col overflow-hidden shadow-inner dark:bg-[#141414]"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
+    <>
+      
+
+    
       {/* <div className="sticky top-0 z-10 flex items-center justify-between gap-1 border-b border-[#1D1D1D] p-2 transition-colors">
         <DialogClose asChild>
           <button className="flex items-center gap-1 rounded-[5px] bg-white px-2 py-0.5 dark:bg-[#262626]">
@@ -552,7 +551,6 @@ export function CreateEmail({
           </button>
         </DialogClose>
       </div> */}
-
       {/* <div className="relative flex h-full flex-col">
         <div className="flex-1">
           <div
@@ -888,33 +886,6 @@ export function CreateEmail({
                       <Plus className="h-3 w-3 fill-[#9A9A9A]" />
                       <span className="px-0.5 text-sm">Add files</span>
                     </button>
-                    {attachments.length > 0 && (
-                      <div className="flex items-center gap-2 ml-2">
-                        {attachments.slice(0, 3).map((file, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-sm"
-                          >
-                            <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
-                            <span className="max-w-[100px] truncate">{file.name}</span>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                removeAttachment(index);
-                              }}
-                              className="ml-1 rounded-sm hover:bg-white/10"
-                            >
-                              <X className="h-3 w-3 fill-[#9A9A9A]" />
-                            </button>
-                          </div>
-                        ))}
-                        {attachments.length > 3 && (
-                          <span className="text-sm text-[#9A9A9A]">
-                            +{attachments.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
                     <Input
                       type="file"
                       id="attachment-input"
@@ -924,6 +895,45 @@ export function CreateEmail({
                       accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                       ref={fileInputRef}
                     />
+                    {attachments.length > 0 && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
+                            <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
+                            <span>{attachments.length} files</span>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 bg-[#202020] p-3" align="start">
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm text-white/90">Attachments</h4>
+                            <div className="max-h-[200px] overflow-y-auto space-y-2">
+                              {attachments.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between gap-2 rounded-md bg-white/5 p-2"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Paperclip className="h-4 w-4 text-[#9A9A9A]" />
+                                    <div>
+                                      <p className="text-sm text-white/90">{file.name}</p>
+                                      <p className="text-xs text-[#9A9A9A]">
+                                        {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => removeAttachment(index)}
+                                    className="rounded-sm p-1 hover:bg-white/10"
+                                  >
+                                    <X className="h-4 w-4 fill-[#9A9A9A]" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                   <Button
                     variant="default"
@@ -945,8 +955,18 @@ export function CreateEmail({
         </div>
       </div> */}
 
-      <div className="flex items-center justify-center">
-        <div className="w-full max-w-[750px] bg-white dark:bg-[#1A1A1A]">
+      
+
+      <div className="flex flex-col gap-1 min-h-screen items-center justify-center">
+      <div className='flex justify-start w-[750px]'>
+      <DialogClose asChild className='flex'>
+          <button className="flex items-center gap-1 rounded-lg px-2 py-1.5 bg-white dark:bg-[#1A1A1A]">
+            <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#929292]" />
+            <span className="text-sm text-black dark:text-white">esc</span>
+          </button>
+        </DialogClose>
+      </div>
+        <div className="w-full max-w-[750px] rounded-lg  bg-white p-0 py-0 dark:bg-[#1A1A1A]">
           <div className="border-b border-[#252525] pb-2">
             <div className="flex justify-between px-3 pt-3">
               <div className="flex items-center gap-2">
@@ -955,9 +975,9 @@ export function CreateEmail({
                   {toEmails.map((email, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-1 pr-2 py-0.5"
+                      className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-1 py-0.5 pr-2"
                     >
-                      <span className="text-sm text-black dark:text-white flex gap-1 py-0.5">
+                      <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                         <Avatar className="h-5 w-5">
                           <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
                             {email.charAt(0).toUpperCase()}
@@ -969,7 +989,7 @@ export function CreateEmail({
                         onClick={() => setToEmails(toEmails.filter((_, i) => i !== index))}
                         className="text-white/50 hover:text-white/90"
                       >
-                        <X className="h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A] mt-0.5" />
+                        <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
                       </button>
                     </div>
                   ))}
@@ -1020,13 +1040,13 @@ export function CreateEmail({
               {showCc && (
                 <div className="flex items-center gap-2 px-3">
                   <p className="text-sm font-medium text-[#8C8C8C]">Cc:</p>
-                  <div className="flex flex-wrap items-center gap-2 flex-1">
+                  <div className="flex flex-1 flex-wrap items-center gap-2">
                     {ccEmails.map((email, index) => (
                       <div
                         key={index}
                         className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
                       >
-                        <span className="text-sm text-black dark:text-white flex gap-1 py-0.5">
+                        <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                           <Avatar className="h-5 w-5">
                             <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
                               {email.charAt(0).toUpperCase()}
@@ -1038,7 +1058,7 @@ export function CreateEmail({
                           onClick={() => setCcEmails(ccEmails.filter((_, i) => i !== index))}
                           className="text-white/50 hover:text-white/90"
                         >
-                          <X className="h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A] mt-0.5" />
+                          <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
                         </button>
                       </div>
                     ))}
@@ -1072,13 +1092,13 @@ export function CreateEmail({
               {showBcc && (
                 <div className="flex items-center gap-2 px-3">
                   <p className="text-sm font-medium text-[#8C8C8C]">Bcc:</p>
-                  <div className="flex flex-wrap items-center gap-2 flex-1">
+                  <div className="flex flex-1 flex-wrap items-center gap-2">
                     {bccEmails.map((email, index) => (
                       <div
                         key={index}
                         className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
                       >
-                        <span className="text-sm text-black dark:text-white flex gap-1 py-0.5">
+                        <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                           <Avatar className="h-5 w-5">
                             <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
                               {email.charAt(0).toUpperCase()}
@@ -1090,7 +1110,7 @@ export function CreateEmail({
                           onClick={() => setBccEmails(bccEmails.filter((_, i) => i !== index))}
                           className="text-white/50 hover:text-white/90"
                         >
-                          <X className="h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A] mt-0.5" />
+                          <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
                         </button>
                       </div>
                     ))}
@@ -1128,18 +1148,25 @@ export function CreateEmail({
             <input
               className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
               placeholder="Re: Design review feedback"
+              value={subjectInput}
+              onChange={(e) => {
+                setSubjectInput(e.target.value);
+                setHasUnsavedChanges(true);
+              }}
             />
           </div>
-          <div className="mb-6 flex flex-col items-start justify-start gap-2 self-stretch rounded-2xl bg-[#202020] px-4 py-3 outline outline-[0.50px] outline-white/5">
+          <div className="mb-6 flex flex-col items-start justify-start gap-2 self-stretch rounded-2xl bg-[#202020] px-4 py-3  outline-white/5">
             <div className="flex flex-col items-center justify-center gap-2.5 self-stretch">
               <div className="flex flex-col items-start justify-start gap-3 self-stretch">
                 <textarea
                   className="resize-none self-stretch bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
                   placeholder="Write your email..."
-                  rows={10}
+                  rows={7}
+                  value={messageContent}
                   onChange={(e) => {
                     setMessageContent(e.target.value);
                     setMessageLength(e.target.value.length);
+                    setHasUnsavedChanges(true);
                   }}
                 />
               </div>
@@ -1175,33 +1202,6 @@ export function CreateEmail({
                     <Plus className="h-3 w-3 fill-[#9A9A9A]" />
                     <span className="px-0.5 text-sm">Add files</span>
                   </button>
-                  {attachments.length > 0 && (
-                    <div className="flex items-center gap-2 ml-2">
-                      {attachments.slice(0, 3).map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-sm"
-                        >
-                          <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
-                          <span className="max-w-[100px] truncate">{file.name}</span>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              removeAttachment(index);
-                            }}
-                            className="ml-1 rounded-sm hover:bg-white/10"
-                          >
-                            <X className="h-3 w-3 fill-[#9A9A9A]" />
-                          </button>
-                        </div>
-                      ))}
-                      {attachments.length > 3 && (
-                        <span className="text-sm text-[#9A9A9A]">
-                          +{attachments.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  )}
                   <Input
                     type="file"
                     id="attachment-input"
@@ -1211,6 +1211,44 @@ export function CreateEmail({
                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                     ref={fileInputRef}
                   />
+                  {attachments.length > 0 && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
+                          <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
+                          <span>{attachments.length} files</span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 bg-[#202020] p-3" align="start">
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-white/90">Attachments</h4>
+                          <div className="max-h-[200px] space-y-2 overflow-y-auto">
+                            {attachments.map((file, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between gap-2 rounded-md bg-white/5 p-2"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div>
+                                    <p className="text-sm text-white/90">{file.name}</p>
+                                    <p className="text-xs text-[#9A9A9A]">
+                                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => removeAttachment(index)}
+                                  className="rounded-sm p-1 hover:bg-white/10"
+                                >
+                                  <X className="h-4 w-4 fill-[#9A9A9A]" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </div>
               </div>
               <div className="flex items-start justify-start gap-3">
@@ -1237,6 +1275,6 @@ export function CreateEmail({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
