@@ -4,6 +4,18 @@ export interface User {
   avatar: string;
 }
 
+export interface ISendEmail {
+  to: Sender[];
+  subject: string;
+  message: string;
+  attachments?: File[];
+  headers?: Record<string, string>;
+  cc?: Sender[];
+  bcc?: Sender[];
+  threadId?: string;
+  fromEmail?: string;
+}
+
 export interface Account {
   name: string;
   logo: React.ComponentType<{ className?: string }>;
@@ -30,7 +42,7 @@ export interface SidebarData {
 }
 
 export interface Sender {
-  name: string;
+  name?: string;
   email: string;
 }
 

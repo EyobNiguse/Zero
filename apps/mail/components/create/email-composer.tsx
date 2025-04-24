@@ -8,50 +8,39 @@ import {
   ThreeDots,
   X,
 } from '../icons/icons';
-import {
-  Command,
-  Paperclip,
-  Plus,
-} from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, Paperclip, Plus } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { useThread } from '@/hooks/use-threads';
+import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { useMemo, useState } from 'react';
+import { ISendEmail } from '@/types';
+import { useQueryState } from 'nuqs';
+import { JSONContent } from 'novel';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import * as React from 'react';
-import { cn } from '@/lib/utils';
 import Editor from './editor';
-import { JSONContent } from 'novel';
-import { useMemo } from 'react';
+import { z } from 'zod';
 
 interface EmailComposerProps {
-  toEmails: string[];
-  setToEmails: (emails: string[]) => void;
-  toInput: string;
-  setToInput: (input: string) => void;
-  ccEmails: string[];
-  setCcEmails: (emails: string[]) => void;
-  ccInput: string;
-  setCcInput: (input: string) => void;
-  bccEmails: string[];
-  setBccEmails: (emails: string[]) => void;
-  bccInput: string;
-  setBccInput: (input: string) => void;
-  showCc: boolean;
-  setShowCc: (show: boolean) => void;
-  showBcc: boolean;
-  setShowBcc: (show: boolean) => void;
-  subjectInput: string;
-  setSubjectInput: (subject: string) => void;
-  messageContent: string;
-  setMessageContent: (content: string) => void;
-  messageLength: number;
-  setMessageLength: (length: number) => void;
-  attachments: File[];
-  setAttachments: (files: File[]) => void;
-  isLoading: boolean;
-  hasUnsavedChanges: boolean;
-  setHasUnsavedChanges: (hasChanges: boolean) => void;
-  onSendEmail: () => void;
+  initialTo?: string[];
+  initialCc?: string[];
+  initialBcc?: string[];
+  initialSubject?: string;
+  initialMessage?: string;
+  initialAttachments?: File[];
+  onSendEmail: (data: {
+    to: string[];
+    cc?: string[];
+    bcc?: string[];
+    subject: string;
+    message: string;
+    attachments: File[];
+  }) => Promise<void>;
   className?: string;
 }
 
@@ -60,64 +49,188 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+const schema = z.object({
+  to: z.array(z.string().email()).min(1),
+  subject: z.string().min(1),
+  message: z.string().min(1),
+  attachments: z.array(z.any()).optional(),
+  headers: z.any().optional(),
+  cc: z.array(z.string().email()).optional(),
+  bcc: z.array(z.string().email()).optional(),
+  threadId: z.string().optional(),
+  fromEmail: z.string().optional(),
+});
+
 export function EmailComposer({
-  toEmails,
-  setToEmails,
-  toInput,
-  setToInput,
-  ccEmails,
-  setCcEmails,
-  ccInput,
-  setCcInput,
-  bccEmails,
-  setBccEmails,
-  bccInput,
-  setBccInput,
-  showCc,
-  setShowCc,
-  showBcc,
-  setShowBcc,
-  subjectInput,
-  setSubjectInput,
-  messageContent,
-  setMessageContent,
-  messageLength,
-  setMessageLength,
-  attachments,
-  setAttachments,
-  isLoading,
-  hasUnsavedChanges,
-  setHasUnsavedChanges,
+  initialTo = [],
+  initialCc = [],
+  initialBcc = [],
+  initialSubject = '',
+  initialMessage = '',
+  initialAttachments = [],
   onSendEmail,
   className,
 }: EmailComposerProps) {
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [messageLength, setMessageLength] = useState(0);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [threadId] = useQueryState('threadId');
+  const [mode] = useQueryState('mode');
+  const { data: emailData } = useThread(threadId ?? null);
+  const { data: session } = useSession();
+
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      to: initialTo,
+      cc: initialCc,
+      bcc: initialBcc,
+      subject: initialSubject,
+      message: initialMessage,
+      attachments: initialAttachments,
+    },
+  });
+
+  React.useEffect(() => {
+    if (!emailData?.latest || !mode || !session?.activeConnection?.email) return;
+
+    const userEmail = session.activeConnection.email.toLowerCase();
+    const latestEmail = emailData.latest;
+    const senderEmail = latestEmail.sender.email.toLowerCase();
+
+    // Reset states
+    form.reset();
+    setShowCc(false);
+    setShowBcc(false);
+
+    // Set subject based on mode
+    const subject =
+      mode === 'forward'
+        ? `Fwd: ${latestEmail.subject || ''}`
+        : latestEmail.subject?.startsWith('Re:')
+          ? latestEmail.subject
+          : `Re: ${latestEmail.subject || ''}`;
+    form.setValue('subject', subject);
+
+    if (mode === 'reply') {
+      // Reply to sender
+      form.setValue('to', [latestEmail.sender.email]);
+    } else if (mode === 'replyAll') {
+      const to: string[] = [];
+      const cc: string[] = [];
+
+      // Add original sender if not current user
+      if (senderEmail !== userEmail) {
+        to.push(latestEmail.sender.email);
+      }
+
+      // Add original recipients from To field
+      latestEmail.to?.forEach((recipient) => {
+        const recipientEmail = recipient.email.toLowerCase();
+        if (recipientEmail !== userEmail && recipientEmail !== senderEmail) {
+          to.push(recipient.email);
+        }
+      });
+
+      // Add CC recipients
+      latestEmail.cc?.forEach((recipient) => {
+        const recipientEmail = recipient.email.toLowerCase();
+        if (recipientEmail !== userEmail && !to.includes(recipient.email)) {
+          cc.push(recipient.email);
+        }
+      });
+
+      // Add BCC recipients
+      latestEmail.bcc?.forEach((recipient) => {
+        const recipientEmail = recipient.email.toLowerCase();
+        if (
+          recipientEmail !== userEmail &&
+          !to.includes(recipient.email) &&
+          !cc.includes(recipient.email)
+        ) {
+          form.setValue('bcc', [...(bccEmails || []), recipient.email]);
+          setShowBcc(true);
+        }
+      });
+
+      form.setValue('to', to);
+      if (cc.length > 0) {
+        form.setValue('cc', cc);
+        setShowCc(true);
+      }
+    }
+    // For forward, we start with empty recipients
+  }, [mode, emailData?.latest, session?.activeConnection?.email]);
+
+  const { watch, setValue, getValues } = form;
+  const toEmails = watch('to');
+  const ccEmails = watch('cc');
+  const bccEmails = watch('bcc');
+  const subjectInput = watch('subject');
+  const messageContent = watch('message');
+  const attachments = watch('attachments');
 
   const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setAttachments([...attachments, ...Array.from(files)]);
+      setValue('attachments', [...(attachments || []), ...Array.from(files)]);
       setHasUnsavedChanges(true);
     }
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments(attachments.filter((_, i) => i !== index));
+    setValue(
+      'attachments',
+      (attachments || []).filter((_, i) => i !== index),
+    );
     setHasUnsavedChanges(true);
   };
 
-  const editorContent = useMemo(() => ({
-    type: 'doc',
-    content: [
-      {
-        type: 'paragraph',
-        content: messageContent ? [{ type: 'text', text: messageContent }] : [],
-      },
-    ],
-  } as JSONContent), [messageContent]);
+  const editorContent = useMemo(
+    () =>
+      ({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: messageContent ? [{ type: 'text', text: messageContent }] : [],
+          },
+        ],
+      }) as JSONContent,
+    [messageContent],
+  );
+
+  const handleSend = async () => {
+    try {
+      setIsLoading(true);
+      const values = getValues();
+      await onSendEmail({
+        to: values.to,
+        cc: showCc ? values.cc : undefined,
+        bcc: showBcc ? values.bcc : undefined,
+        subject: values.subject,
+        message: values.message,
+        attachments: values.attachments || [],
+      });
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('Failed to send email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className={cn("w-full max-w-[750px] rounded-lg bg-white p-0 py-0 dark:bg-[#1A1A1A]", className)}>
+    <div
+      className={cn(
+        'w-full max-w-[750px] overflow-hidden rounded-lg bg-white p-0 py-0 dark:bg-[#1A1A1A]',
+        className,
+      )}
+    >
       <div className="border-b border-[#252525] pb-2">
         <div className="flex justify-between px-3 pt-3">
           <div className="flex items-center gap-2">
@@ -137,7 +250,13 @@ export function EmailComposer({
                     {email}
                   </span>
                   <button
-                    onClick={() => setToEmails(toEmails.filter((_, i) => i !== index))}
+                    onClick={() => {
+                      setValue(
+                        'to',
+                        toEmails.filter((_, i) => i !== index),
+                      );
+                      setHasUnsavedChanges(true);
+                    }}
                     className="text-white/50 hover:text-white/90"
                   >
                     <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
@@ -147,23 +266,22 @@ export function EmailComposer({
               <input
                 className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
                 placeholder="Enter email"
-                value={toInput}
-                onChange={(e) => {
-                  setToInput(e.target.value);
-                  setHasUnsavedChanges(true);
-                }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && toInput.trim()) {
+                  if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                     e.preventDefault();
-                    if (isValidEmail(toInput.trim())) {
-                      setToEmails([...toEmails, toInput.trim()]);
-                      setToInput('');
+                    if (isValidEmail(e.currentTarget.value.trim())) {
+                      setValue('to', [...toEmails, e.currentTarget.value.trim()]);
+                      e.currentTarget.value = '';
                       setHasUnsavedChanges(true);
                     } else {
                       toast.error('Please enter a valid email address');
                     }
-                  } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-                    setToEmails(toEmails.slice(0, -1));
+                  } else if (
+                    e.key === 'Backspace' &&
+                    !e.currentTarget.value &&
+                    toEmails.length > 0
+                  ) {
+                    setValue('to', toEmails.slice(0, -1));
                     setHasUnsavedChanges(true);
                   }
                 }}
@@ -193,7 +311,7 @@ export function EmailComposer({
             <div className="flex items-center gap-2 px-3">
               <p className="text-sm font-medium text-[#8C8C8C]">Cc:</p>
               <div className="flex flex-1 flex-wrap items-center gap-2">
-                {ccEmails.map((email, index) => (
+                {ccEmails?.map((email, index) => (
                   <div
                     key={index}
                     className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
@@ -207,7 +325,13 @@ export function EmailComposer({
                       {email}
                     </span>
                     <button
-                      onClick={() => setCcEmails(ccEmails.filter((_, i) => i !== index))}
+                      onClick={() => {
+                        setValue(
+                          'cc',
+                          ccEmails.filter((_, i) => i !== index),
+                        );
+                        setHasUnsavedChanges(true);
+                      }}
                       className="text-white/50 hover:text-white/90"
                     >
                       <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
@@ -217,23 +341,22 @@ export function EmailComposer({
                 <input
                   className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
                   placeholder="Enter email"
-                  value={ccInput}
-                  onChange={(e) => {
-                    setCcInput(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && ccInput.trim()) {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                       e.preventDefault();
-                      if (isValidEmail(ccInput.trim())) {
-                        setCcEmails([...ccEmails, ccInput.trim()]);
-                        setCcInput('');
+                      if (isValidEmail(e.currentTarget.value.trim())) {
+                        setValue('cc', [...(ccEmails || []), e.currentTarget.value.trim()]);
+                        e.currentTarget.value = '';
                         setHasUnsavedChanges(true);
                       } else {
                         toast.error('Please enter a valid email address');
                       }
-                    } else if (e.key === 'Backspace' && !ccInput && ccEmails.length > 0) {
-                      setCcEmails(ccEmails.slice(0, -1));
+                    } else if (
+                      e.key === 'Backspace' &&
+                      !e.currentTarget.value &&
+                      ccEmails?.length
+                    ) {
+                      setValue('cc', ccEmails.slice(0, -1));
                       setHasUnsavedChanges(true);
                     }
                   }}
@@ -247,7 +370,7 @@ export function EmailComposer({
             <div className="flex items-center gap-2 px-3">
               <p className="text-sm font-medium text-[#8C8C8C]">Bcc:</p>
               <div className="flex flex-1 flex-wrap items-center gap-2">
-                {bccEmails.map((email, index) => (
+                {bccEmails?.map((email, index) => (
                   <div
                     key={index}
                     className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
@@ -261,7 +384,13 @@ export function EmailComposer({
                       {email}
                     </span>
                     <button
-                      onClick={() => setBccEmails(bccEmails.filter((_, i) => i !== index))}
+                      onClick={() => {
+                        setValue(
+                          'bcc',
+                          bccEmails.filter((_, i) => i !== index),
+                        );
+                        setHasUnsavedChanges(true);
+                      }}
                       className="text-white/50 hover:text-white/90"
                     >
                       <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
@@ -271,23 +400,22 @@ export function EmailComposer({
                 <input
                   className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
                   placeholder="Enter email"
-                  value={bccInput}
-                  onChange={(e) => {
-                    setBccInput(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && bccInput.trim()) {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                       e.preventDefault();
-                      if (isValidEmail(bccInput.trim())) {
-                        setBccEmails([...bccEmails, bccInput.trim()]);
-                        setBccInput('');
+                      if (isValidEmail(e.currentTarget.value.trim())) {
+                        setValue('bcc', [...(bccEmails || []), e.currentTarget.value.trim()]);
+                        e.currentTarget.value = '';
                         setHasUnsavedChanges(true);
                       } else {
                         toast.error('Please enter a valid email address');
                       }
-                    } else if (e.key === 'Backspace' && !bccInput && bccEmails.length > 0) {
-                      setBccEmails(bccEmails.slice(0, -1));
+                    } else if (
+                      e.key === 'Backspace' &&
+                      !e.currentTarget.value &&
+                      bccEmails?.length
+                    ) {
+                      setValue('bcc', bccEmails.slice(0, -1));
                       setHasUnsavedChanges(true);
                     }
                   }}
@@ -306,33 +434,31 @@ export function EmailComposer({
           placeholder="Re: Design review feedback"
           value={subjectInput}
           onChange={(e) => {
-            setSubjectInput(e.target.value);
+            setValue('subject', e.target.value);
             setHasUnsavedChanges(true);
           }}
         />
       </div>
 
       {/* Message Content */}
-      <div className="mb-6 flex flex-col items-start justify-start gap-2 self-stretch rounded-2xl bg-[#202020] px-4 py-3 outline-white/5">
-        <div className="flex flex-col items-center justify-center gap-2.5 self-stretch">
-          <div className="flex flex-col items-start justify-start gap-3 self-stretch">
-            <Editor
-              initialValue={editorContent}
-              onChange={(content) => {
-                // Extract plain text from the HTML content
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = content;
-                const plainText = tempDiv.textContent || tempDiv.innerText || '';
-                
-                setMessageContent(plainText);
-                setMessageLength(plainText.length);
-                setHasUnsavedChanges(true);
-              }}
-              className="w-full min-h-[200px]"
-              placeholder="Write your email..."
-              onCommandEnter={onSendEmail}
-            />
-          </div>
+      <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch bg-[#202020] px-4 py-3 outline-white/5">
+        <div className="flex flex-col gap-2.5 self-stretch">
+          <Editor
+            initialValue={editorContent}
+            onChange={(content) => {
+              // Extract plain text from the HTML content
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = content;
+              const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+              setValue('message', plainText);
+              setMessageLength(plainText.length);
+              setHasUnsavedChanges(true);
+            }}
+            className="max-h-[200px] min-h-[200px] w-full"
+            placeholder="Write your email..."
+            onCommandEnter={handleSend}
+          />
         </div>
 
         {/* Bottom Actions */}
@@ -341,8 +467,10 @@ export function EmailComposer({
             <div className="flex items-center justify-start">
               <button
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
-                onClick={onSendEmail}
-                disabled={isLoading || !toEmails.length || !messageContent.trim() || !subjectInput.trim()}
+                onClick={handleSend}
+                disabled={
+                  isLoading || !toEmails.length || !messageContent.trim() || !subjectInput.trim()
+                }
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="text-center text-sm leading-none text-white dark:text-black">
@@ -373,7 +501,7 @@ export function EmailComposer({
                 ref={fileInputRef}
               />
 
-              {attachments.length > 0 && (
+              {attachments && attachments.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
@@ -429,8 +557,8 @@ export function EmailComposer({
                 {messageLength < 50
                   ? 'short-length'
                   : messageLength < 200
-                  ? 'medium-length'
-                  : 'long-length'}
+                    ? 'medium-length'
+                    : 'long-length'}
               </span>
             </button>
           </div>
@@ -438,4 +566,4 @@ export function EmailComposer({
       </div>
     </div>
   );
-} 
+}

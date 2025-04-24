@@ -2,7 +2,7 @@
 
 import { createDriver } from '@/app/api/driver';
 import { getActiveConnection } from './utils';
-import { Sender } from '@/types';
+import { ISendEmail } from '@/types';
 
 export async function sendEmail({
   to,
@@ -14,17 +14,7 @@ export async function sendEmail({
   headers: additionalHeaders = {},
   threadId,
   fromEmail,
-}: {
-  to: Sender[];
-  subject: string;
-  message: string;
-  attachments: File[];
-  headers?: Record<string, string>;
-  cc?: Sender[];
-  bcc?: Sender[];
-  threadId?: string;
-  fromEmail?: string;
-}) {
+}: ISendEmail) {
   if (!to || !subject || !message) {
     throw new Error('Missing required fields');
   }
@@ -47,7 +37,7 @@ export async function sendEmail({
     subject,
     to,
     message,
-    attachments,
+    attachments: attachments || [],
     headers: additionalHeaders,
     cc,
     bcc,
