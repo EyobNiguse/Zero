@@ -88,7 +88,7 @@ export const navigationConfig: Record<string, NavConfig> = {
             icon: ExclamationCircle,
           },
           {
-            id: 'bin',
+            id: 'trash',
             title: 'navigation.sidebar.bin',
             url: '/mail/bin',
             icon: Bin,
