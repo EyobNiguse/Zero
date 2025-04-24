@@ -26,6 +26,7 @@ import {
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
+import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { MailDisplaySkeleton } from './mail-skeleton';
@@ -43,6 +44,7 @@ import MailDisplay from './mail-display';
 import { ParsedMessage } from '@/types';
 import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
+import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 
 interface ThreadDisplayProps {
@@ -146,14 +148,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const { mutate: mutateThreads } = useThreads();
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [mail, setMail] = useMail();
   const t = useTranslations();
   const { mutate: mutateStats } = useStats();
   const { folder } = useParams<{ folder: string }>();
   const [threadId, setThreadId] = useQueryState('threadId');
   const [mode, setMode] = useQueryState('mode');
-  const parentRef = useRef<HTMLDivElement>(null);
+  const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const {
     data: { threads: items = [] },
   } = useThreads();
@@ -237,27 +238,28 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const moveThreadTo = useCallback(
     async (destination: ThreadDestination) => {
       if (!threadId) return;
-      const promise = async () => {
-        await moveThreadsTo({
-          threadIds: [threadId],
-          currentFolder: folder,
-          destination,
-        });
-        await Promise.all([mutateStats(), mutateThreads()]);
-        handleClose();
-      };
-
-      toast.promise(promise(), {
-        loading: t('common.actions.moving'),
-        success:
-          destination === 'inbox'
-            ? t('common.actions.movedToInbox')
-            : destination === 'spam'
-              ? t('common.actions.movedToSpam')
-              : destination === 'bin'
-                ? t('common.actions.movedToBin')
-                : t('common.actions.archived'),
+      const promise = moveThreadsTo({
+        threadIds: [threadId],
+        currentFolder: folder,
+        destination,
+      });
+      setBackgroundQueue({ type: 'add', threadId: `thread:${threadId}` });
+      handleNext();
+      toast.success(
+        destination === 'inbox'
+          ? t('common.actions.movedToInbox')
+          : destination === 'spam'
+            ? t('common.actions.movedToSpam')
+            : destination === 'bin'
+              ? t('common.actions.movedToBin')
+              : t('common.actions.archived'),
+      );
+      toast.promise(promise, {
         error: t('common.actions.failedToMove'),
+        finally: async () => {
+          await Promise.all([mutateStats(), mutateThreads()]);
+          setBackgroundQueue({ type: 'delete', threadId: `thread:${threadId}` });
+        },
       });
     },
     [threadId, folder, mutateStats, mutateThreads, handleClose, t],
@@ -381,13 +383,15 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
                       >
                         <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                        <div className="hidden md:flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                        <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
                           <div className="justify-start text-sm leading-none text-white">Reply</div>
                         </div>
                         <span className="sr-only md:hidden">Reply</span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="md:hidden">Reply</TooltipContent>
+                    <TooltipContent side="bottom" className="md:hidden">
+                      Reply
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <TooltipProvider delayDuration={0}>
@@ -400,13 +404,17 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
                       >
                         <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                        <div className="hidden md:flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                          <div className="justify-start text-sm leading-none text-white">Reply All</div>
+                        <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
+                          <div className="justify-start text-sm leading-none text-white">
+                            Reply All
+                          </div>
                         </div>
                         <span className="sr-only md:hidden">Reply All</span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="md:hidden">Reply All</TooltipContent>
+                    <TooltipContent side="bottom" className="md:hidden">
+                      Reply All
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <TooltipProvider delayDuration={0}>
@@ -419,16 +427,20 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
                       >
                         <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                        <div className="hidden md:flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                          <div className="justify-start text-sm leading-none text-white">Forward</div>
+                        <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
+                          <div className="justify-start text-sm leading-none text-white">
+                            Forward
+                          </div>
                         </div>
                         <span className="sr-only md:hidden">Forward</span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="md:hidden">Forward</TooltipContent>
+                    <TooltipContent side="bottom" className="md:hidden">
+                      Forward
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <button 
+                <button
                   onClick={() => moveThreadTo('bin')}
                   className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
                 >

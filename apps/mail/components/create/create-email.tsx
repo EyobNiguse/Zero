@@ -1,57 +1,15 @@
 'use client';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  CurvedArrow,
-  Lightning,
-  MediumStack,
-  ShortStack,
-  LongStack,
-  Smile,
-  ThreeDots,
-  X,
-} from '../icons/icons';
-import {
-  ArrowUpIcon,
-  MinusCircle,
-  Paperclip,
-  PlusCircle,
-  ChevronDown,
-  Plus,
-  Command,
-} from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { UploadedFileIcon } from '@/components/create/uploaded-file-icon';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useEmailAliases } from '@/hooks/use-email-aliases';
-import { generateHTML, generateJSON } from '@tiptap/core';
 import { useConnections } from '@/hooks/use-connections';
-import { createDraft, getDraft } from '@/actions/drafts';
 import { useHotkeysContext } from 'react-hotkeys-hook';
-import { Separator } from '@/components/ui/separator';
 import { DialogClose } from '@/components/ui/dialog';
-import { SidebarToggle } from '../ui/sidebar-toggle';
-import Paragraph from '@tiptap/extension-paragraph';
 import { useSettings } from '@/hooks/use-settings';
-import { useContacts } from '@/hooks/use-contacts';
-import Document from '@tiptap/extension-document';
 import { EmailComposer } from './email-composer';
-import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
-import { truncateFileName } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { AIAssistant } from './ai-assistant';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
-import Text from '@tiptap/extension-text';
-import Bold from '@tiptap/extension-bold';
-import { type JSONContent } from 'novel';
 import { useQueryState } from 'nuqs';
-import { useEffect } from 'react';
+import { X } from '../icons/icons';
 import posthog from 'posthog-js';
 import { toast } from 'sonner';
 import * as React from 'react';

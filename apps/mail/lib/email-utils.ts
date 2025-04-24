@@ -27,7 +27,7 @@ export const template = (html: string, imagesEnabled: boolean = false) => {
 
   // Add a script to listen for security policy violations
   const script = template.createElement('script');
-  script.setAttribute("nonce", nonce)
+  script.setAttribute('nonce', nonce);
   script.textContent = `
     document.addEventListener('securitypolicyviolation', (e) => {
       // Send the violation details to the parent window

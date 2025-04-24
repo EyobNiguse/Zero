@@ -69,7 +69,7 @@ export const EMAIL_HTML_TEMPLATE = `
       <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
       <style>
         body {
-        font-family: 'Inter', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
         @media (prefers-color-scheme: dark) {
           body {
