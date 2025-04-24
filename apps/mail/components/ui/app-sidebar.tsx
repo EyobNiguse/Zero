@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogOverlay,
   DialogTitle,
   DialogTrigger,
@@ -25,10 +26,10 @@ import { useTranslations } from 'next-intl';
 import { FOLDERS } from '@/lib/utils';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
+import { useQueryState } from 'nuqs';
 import { Button } from './button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQueryState } from 'nuqs';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
@@ -76,7 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {...props}
         className={`flex select-none flex-col items-center ${state === 'collapsed' ? '' : ''}`}
       >
-        <div className="flex w-full flex-col z-20 relative">
+        <div className="relative z-20 flex w-full flex-col">
           <SidebarHeader className="flex flex-col gap-2 pt-[18px]">
             <NavUser />
             <AnimatePresence mode="wait">
@@ -128,12 +129,19 @@ function ComposeButton() {
   const t = useTranslations();
 
   const [dialogOpen, setDialogOpen] = useQueryState('isComposeOpen');
+  const [, setDraftId] = useQueryState('draftId');
+  const [, setTo] = useQueryState('to');
   const handleOpenChange = (open: boolean) => {
     setDialogOpen(open ? 'true' : null);
+    if (!open) {
+      setDraftId(null);
+      setTo(null);
+    }
   };
   return (
     <Dialog open={!!dialogOpen} onOpenChange={handleOpenChange}>
       <DialogTitle></DialogTitle>
+      <DialogDescription></DialogDescription>
 
       <DialogTrigger asChild>
         <button className="inline-flex h-8 w-full items-center justify-center gap-1 self-stretch overflow-hidden rounded-md border border-gray-200 bg-transparent text-black dark:border-none dark:bg-gradient-to-b dark:from-white/20 dark:to-white/10 dark:text-white dark:outline dark:outline-1 dark:outline-offset-[-1px] dark:outline-white/5">
@@ -148,7 +156,7 @@ function ComposeButton() {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-screen h-screen border-none bg-white p-0 bg-transparent shadow-none ">
+      <DialogContent className="max-w-screen h-screen border-none bg-transparent p-0 shadow-none">
         <CreateEmail />
       </DialogContent>
     </Dialog>

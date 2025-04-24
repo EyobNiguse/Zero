@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
+import { useDraft } from '@/hooks/use-drafts';
 import { useForm } from 'react-hook-form';
 import { useMemo, useState } from 'react';
 import { ISendEmail } from '@/types';
@@ -81,6 +82,17 @@ export function EmailComposer({
   const [mode] = useQueryState('mode');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
+  const [draftId] = useQueryState('draftId');
+  const { data: draft } = useDraft(draftId ?? null);
+
+  React.useEffect(() => {
+    if (draft) {
+      if (draft.to) form.setValue('to', draft.to);
+      // TODO: Fix this
+      if (draft.content) form.setValue('message', draft.content);
+      if (draft.subject) form.setValue('subject', draft.subject);
+    }
+  }, [draft]);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),

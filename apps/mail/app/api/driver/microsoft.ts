@@ -8,7 +8,6 @@ import { delay, withExponentialBackoff } from '../utils';
 import { filterSuggestions } from '@/lib/filter';
 import { cleanSearchValue } from '@/lib/utils';
 import { IConfig, MailManager } from './types';
-import { EnableBrain } from '@/actions/brain';
 import { createMimeMessage } from 'mimetext';
 import * as he from 'he';
 
@@ -266,7 +265,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
     getDraft: async (id: string) => {
       const client = getClient(config.auth?.access_token || '');
       const draft = await client.api(`/me/messages/${id}`).get();
-      return parseMessage(draft);
+      //   return parseMessage(draft);
+      return { id: id };
     },
 
     listDrafts: async (q?: string, maxResults = 20, pageToken?: string) => {

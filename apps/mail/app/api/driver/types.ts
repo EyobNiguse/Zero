@@ -7,11 +7,21 @@ export interface IGetThreadResponse {
   totalReplies: number;
 }
 
+export interface ParsedDraft {
+  id: string;
+  to?: string[];
+  subject?: string;
+  content?: string;
+  // todo: add <T>
+  rawMessage?: any;
+}
+
 export interface MailManager {
+  getIdType: (id: string) => 'thread' | 'draft';
   get(id: string): Promise<IGetThreadResponse>;
   create(data: IOutgoingMessage): Promise<any>;
   createDraft(data: any): Promise<any>;
-  getDraft: (id: string) => Promise<any>;
+  getDraft: (id: string) => Promise<ParsedDraft>;
   listDrafts: (q?: string, maxResults?: number, pageToken?: string) => Promise<any>;
   delete(id: string): Promise<any>;
   list<T>(

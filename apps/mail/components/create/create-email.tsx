@@ -6,6 +6,7 @@ import { DialogClose } from '@/components/ui/dialog';
 import { useSettings } from '@/hooks/use-settings';
 import { EmailComposer } from './email-composer';
 import { useSession } from '@/lib/auth-client';
+import { useDraft } from '@/hooks/use-drafts';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
 import { useQueryState } from 'nuqs';
@@ -24,14 +25,11 @@ export function CreateEmail({
   initialSubject?: string;
   initialBody?: string;
 }) {
-  const [draftId, setDraftId] = useQueryState('draftId');
-  const { settings } = useSettings();
-  const { enableScope, disableScope } = useHotkeysContext();
-  const [isCardHovered, setIsCardHovered] = React.useState(false);
-  const dragCounter = React.useRef(0);
   const { data: session } = useSession();
   const { data: connections } = useConnections();
   const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
+  const [draftId, setDraftId] = useQueryState('draftId');
+  const [composeOpen, setComposeOpen] = useQueryState('isComposeOpen');
 
   const activeAccount = React.useMemo(() => {
     if (!session) return null;

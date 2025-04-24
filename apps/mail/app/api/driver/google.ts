@@ -1,7 +1,7 @@
 import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
+import { IGetThreadResponse, type IConfig, type MailManager } from './types';
 import { deleteActiveConnection, FatalErrors } from '@/actions/utils';
 import { IOutgoingMessage, type ParsedMessage } from '@/types';
-import { type IConfig, type MailManager } from './types';
 import { type gmail_v1, google } from 'googleapis';
 import { filterSuggestions } from '@/lib/filter';
 import { GMAIL_COLORS } from '@/lib/constants';
@@ -52,15 +52,7 @@ const findHtmlBody = (parts: any[]): string => {
   return '';
 };
 
-interface ParsedDraft {
-  id: string;
-  to?: string[];
-  subject?: string;
-  content?: string;
-  rawMessage?: gmail_v1.Schema$Message;
-}
-
-const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
+const parseDraft = (draft: gmail_v1.Schema$Draft) => {
   if (!draft.message) return null;
 
   const headers = draft.message.payload?.headers || [];
@@ -559,14 +551,25 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
     },
     getScope,
+    getIdType: (id: string) => {
+      if (id.startsWith('r')) {
+        return 'draft';
+      }
+      return 'thread';
+    },
     getUserInfo: (tokens: IConfig['auth']) => {
       return withErrorHandler(
         'getUserInfo',
-        () => {
+        async () => {
           auth.setCredentials({ ...tokens, scope: getScope() });
-          return google
+          const res = await google
             .people({ version: 'v1', auth })
             .people.get({ resourceName: 'people/me', personFields: 'names,photos,emailAddresses' });
+          return {
+            address: res.data.emailAddresses?.[0]?.value ?? '',
+            name: res.data.names?.[0]?.displayName ?? '',
+            photo: res.data.photos?.[0]?.url ?? '',
+          };
         },
         { tokens },
       );
@@ -904,7 +907,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             return dateB - dateA;
           });
 
-          return { ...res.data, drafts: sortedDrafts } as any;
+          return { ...res.data, threads: sortedDrafts };
         },
         { q, maxResults, pageToken },
       );
