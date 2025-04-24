@@ -9,7 +9,7 @@ import {
   X,
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, Paperclip, Plus } from 'lucide-react';
+import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useThread } from '@/hooks/use-threads';
@@ -227,7 +227,7 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'w-full max-w-[750px] overflow-hidden rounded-lg bg-white p-0 py-0 dark:bg-[#1A1A1A]',
+        'w-full max-w-[750px] overflow-hidden rounded-2xl bg-white p-0 py-0 dark:bg-[#1A1A1A]',
         className,
       )}
     >
@@ -291,16 +291,18 @@ export function EmailComposer({
 
           <div className="flex gap-2">
             <button
-              className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
+              className="flex h-full items-center gap-2 rounded-xl border p-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
               onClick={() => setShowCc(!showCc)}
             >
-              Cc
+              {showCc ? <MinusCircle className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}{' '}
+              <span>CC</span>
             </button>
             <button
-              className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
+              className="flex h-full items-center gap-2 rounded-xl border p-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
               onClick={() => setShowBcc(!showBcc)}
             >
-              Bcc
+              {showBcc ? <MinusCircle className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}{' '}
+              <span>BCC</span>
             </button>
           </div>
         </div>

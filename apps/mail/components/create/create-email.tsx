@@ -47,7 +47,6 @@ import { Input } from '@/components/ui/input';
 import { AIAssistant } from './ai-assistant';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
-import { EmailInput } from './email-input';
 import Text from '@tiptap/extension-text';
 import Bold from '@tiptap/extension-bold';
 import { type JSONContent } from 'novel';
@@ -56,40 +55,7 @@ import { useEffect } from 'react';
 import posthog from 'posthog-js';
 import { toast } from 'sonner';
 import * as React from 'react';
-import Editor from './editor';
 import './prosemirror.css';
-
-const MAX_VISIBLE_ATTACHMENTS = 12;
-
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-// Add a more lenient check for partial emails
-const isPartialEmail = (email: string): boolean => {
-  return email.includes('@');
-};
-
-const createEmptyDocContent = (): JSONContent => ({
-  type: 'doc',
-  content: [
-    {
-      type: 'paragraph',
-      content: [],
-    },
-  ],
-});
-
-const filterContacts = (contacts: any[], searchTerm: string, excludeEmails: string[]) => {
-  if (!searchTerm) return [];
-  const term = searchTerm.toLowerCase();
-  return contacts.filter(
-    (contact) =>
-      (contact.email?.toLowerCase().includes(term) || contact.name?.toLowerCase().includes(term)) &&
-      !excludeEmails.includes(contact.email),
-  );
-};
 
 export function CreateEmail({
   initialTo = '',
