@@ -46,6 +46,7 @@ import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+import { SuccessEmailToast } from '../theme/toast';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -245,15 +246,16 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       });
       setBackgroundQueue({ type: 'add', threadId: `thread:${threadId}` });
       handleNext();
-      toast.success(
-        destination === 'inbox'
+      
+      toast.custom((id) => (
+        <SuccessEmailToast message={destination === 'inbox'
           ? t('common.actions.movedToInbox')
           : destination === 'spam'
             ? t('common.actions.movedToSpam')
             : destination === 'bin'
               ? t('common.actions.movedToBin')
-              : t('common.actions.archived'),
-      );
+              : t('common.actions.archived')} />
+      ));
       toast.promise(promise, {
         error: t('common.actions.failedToMove'),
         finally: async () => {

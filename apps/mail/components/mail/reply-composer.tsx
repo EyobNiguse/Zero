@@ -12,6 +12,7 @@ import { sendEmail } from '@/actions/send';
 import { useQueryState } from 'nuqs';
 import { Sender } from '@/types';
 import { toast } from 'sonner';
+import { SuccessEmailToast } from '../theme/toast';
 
 export default function ReplyCompose() {
   const [threadId] = useQueryState('threadId');
@@ -131,7 +132,11 @@ export default function ReplyCompose() {
       // Reset states
       setMode(null);
       await mutate();
-      toast.success(t('pages.createEmail.emailSentSuccessfully'));
+      toast.custom((id) => (
+        <div className='relative top-0 left-32'>
+          <SuccessEmailToast message={t('pages.createEmail.emailSent')} />
+        </div>
+      ));
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error(t('pages.createEmail.failedToSendEmail'));
