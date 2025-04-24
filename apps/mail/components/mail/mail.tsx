@@ -288,7 +288,7 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit mt-1 flex p-0 absolute z-[5]">
+      <div className="rounded-inherit mt-1 flex p-0 relative z-[5]">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
