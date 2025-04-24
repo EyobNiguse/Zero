@@ -493,9 +493,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   ))}
                 </div>
               </ScrollArea>
-              {/* <div className={cn('relative z-10 mt-3', isFullscreen ? 'mb-2' : '')}>
+              <div className={cn('relative z-10 mt-3 px-2', isFullscreen ? 'mb-2' : '')}>
                 <ReplyCompose />
-              </div> */}
+              </div>
             </div>
           </>
         )}

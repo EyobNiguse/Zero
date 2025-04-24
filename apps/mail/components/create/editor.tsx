@@ -92,6 +92,8 @@ interface EditorProps {
   onSignatureToggle?: (include: boolean) => void;
   signature?: string;
   hasSignature?: boolean;
+  readOnly?: boolean;
+  hideToolbar?: boolean;
 }
 
 interface EditorState {
@@ -345,6 +347,8 @@ export default function Editor({
   onAttachmentsChange,
   senderInfo,
   myInfo,
+  readOnly,
+  hideToolbar,
 }: EditorProps) {
   const [state, dispatch] = useReducer(editorReducer, {
     openNode: false,
@@ -468,6 +472,7 @@ export default function Editor({
       className={`relative w-full max-w-[450px] sm:max-w-[600px] ${className || ''}`}
       onClick={focusEditor}
       onKeyDown={(e) => {
+        if (readOnly) return;
         // Handle tab key
         if (e.key === 'Tab' && !e.shiftKey) {
           if (onTab && onTab()) {
@@ -528,8 +533,10 @@ export default function Editor({
           ref={containerRef}
           className="cursor-text relative"
           editorProps={{
+            editable: () => !readOnly,
             handleDOMEvents: {
               mousedown: (view, event) => {
+                if (readOnly) return false;
                 const coords = view.posAtCoords({
                   left: event.clientX,
                   top: event.clientY,
@@ -548,6 +555,7 @@ export default function Editor({
                 return false;
               },
               keydown: (view, event) => {
+                if (readOnly) return false;
                 if (event.key === 'Tab' && !event.shiftKey) {
                   if (onTab && onTab()) {
                     event.preventDefault();
@@ -564,20 +572,25 @@ export default function Editor({
                 return handleCommandNavigation(event);
               },
               focus: () => {
-                onFocus?.();
+                if (!readOnly) onFocus?.();
                 return false;
               },
               blur: () => {
-                onBlur?.();
+                if (!readOnly) onBlur?.();
                 return false;
               },
             },
-            handleDrop: (view, event, _slice, moved) =>
-              handleImageDrop(view, event, moved, (file) => {
+            handleDrop: (view, event, _slice, moved) => {
+              if (readOnly) return false;
+              return handleImageDrop(view, event, moved, (file) => {
                 onAttachmentsChange?.([file]);
-              }),
+              });
+            },
             attributes: {
-              class: 'prose dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full min-h-[200px] py-2',
+              class: cn(
+                'prose dark:prose-invert prose-headings:font-title focus:outline-none max-w-full min-h-[200px]',
+                readOnly && 'pointer-events-none select-text',
+              ),
               'data-placeholder': placeholder,
             },
           }}
@@ -587,13 +600,12 @@ export default function Editor({
           onDestroy={() => {
           }}
           onUpdate={({ editor }) => {
+            if (readOnly) return;
             // Store the content in the ref to prevent losing it
             contentRef.current = editor.getHTML();
             onChange(editor.getHTML());
           }}
-          slotBefore={
-            <MenuBar />
-          }
+          
           slotAfter={null}
         >
           {/* Make sure the command palette doesn't cause a refresh */}

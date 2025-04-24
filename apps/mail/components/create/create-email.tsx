@@ -57,6 +57,7 @@ import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import './prosemirror.css';
+import { EmailComposer } from './email-composer';
 
 const MAX_VISIBLE_ATTACHMENTS = 12;
 
@@ -122,216 +123,6 @@ export function CreateEmail({
   const [isCardHovered, setIsCardHovered] = React.useState(false);
   const dragCounter = React.useRef(0);
   const [messageLength, setMessageLength] = React.useState(0);
-
-  const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(() => {
-    if (initialBody) {
-      try {
-        return generateJSON(initialBody, [Document, Paragraph, Text, Bold]);
-      } catch (error) {
-        console.error('Error parsing initial body:', error);
-        return createEmptyDocContent();
-      }
-    }
-    return null;
-  });
-
-  const { data: session } = useSession();
-  const { data: connections } = useConnections();
-  const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
-
-  const activeAccount = React.useMemo(() => {
-    if (!session) return null;
-    return connections?.find((connection) => connection.id === session?.activeConnection?.id);
-  }, [session, connections]);
-
-  const userName =
-    activeAccount?.name || session?.activeConnection?.name || session?.user?.name || '';
-  const userEmail =
-    activeAccount?.email || session?.activeConnection?.email || session?.user?.email || '';
-
-  //   const filteredContacts = React.useMemo(
-  //     () => filterContacts(contacts, toInput, toEmails),
-  //     [contacts, toInput, toEmails],
-  //   );
-
-  //   const filteredCcContacts = React.useMemo(
-  //     () => filterContacts(contacts, ccInput, [...toEmails, ...ccEmails]),
-  //     [contacts, ccInput, toEmails, ccEmails],
-  //   );
-
-  //   const filteredBccContacts = React.useMemo(
-  //     () => filterContacts(contacts, bccInput, [...toEmails, ...ccEmails, ...bccEmails]),
-  //     [contacts, bccInput, toEmails, ccEmails, bccEmails],
-  //   );
-
-  React.useEffect(() => {
-    if (!draftId && !defaultValue) {
-      setDefaultValue(createEmptyDocContent());
-    }
-  }, [draftId, defaultValue]);
-
-  React.useEffect(() => {
-    const loadDraft = async () => {
-      if (!draftId) {
-        setDefaultValue(createEmptyDocContent());
-        return;
-      }
-
-      try {
-        const draft = await getDraft(draftId);
-
-        if (!draft) {
-          toast.error('Draft not found');
-          return;
-        }
-
-        setDraftId(draft.id);
-
-        if (draft.to?.length) {
-          setToEmails(draft.to);
-        }
-        if (draft.subject) {
-          setSubjectInput(draft.subject);
-        }
-
-        if (draft.content) {
-          try {
-            setMessageContent(draft.content);
-            setResetEditorKey((prev) => prev + 1);
-            setTimeout(() => {
-              try {
-                const json = generateJSON(draft.content, [Document, Paragraph, Text, Bold]);
-                setDefaultValue(json);
-              } catch (error) {
-                console.error('Error parsing draft content:', error);
-                setDefaultValue(createEmptyDocContent());
-              }
-            }, 0);
-          } catch (error) {
-            console.error('Error setting draft content:', error);
-            setDefaultValue(createEmptyDocContent());
-          }
-        } else {
-          setDefaultValue(createEmptyDocContent());
-          setMessageContent('');
-        }
-
-        setHasUnsavedChanges(false);
-      } catch (error) {
-        console.error('Error loading draft:', error);
-        toast.error('Failed to load draft');
-      }
-    };
-
-    loadDraft();
-  }, [draftId]);
-
-  const t = useTranslations();
-
-  // Add refs for all inputs
-  const toInputRef = React.useRef<HTMLInputElement>(null);
-  const ccInputRef = React.useRef<HTMLInputElement>(null);
-  const bccInputRef = React.useRef<HTMLInputElement>(null);
-  const subjectInputRef = React.useRef<HTMLInputElement>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Remove auto-focus logic
-  React.useEffect(() => {
-    if (!isFirstMount.current) return;
-    isFirstMount.current = false;
-  }, []);
-
-  // Remove keyboard shortcut handler
-  React.useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Only trigger if "/" is pressed and no input/textarea is focused
-      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
-        e.preventDefault();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyPress);
-    return () => document.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
-  const handleEmailInputChange = (type: 'to' | 'cc' | 'bcc', value: string) => {
-    // Update the input value immediately without any validation
-    switch (type) {
-      case 'to':
-        setToInput(value);
-        break;
-      case 'cc':
-        setCcInput(value);
-        break;
-      case 'bcc':
-        setBccInput(value);
-        break;
-    }
-  };
-
-  const handleAddEmail = (type: 'to' | 'cc' | 'bcc', email: string) => {
-    // Only validate and add when Enter is pressed
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) return;
-
-    const emailState = type === 'to' ? toEmails : type === 'cc' ? ccEmails : bccEmails;
-    const setEmailState = type === 'to' ? setToEmails : type === 'cc' ? setCcEmails : setBccEmails;
-    const setInputState = type === 'to' ? setToInput : type === 'cc' ? setCcInput : setBccInput;
-
-    if (isValidEmail(trimmedEmail)) {
-      setEmailState([...emailState, trimmedEmail]);
-      setInputState('');
-      setHasUnsavedChanges(true);
-    } else if (emailState.length === 0) {
-      // Only show error if there are no emails yet
-      toast.error(t('pages.createEmail.invalidEmail'));
-    }
-  };
-
-  // const saveDraft = React.useCallback(async () => {
-  //   if (!hasUnsavedChanges) return;
-  //   if (!toEmails.length || !subjectInput || !messageContent) return;
-
-  //   try {
-  //     setIsLoading(true);
-  //     const draftData = {
-  //       to: toEmails.join(', '),
-  //       cc: ccEmails.join(', '),
-  //       bcc: bccEmails.join(', '),
-  //       subject: subjectInput,
-  //       message: messageContent || '',
-  //       attachments: attachments,
-  //       id: draftId,
-  //     };
-
-  //     const response = await createDraft(draftData);
-
-  //     if (response?.id && response.id !== draftId) {
-  //       setDraftId(response.id);
-  //     }
-
-  //     setHasUnsavedChanges(false);
-  //   } catch (error) {
-  //     console.error('Error saving draft:', error);
-  //     toast.error('Failed to save draft');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
-
-  // React.useEffect(() => {
-  //   if (!hasUnsavedChanges) return;
-
-  //   const autoSaveTimer = setTimeout(() => {
-  //     saveDraft();
-  //   }, 3000);
-
-  //   return () => clearTimeout(autoSaveTimer);
-  // }, [hasUnsavedChanges, saveDraft]);
-
-  // React.useEffect(() => {
-  //   setHasUnsavedChanges(true);
-  // }, [messageContent]);
 
   const handleSendEmail = async () => {
     if (!toEmails.length) {
@@ -407,873 +198,150 @@ export function CreateEmail({
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(true);
-    }
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    if (!e.target || !(e.target as HTMLElement).closest('.ProseMirror')) {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        setAttachments((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
-        setHasUnsavedChanges(true);
-      }
-    }
-  };
-
-  // Add a mount ref to ensure we only auto-focus once
-  const isFirstMount = React.useRef(true);
-
-  const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      setAttachments((prev) => [...prev, ...Array.from(files)]);
-      setHasUnsavedChanges(true);
-    }
-  };
-
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-    setHasUnsavedChanges(true);
-  };
-
-  const handleDragEnterCard = (e: React.DragEvent) => {
-    e.preventDefault();
-    dragCounter.current += 1;
-    setIsCardHovered(true);
-  };
-
-  const handleDragLeaveCard = (e: React.DragEvent) => {
-    e.preventDefault();
-    dragCounter.current -= 1;
-    if (dragCounter.current <= 0) {
-      setIsCardHovered(false);
-      dragCounter.current = 0;
-    }
-  };
-
+  // Add hotkey handler for command+send
   React.useEffect(() => {
-    if (initialTo) {
-      const emails = initialTo.split(',').map((email) => email.trim());
-      const validEmails = emails.filter((email) => isValidEmail(email));
-      if (validEmails.length > 0) {
-        setToEmails(validEmails);
-      } else {
-        setToInput(initialTo);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSendEmail();
       }
-    }
-
-    if (initialSubject) {
-      setSubjectInput(initialSubject);
-    }
-
-    if (initialBody && !defaultValue) {
-      setDefaultValue({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: initialBody,
-              },
-            ],
-          },
-        ],
-      });
-      setMessageContent(initialBody);
-    }
-  }, [initialTo, initialSubject, initialBody, defaultValue]);
-
-  useEffect(() => {
-    console.log('Enabling compose scope (CreateEmail)');
-    enableScope('compose');
-
-    return () => {
-      console.log('Disabling compose scope (CreateEmail)');
-      disableScope('compose');
     };
-  }, [enableScope, disableScope]);
 
-  const getLengthType = (length: number) => {
-    if (length < 100) return { icon: 'ShortStack', text: 'short-length' };
-    if (length < 500) return { icon: 'MediumStack', text: 'medium-length' };
-    return { icon: 'LongStack', text: 'long-length' };
-  };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleSendEmail]);
 
-  // Add effect to handle ESC key
+  const [defaultValue, setDefaultValue] = React.useState<JSONContent | null>(() => {
+    if (initialBody) {
+      try {
+        return generateJSON(initialBody, [Document, Paragraph, Text, Bold]);
+      } catch (error) {
+        console.error('Error parsing initial body:', error);
+        return createEmptyDocContent();
+      }
+    }
+    return null;
+  });
+
+  const { data: session } = useSession();
+  const { data: connections } = useConnections();
+  const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
+
+  const activeAccount = React.useMemo(() => {
+    if (!session) return null;
+    return connections?.find((connection) => connection.id === session?.activeConnection?.id);
+  }, [session, connections]);
+
+  const userName =
+    activeAccount?.name || session?.activeConnection?.name || session?.user?.name || '';
+  const userEmail =
+    activeAccount?.email || session?.activeConnection?.email || session?.user?.email || '';
+
   React.useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        // If there are unsaved changes, show a confirmation dialog
-        if (hasUnsavedChanges) {
-          if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
-            const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
-            closeButton?.click();
+    if (!draftId && !defaultValue) {
+      setDefaultValue(createEmptyDocContent());
+    }
+  }, [draftId, defaultValue]);
+
+  React.useEffect(() => {
+    const loadDraft = async () => {
+      if (!draftId) {
+        setDefaultValue(createEmptyDocContent());
+        return;
+      }
+
+      try {
+        const draft = await getDraft(draftId);
+
+        if (!draft) {
+          toast.error('Draft not found');
+          return;
+        }
+
+        setDraftId(draft.id);
+
+        if (draft.to?.length) {
+          setToEmails(draft.to);
+        }
+        if (draft.subject) {
+          setSubjectInput(draft.subject);
+        }
+
+        if (draft.content) {
+          try {
+            setMessageContent(draft.content);
+            setResetEditorKey((prev) => prev + 1);
+            setTimeout(() => {
+              try {
+                const json = generateJSON(draft.content, [Document, Paragraph, Text, Bold]);
+                setDefaultValue(json);
+              } catch (error) {
+                console.error('Error parsing draft content:', error);
+                setDefaultValue(createEmptyDocContent());
+              }
+            }, 0);
+          } catch (error) {
+            console.error('Error setting draft content:', error);
+            setDefaultValue(createEmptyDocContent());
           }
         } else {
-          const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
-          closeButton?.click();
+          setDefaultValue(createEmptyDocContent());
+          setMessageContent('');
         }
+
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        toast.error('Failed to load draft');
       }
     };
 
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [hasUnsavedChanges]);
+    loadDraft();
+  }, [draftId]);
+
+  const t = useTranslations();
 
   return (
     <>
-      
-
-    
-      {/* <div className="sticky top-0 z-10 flex items-center justify-between gap-1 border-b border-[#1D1D1D] p-2 transition-colors">
-        <DialogClose asChild>
-          <button className="flex items-center gap-1 rounded-[5px] bg-white px-2 py-0.5 dark:bg-[#262626]">
-            <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#929292]" />{' '}
-            <span className="text-sm text-black dark:text-[#929292]">esc</span>
-          </button>
-        </DialogClose>
-      </div> */}
-      {/* <div className="relative flex h-full flex-col">
-        <div className="flex-1">
-          <div
-            className="bg-sidebar relative mx-auto flex max-h-[80vh] w-full max-w-[500px] flex-col rounded-lg border pt-4 
-            sm:max-w-[720px]"
-            style={{ height: '' }}
-            onDragEnter={handleDragEnterCard}
-            onDragLeave={handleDragLeaveCard}
-          >
-            {isDragging && isCardHovered && (
-              <div className="bg-background/80 border-primary/30 absolute inset-0 z-50 m-4 flex items-center justify-center 
-              rounded-2xl border-2 
-              border-dashed backdrop-blur-sm">
-                <div className="text-muted-foreground flex flex-col items-center gap-2">
-                  <Paperclip className="text-muted-foreground h-12 w-12" />
-                  <p className="text-lg font-medium">{t('pages.createEmail.dropFilesToAttach')}</p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center justify-end gap-2 pr-4">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                tabIndex={-1}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowCc(!showCc);
-                  if (!showCc) {
-                    setCcEmails([]);
-                  }
-                  setTimeout(() => {
-                    ccInputRef.current?.focus();
-                  }, 0);
-                }}
-                className="text-xs"
-              >
-                <span>Cc</span>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                tabIndex={-1}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowBcc(!showBcc);
-                  if (!showBcc) {
-                    setBccEmails([]);
-                  }
-                  setTimeout(() => {
-                    bccInputRef.current?.focus();
-                  }, 0);
-                }}
-                className="text-xs"
-              >
-                <span>Bcc</span>
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 space-y-12 overflow-y-auto overflow-x-hidden">
-              <div className="space-y-3 md:px-1">
-                <EmailInput
-                  type="to"
-                  emails={toEmails}
-                  setEmails={setToEmails}
-                  inputValue={toInput}
-                  setInputValue={setToInput}
-                  filteredContacts={[]}
-                  isLoading={isLoading}
-                  onAddEmail={handleAddEmail}
-                  hasUnsavedChanges={hasUnsavedChanges}
-                  setHasUnsavedChanges={setHasUnsavedChanges}
-                  className="w-24 text-right"
-                />
-
-                {showCc && (
-                  <EmailInput
-                    type="cc"
-                    emails={ccEmails}
-                    setEmails={setCcEmails}
-                    inputValue={ccInput}
-                    setInputValue={setCcInput}
-                    filteredContacts={[]}
-                    isLoading={isLoading}
-                    onAddEmail={handleAddEmail}
-                    hasUnsavedChanges={hasUnsavedChanges}
-                    setHasUnsavedChanges={setHasUnsavedChanges}
-                    className="w-24 text-right"
-                  />
-                )}
-
-                {showBcc && (
-                  <EmailInput
-                    type="bcc"
-                    emails={bccEmails}
-                    setEmails={setBccEmails}
-                    inputValue={bccInput}
-                    setInputValue={setBccInput}
-                    filteredContacts={[]}
-                    isLoading={isLoading}
-                    onAddEmail={handleAddEmail}
-                    hasUnsavedChanges={hasUnsavedChanges}
-                    setHasUnsavedChanges={setHasUnsavedChanges}
-                    className="w-24 text-right"
-                  />
-                )}
-
-                <div className="flex items-center">
-                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 
-                  md:w-24">
-                    {t('common.searchBar.from')}
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between text-left font-normal"
-                        disabled={isLoadingAliases || isLoading}
-                      >
-                        <span>{selectedFromEmail || aliases?.[0]?.email || userEmail}</span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="w-[var(--radix-dropdown-trigger-width)]"
-                      align="start"
-                    >
-                      {isLoadingAliases ? (
-                        <div className="px-2 py-1 text-center text-sm">Loading...</div>
-                      ) : aliases && aliases.length > 0 ? (
-                        aliases.map((alias) => (
-                          <DropdownMenuItem
-                            key={alias.email}
-                            onClick={() => setSelectedFromEmail(alias.email)}
-                            className="cursor-pointer"
-                          >
-                            {alias.name ? `${alias.name} <${alias.email}>` : alias.email}
-                            {alias.primary && ' (Primary)'}
-                          </DropdownMenuItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1 text-center text-sm">{userEmail}</div>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div className="flex items-center">
-                  <div className="text-muted-foreground w-20 flex-shrink-0 pr-3 text-right text-[1rem] font-[600] opacity-50 
-                  md:w-24">
-                    {t('common.searchBar.subject')}
-                  </div>
-                  <input
-                    ref={subjectInputRef}
-                    disabled={isLoading}
-                    type="text"
-                    className="text-md relative left-[7.5px] w-full bg-transparent placeholder:text-[#616161] 
-                    placeholder:opacity-50 focus:outline-none"
-                    placeholder={t('common.searchBar.subject')}
-                    value={subjectInput}
-                    onChange={(e) => {
-                      setSubjectInput(e.target.value);
-                      setHasUnsavedChanges(true);
-                    }}
-                  />
-                </div>
-
-                <div className="flex">
-                  <div className="text-muted-foreground text-md relative -top-[1px] w-20 flex-shrink-0 pr-3 pt-2 text-right 
-                  font-[600] opacity-50 
-                  md:w-24">
-                    {t('pages.createEmail.body')}
-                  </div>
-                  <div className="w-full">
-                    {defaultValue && (
-                      <Editor
-                        initialValue={defaultValue}
-                        onChange={(newContent) => {
-                          setMessageContent(newContent);
-                          if (newContent.trim() !== '') {
-                            setHasUnsavedChanges(true);
-                          }
-                        }}
-                        key={resetEditorKey}
-                        placeholder={t('pages.createEmail.writeYourMessageHere')}
-                        onAttachmentsChange={setAttachments}
-                        onCommandEnter={handleSendEmail}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="sticky bottom-0 left-0 right-0 z-10 border-t px-2 py-2">
-              <div className="flex items-center justify-end">
-                <div className="flex items-center gap-4">
-                  <div className="pb-2 pt-2">
-                    <AIAssistant
-                      currentContent={messageContent}
-                      subject={subjectInput}
-                      recipients={toEmails}
-                      userContext={{ name: userName, email: userEmail }}
-                      onContentGenerated={(jsonContent, newSubject) => {
-                        console.log('CreateEmail: Received AI-generated content', {
-                          jsonContentType: jsonContent.type,
-                          hasContent: Boolean(jsonContent.content),
-                          contentLength: jsonContent.content?.length || 0,
-                          newSubject: newSubject,
-                        });
-
-                        try {
-                          // Update the editor content with the AI-generated content
-                          setDefaultValue(jsonContent);
-
-                          // Extract and set the text content for validation purposes
-                          // This ensures the submit button is enabled immediately
-                          if (jsonContent.content && jsonContent.content.length > 0) {
-                            // Extract text content from JSON structure recursively
-                            const extractTextContent = (node: any): string => {
-                              if (!node) return '';
-
-                              if (node.text) return node.text;
-
-                              if (node.content && Array.isArray(node.content)) {
-                                return node.content.map(extractTextContent).join(' ');
-                              }
-
-                              return '';
-                            };
-
-                            // Process all content nodes
-                            const textContent = jsonContent.content
-                              .map(extractTextContent)
-                              .join('\n')
-                              .trim();
-                            setMessageContent(textContent);
-                          }
-
-                          // Update the subject if provided
-                          if (newSubject && (!subjectInput || subjectInput.trim() === '')) {
-                            console.log('CreateEmail: Setting new subject from AI', newSubject);
-                            setSubjectInput(newSubject);
-                          }
-
-                          // Mark as having unsaved changes
-                          setHasUnsavedChanges(true);
-
-                          // Reset the editor to ensure it picks up the new content
-                          setResetEditorKey((prev) => prev + 1);
-
-                          console.log('CreateEmail: Successfully applied AI content');
-                        } catch (error) {
-                          console.error('CreateEmail: Error applying AI content', error);
-                          toast.error('Error applying AI content to your email. Please try again.');
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3">
-                  {attachments.length > 0 && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="flex items-center gap-2">
-                          <Paperclip className="h-4 w-4" />
-                          <span>
-                            {attachments.length}{' '}
-                            {t('common.replyCompose.attachmentCount', {
-                              count: attachments.length,
-                            })}
-                          </span>
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 touch-auto overflow-x-hidden" align="end">
-                        <div className="space-y-2">
-                          <div className="px-1">
-                            <h4 className="font-medium leading-none">
-                              {t('common.replyCompose.attachments')}
-                            </h4>
-                            <p className="text-muted-foreground text-sm">
-                              {attachments.length}{' '}
-                              {t('common.replyCompose.fileCount', {
-                                count: attachments.length,
-                              })}
-                            </p>
-                          </div>
-                          <Separator />
-                          <div className="touch-auto overflow-y-auto overflow-x-hidden overscroll-contain px-1 py-1">
-                            <div className="grid grid-cols-2 gap-2">
-                              {attachments.map((file, index) => (
-                                <div
-                                  key={index}
-                                  className="group relative overflow-hidden rounded-md border"
-                                >
-                                  <UploadedFileIcon
-                                    removeAttachment={removeAttachment}
-                                    index={index}
-                                    file={file}
-                                  />
-                                  <div className="bg-muted/10 p-2">
-                                    <p className="text-xs font-medium">
-                                      {truncateFileName(file.name, 20)}
-                                    </p>
-                                    <p className="text-muted-foreground text-xs">
-                                      {(file.size / (1024 * 1024)).toFixed(2)} MB
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                  <div className="relative">
-                    <Input
-                      type="file"
-                      id="attachment-input"
-                      className="absolute h-full w-full opacity-0"
-                      onChange={handleAttachment}
-                      multiple
-                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                      style={{ display: 'none' }}
-                      ref={fileInputRef}
-                    />
-                    <button 
-                      className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
-                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                    >
-                      <Plus className="h-3 w-3 fill-[#9A9A9A]" />
-                      <span className="px-0.5 text-sm">Add files</span>
-                    </button>
-                    <Input
-                      type="file"
-                      id="attachment-input"
-                      className="hidden"
-                      onChange={handleAttachment}
-                      multiple
-                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                      ref={fileInputRef}
-                    />
-                    {attachments.length > 0 && (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
-                            <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
-                            <span>{attachments.length} files</span>
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 bg-[#202020] p-3" align="start">
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-sm text-white/90">Attachments</h4>
-                            <div className="max-h-[200px] overflow-y-auto space-y-2">
-                              {attachments.map((file, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center justify-between gap-2 rounded-md bg-white/5 p-2"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Paperclip className="h-4 w-4 text-[#9A9A9A]" />
-                                    <div>
-                                      <p className="text-sm text-white/90">{file.name}</p>
-                                      <p className="text-xs text-[#9A9A9A]">
-                                        {(file.size / (1024 * 1024)).toFixed(2)} MB
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <button
-                                    onClick={() => removeAttachment(index)}
-                                    className="rounded-sm p-1 hover:bg-white/10"
-                                  >
-                                    <X className="h-4 w-4 fill-[#9A9A9A]" />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </div>
-                  <Button
-                    variant="default"
-                    className="h-9 w-9 overflow-hidden rounded-full"
-                    onClick={handleSendEmail}
-                    disabled={
-                      isLoading ||
-                      !toEmails.length ||
-                      !messageContent.trim() ||
-                      !subjectInput.trim()
-                    }
-                  >
-                    <ArrowUpIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      
-
       <div className="flex flex-col gap-1 min-h-screen items-center justify-center">
-      <div className='flex justify-start w-[750px]'>
-      <DialogClose asChild className='flex'>
-          <button className="flex items-center gap-1 rounded-lg px-2 py-1.5 bg-white dark:bg-[#1A1A1A]">
-            <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#929292]" />
-            <span className="text-sm text-black dark:text-white">esc</span>
-          </button>
-        </DialogClose>
-      </div>
-        <div className="w-full max-w-[750px] rounded-lg  bg-white p-0 py-0 dark:bg-[#1A1A1A]">
-          <div className="border-b border-[#252525] pb-2">
-            <div className="flex justify-between px-3 pt-3">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-[#8C8C8C]">To:</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {toEmails.map((email, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-1 py-0.5 pr-2"
-                    >
-                      <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
-                        <Avatar className="h-5 w-5">
-                          <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
-                            {email.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        {email}
-                      </span>
-                      <button
-                        onClick={() => setToEmails(toEmails.filter((_, i) => i !== index))}
-                        className="text-white/50 hover:text-white/90"
-                      >
-                        <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
-                      </button>
-                    </div>
-                  ))}
-                  <input
-                    className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
-                    placeholder="Enter email"
-                    value={toInput}
-                    onChange={(e) => {
-                      setToInput(e.target.value);
-                      setHasUnsavedChanges(true);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && toInput.trim()) {
-                        e.preventDefault();
-                        if (isValidEmail(toInput.trim())) {
-                          setToEmails([...toEmails, toInput.trim()]);
-                          setToInput('');
-                          setHasUnsavedChanges(true);
-                        } else {
-                          toast.error('Please enter a valid email address');
-                        }
-                      } else if (e.key === 'Backspace' && !toInput && toEmails.length > 0) {
-                        setToEmails(toEmails.slice(0, -1));
-                        setHasUnsavedChanges(true);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
-                  onClick={() => setShowCc(!showCc)}
-                >
-                  Cc
-                </button>
-
-                <button
-                  className="text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
-                  onClick={() => setShowBcc(!showBcc)}
-                >
-                  Bcc
-                </button>
-              </div>
-            </div>
-            <div className={`flex flex-col gap-2 ${showCc || showBcc ? 'pt-2' : ''}`}>
-              {showCc && (
-                <div className="flex items-center gap-2 px-3">
-                  <p className="text-sm font-medium text-[#8C8C8C]">Cc:</p>
-                  <div className="flex flex-1 flex-wrap items-center gap-2">
-                    {ccEmails.map((email, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
-                      >
-                        <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
-                              {email.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {email}
-                        </span>
-                        <button
-                          onClick={() => setCcEmails(ccEmails.filter((_, i) => i !== index))}
-                          className="text-white/50 hover:text-white/90"
-                        >
-                          <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
-                        </button>
-                      </div>
-                    ))}
-                    <input
-                      className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
-                      placeholder="Enter email"
-                      value={ccInput}
-                      onChange={(e) => {
-                        setCcInput(e.target.value);
-                        setHasUnsavedChanges(true);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && ccInput.trim()) {
-                          e.preventDefault();
-                          if (isValidEmail(ccInput.trim())) {
-                            setCcEmails([...ccEmails, ccInput.trim()]);
-                            setCcInput('');
-                            setHasUnsavedChanges(true);
-                          } else {
-                            toast.error('Please enter a valid email address');
-                          }
-                        } else if (e.key === 'Backspace' && !ccInput && ccEmails.length > 0) {
-                          setCcEmails(ccEmails.slice(0, -1));
-                          setHasUnsavedChanges(true);
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-              {showBcc && (
-                <div className="flex items-center gap-2 px-3">
-                  <p className="text-sm font-medium text-[#8C8C8C]">Bcc:</p>
-                  <div className="flex flex-1 flex-wrap items-center gap-2">
-                    {bccEmails.map((email, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
-                      >
-                        <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
-                              {email.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {email}
-                        </span>
-                        <button
-                          onClick={() => setBccEmails(bccEmails.filter((_, i) => i !== index))}
-                          className="text-white/50 hover:text-white/90"
-                        >
-                          <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
-                        </button>
-                      </div>
-                    ))}
-                    <input
-                      className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
-                      placeholder="Enter email"
-                      value={bccInput}
-                      onChange={(e) => {
-                        setBccInput(e.target.value);
-                        setHasUnsavedChanges(true);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && bccInput.trim()) {
-                          e.preventDefault();
-                          if (isValidEmail(bccInput.trim())) {
-                            setBccEmails([...bccEmails, bccInput.trim()]);
-                            setBccInput('');
-                            setHasUnsavedChanges(true);
-                          } else {
-                            toast.error('Please enter a valid email address');
-                          }
-                        } else if (e.key === 'Backspace' && !bccInput && bccEmails.length > 0) {
-                          setBccEmails(bccEmails.slice(0, -1));
-                          setHasUnsavedChanges(true);
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 p-3">
-            <p className="text-sm font-medium text-[#8C8C8C]">Subject:</p>
-            <input
-              className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
-              placeholder="Re: Design review feedback"
-              value={subjectInput}
-              onChange={(e) => {
-                setSubjectInput(e.target.value);
-                setHasUnsavedChanges(true);
-              }}
-            />
-          </div>
-          <div className="mb-6 flex flex-col items-start justify-start gap-2 self-stretch rounded-2xl bg-[#202020] px-4 py-3  outline-white/5">
-            <div className="flex flex-col items-center justify-center gap-2.5 self-stretch">
-              <div className="flex flex-col items-start justify-start gap-3 self-stretch">
-                <textarea
-                  className="resize-none self-stretch bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
-                  placeholder="Write your email..."
-                  rows={7}
-                  value={messageContent}
-                  onChange={(e) => {
-                    setMessageContent(e.target.value);
-                    setMessageLength(e.target.value.length);
-                    setHasUnsavedChanges(true);
-                  }}
-                />
-              </div>
-            </div>
-            <div className="inline-flex items-center justify-between self-stretch">
-              <div className="flex items-center justify-start gap-3">
-                <div className="flex items-center justify-start">
-                  <button
-                    className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
-                    onClick={handleSendEmail}
-                    disabled={
-                      isLoading ||
-                      !toEmails.length ||
-                      !messageContent.trim() ||
-                      !subjectInput.trim()
-                    }
-                  >
-                    <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                      <div className="text-center text-sm leading-none text-white dark:text-black">
-                        Send now
-                      </div>
-                    </div>
-
-                    <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
-                      <Command className="h-3.5 w-3.5 text-white dark:text-black" />
-                      <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-black" />
-                    </div>
-                  </button>
-                  <button
-                    className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
-                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                  >
-                    <Plus className="h-3 w-3 fill-[#9A9A9A]" />
-                    <span className="px-0.5 text-sm">Add files</span>
-                  </button>
-                  <Input
-                    type="file"
-                    id="attachment-input"
-                    className="hidden"
-                    onChange={handleAttachment}
-                    multiple
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                    ref={fileInputRef}
-                  />
-                  {attachments.length > 0 && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
-                          <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
-                          <span>{attachments.length} files</span>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 bg-[#202020] p-3" align="start">
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-white/90">Attachments</h4>
-                          <div className="max-h-[200px] space-y-2 overflow-y-auto">
-                            {attachments.map((file, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between gap-2 rounded-md bg-white/5 p-2"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div>
-                                    <p className="text-sm text-white/90">{file.name}</p>
-                                    <p className="text-xs text-[#9A9A9A]">
-                                      {(file.size / (1024 * 1024)).toFixed(2)} MB
-                                    </p>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => removeAttachment(index)}
-                                  className="rounded-sm p-1 hover:bg-white/10"
-                                >
-                                  <X className="h-4 w-4 fill-[#9A9A9A]" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-start justify-start gap-3">
-                <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
-                  <Smile className="h-3 w-3 fill-[#9A9A9A]" />
-                  <span className="px-0.5 text-sm">Casual</span>
-                </button>
-                <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
-                  {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
-                  {messageLength >= 50 && messageLength < 200 && (
-                    <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
-                  )}
-                  {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
-                  <span className="px-0.5 text-sm">
-                    {messageLength < 50
-                      ? 'short-length'
-                      : messageLength < 200
-                        ? 'medium-length'
-                        : 'long-length'}
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className='flex justify-start w-[750px]'>
+          <DialogClose asChild className='flex'>
+            <button className="flex items-center gap-1 rounded-lg px-2 py-1.5 bg-white dark:bg-[#1A1A1A]">
+              <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#929292]" />
+              <span className="text-sm text-black dark:text-white">esc</span>
+            </button>
+          </DialogClose>
         </div>
+        <EmailComposer
+          toEmails={toEmails}
+          setToEmails={setToEmails}
+          toInput={toInput}
+          setToInput={setToInput}
+          ccEmails={ccEmails}
+          setCcEmails={setCcEmails}
+          ccInput={ccInput}
+          setCcInput={setCcInput}
+          bccEmails={bccEmails}
+          setBccEmails={setBccEmails}
+          bccInput={bccInput}
+          setBccInput={setBccInput}
+          showCc={showCc}
+          setShowCc={setShowCc}
+          showBcc={showBcc}
+          setShowBcc={setShowBcc}
+          subjectInput={subjectInput}
+          setSubjectInput={setSubjectInput}
+          messageContent={messageContent}
+          setMessageContent={setMessageContent}
+          messageLength={messageLength}
+          setMessageLength={setMessageLength}
+          attachments={attachments}
+          setAttachments={setAttachments}
+          isLoading={isLoading}
+          hasUnsavedChanges={hasUnsavedChanges}
+          setHasUnsavedChanges={setHasUnsavedChanges}
+          onSendEmail={handleSendEmail}
+        />
       </div>
     </>
   );

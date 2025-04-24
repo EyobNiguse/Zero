@@ -711,7 +711,7 @@ const [mode, setMode] = useQueryState('mode');
                 </button>
                 <button
                   onClick={() => {
-                    setMode('reply');
+                    setMode('replyAll');
                   }}
                   className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
                 >
@@ -739,7 +739,7 @@ const [mode, setMode] = useQueryState('mode');
             </div>
           </div>
         </div>
-        <ReplyCompose />
+       
       </div>
     </div>
   );
