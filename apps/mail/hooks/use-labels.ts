@@ -30,6 +30,7 @@ export function useLabels() {
 
 export function useThreadLabels(ids: string[]) {
   const { labels } = useLabels();
+
   const threadLabels = useMemo(() => {
     if (!labels) return [];
     return labels.filter((label) => (label.id ? ids.includes(label.id) : false));

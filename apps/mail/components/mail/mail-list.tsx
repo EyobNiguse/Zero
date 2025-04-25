@@ -783,7 +783,7 @@ export const MailLabels = memo(
   ({ labels }: { labels: Label[] }) => {
     const t = useTranslations();
 
-    if (!labels.length) return null;
+    if (!labels?.length) return null;
 
     const visibleLabels = labels.filter(
       (label) => !['unread', 'inbox'].includes(label.name.toLowerCase()),

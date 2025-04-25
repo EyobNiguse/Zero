@@ -261,6 +261,9 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         bccRecipients: data.bcc?.map((r: any) => ({ emailAddress: { address: r.email } })),
       });
     },
+    getUserLabels() {
+      return new Promise((resolve) => resolve([]));
+    },
 
     getDraft: async (id: string) => {
       const client = getClient(config.auth?.access_token || '');

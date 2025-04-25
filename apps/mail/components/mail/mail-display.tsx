@@ -23,9 +23,9 @@ import {
   DialogHeader,
   DialogClose,
 } from '../ui/dialog';
+import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Briefcase, Star, StickyNote, Users } from 'lucide-react';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
@@ -40,8 +40,8 @@ import { Separator } from '../ui/separator';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { MailIframe } from './mail-iframe';
-import { FileText } from 'lucide-react';
 import { MailLabels } from './mail-list';
+import { FileText } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import { Badge } from '../ui/badge';
@@ -230,31 +230,35 @@ const cleanNameDisplay = (name?: string) => {
   return name.trim();
 };
 
-const AiSummary = ({ onClick, e }: { onClick?: (e: React.MouseEvent) => void, e?: React.MouseEvent }) => {
+const AiSummary = ({
+  onClick,
+  e,
+}: {
+  onClick?: (e: React.MouseEvent) => void;
+  e?: React.MouseEvent;
+}) => {
   const [showSummary, setShowSummary] = useState(true);
-  
+
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event from bubbling up
     setShowSummary(!showSummary);
   };
-  
+
   return (
-    <div 
+    <div
       className="mt-5 max-w-3xl rounded-xl border border-[#8B5CF6] bg-white p-3 dark:bg-[#252525]"
       onClick={(e) => e.stopPropagation()} // Prevent clicks from collapsing email
     >
-      <div 
-        className="flex items-center cursor-pointer" 
-        onClick={handleToggle}
-      >
+      <div className="flex cursor-pointer items-center" onClick={handleToggle}>
         <p className="text-sm font-medium text-[#929292]">AI Summary</p>
-        <ChevronDown className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? '' : 'rotate-180'}`} />
+        <ChevronDown
+          className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? '' : 'rotate-180'}`}
+        />
       </div>
       {showSummary && (
-        <div className='text-black dark:text-white text-sm mt-2'>
-          Design review of new email client features. Team discussed command center
-          improvements and category system. General positive feedback, with suggestions
-          for quick actions placement.
+        <div className="mt-2 text-sm text-black dark:text-white">
+          Design review of new email client features. Team discussed command center improvements and
+          category system. General positive feedback, with suggestions for quick actions placement.
         </div>
       )}
     </div>
@@ -350,7 +354,9 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []}  />
+                  {emailData?.tags ? (
+                    <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []} />
+                  ) : null}
                   <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
                   <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
                     {(() => {
