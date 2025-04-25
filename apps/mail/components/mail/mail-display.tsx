@@ -1,14 +1,4 @@
 import {
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-  Dialog,
-  DialogFooter,
-  DialogHeader,
-  DialogClose,
-} from '../ui/dialog';
-import {
   Bell,
   Calendar,
   Docx,
@@ -21,19 +11,21 @@ import {
   ReplyAll,
   Tag,
   User,
+  ChevronDown,
 } from '../icons/icons';
 import {
-  BellOff,
-  Check,
-  ChevronDown,
-  LoaderCircleIcon,
-  Lock,
-  FileText,
-  ImageIcon,
-} from 'lucide-react';
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+  Dialog,
+  DialogFooter,
+  DialogHeader,
+  DialogClose,
+} from '../ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { memo, useEffect, useMemo, useState, useRef } from 'react';
+import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Briefcase, Star, StickyNote, Users } from 'lucide-react';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
@@ -48,6 +40,7 @@ import { Separator } from '../ui/separator';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { MailIframe } from './mail-iframe';
+import { FileText } from 'lucide-react';
 import { MailLabels } from './mail-list';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
@@ -234,8 +227,38 @@ const cleanEmailDisplay = (email?: string) => {
 // Helper function to clean name display
 const cleanNameDisplay = (name?: string) => {
   if (!name) return '';
-  const match = name.match(/^[^a-zA-Z]*(.*?)[^a-zA-Z]*$/);
-  return match ? match[1] : name;
+  return name.trim();
+};
+
+const AiSummary = ({ onClick, e }: { onClick?: (e: React.MouseEvent) => void, e?: React.MouseEvent }) => {
+  const [showSummary, setShowSummary] = useState(true);
+  
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+    setShowSummary(!showSummary);
+  };
+  
+  return (
+    <div 
+      className="mt-5 max-w-3xl rounded-xl border border-[#8B5CF6] bg-white p-3 dark:bg-[#252525]"
+      onClick={(e) => e.stopPropagation()} // Prevent clicks from collapsing email
+    >
+      <div 
+        className="flex items-center cursor-pointer" 
+        onClick={handleToggle}
+      >
+        <p className="text-sm font-medium text-[#929292]">AI Summary</p>
+        <ChevronDown className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? '' : 'rotate-180'}`} />
+      </div>
+      {showSummary && (
+        <div className='text-black dark:text-white text-sm mt-2'>
+          Design review of new email client features. Team discussed command center
+          improvements and category system. General positive feedback, with suggestions
+          for quick actions placement.
+        </div>
+      )}
+    </div>
+  );
 };
 
 const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) => {
@@ -264,7 +287,8 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
 
   useEffect(() => {
     if (!demo) {
-      setIsCollapsed(false);
+      // Set all emails to collapsed by default except the last one
+      setIsCollapsed(totalEmails ? index !== totalEmails - 1 : false);
       if (totalEmails && index === totalEmails - 1) {
         if (totalEmails > 5) {
           setTimeout(() => {
@@ -307,88 +331,96 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
     <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}>
       <div className="relative h-full overflow-y-auto">
         <div
-          className="flex flex-col py-4 pb-2 transition-all duration-200"
-          // onClick={() => setIsCollapsed(!isCollapsed)}
+          className="flex cursor-pointer flex-col pb-2 transition-all duration-200"
+          onClick={() => setIsCollapsed(!isCollapsed)}
         >
-          {index === 0 && (
-            <div className="mb-2 border-b px-4 pb-4">
-              <p className="font-medium text-black dark:text-white">
-                {emailData.subject}{' '}
-                <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
-                  {totalEmails && `[${totalEmails}]`}
-                </span>
-              </p>
-              <div className="mb-4 mt-1 flex items-center gap-1">
-                <Calendar className="size-3.5 fill-[#6D6D6D] dark:fill-[#8C8C8C]" />
-                <span className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
-                  {formatDate(emailData?.receivedOn)}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []} />
-                <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
-                <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
-                  {(() => {
-                    interface Person {
-                      name: string;
-                      email: string;
-                    }
-
-                    const allPeople = [
-                      ...(folder === 'sent' ? [] : [emailData.sender]),
-                      ...(emailData.to || []),
-                      ...(emailData.cc || []),
-                      ...(emailData.bcc || []),
-                    ];
-
-                    const people = allPeople.filter(
-                      (p): p is Person =>
-                        Boolean(p?.email) &&
-                        p.name !== 'No Sender Name' &&
-                        p === allPeople.find((other) => other?.email === p?.email),
-                    );
-
-                    const renderPerson = (person: Person) => (
-                      <div
-                        key={person.email}
-                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-[#F5F5F5] py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
-                      >
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
-                          <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
-                            {getFirstLetterCharacter(person.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
-                          {person.name || person.email}
-                        </div>
-                      </div>
-                    );
-
-                    if (people.length <= 2) {
-                      return people.map(renderPerson);
-                    }
-
-                    // Only show first two people plus count if we have at least two people
-                    const firstPerson = people[0];
-                    const secondPerson = people[1];
-
-                    if (firstPerson && secondPerson) {
-                      return (
-                        <>
-                          {renderPerson(firstPerson)}
-                          {renderPerson(secondPerson)}
-                          <span className="text-sm">+{people.length - 2} others</span>
-                        </>
-                      );
-                    }
-
-                    return null;
-                  })()}
+          <div className={cn('px-4', index === 0 && 'border-b py-4')}>
+            {index === 0 && (
+              <>
+                <p className="font-medium text-black dark:text-white">
+                  {emailData.subject}{' '}
+                  <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
+                    {totalEmails && `[${totalEmails}]`}
+                  </span>
+                </p>
+                <div className="mb-4 mt-1 flex items-center gap-1">
+                  <Calendar className="size-3.5 fill-[#6D6D6D] dark:fill-[#8C8C8C]" />
+                  <span className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
+                    {formatDate(emailData?.receivedOn)}
+                  </span>
                 </div>
-              </div>
-            </div>
-          )}
+                <div className="flex items-center gap-4">
+                  <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []}  />
+                  <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
+                  <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
+                    {(() => {
+                      interface Person {
+                        name: string;
+                        email: string;
+                      }
+
+                      const allPeople = [
+                        ...(folder === 'sent' ? [] : [emailData.sender]),
+                        ...(emailData.to || []),
+                        ...(emailData.cc || []),
+                        ...(emailData.bcc || []),
+                      ];
+
+                      const people = allPeople.filter(
+                        (p): p is Person =>
+                          Boolean(p?.email) &&
+                          p.name !== 'No Sender Name' &&
+                          p === allPeople.find((other) => other?.email === p?.email),
+                      );
+
+                      const renderPerson = (person: Person) => (
+                        <div
+                          key={person.email}
+                          className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-[#F5F5F5] py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+                        >
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage
+                              src={getEmailLogo(person.email)}
+                              className="rounded-full"
+                            />
+                            <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                              {getFirstLetterCharacter(person.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
+                            {person.name || person.email}
+                          </div>
+                        </div>
+                      );
+
+                      if (people.length <= 2) {
+                        return people.map(renderPerson);
+                      }
+
+                      // Only show first two people plus count if we have at least two people
+                      const firstPerson = people[0];
+                      const secondPerson = people[1];
+
+                      if (firstPerson && secondPerson) {
+                        return (
+                          <>
+                            {renderPerson(firstPerson)}
+                            {renderPerson(secondPerson)}
+                            <span className="text-sm">
+                              +{people.length - 2} {people.length - 2 === 1 ? 'other' : 'others'}
+                            </span>
+                          </>
+                        );
+                      }
+
+                      return null;
+                    })()}
+                  </div>
+                </div>
+                <AiSummary />
+              </>
+            )}
+          </div>
 
           <div className="mt-3 flex w-full items-start justify-between gap-4 px-4">
             <div className="flex w-full justify-center gap-4">
@@ -637,9 +669,10 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
             'grid overflow-hidden transition-all duration-200',
             isCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
           )}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="min-h-0 overflow-hidden">
-            <div className="h-fit w-full p-0">
+            <div className="h-fit w-full p-0 px-4">
               {emailData?.decodedBody ? (
                 <MailIframe html={emailData?.decodedBody} senderEmail={emailData.sender.email} />
               ) : (

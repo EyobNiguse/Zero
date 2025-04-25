@@ -5,8 +5,9 @@ import {
   ShortStack,
   LongStack,
   Smile,
-  ThreeDots,
+
   X,
+  Sparkles,
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
@@ -26,6 +27,13 @@ import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import { z } from 'zod';
+import { generateAIEmailBody } from '@/actions/ai';
+
+interface AIBodyResponse {
+  content: string;
+  jsonContent: JSONContent;
+  type: 'email' | 'question' | 'system';
+}
 
 interface EmailComposerProps {
   initialTo?: string[];
@@ -42,6 +50,7 @@ interface EmailComposerProps {
     message: string;
     attachments: File[];
   }) => Promise<void>;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -70,6 +79,7 @@ export function EmailComposer({
   initialMessage = '',
   initialAttachments = [],
   onSendEmail,
+  onClose,
   className,
 }: EmailComposerProps) {
   const [showCc, setShowCc] = useState(false);
@@ -77,6 +87,7 @@ export function EmailComposer({
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [messageLength, setMessageLength] = useState(0);
+  const [isAIComposing, setIsAIComposing] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const [mode] = useQueryState('mode');
@@ -201,19 +212,24 @@ export function EmailComposer({
     setHasUnsavedChanges(true);
   };
 
-  const editorContent = useMemo(
-    () =>
-      ({
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: messageContent ? [{ type: 'text', text: messageContent }] : [],
-          },
-        ],
-      }) as JSONContent,
-    [messageContent],
-  );
+  // Helper function to create JSONContent from text
+  const createJsonContentFromText = (text: string): JSONContent => ({
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text }],
+      },
+    ],
+  });
+
+  // Add state for editor content
+  const [editorContent, setEditorContent] = React.useState<JSONContent>(createJsonContentFromText(messageContent || ''));
+
+  // Update editorContent when messageContent changes
+  React.useEffect(() => {
+    setEditorContent(createJsonContentFromText(messageContent || ''));
+  }, [messageContent]);
 
   const handleSend = async () => {
     try {
@@ -231,6 +247,47 @@ export function EmailComposer({
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    try {
+      setIsLoading(true);
+      const values = getValues();
+      const result = await generateAIEmailBody({
+        prompt: values.message, // Use the current message as the prompt
+        currentContent: '',
+        subject: values.subject,
+        to: values.to,
+        userContext: {
+          name: session?.user?.name,
+          email: session?.user?.email,
+        },
+      });
+
+      if (result.type === 'system') {
+        toast.error(result.content || 'Failed to generate email');
+        return;
+      }
+
+      if (result.type === 'question') {
+        // Keep the AI compose mode active if we got a question back
+        setValue('message', '');
+        toast.info('Please answer the AI\'s question to continue');
+      } else {
+        // If we got email content, set it and exit AI compose mode
+        setValue('message', result.content);
+        // Update the editor content with the jsonContent
+        setEditorContent(result.jsonContent || createJsonContentFromText(result.content));
+        setIsAIComposing(false);
+        toast.success('Email generated successfully');
+      }
+      setHasUnsavedChanges(true);
+    } catch (error) {
+      console.error('Error generating AI email:', error);
+      toast.error('Failed to generate email');
     } finally {
       setIsLoading(false);
     }
@@ -314,6 +371,14 @@ export function EmailComposer({
             >
               <span>Bcc</span>
             </button>
+            {onClose && (
+              <button
+                className="flex h-full items-center gap-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
+                onClick={onClose}
+              >
+                <X className="h-3.5 w-3.5 fill-[#9A9A9A]" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -467,26 +532,27 @@ export function EmailComposer({
               setMessageLength(plainText.length);
               setHasUnsavedChanges(true);
             }}
-            className="max-h-[200px] min-h-[200px] w-full"
-            placeholder="Write your email..."
-            onCommandEnter={handleSend}
+            className="max-h-[200px] min-h-[200px] w-full cursor-text"
+            placeholder={isAIComposing ? "Describe how you want to respond to this email..." : "Write your email..."}
+            onCommandEnter={isAIComposing ? handleAIGenerate : handleSend}
           />
         </div>
 
         {/* Bottom Actions */}
         <div className="inline-flex items-center justify-between self-stretch">
           <div className="flex items-center justify-start gap-3">
-            <div className="flex items-center justify-start">
+            <div className="flex items-center justify-start gap-4">
+              
               <button
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
-                onClick={handleSend}
+                onClick={isAIComposing ? handleAIGenerate : handleSend}
                 disabled={
                   isLoading || !toEmails.length || !messageContent.trim() || !subjectInput.trim()
                 }
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="text-center text-sm leading-none text-white dark:text-black">
-                    Send now
+                    {isAIComposing ? "Generate email text" : "Send email"}
                   </div>
                 </div>
                 <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
@@ -496,7 +562,27 @@ export function EmailComposer({
               </button>
 
               <button
-                className="ml-3 flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-2  dark:bg-[#252525] border border-[#8B5CF6] "
+                onClick={() => {
+                  setIsAIComposing(true);
+                  setValue('message', ''); // Clear the current message to make room for the prompt
+                }}
+                disabled={isLoading || !toEmails.length || !subjectInput.trim()}
+              >
+                <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                <div className="flex h-5 items-center justify-center gap-1 rounded-sm ">
+                  <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+                  
+                </div>
+                  <div className="text-center text-sm leading-none text-black dark:text-white">
+                    AI compose
+                  </div>
+                </div>
+                
+              </button>
+
+              <button
+                className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Plus className="h-3 w-3 fill-[#9A9A9A]" />
