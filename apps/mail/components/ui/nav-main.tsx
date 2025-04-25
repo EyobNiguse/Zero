@@ -159,6 +159,8 @@ export function NavMain({ items }: NavMainProps) {
     [pathname, searchParams],
   );
 
+ 
+
   const handleFilterByLabel = (label: Label) => () => {
     const existingValue = searchValue.value;
     if (existingValue.includes(`label:${label.name}`)) {
@@ -308,7 +310,12 @@ function NavItem(item: NavItemProps & { href: string }) {
   return (
     <Collapsible defaultOpen={item.isActive}>
       <CollapsibleTrigger asChild>
-        <Link {...linkProps} prefetch target={item.target}>
+        <Link
+          {...linkProps}
+          prefetch
+          onClick={item.onClick ? item.onClick : undefined}
+          target={item.target}
+        >
           {buttonContent}
         </Link>
       </CollapsibleTrigger>
