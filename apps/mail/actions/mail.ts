@@ -1,6 +1,6 @@
 'use server';
+import { deleteActiveConnection, FatalErrors, getActiveDriver } from './utils';
 import { IGetThreadResponse } from '@/app/api/driver/types';
-import { getActiveDriver } from './utils';
 import { ParsedMessage } from '@/types';
 
 export const getMail = async ({ id }: { id: string }): Promise<IGetThreadResponse | null> => {
@@ -115,7 +115,7 @@ export const toggleStar = async ({ ids }: { ids: string[] }) => {
 };
 
 export const deleteThread = async ({ id }: { id: string }) => {
-  console.log("Deleting thread:", id);
+  console.log('Deleting thread:', id);
   try {
     const driver = await getActiveDriver();
     await driver.delete(id);
@@ -125,4 +125,4 @@ export const deleteThread = async ({ id }: { id: string }) => {
     console.error('Error deleting thread:', error);
     throw error;
   }
-}
+};
