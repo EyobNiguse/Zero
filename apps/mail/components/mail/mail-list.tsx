@@ -431,7 +431,7 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span className={cn('max-w-[10ch] truncate text-sm')}>
+                        <span className={cn('max-w-[30ch] truncate text-sm')}>
                           {highlightText(
                             cleanNameDisplay(latestMessage.sender.name) || '',
                             searchValue.highlight,
