@@ -54,7 +54,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       threadId: message.conversationId || '',
       title: message.subject || 'ERROR',
       tls: wasSentWithTLS(receivedHeaders) || !!hasTLSReport,
-      tags: message.categories || [],
+      tags: message.categories?.map((c) => ({ id: c, name: c })) || [],
       //   listUnsubscribe,
       //   listUnsubscribePost,
       //   replyTo,
