@@ -290,7 +290,12 @@ function NavItem(item: NavItemProps & { href: string }) {
   return (
     <Collapsible defaultOpen={item.isActive}>
       <CollapsibleTrigger asChild>
-        <Link {...linkProps} prefetch target={item.target}>
+        <Link
+          {...linkProps}
+          prefetch
+          onClick={item.onClick ? item.onClick : undefined}
+          target={item.target}
+        >
           {buttonContent}
         </Link>
       </CollapsibleTrigger>
