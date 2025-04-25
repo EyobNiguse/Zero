@@ -320,7 +320,7 @@ const Thread = memo(
                           <span className="size-2 rounded bg-[#006FFE]" />
                         ) : null}
                       </p>
-                      <MailLabels labels={threadLabels} />
+                      <MailLabels labels={latestMessage.tags} />
                       {Math.random() > 0.5 &&
                         (() => {
                           const count = Math.floor(Math.random() * 10) + 1;
@@ -473,7 +473,7 @@ const Thread = memo(
                     >
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
-                    <MailLabels labels={threadLabels} />
+                    <MailLabels labels={latestMessage.tags} />
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
