@@ -382,14 +382,14 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                       const renderPerson = (person: Person) => (
                         <div
                           key={person.email}
-                          className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-[#F5F5F5] py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+                          className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
                         >
                           <Avatar className="h-5 w-5">
                             <AvatarImage
                               src={getEmailLogo(person.email)}
                               className="rounded-full"
                             />
-                            <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                            <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold dark:bg-[#373737]">
                               {getFirstLetterCharacter(person.name)}
                             </AvatarFallback>
                           </Avatar>
@@ -430,7 +430,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
 
           <div className="mt-3 flex w-full items-start justify-between gap-4 px-4">
             <div className="flex w-full justify-center gap-4">
-              <Avatar className="mt-1.5 h-8 w-8 rounded-full">
+              <Avatar className="mt-1.5 h-8 w-8 rounded-full border dark:border-none">
                 <AvatarImage
                   className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
                   src={getEmailLogo(emailData?.sender?.email)}
@@ -694,7 +694,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button
-                        className="flex h-7 items-center gap-1 rounded-[5px] bg-[#FAFAFA] px-4 text-sm font-medium hover:bg-[#F0F0F0] dark:bg-[#262626] dark:hover:bg-[#303030]"
+                        className="flex h-7 items-center gap-1 rounded-[5px] bg-[#FAFAFA] border dark: px-4 text-sm font-medium hover:bg-[#F0F0F0] dark:bg-[#262626] dark:hover:bg-[#303030]"
                         onClick={() => {
                           try {
                             // Convert base64 to blob
@@ -737,33 +737,33 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   onClick={() => {
                     setMode('reply');
                   }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
                 >
                   <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-white">Reply</div>
+                    <div className="justify-start text-sm leading-none text-black dark:text-white">Reply</div>
                   </div>
                 </button>
                 <button
                   onClick={() => {
                     setMode('replyAll');
                   }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
                 >
                   <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-white">Reply All</div>
+                    <div className="justify-start text-sm leading-none text-black dark:text-white">Reply All</div>
                   </div>
                 </button>
                 <button
                   onClick={() => {
                     setMode('forward');
                   }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
                 >
                   <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-white">Forward</div>
+                    <div className="justify-start text-sm leading-none text-black dark:text-white">Forward</div>
                   </div>
                 </button>
               </div>

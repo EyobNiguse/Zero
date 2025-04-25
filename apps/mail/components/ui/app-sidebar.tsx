@@ -131,6 +131,7 @@ function ComposeButton() {
   const [dialogOpen, setDialogOpen] = useQueryState('isComposeOpen');
   const [, setDraftId] = useQueryState('draftId');
   const [, setTo] = useQueryState('to');
+  
   const handleOpenChange = (open: boolean) => {
     setDialogOpen(open ? 'true' : null);
     if (!open) {

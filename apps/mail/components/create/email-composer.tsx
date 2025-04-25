@@ -91,6 +91,7 @@ export function EmailComposer({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const [mode] = useQueryState('mode');
+  const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
   const [draftId] = useQueryState('draftId');
@@ -118,6 +119,9 @@ export function EmailComposer({
   });
 
   React.useEffect(() => {
+    // Don't populate from threadId if we're in compose mode
+    if (isComposeOpen === 'true') return;
+    
     if (!emailData?.latest || !mode || !session?.activeConnection?.email) return;
 
     const userEmail = session.activeConnection.email.toLowerCase();
@@ -296,11 +300,11 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'w-full max-w-[750px] overflow-hidden rounded-2xl bg-white p-0 py-0 dark:bg-[#1A1A1A]',
+        'w-full max-w-[750px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 dark:bg-[#1A1A1A] shadow-sm',
         className,
       )}
     >
-      <div className="border-b border-[#252525] pb-2">
+      <div className="border-b border-[#E7E7E7] dark:border-[#252525] pb-2">
         <div className="flex justify-between px-3 pt-3">
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-[#8C8C8C]">To:</p>
@@ -308,11 +312,11 @@ export function EmailComposer({
               {toEmails.map((email, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-1 py-0.5 pr-2"
+                  className="flex items-center gap-1 rounded-full border border-[#DBDBDB] dark:border-[#2B2B2B] px-1 py-0.5 pr-2"
                 >
                   <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                     <Avatar className="h-5 w-5">
-                      <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                      <AvatarFallback className="rounded-full bg-[#F5F5F5] text-[#6D6D6D] dark:text-[#9B9B9B] text-xs font-bold dark:bg-[#373737]">
                         {email.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -391,11 +395,11 @@ export function EmailComposer({
                 {ccEmails?.map((email, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
+                    className="flex items-center gap-1 rounded-full border border-[#DBDBDB] dark:border-[#2B2B2B] px-2 py-0.5"
                   >
                     <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                       <Avatar className="h-5 w-5">
-                        <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                        <AvatarFallback className="rounded-full bg-[#F5F5F5] text-[#6D6D6D] dark:text-[#9B9B9B] text-xs font-bold dark:bg-[#373737]">
                           {email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -450,11 +454,11 @@ export function EmailComposer({
                 {bccEmails?.map((email, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-1 rounded-full border border-[#2B2B2B] px-2 py-0.5"
+                    className="flex items-center gap-1 rounded-full border border-[#DBDBDB] dark:border-[#2B2B2B] px-2 py-0.5"
                   >
                     <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                       <Avatar className="h-5 w-5">
-                        <AvatarFallback className="rounded-full bg-[#FFFFFF] text-xs font-bold dark:bg-[#373737]">
+                        <AvatarFallback className="rounded-full bg-[#F5F5F5] text-[#6D6D6D] dark:text-[#9B9B9B] text-xs font-bold dark:bg-[#373737]">
                           {email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -507,7 +511,7 @@ export function EmailComposer({
       <div className="flex items-center gap-2 p-3">
         <p className="text-sm font-medium text-[#8C8C8C]">Subject:</p>
         <input
-          className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-white/90 placeholder:text-[#797979] focus:outline-none"
+          className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-black dark:text-white/90 placeholder:text-[#797979] focus:outline-none"
           placeholder="Re: Design review feedback"
           value={subjectInput}
           onChange={(e) => {
@@ -518,8 +522,8 @@ export function EmailComposer({
       </div>
 
       {/* Message Content */}
-      <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch bg-[#202020] px-3 py-3 outline-white/5">
-        <div className="flex flex-col gap-2.5 self-stretch">
+      <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 border-t self-stretch bg-[#FFFFFF] dark:bg-[#202020] px-3 py-3 outline-white/5">
+        <div className="flex flex-col gap-2.5 self-stretch ">
           <Editor
             initialValue={editorContent}
             onChange={(content) => {
@@ -532,7 +536,7 @@ export function EmailComposer({
               setMessageLength(plainText.length);
               setHasUnsavedChanges(true);
             }}
-            className="max-h-[200px] min-h-[200px] w-full cursor-text"
+            className="max-h-[150px] min-h-[150px] w-full cursor-text"
             placeholder={isAIComposing ? "Describe how you want to respond to this email..." : "Write your email..."}
             onCommandEnter={isAIComposing ? handleAIGenerate : handleSend}
           />
@@ -562,7 +566,7 @@ export function EmailComposer({
               </button>
 
               <button
-                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-2  dark:bg-[#252525] border border-[#8B5CF6] "
+                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md pl-1.5 pr-2  dark:bg-[#252525] border border-[#8B5CF6] "
                 onClick={() => {
                   setIsAIComposing(true);
                   setValue('message', ''); // Clear the current message to make room for the prompt
@@ -582,7 +586,7 @@ export function EmailComposer({
               </button>
 
               <button
-                className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                className="flex h-7 items-center gap-0.5 overflow-hidden border dark:border-none rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Plus className="h-3 w-3 fill-[#9A9A9A]" />

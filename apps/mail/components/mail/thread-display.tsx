@@ -364,7 +364,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   onClick={handleClose}
                 />
                 {/* <ThreadSubject subject={emailData.latest?.subject} /> */}
-                <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />{' '}
+                <div className="bg-[#E7E7E7] dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />{' '}
                 <div>
                   <ThreadActionButton
                     icon={ChevronLeft}
@@ -382,11 +382,11 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         onClick={() => {
                           setMode('reply');
                         }}
-                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
                       >
                         <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                         <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
-                          <div className="justify-start text-sm leading-none text-white">Reply</div>
+                          <div className="justify-start text-sm leading-none text-black dark:text-white">Reply</div>
                         </div>
                         <span className="sr-only md:hidden">Reply</span>
                       </button>
@@ -403,11 +403,11 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         onClick={() => {
                           setMode('replyAll');
                         }}
-                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border dark:border-none bg-white px-1.5 dark:bg-[#313131]"
                       >
                         <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                         <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
-                          <div className="justify-start text-sm leading-none text-white">
+                          <div className="justify-start text-sm leading-none text-black dark:text-white">
                             Reply All
                           </div>
                         </div>
@@ -426,11 +426,11 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         onClick={() => {
                           setMode('forward');
                         }}
-                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131]"
+                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border dark:border-none bg-white px-1.5 dark:bg-[#313131]"
                       >
                         <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                         <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
-                          <div className="justify-start text-sm leading-none text-white">
+                          <div className="justify-start text-sm leading-none text-black dark:text-white">
                             Forward
                           </div>
                         </div>

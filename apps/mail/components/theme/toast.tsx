@@ -7,7 +7,7 @@ interface SuccessEmailToastProps {
 export const SuccessEmailToast = ({ message }: SuccessEmailToastProps) => {
  
   return (
-    <div className="w-96 pl-3 pr-1.5 py-1.5 dark:bg-[#2C2C2C] rounded-xl  inline-flex justify-center items-center gap-2 overflow-hidden">
+    <div className="w-96 pl-3 pr-1.5 py-1.5 bg-white dark:bg-[#2C2C2C] rounded-xl  inline-flex justify-center items-center gap-2 overflow-hidden border dark:border-none">
       <div className="w-4.5 h-4.5 relative">
         <CircleCheck className="h-4.5 w-4.5 fill-[#36B981]" />
       </div>

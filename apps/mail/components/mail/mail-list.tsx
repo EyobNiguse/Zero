@@ -397,7 +397,7 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4 px-4">
               <div>
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8 border rounded-full dark:border-none">
                   {isGroupThread ? (
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">
                       <GroupPeople className="h-4 w-4" />

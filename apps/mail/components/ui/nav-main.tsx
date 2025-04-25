@@ -192,7 +192,7 @@ export function NavMain({ items }: NavMainProps) {
                   {section.title}
                 </p>
               ) : (
-                <div className="mx-2 mb-4 mt-2 h-[0.5px] bg-[#262626]" />
+                <div className="mx-2 mb-4 mt-2 h-[0.5px] bg-[#6D6D6D]/50 dark:bg-[#262626]" />
               )}
               <div className="z-20 space-y-1 pb-2">
                 {section.items.map((item) => (
@@ -230,8 +230,8 @@ export function NavMain({ items }: NavMainProps) {
                         className={cn(
                           'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
                           searchValue.value.includes(`label:${label.name}`)
-                            ? 'border-purple-800 bg-purple-800/30'
-                            : 'bg-subtleBlack',
+                            ? 'border-accent-foreground'
+                            : 'dark:bg-subtleBlack',
                         )}
                       >
                         {label.name}

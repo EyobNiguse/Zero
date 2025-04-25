@@ -593,7 +593,7 @@ export const Categories = () => {
         <Lightning
           className={cn(
             'fill-[#6D6D6D] dark:fill-[#989898]',
-            category === 'Important' && 'fill-black dark:fill-white',
+            category === 'Important' && 'dark:fill-white fill-white',
           )}
         />
       ),
@@ -606,7 +606,7 @@ export const Categories = () => {
         <Mail
           className={cn(
             'fill-[#6D6D6D] dark:fill-[#989898]',
-            category === 'All Mail' && 'fill-black dark:fill-white',
+            category === 'All Mail' && 'dark:fill-white fill-white',
           )}
         />
       ),
@@ -621,7 +621,7 @@ export const Categories = () => {
         <User
           className={cn(
             'fill-[#6D6D6D] dark:fill-[#989898]',
-            category === 'Personal' && 'fill-black dark:fill-white',
+            category === 'Personal' && 'dark:fill-white fill-white',
           )}
         />
       ),
@@ -634,7 +634,7 @@ export const Categories = () => {
         <Bell
           className={cn(
             'fill-[#6D6D6D] dark:fill-[#989898]',
-            category === 'Updates' && 'fill-black dark:fill-white',
+            category === 'Updates' && 'dark:fill-white fill-white',
           )}
         />
       ),
@@ -647,7 +647,7 @@ export const Categories = () => {
         <Tag
           className={cn(
             'fill-[#6D6D6D] dark:fill-[#989898]',
-            category === 'Promotions' && 'fill-black dark:fill-white',
+            category === 'Promotions' && 'dark:fill-white fill-white',
           )}
         />
       ),
@@ -715,9 +715,9 @@ function CategorySelect() {
           });
         }}
         className={cn(
-          'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-md transition-all duration-300 ease-out',
+          'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-md transition-all duration-300 ease-out border dark:border-none',
           isSelected
-            ? cn('flex-1 px-3 text-white', bgColor)
+            ? cn('flex-1 px-3 text-white border-none', bgColor)
             : 'w-8 bg-white hover:bg-gray-100 dark:bg-[#313131] dark:hover:bg-[#313131]/80',
         )}
         tabIndex={isOverlay ? -1 : undefined}

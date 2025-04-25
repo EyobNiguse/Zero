@@ -140,7 +140,7 @@ export function NavUser() {
                         <div className="text-sm font-medium">
                           {activeAccount?.name || session?.user.name || 'User'}
                         </div>
-                        <div className="text-muted-foreground text-xs">{activeAccount.email}</div>
+                        <div className="text-muted-foreground text-xs">{activeAccount?.email}</div>
                       </div>
                     </div>
                     <DropdownMenuSeparator />
@@ -305,7 +305,79 @@ export function NavUser() {
               </button>
             </AddConnectionDialog></div>
             <div>
-              <ThreeDots className='fill-iconLight dark:fill-iconDark' />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="cursor-pointer">
+                    <ThreeDots className='fill-iconLight dark:fill-iconDark' />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="ml-3 min-w-56 font-medium bg-white dark:bg-[#131313]"
+                  align="end"
+                  side={'bottom'}
+                  sideOffset={8}
+                >
+                  <div className="space-y-1">
+                    <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
+                      <div className="flex w-full items-center gap-2">
+                        {theme === 'dark' ? (
+                          <MoonIcon className="size-4 opacity-60" />
+                        ) : (
+                          <SunIcon className="size-4 opacity-60" />
+                        )}
+                        <p className="text-[13px] opacity-60">{t('common.navUser.appTheme')}</p>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={getSettingsHref()} className="cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Settings size={16} className="opacity-60" />
+                          <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <a href="https://discord.gg/0email" target="_blank" className="w-full">
+                        <div className="flex items-center gap-2">
+                          <HelpCircle size={16} className="opacity-60" />
+                          <p className="text-[13px] opacity-60">{t('common.navUser.customerSupport')}</p>
+                        </div>
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
+                      <div className="flex items-center gap-2">
+                        <LogOut size={16} className="opacity-60" />
+                        <p className="text-[13px] opacity-60">{t('common.actions.logout')}</p>
+                      </div>
+                    </DropdownMenuItem>
+                  </div>
+
+                  {session && (
+                    <>
+                      <DropdownMenuSeparator className="mt-1" />
+                      <div className="text-muted-foreground/60 flex items-center justify-center gap-1 px-2 pb-2 pt-1 text-[10px]">
+                        <a href="/privacy" className="hover:underline">
+                          Privacy
+                        </a>
+                        <span>·</span>
+                        <a href="/terms" className="hover:underline">
+                          Terms
+                        </a>
+                      </div>
+                      <DropdownMenuSeparator className="mt-1" />
+                      <p className="text-muted-foreground px-2 py-1 text-[11px] font-medium">
+                        Debug
+                      </p>
+                      <DropdownMenuItem onClick={handleClearCache}>
+                        <div className="flex items-center gap-2">
+                          <HelpCircle size={16} className="opacity-60" />
+                          <p className="text-[13px] opacity-60">Clear Local Cache</p>
+                        </div>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         )}

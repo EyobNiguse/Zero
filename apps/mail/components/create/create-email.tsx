@@ -88,13 +88,13 @@ export function CreateEmail({
       <div className="flex min-h-screen flex-col items-center justify-center gap-1">
         <div className="flex w-[750px] justify-start">
           <DialogClose asChild className="flex">
-            <button className="flex items-center gap-1 rounded-lg bg-white px-2 py-1.5 dark:bg-[#1A1A1A]">
-              <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#929292]" />
-              <span className="text-sm text-black dark:text-white">esc</span>
+            <button className="flex items-center gap-1 rounded-lg bg-[#F0F0F0] px-2 py-1.5 dark:bg-[#1A1A1A]">
+              <X className="mt-0.5 h-3.5 w-3.5 fill-[#6D6D6D] dark:fill-[#929292]" />
+              <span className="text-sm text-[#6D6D6D] dark:text-white font-medium">esc</span>
             </button>
           </DialogClose>
         </div>
-        <EmailComposer onSendEmail={handleSendEmail} />
+        <EmailComposer className='border rounded-2xl mb-12' onSendEmail={handleSendEmail} />
       </div>
     </>
   );

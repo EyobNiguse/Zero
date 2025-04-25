@@ -261,7 +261,7 @@ export function SearchBar() {
         <div className="relative w-full">
           <Input
             placeholder={'Search...'}
-            className="bg-white dark:bg-[#141414] text-muted-foreground placeholder:text-muted-foreground/70 h-[32px] w-full select-none rounded-md border-none pl-9 pr-14 shadow-none"
+            className="bg-white dark:bg-[#141414] text-muted-foreground placeholder:text-muted-foreground/70 h-[32px] w-full select-none rounded-md border dark:border-none pl-9 pr-14 shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
             {...form.register('q')}
             value={q}
             disabled={isSearching}
