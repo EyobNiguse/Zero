@@ -21,11 +21,9 @@ function validateSettings(settings: unknown): UserSettings {
 export async function saveUserSettings(settings: UserSettings) {
   try {
     const userId = await getAuthenticatedUserId();
-    console.log(settings, 'before');
+    if (!userId) throw new Error('User not authenticated');
 
     settings = validateSettings(settings);
-
-    console.log(settings, 'after');
 
     const timestamp = new Date();
 
