@@ -6,9 +6,10 @@ export async function POST(req: Request) {
     const { messages, context } = await req.json();
 
     const lastMessage = messages[messages.length - 1].content;
-    
-    let systemPrompt = 'You are a helpful AI assistant. Provide clear, concise, and accurate responses.';
-    
+
+    let systemPrompt =
+      'You are a helpful AI assistant. Provide clear, concise, and accurate responses.';
+
     // If this is an email request, modify the system prompt
     if (context?.isEmailRequest) {
       systemPrompt = `You are an email writing assistant. Generate professional, well-structured emails.
@@ -30,12 +31,12 @@ Output format:
     const { completion } = await generateCompletions({
       model: 'llama3-8b-8192',
       systemPrompt,
-      prompt: context?.isEmailRequest 
+      prompt: context?.isEmailRequest
         ? `Generate a professional email for the following request: ${lastMessage}`
         : lastMessage,
       temperature: 0.7,
       max_tokens: 500,
-      userName: 'User'
+      userName: 'User',
     });
 
     // If this was an email request, try to parse the JSON response
@@ -52,9 +53,6 @@ Output format:
     return NextResponse.json({ content: completion });
   } catch (error) {
     console.error('Chat API Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate response' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to generate response' }, { status: 400 });
   }
-} 
+}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import useSWR from 'swr';
@@ -84,49 +85,19 @@ export function useLabels() {
     }
   };
 
-  const getThreadLabels = async (ids: string[]) => {
-    const { data } = await useThreadLabels(ids);
-    return data || [];
-  };
-
   return {
     labels: labels || [],
     isLoading,
     error,
-    createLabel,
-    updateLabel,
-    deleteLabel,
-    getThreadLabels,
-    refresh: () => mutate(),
   };
 }
 
 export function useThreadLabels(ids: string[]) {
-  const key = ids.length > 0 ? `/api/v1/thread-labels?ids=${ids.join(',')}` : null;
+  const { labels } = useLabels();
+  const threadLabels = useMemo(() => {
+    if (!labels) return [];
+    return labels.filter((label) => (label.id ? ids.includes(label.id) : false));
+  }, [labels, ids]);
 
-  return useSWR<Label[]>(
-    key,
-    async (url) => {
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch thread labels');
-        }
-
-        return response.json();
-      } catch (error) {
-        toast.error('Failed to fetch thread labels');
-        throw error;
-      }
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 5000,
-    },
-  );
+  return { labels: threadLabels };
 }

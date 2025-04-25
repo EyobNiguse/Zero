@@ -1,10 +1,10 @@
-import { generateText, tool } from 'ai';
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { openai } from '@ai-sdk/openai';
 import { getActiveDriver } from '@/actions/utils';
 import { type gmail_v1 } from 'googleapis';
+import { openai } from '@ai-sdk/openai';
+import { generateText, tool } from 'ai';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { z } from 'zod';
 
 // Define our email search tool
 const emailSearchTool = tool({
@@ -74,7 +74,7 @@ For sender searches, use the exact name/email provided by the user.
 For domain searches, search both the from: field and general content.
 For subject/content searches, include relevant synonyms and related terms.
 
-Important: This is a search-only assistant. Do not generate email content or handle email composition requests.`
+Important: This is a search-only assistant. Do not generate email content or handle email composition requests.`,
     };
 
     const { text, steps } = await generateText({
@@ -89,8 +89,8 @@ Important: This is a search-only assistant. Do not generate email content or han
 
     // Extract the search query and explanation from the tool call
     const toolCall = steps
-      .flatMap(step => step.toolCalls)
-      .find(call => call.toolName === 'emailSearch');
+      .flatMap((step) => step.toolCalls)
+      .find((call) => call.toolName === 'emailSearch');
 
     if (!toolCall?.args?.query) {
       throw new Error('Failed to generate search query');
@@ -104,46 +104,47 @@ Important: This is a search-only assistant. Do not generate email content or han
     const results = await driver.list('', searchQuery, 20);
 
     // Process the results - use the raw response from Gmail API
-    const processResultPromises = results?.threads?.map(async thread => {
-      const rawThread = thread as gmail_v1.Schema$Thread;
-      
-      try {
-        // Get the thread data using our existing driver
-        const threadData = await driver.get(rawThread.id!);
-        const firstMessage = threadData.messages[0];
-        
-        if (!firstMessage) {
-          throw new Error('No messages found in thread');
-        }
+    const processResultPromises =
+      results?.threads?.map(async (thread) => {
+        const rawThread = thread as gmail_v1.Schema$Thread;
 
-        return {
-          id: rawThread.id!,
-          snippet: rawThread.snippet || '',
-          historyId: rawThread.historyId,
-          subject: firstMessage.subject || 'No subject',
-          from: firstMessage.sender.email || firstMessage.sender.name || 'Unknown sender',
-        };
-      } catch (error) {
-        console.error('Error processing thread:', error);
-        return {
-          id: rawThread.id!,
-          snippet: rawThread.snippet || '',
-          historyId: rawThread.historyId,
-          subject: 'Error loading subject',
-          from: 'Error loading sender',
-        };
-      }
-    }) || [];
+        try {
+          // Get the thread data using our existing driver
+          const threadData = await driver.get(rawThread.id!);
+          const firstMessage = threadData.messages[0];
+
+          if (!firstMessage) {
+            throw new Error('No messages found in thread');
+          }
+
+          return {
+            id: rawThread.id!,
+            snippet: rawThread.snippet || '',
+            historyId: rawThread.historyId,
+            subject: firstMessage.subject || 'No subject',
+            from: firstMessage.sender.email || firstMessage.sender.name || 'Unknown sender',
+          };
+        } catch (error) {
+          console.error('Error processing thread:', error);
+          return {
+            id: rawThread.id!,
+            snippet: rawThread.snippet || '',
+            historyId: rawThread.historyId,
+            subject: 'Error loading subject',
+            from: 'Error loading sender',
+          };
+        }
+      }) || [];
 
     // Resolve all promises
     const resolvedResults = await Promise.all(processResultPromises);
 
     // Create a natural response using the AI's text and search results
     const hasResults = resolvedResults.length > 0;
-    
+
     // Let the AI's response text lead the way
     let summary = text;
-    
+
     // Add result information
     if (hasResults) {
       summary += `\n\nI found ${resolvedResults.length} email${resolvedResults.length === 1 ? '' : 's'} ${searchExplanation}. Here ${resolvedResults.length === 1 ? 'it is' : 'they are'}:`;
@@ -151,20 +152,22 @@ Important: This is a search-only assistant. Do not generate email content or han
       summary += `\n\nI couldn't find any emails ${searchExplanation}. Would you like to try a different search?`;
     }
 
-    return new Response(JSON.stringify({
-      content: summary,
-      searchQuery,
-      searchDisplay: `Searched for "${searchQuery}"`,
-      results: resolvedResults,
-    }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-
+    return new Response(
+      JSON.stringify({
+        content: summary,
+        searchQuery,
+        searchDisplay: `Searched for "${searchQuery}"`,
+        results: resolvedResults,
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   } catch (error) {
     console.error('AI Search error:', error);
     return new Response(JSON.stringify({ error: 'Failed to process search request' }), {
-      status: 500,
+      status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
   }
-} 
+}

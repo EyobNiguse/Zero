@@ -325,7 +325,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <MailDisplayLabels labels={emailData?.tags || []} />
+                <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []} />
                 <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
                 <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
                   {(() => {

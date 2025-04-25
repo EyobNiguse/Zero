@@ -18,6 +18,7 @@ import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
 import { ThreadContextMenu } from '@/components/context/thread-context';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
+import { Label, useThreadLabels } from '@/hooks/use-labels';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,7 +33,6 @@ import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
 import { useDraft } from '@/hooks/use-drafts';
 import { useTranslations } from 'next-intl';
-import { Label } from '@/hooks/use-labels';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
@@ -156,6 +156,10 @@ const Thread = memo(
     const latestMessage = demo ? demoMessage : getThreadData?.latest;
     const emailContent = demo ? demoMessage?.body : getThreadData?.latest?.body;
 
+    const { labels: threadLabels } = useThreadLabels(
+      latestMessage ? latestMessage.tags?.map((t) => t.id!) : [],
+    );
+
     const mainSearchTerm = useMemo(() => {
       if (!searchValue.highlight) return '';
       return getMainSearchTerm(searchValue.highlight);
@@ -185,11 +189,6 @@ const Thread = memo(
     }, [threadId, message.id, latestMessage, mail.selected]);
 
     const isMailBulkSelected = mail.bulkSelected.includes(latestMessage?.threadId ?? message.id);
-
-    const threadLabels = useMemo(() => {
-      if (!latestMessage) return [];
-      return [...(latestMessage.tags || [])];
-    }, [latestMessage]);
 
     const isFolderInbox = folder === FOLDERS.INBOX || !folder;
     const isFolderSpam = folder === FOLDERS.SPAM;
@@ -439,7 +438,7 @@ const Thread = memo(
                           )}
                         </span>{' '}
                         <span className="flex items-center space-x-2">
-                          <RenderLabels ids={threadLabels} />
+                          <RenderLabels labels={threadLabels} />
                         </span>
                       </span>
                       {getThreadData.totalReplies > 1 ? (
@@ -781,13 +780,13 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 MailList.displayName = 'MailList';
 
 export const MailLabels = memo(
-  ({ labels }: { labels: string[] }) => {
+  ({ labels }: { labels: Label[] }) => {
     const t = useTranslations();
 
     if (!labels.length) return null;
 
     const visibleLabels = labels.filter(
-      (label) => !['unread', 'inbox'].includes(label.toLowerCase()),
+      (label) => !['unread', 'inbox'].includes(label.name.toLowerCase()),
     );
 
     if (!visibleLabels.length) return null;
@@ -795,13 +794,13 @@ export const MailLabels = memo(
     return (
       <div className={cn('flex select-none items-center')}>
         {visibleLabels.map((label) => {
-          const style = getDefaultBadgeStyle(label);
-          if (label.toLowerCase() === 'notes') {
+          const style = getDefaultBadgeStyle(label.name);
+          if (label.name.toLowerCase() === 'notes') {
             return (
-              <Tooltip key={label}>
+              <Tooltip key={label.id}>
                 <TooltipTrigger asChild>
                   <Badge className="rounded-md bg-amber-100 p-1 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400">
-                    {getLabelIcon(label)}
+                    {getLabelIcon(label.name)}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent className="hidden px-1 py-0 text-xs">
@@ -814,7 +813,7 @@ export const MailLabels = memo(
           // Skip rendering if style is "secondary" (default case)
           if (style === 'secondary') return null;
 
-          const normalizedLabel = getNormalizedLabelKey(label);
+          const normalizedLabel = getNormalizedLabelKey(label.name);
 
           let labelContent;
           switch (normalizedLabel) {
@@ -844,8 +843,8 @@ export const MailLabels = memo(
           }
 
           return (
-            <Badge key={label} className="rounded-md p-1" variant={style}>
-              {getLabelIcon(label)}
+            <Badge key={label.id} className="rounded-md p-1" variant={style}>
+              {getLabelIcon(label.name)}
             </Badge>
           );
         })}

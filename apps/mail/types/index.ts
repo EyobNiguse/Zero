@@ -1,3 +1,5 @@
+import { Label } from '@/hooks/use-labels';
+
 export interface User {
   name: string;
   email: string;
@@ -51,7 +53,7 @@ export interface ParsedMessage {
   connectionId?: string;
   title: string;
   subject: string;
-  tags: string[];
+  tags: Label[];
   sender: Sender;
   to: Sender[];
   cc: Sender[] | null;

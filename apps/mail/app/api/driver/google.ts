@@ -260,7 +260,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       threadId: threadId || '',
       title: snippet ? he.decode(snippet).trim() : 'ERROR',
       tls: wasSentWithTLS(receivedHeaders) || !!hasTLSReport,
-      tags: labelIds || [],
+      tags: labelIds?.map((l) => ({ id: l, name: l })) || [],
       listUnsubscribe,
       listUnsubscribePost,
       replyTo,
@@ -978,7 +978,18 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const res = await gmail.users.labels.list({
         userId: 'me',
       });
-      return res.data.labels;
+      // wtf google, null values for EVERYTHING?
+      return (
+        res.data.labels?.map((label) => ({
+          id: label.id ?? '',
+          name: label.name ?? '',
+          type: label.type ?? '',
+          color: {
+            backgroundColor: label.color?.backgroundColor ?? '',
+            textColor: label.color?.textColor ?? '',
+          },
+        })) ?? []
+      );
     },
     getLabel: async (labelId: string) => {
       const res = await gmail.users.labels.get({

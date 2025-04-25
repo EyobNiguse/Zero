@@ -1,4 +1,5 @@
 import { type IOutgoingMessage, type InitialThread, type ParsedMessage } from '@/types';
+import { Label } from '@/hooks/use-labels';
 
 export interface IGetThreadResponse {
   messages: ParsedMessage[];
@@ -48,7 +49,7 @@ export interface MailManager {
     options: { addLabels: string[]; removeLabels: string[] },
   ): Promise<void>;
   getAttachment(messageId: string, attachmentId: string): Promise<string | undefined>;
-  getUserLabels(): Promise<any>;
+  getUserLabels(): Promise<Label[]>;
   getLabel: (labelId: string) => Promise<any>;
   createLabel(label: {
     name: string;

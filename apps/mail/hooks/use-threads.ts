@@ -6,6 +6,7 @@ import type { InitialThread, ParsedMessage } from '@/types';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useSession } from '@/lib/auth-client';
 import { defaultPageSize } from '@/lib/utils';
+import { useAtom, useAtomValue } from 'jotai';
 import { Label } from '@/hooks/use-labels';
 import useSWRInfinite from 'swr/infinite';
 import useSWR, { preload } from 'swr';
@@ -13,7 +14,6 @@ import { useQueryState } from 'nuqs';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { useAtom, useAtomValue } from 'jotai';
 
 export const preloadThread = async (userId: string, threadId: string, connectionId: string) => {
   console.log(`🔄 Prefetching email ${threadId}...`);
@@ -153,36 +153,6 @@ export const useThreads = () => {
     mutate,
   };
 };
-
-export function useThreadLabels(ids: string[]) {
-  const key = ids.length > 0 ? `/api/v1/thread-labels?ids=${ids.join(',')}` : null;
-
-  return useSWR<Label[]>(
-    key,
-    async (url) => {
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch thread labels');
-        }
-
-        return response.json();
-      } catch (error) {
-        toast.error('Failed to fetch thread labels');
-        throw error;
-      }
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 5000,
-    },
-  );
-}
 
 export const useThread = (threadId: string | null) => {
   const { data: session } = useSession();

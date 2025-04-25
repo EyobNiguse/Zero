@@ -2,14 +2,13 @@
 
 import { PopoverContent, PopoverTrigger } from '@radix-ui/react-popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { Label, useThreadLabels } from '@/hooks/use-labels';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { Label } from '@/hooks/use-labels';
 import { Popover } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 
-export const RenderLabels = ({ ids }: { ids: string[] }) => {
-  const { data: labels = [] } = useThreadLabels(ids);
+export const RenderLabels = ({ labels }: { labels: Label[] }) => {
   const [searchValue, setSearchValue] = useSearchValue();
   const label = React.useMemo(() => labels[0], [labels]);
 
