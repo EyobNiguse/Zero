@@ -18,9 +18,9 @@ import { ShieldCheckIcon } from '@/components/icons/animated/shield';
 import { KeyboardIcon } from '@/components/icons/animated/keyboard';
 import { SparklesIcon } from '@/components/icons/animated/sparkles';
 import { UsersIcon } from '@/components/icons/animated/users';
+import { MessageSquareIcon } from 'lucide-react';
 import { NestedKeyOf } from 'next-intl';
 import { MessageKeys } from 'next-intl';
-import { MessageSquareIcon } from 'lucide-react';
 export interface NavItem {
   id?: string;
   title: string;
@@ -192,7 +192,7 @@ export const bottomNavItems = [
       {
         id: 'feedback',
         title: 'navigation.sidebar.feedback',
-        url: 'feedback.0.email',
+        url: 'https://feedback.0.email',
         icon: MessageSquare,
       },
       {
