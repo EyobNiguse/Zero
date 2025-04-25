@@ -29,11 +29,11 @@ const arr = [
 ];
 
 const runTest = async () => {
-  const resend = new Resend('re_4MvvHnvy_61gQkcG4ZbwB7r6LnUZkdvVV');
+  const resend = new Resend('');
   for (const item of arr) {
     const response = await resend.emails.send({
-      from: `${faker.person.firstName().toLowerCase()}@n8n.new`,
-      to: 'ab0udamd@gmail.com',
+      from: `${faker.person.firstName().toLowerCase()}@test.com`,
+      to: '',
       subject: item.subject,
       html: item.text,
     });
