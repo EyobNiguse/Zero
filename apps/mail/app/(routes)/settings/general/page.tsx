@@ -180,7 +180,7 @@ export default function GeneralPage() {
       >
         {JSON.stringify(form.formState.errors)}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form id="general-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="flex w-full items-center gap-5">
               <FormField
                 control={form.control}
