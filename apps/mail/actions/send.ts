@@ -15,18 +15,7 @@ export async function sendEmail({
   threadId,
   fromEmail,
   draftId,
-}: {
-  to: Sender[];
-  subject: string;
-  message: string;
-  attachments: File[];
-  headers?: Record<string, string>;
-  cc?: Sender[];
-  bcc?: Sender[];
-  threadId?: string;
-  fromEmail?: string;
-  draftId?: string;
-}) {
+}: ISendEmail & { draftId?: string }) {
   if (!to || !subject || !message) {
     throw new Error('Missing required fields');
   }
