@@ -1,5 +1,7 @@
+'use client';
+
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
-import { useCallback, useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { hotkeysDB } from './hotkeys-db';
 
@@ -135,11 +137,55 @@ export function useShortcuts(
   handlers: { [key: string]: () => void },
   options: Partial<HotkeyOptions> = {},
 ) {
-  // DISABLED
-  //   shortcuts.forEach((shortcut) => {
-  //     const handler = handlers[shortcut.action];
-  //     if (handler) {
-  //       useShortcut(shortcut, handler, options);
-  //     }
-  //   });
+  const shortcutMap = useMemo(() => {
+    return shortcuts.reduce<Record<string, Shortcut>>((acc, shortcut) => {
+      if (handlers[shortcut.action]) {
+        acc[shortcut.action] = shortcut;
+      }
+      return acc;
+    }, {});
+  }, [shortcuts]);
+
+  const shortcutString = useMemo(() => {
+    return Object.entries(shortcutMap)
+      .map(([action, shortcut]) => {
+        if (handlers[action]) {
+          return formatKeys(shortcut.keys);
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .join(',');
+  }, [shortcutMap, handlers]);
+
+  console.log('GETTING SETTING SHORTCUTS');
+
+  useHotkeys(
+    shortcutString,
+    (event: KeyboardEvent, hotkeysEvent) => {
+      const pressedKeys = hotkeysEvent.keys?.join('+') || '';
+      const matchingEntry = Object.entries(shortcutMap).find(
+        ([_, shortcut]) => formatKeys(shortcut.keys) === pressedKeys,
+      );
+
+      if (matchingEntry) {
+        const [action, shortcut] = matchingEntry;
+        const handlerFn = handlers[action];
+        if (handlerFn) {
+          if (shortcut.preventDefault || options.preventDefault) {
+            event.preventDefault();
+          }
+          handlerFn();
+        }
+      }
+    },
+    {
+      ...options,
+      scopes: options.scope ? [options.scope] : undefined,
+      preventDefault: false, // We'll handle preventDefault per-shortcut
+      keyup: false,
+      keydown: true,
+    },
+    [shortcutMap, handlers, options],
+  );
 }
