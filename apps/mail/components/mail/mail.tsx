@@ -32,7 +32,6 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { Filter, Lightning, Mail, X } from '../icons/icons';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useHotkeysContext } from 'react-hotkeys-hook';
-import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { getMail, markAsRead } from '@/actions/mail';
@@ -43,7 +42,6 @@ import { Tag, User, Bell } from '../icons/icons';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
-import { useParams } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -362,7 +360,7 @@ export function MailLayout() {
               <div className="p-2 px-[22px]">
                 <SearchBar />
                 <div className="mt-2">
-                  <CategorySelect />
+                  {folder === 'inbox' && <CategorySelect />}
                 </div>
               </div>
               <div
@@ -690,15 +688,8 @@ function CategorySelect() {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
 
-  // Skip category selection for drafts, spam, sent, archive, and bin pages
-  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(
-    folder || '',
-  );
-  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(
-    folder || '',
-  );
-
-  if (!shouldShowCategorySelect) return <div className="h-8"></div>;
+  // Only show category selection for inbox folder
+  if (folder !== 'inbox') return <div className="h-8"></div>;
 
   // Primary category is always the first one
   const primaryCategory = categories[0];

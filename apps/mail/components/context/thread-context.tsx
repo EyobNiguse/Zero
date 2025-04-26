@@ -40,6 +40,7 @@ import { useQueryState } from 'nuqs';
 import { useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+import { backgroundQueueAtom } from '@/store/backgroundQueue';
 
 interface EmailAction {
   id: string;

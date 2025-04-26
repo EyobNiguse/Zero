@@ -61,12 +61,12 @@ export function CreateEmail({
         message: data.message,
         attachments: data.attachments,
         fromEmail: fromEmail,
-      };
+      });
 
       if (draftId) {
-        await sendEmail({ ...emailData, draftId });
+        await sendEmail({ ...data, draftId });
       } else {
-        await sendEmail(emailData);
+        await sendEmail(data);
       }
 
       // Track different email sending scenarios

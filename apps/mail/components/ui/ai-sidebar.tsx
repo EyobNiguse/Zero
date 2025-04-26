@@ -88,7 +88,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
               maxSize={45}
               className="bg-panelLight dark:bg-panelDark ml- mr-1.5 mt-1 h-[calc(98vh+9px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
             >
-              <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', 'mr-1.5', className)}>
+              <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
                   {/* <div className="sticky top-0 z-10 flex items-center justify-end bg-panelLight dark:bg-panelDark">
                     <Tooltip>
@@ -103,7 +103,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                   <div className="b relative flex-1 overflow-hidden">
                     {!hasMessages && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div className="relative h-20 w-20">
+                        <div className="relative mb-4 h-[44px] w-[44px]">
                           <Image
                             src="/black-icon.svg"
                             alt="Zero Logo"
@@ -117,9 +117,49 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                             className="hidden dark:block"
                           />
                         </div>
-                        <p className="animate-shine mt-2 hidden bg-gradient-to-r from-neutral-500 via-neutral-300 to-neutral-500 bg-[length:200%_100%] bg-clip-text text-lg text-transparent opacity-50 md:block">
-                          Ask Zero a question...
+                        <p className="mb-3 mt-2 hidden text-sm text-black md:block dark:text-white">
+                          Ask anything about your emails
                         </p>
+                        <p className="text-sm text-[#8C8C8C]">
+                          Ask to do or show anything using natural language
+                        </p>
+
+                        <div className="mt-6 flex w-full flex-col items-center gap-2">
+                          {/* First row */}
+                          <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
+                            <div className="flex gap-4 px-4">
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                                Find invoice from Stripe
+                              </p>
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                                Reply to Nick
+                              </p>
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                                Show recent design feedback
+                              </p>
+                            </div>
+                            {/* Left mask */}
+                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+                            {/* Right mask */}
+                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
+                          </div>
+
+                          {/* Second row */}
+                          <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
+                            <div className="flex gap-4 px-4">
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                                Schedule meeting with Sarah
+                              </p>
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                                What did alex say about the design
+                              </p>
+                            </div>
+                            {/* Left mask */}
+                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+                            {/* Right mask */}
+                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
+                          </div>
+                        </div>
                       </div>
                     )}
                     <AIChat
@@ -138,3 +178,21 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
 }
 
 export default AISidebar;
+
+// Add this style to the file to hide scrollbars
+const noScrollbarStyle = `
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+`;
+
+if (typeof document !== 'undefined') {
+  // Add the style to the document head when on client
+  const style = document.createElement('style');
+  style.innerHTML = noScrollbarStyle;
+  document.head.appendChild(style);
+}
