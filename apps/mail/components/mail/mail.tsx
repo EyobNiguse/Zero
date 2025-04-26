@@ -42,9 +42,9 @@ import { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
 import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
-import { useParams } from 'next/navigation';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { getMail, markAsRead } from '@/actions/mail';
@@ -52,9 +52,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
-import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
+import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
@@ -181,7 +181,7 @@ export function DemoMailLayout() {
                 defaultSize={75}
                 minSize={25}
               >
-                <div className="relative hidden h-[calc(100vh-(12px+14px))] max-h-[800px] flex-1 md:block">
+                <div className="relative hidden h-[calc(100dvh-(12px+14px))] max-h-[800px] flex-1 md:block">
                   <ThreadDemo messages={selectedMail ? [selectedMail] : []} />
                 </div>
               </ResizablePanel>
@@ -192,7 +192,7 @@ export function DemoMailLayout() {
         {/* Mobile Drawer */}
         {isMobile && (
           <Drawer open={!!threadIdParam}>
-            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-3rem)] overflow-hidden p-0">
+            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100dvh-3rem)] overflow-hidden p-0">
               <DrawerHeader className="sr-only">
                 <DrawerTitle>Email Details</DrawerTitle>
               </DrawerHeader>
@@ -394,7 +394,7 @@ export function MailLayout() {
                 defaultSize={75}
                 minSize={35}
               >
-                <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
+                <div className="relative hidden h-[calc(100dvh-(12px+14px))] flex-1 md:block">
                   <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
                 </div>
               </ResizablePanel>
@@ -410,7 +410,7 @@ export function MailLayout() {
               if (!isOpen) handleClose();
             }}
           >
-            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-4rem)] overflow-hidden p-0">
+            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100dvh-4rem)] overflow-hidden p-0">
               <DrawerHeader className="sr-only">
                 <DrawerTitle>Email Details</DrawerTitle>
               </DrawerHeader>
@@ -471,7 +471,7 @@ function BulkSelectActions() {
     try {
       const response = await markAsRead({ ids: mail.bulkSelected });
       if (response.success) {
-        // TODO: fix this, it needs useThread mutation 
+        // TODO: fix this, it needs useThread mutation
         await mutateThreads();
         await mutateStats();
         setMail((prev) => ({
@@ -657,7 +657,9 @@ function CategorySelect() {
   });
 
   // Skip category selection for drafts, spam, sent, archive, and bin pages
-  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
+  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(
+    folder || '',
+  );
 
   if (!shouldShowCategorySelect) return null;
 
