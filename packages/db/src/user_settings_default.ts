@@ -13,7 +13,7 @@ export const defaultUserSettings = {
 export const userSettingsSchema = z.object({
   language: z.string(),
   timezone: z.string(),
-  dynamicContent: z.boolean(),
+  dynamicContent: z.boolean().optional(),
   externalImages: z.boolean(),
   customPrompt: z.string(),
   isOnboarded: z.boolean().optional(),

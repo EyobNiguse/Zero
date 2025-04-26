@@ -178,7 +178,6 @@ export default function GeneralPage() {
           </Button>
         }
       >
-        {JSON.stringify(form.formState.errors)}
         <Form {...form}>
           <form id="general-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="flex w-full items-center gap-5">
@@ -218,25 +217,6 @@ export default function GeneralPage() {
               />
             </div>
             <div className="flex w-full w-max flex-col items-start gap-5">
-              {/* <FormField
-                control={form.control}
-                name="dynamicContent"
-                render={({ field }) => (
-                  <FormItem className="bg-popover flex flex-row items-center justify-between rounded-lg border p-4 w-full md:w-auto">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        {t('pages.settings.general.dynamicContent')}
-                      </FormLabel>
-                      <FormDescription>
-                        {t('pages.settings.general.dynamicContentDescription')}
-                      </FormDescription>
-                    </div>
-                    <FormControl className="ml-4">
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              /> */}
               <FormField
                 control={form.control}
                 name="externalImages"
