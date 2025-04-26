@@ -279,7 +279,7 @@ const options = {
               void EnableBrain({
                 connection: { id: newConnectionId, providerId: userAccount.providerId },
               });
-              console.log('Created new connection for user', newConnection);
+              console.warn('Created new connection for user', user.email);
             }
           }
         }

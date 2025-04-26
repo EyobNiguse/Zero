@@ -142,15 +142,10 @@ export default function GeneralPage() {
   }, [form, settings]);
 
   async function onSubmit(values: z.infer<typeof userSettingsSchema>) {
-    console.log(values);
     setIsSaving(true);
     try {
-      console.log('saving settings', values);
       await saveUserSettings(values);
-      console.log('mutated settings', values);
       await mutate(values, { revalidate: false });
-
-      console.log('mutated settings', values);
       if (values.language !== locale) {
         await changeLocale(values.language as Locale);
         const localeName = new Intl.DisplayNames([values.language], { type: 'language' }).of(
