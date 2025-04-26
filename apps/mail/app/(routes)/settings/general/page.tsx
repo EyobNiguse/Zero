@@ -159,6 +159,8 @@ export default function GeneralPage() {
       console.error('Failed to save settings:', error);
       toast.error(t('common.settings.failedToSave'));
       await mutate();
+    } finally {
+      setIsSaving(false);
     }
   }
 
