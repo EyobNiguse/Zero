@@ -61,13 +61,8 @@ export function CreateEmail({
         message: data.message,
         attachments: data.attachments,
         fromEmail: fromEmail,
+        draftId: draftId || undefined,
       });
-
-      if (draftId) {
-        await sendEmail({ ...data, draftId });
-      } else {
-        await sendEmail(data);
-      }
 
       // Track different email sending scenarios
       if (data.cc && data.bcc) {
@@ -96,11 +91,11 @@ export function CreateEmail({
           <DialogClose asChild className="flex">
             <button className="flex items-center gap-1 rounded-lg bg-[#F0F0F0] px-2 py-1.5 dark:bg-[#1A1A1A]">
               <X className="mt-0.5 h-3.5 w-3.5 fill-[#6D6D6D] dark:fill-[#929292]" />
-              <span className="text-sm text-[#6D6D6D] dark:text-white font-medium">esc</span>
+              <span className="text-sm font-medium text-[#6D6D6D] dark:text-white">esc</span>
             </button>
           </DialogClose>
         </div>
-        <EmailComposer className='border rounded-2xl mb-12' onSendEmail={handleSendEmail} />
+        <EmailComposer className="mb-12 rounded-2xl border" onSendEmail={handleSendEmail} />
       </div>
     </>
   );
