@@ -142,11 +142,15 @@ export default function GeneralPage() {
   }, [form, settings]);
 
   async function onSubmit(values: z.infer<typeof userSettingsSchema>) {
+    console.log(values);
     setIsSaving(true);
     try {
+      console.log('saving settings', values);
       await saveUserSettings(values);
+      console.log('mutated settings', values);
       await mutate(values, { revalidate: false });
 
+      console.log('mutated settings', values);
       if (values.language !== locale) {
         await changeLocale(values.language as Locale);
         const localeName = new Intl.DisplayNames([values.language], { type: 'language' }).of(
@@ -159,10 +163,7 @@ export default function GeneralPage() {
     } catch (error) {
       console.error('Failed to save settings:', error);
       toast.error(t('common.settings.failedToSave'));
-      // Revert the optimistic update
       await mutate();
-    } finally {
-      setIsSaving(false);
     }
   }
 
