@@ -690,7 +690,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                 </div>
               )}
               {emailData?.attachments && emailData?.attachments.length > 0 ? (
-                <div className="mb-4 flex items-center gap-2 px-4 pt-4">
+                <div className="mb-4 flex items-center gap-2 pt-4">
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button
@@ -732,7 +732,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   ))}
                 </div>
               ) : null}
-              <div className="mb-4 mt-3 flex gap-2 px-4">
+              <div className="mb-4 mt-3 flex gap-2">
                 <button
                   onClick={() => {
                     setMode('reply');

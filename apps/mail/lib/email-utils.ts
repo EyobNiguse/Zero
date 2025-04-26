@@ -39,6 +39,9 @@ export const template = (html: string, imagesEnabled: boolean = false) => {
   template.head.appendChild(script);
 
   template.body.innerHTML = doc.body.innerHTML;
+  template.body.style.height = 'min-content';
+  template.body.style.margin = '0';
+  template.getElementsByTagName('html')[0]?.setAttribute('style', 'height: min-content;');
   template.body.style.backgroundColor = getComputedStyle(document.body).getPropertyValue(
     'background-color',
   );

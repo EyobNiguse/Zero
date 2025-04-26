@@ -18,7 +18,7 @@ export function MailIframe({ html, senderEmail }: { html: string; senderEmail: s
     isTrustedSender || settings?.externalImages || false,
   );
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [height, setHeight] = useState(300);
+  const [height, setHeight] = useState(0);
   const { resolvedTheme } = useTheme();
 
   const onTrustSender = useCallback(
