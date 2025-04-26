@@ -32,6 +32,7 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { Filter, Lightning, Mail, X } from '../icons/icons';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useHotkeysContext } from 'react-hotkeys-hook';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { getMail, markAsRead } from '@/actions/mail';
@@ -42,6 +43,7 @@ import { Tag, User, Bell } from '../icons/icons';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
+import { useParams } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -170,7 +172,7 @@ export function DemoMailLayout() {
                 defaultSize={75}
                 minSize={25}
               >
-                <div className="relative hidden h-[calc(100vh-(12px+14px))] max-h-[800px] flex-1 md:block">
+                <div className="relative hidden h-[calc(100dvh-(12px+14px))] max-h-[800px] flex-1 md:block">
                   <ThreadDemo messages={selectedMail ? [selectedMail] : []} />
                 </div>
               </ResizablePanel>
@@ -181,7 +183,7 @@ export function DemoMailLayout() {
         {/* Mobile Drawer */}
         {isMobile && (
           <Drawer open={!!threadIdParam}>
-            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100vh-3rem)] overflow-hidden p-0">
+            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100dvh-3rem)] overflow-hidden p-0">
               <DrawerHeader className="sr-only">
                 <DrawerTitle>Email Details</DrawerTitle>
               </DrawerHeader>
@@ -459,6 +461,7 @@ function BulkSelectActions() {
       const response = await markAsRead({ ids: mail.bulkSelected });
       if (response.success) {
         // TODO: fix this, it needs useThread mutation
+        // TODO: fix this, it needs useThread mutation
         await mutateThreads();
         await mutateStats();
         setMail((prev) => ({
@@ -688,6 +691,9 @@ function CategorySelect() {
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
 
   // Skip category selection for drafts, spam, sent, archive, and bin pages
+  const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(
+    folder || '',
+  );
   const shouldShowCategorySelect = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(
     folder || '',
   );

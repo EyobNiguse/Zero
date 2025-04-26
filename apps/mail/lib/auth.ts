@@ -15,6 +15,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
 import { getActiveDriver } from '@/actions/utils';
 import { createDriver } from '@/app/api/driver';
+import { EnableBrain } from '@/actions/brain';
 import { redirect } from 'next/navigation';
 import { APIError } from 'better-auth/api';
 import { eq } from 'drizzle-orm';
@@ -106,6 +107,10 @@ const options = {
     },
   },
   session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 7 days
+    },
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
   },
@@ -250,9 +255,10 @@ const options = {
             .where(eq(account.userId, user.id))
             .limit(1);
           if (userAccount) {
+            const newConnectionId = crypto.randomUUID();
             // create a new connection
             const [newConnection] = await db.insert(connection).values({
-              id: crypto.randomUUID(),
+              id: newConnectionId,
               userId: user.id,
               email: user.email,
               name: user.name,
@@ -267,9 +273,13 @@ const options = {
               createdAt: new Date(),
               updatedAt: new Date(),
             } as any);
+
             // this type error is pissing me tf off
             if (newConnection) {
-              console.log('Created new connection for user', newConnection);
+              void EnableBrain({
+                connection: { id: newConnectionId, providerId: userAccount.providerId },
+              });
+              console.warn('Created new connection for user', user.email);
             }
           }
         }

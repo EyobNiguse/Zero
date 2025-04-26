@@ -16,6 +16,8 @@ import {
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
@@ -51,6 +53,12 @@ export function NavUser() {
   const handleClearCache = useCallback(async () => {
     dexieStorageProvider().clear();
     toast.success('Cache cleared successfully');
+  }, []);
+
+  const handleEnableBrain = useCallback(async () => {
+    // This takes too long, not waiting
+    const enabled = await EnableBrain({});
+    if (enabled) toast.success('Brain enabled successfully');
   }, []);
 
   const activeAccount = useMemo(() => {

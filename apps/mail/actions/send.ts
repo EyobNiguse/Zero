@@ -14,7 +14,19 @@ export async function sendEmail({
   headers: additionalHeaders = {},
   threadId,
   fromEmail,
-}: ISendEmail) {
+  draftId,
+}: {
+  to: Sender[];
+  subject: string;
+  message: string;
+  attachments: File[];
+  headers?: Record<string, string>;
+  cc?: Sender[];
+  bcc?: Sender[];
+  threadId?: string;
+  fromEmail?: string;
+  draftId?: string;
+}) {
   if (!to || !subject || !message) {
     throw new Error('Missing required fields');
   }
@@ -33,7 +45,7 @@ export async function sendEmail({
     },
   });
 
-  await driver.create({
+  const emailData = {
     subject,
     to,
     message,
@@ -43,7 +55,13 @@ export async function sendEmail({
     bcc,
     threadId,
     fromEmail,
-  });
+  };
+
+  if (draftId) {
+    await driver.sendDraft(draftId, emailData);
+  } else {
+    await driver.create(emailData);
+  }
 
   return { success: true };
 }

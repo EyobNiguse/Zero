@@ -61,7 +61,13 @@ export function CreateEmail({
         message: data.message,
         attachments: data.attachments,
         fromEmail: fromEmail,
-      });
+      };
+
+      if (draftId) {
+        await sendEmail({ ...emailData, draftId });
+      } else {
+        await sendEmail(emailData);
+      }
 
       // Track different email sending scenarios
       if (data.cc && data.bcc) {

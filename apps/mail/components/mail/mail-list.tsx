@@ -521,7 +521,7 @@ export function MailListDemo({
 }) {
   return (
     <ScrollArea className="h-full pb-2" type="scroll">
-      <div className={cn('relative min-h-[calc(100vh-4rem)] w-full')}>
+      <div className={cn('relative min-h-[calc(100dvh-4rem)] w-full')}>
         <div className="absolute left-0 top-0 w-full p-[8px]">
           {filteredItems.map((item) => {
             return item ? (

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { userSettingsSchema } from '@zero/db/user_settings_default';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { availableLocales, locales, Locale } from '@/i18n/config';
 import { useForm, ControllerRenderProps } from 'react-hook-form';
@@ -36,21 +37,12 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-const formSchema = z.object({
-  language: z.enum(locales as [string, ...string[]]),
-  timezone: z.string(),
-  dynamicContent: z.boolean(),
-  externalImages: z.boolean(),
-  customPrompt: z.string(),
-  trustedSenders: z.string().array(),
-});
-
 const TimezoneSelect = memo(
   ({
     field,
     t,
   }: {
-    field: ControllerRenderProps<z.infer<typeof formSchema>, 'timezone'>;
+    field: ControllerRenderProps<z.infer<typeof userSettingsSchema>, 'timezone'>;
     t: any;
   }) => {
     const [open, setOpen] = useState(false);
@@ -129,8 +121,8 @@ export default function GeneralPage() {
   const t = useTranslations();
   const { settings, mutate } = useSettings();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof userSettingsSchema>>({
+    resolver: zodResolver(userSettingsSchema),
     defaultValues: {
       language: locale,
       timezone: getBrowserTimezone(),
@@ -149,12 +141,11 @@ export default function GeneralPage() {
     }
   }, [form, settings]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof userSettingsSchema>) {
     setIsSaving(true);
     try {
       await saveUserSettings(values);
       await mutate(values, { revalidate: false });
-
       if (values.language !== locale) {
         await changeLocale(values.language as Locale);
         const localeName = new Intl.DisplayNames([values.language], { type: 'language' }).of(
@@ -167,7 +158,6 @@ export default function GeneralPage() {
     } catch (error) {
       console.error('Failed to save settings:', error);
       toast.error(t('common.settings.failedToSave'));
-      // Revert the optimistic update
       await mutate();
     } finally {
       setIsSaving(false);
@@ -223,26 +213,7 @@ export default function GeneralPage() {
                 )}
               />
             </div>
-            <div className="flex w-max flex-col items-start gap-5">
-              {/* <FormField
-                control={form.control}
-                name="dynamicContent"
-                render={({ field }) => (
-                  <FormItem className="bg-popover flex flex-row items-center justify-between rounded-lg border p-4 w-full md:w-auto">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        {t('pages.settings.general.dynamicContent')}
-                      </FormLabel>
-                      <FormDescription>
-                        {t('pages.settings.general.dynamicContentDescription')}
-                      </FormDescription>
-                    </div>
-                    <FormControl className="ml-4">
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              /> */}
+            <div className="flex w-full w-max flex-col items-start gap-5">
               <FormField
                 control={form.control}
                 name="externalImages"
@@ -266,7 +237,7 @@ export default function GeneralPage() {
                 control={form.control}
                 name="trustedSenders"
                 render={({ field }) =>
-                  field.value.length > 0 && !externalImages ? (
+                  (field.value?.length || 0) > 0 && !externalImages ? (
                     <FormItem className="bg-popover flex w-full flex-col rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">
@@ -277,7 +248,7 @@ export default function GeneralPage() {
                         </FormDescription>
                       </div>
                       <ScrollArea className="flex max-h-32 flex-col pr-3">
-                        {field.value.map((senderEmail) => (
+                        {field.value?.map((senderEmail) => (
                           <div
                             className="mt-1.5 flex items-center justify-between first:mt-0"
                             key={senderEmail}
@@ -287,7 +258,7 @@ export default function GeneralPage() {
                               <TooltipTrigger asChild>
                                 <button
                                   onClick={() =>
-                                    field.onChange(field.value.filter((e) => e !== senderEmail))
+                                    field.onChange(field.value?.filter((e) => e !== senderEmail))
                                   }
                                 >
                                   <XIcon className="h-4 w-4 transition hover:opacity-80" />
