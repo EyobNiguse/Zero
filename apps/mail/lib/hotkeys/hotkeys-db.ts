@@ -38,10 +38,27 @@ const fetchServerHotkeys = async (): Promise<Shortcut[] | null> => {
 
 let serverHotkeysLoaded = false;
 
+// Only fetch hotkeys from server on initial load
+async function initializeHotkeysFromServer(): Promise<Shortcut[]> {
+  const serverHotkeys = await fetchServerHotkeys();
+  if (serverHotkeys) {
+    serverHotkeysLoaded = true;
+    return serverHotkeys;
+  }
+  return [];
+}
+
 class HotkeysDB {
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
+    if (!serverHotkeysLoaded) {
+      const serverHotkeys = await initializeHotkeysFromServer();
+      if (serverHotkeys.length > 0) {
+        await this.saveAllHotkeys(this.mergeWithDefaults(serverHotkeys));
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -66,7 +83,7 @@ class HotkeysDB {
           const serverHotkeys = await fetchServerHotkeys();
           if (serverHotkeys?.length) {
             const mergedHotkeys = this.mergeWithDefaults(serverHotkeys);
-            await this.saveAllHotkeys(mergedHotkeys, false);
+            await this.saveAllHotkeys(mergedHotkeys);
           } else {
             await this.initializeDefaultShortcuts();
           }
@@ -89,18 +106,18 @@ class HotkeysDB {
   }
 
   private async initializeDefaultShortcuts(): Promise<void> {
-    await this.saveAllHotkeys(keyboardShortcuts, true);
+    await this.saveAllHotkeys(keyboardShortcuts);
   }
 
   async saveHotkey(shortcut: Shortcut): Promise<void> {
-    const allHotkeys = await this.getAllHotkeys();
-    const updatedHotkeys = allHotkeys.map((s) => (s.action === shortcut.action ? shortcut : s));
-
-    if (!allHotkeys.some((s) => s.action === shortcut.action)) {
-      updatedHotkeys.push(shortcut);
+    const shortcuts = await this.getAllHotkeys();
+    const index = shortcuts.findIndex((s) => s.action === shortcut.action);
+    if (index !== -1) {
+      shortcuts[index] = shortcut;
+    } else {
+      shortcuts.push(shortcut);
     }
-
-    await this.saveAllHotkeys(updatedHotkeys, true);
+    await this.saveAllHotkeys(shortcuts);
   }
 
   async getHotkey(action: string): Promise<Shortcut | undefined> {
@@ -123,19 +140,14 @@ class HotkeysDB {
     });
   }
 
-  private async saveAllHotkeys(shortcuts: Shortcut[], shouldSync: boolean = true): Promise<void> {
+  private async saveAllHotkeys(shortcuts: Shortcut[]): Promise<void> {
     if (!this.db) await this.init();
     return new Promise<void>((resolve, reject) => {
       const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
 
       transaction.onerror = () => reject(transaction.error);
-      transaction.oncomplete = async () => {
-        if (shouldSync && serverHotkeysLoaded) {
-          await syncWithServer(shortcuts);
-        }
-        resolve();
-      };
+      transaction.oncomplete = () => resolve();
 
       store.clear();
       store.put({ id: 'shortcuts', shortcuts });
