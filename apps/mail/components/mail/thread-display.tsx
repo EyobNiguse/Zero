@@ -15,6 +15,7 @@ import {
   ArchiveX,
   Forward,
   ReplyAll,
+  Star,
 } from '../icons/icons';
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { MailDisplaySkeleton } from './mail-skeleton';
+import { SuccessEmailToast } from '../theme/toast';
 import { Button } from '@/components/ui/button';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
@@ -46,7 +48,6 @@ import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
-import { SuccessEmailToast } from '../theme/toast';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -150,6 +151,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mail, setMail] = useMail();
+  const [isStarred, setIsStarred] = useState(false);
   const t = useTranslations();
   const { mutate: mutateStats } = useStats();
   const { folder } = useParams<{ folder: string }>();
@@ -247,15 +249,19 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       });
       setBackgroundQueue({ type: 'add', threadId: `thread:${threadId}` });
       handleNext();
-      
+
       toast.custom((id) => (
-        <SuccessEmailToast message={destination === 'inbox'
-          ? t('common.actions.movedToInbox')
-          : destination === 'spam'
-            ? t('common.actions.movedToSpam')
-            : destination === 'bin'
-              ? t('common.actions.movedToBin')
-              : t('common.actions.archived')} />
+        <SuccessEmailToast
+          message={
+            destination === 'inbox'
+              ? t('common.actions.movedToInbox')
+              : destination === 'spam'
+                ? t('common.actions.movedToSpam')
+                : destination === 'bin'
+                  ? t('common.actions.movedToBin')
+                  : t('common.actions.archived')
+          }
+        />
       ));
       toast.promise(promise, {
         error: t('common.actions.failedToMove'),
@@ -268,48 +274,37 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     [threadId, folder, mutateStats, mutateThreads, handleClose, t],
   );
 
-  // const handleMarkAsUnread = useCallback(async () => {
-  //   if (!emailData || !threadId) return;
+  // Add handleToggleStar function
+  const handleToggleStar = useCallback(async () => {
+    if (!emailData || !threadId) return;
+    
+    const newStarredState = !isStarred;
+    setIsStarred(newStarredState);
+    
+    const done = Promise.all([mutateThreads()]);
+    if (newStarredState) {
+      toast.custom((id) => (
+        <SuccessEmailToast
+          message={t('common.actions.addedToFavorites')}
+        />
+      ));
+    } else {
+      toast.custom((id) => (
+        <SuccessEmailToast
+          message={t('common.actions.removedFromFavorites')}
+        />
+      ));
+      
+    }
+  }, [emailData, threadId, isStarred, mutateThreads, t]);
 
-  //   const promise = async () => {
-  //     const result = await markAsUnread({ ids: [threadId] });
-  //     if (!result.success) throw new Error('Failed to mark as unread');
-
-  //     setMail((prev) => ({ ...prev, bulkSelected: [] }));
-  //     await Promise.allSettled([mutateStats(), mutateThread()]);
-  //     handleClose();
-  //   };
-
-  //   toast.promise(promise(), {
-  //     loading: t('common.actions.markingAsUnread'),
-  //     success: t('common.mail.markedAsUnread'),
-  //     error: t('common.mail.failedToMarkAsUnread'),
-  //   });
-  // }, [emailData, threadId, t]);
-
-  // const handleFavourites = async () => {
-  //   if (!emailData || !threadId) return;
-  //   const done = Promise.all([mutateThreads()]);
-  //   if (emailData.latest?.tags?.includes('STARRED')) {
-  //     toast.promise(
-  //       modifyLabels({ threadId: [threadId], removeLabels: ['STARRED'] }).then(() => done),
-  //       {
-  //         success: t('common.actions.removedFromFavorites'),
-  //         loading: t('common.actions.removingFromFavorites'),
-  //         error: t('common.actions.failedToRemoveFromFavorites'),
-  //       },
-  //     );
-  //   } else {
-  //     toast.promise(
-  //       modifyLabels({ threadId: [threadId], addLabels: ['STARRED'] }).then(() => done),
-  //       {
-  //         success: t('common.actions.addedToFavorites'),
-  //         loading: t('common.actions.addingToFavorites'),
-  //         error: t('common.actions.failedToAddToFavorites'),
-  //       },
-  //     );
-  //   }
-  // };
+  // Set initial star state based on email data
+  useEffect(() => {
+    if (emailData?.latest?.tags) {
+      // Check if any tag has the name 'STARRED'
+      setIsStarred(emailData.latest.tags.some(tag => tag.name === 'STARRED'));
+    }
+  }, [emailData?.latest?.tags]);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -342,10 +337,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     }
   }, [mode, activeReplyId]);
 
-  const replyToMessage = useCallback((messageId: string, replyMode: string = 'reply') => {
-    setActiveReplyId(messageId);
-    setMode(replyMode);
-  }, [setMode]);
+  const replyToMessage = useCallback(
+    (messageId: string, replyMode: string = 'reply') => {
+      setActiveReplyId(messageId);
+      setMode(replyMode);
+    },
+    [setMode],
+  );
 
   return (
     <div
@@ -391,7 +389,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   onClick={handleClose}
                 />
                 {/* <ThreadSubject subject={emailData.latest?.subject} /> */}
-                <div className="bg-[#E7E7E7] dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />{' '}
+                <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}
                 <div>
                   <ThreadActionButton
                     icon={ChevronLeft}
@@ -402,13 +400,60 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-               
-                <button
-                  onClick={() => moveThreadTo('bin')}
-                  className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
-                >
-                  <Trash className="fill-[#F43F5E]" />
-                </button>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleToggleStar}
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]"
+                      >
+                        <Star 
+                          className={cn(
+                            "h-5 w-5 mt-[2.4px] ml-[2px]",
+                            isStarred 
+                              ? "fill-yellow-400 stroke-yellow-400" 
+                              : "fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]"
+                          )} 
+                        />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                      {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => moveThreadTo('archive')}
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]"
+                      >
+                        <Archive className="fill-iconLight dark:fill-iconDark" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                      {t('common.threadDisplay.archive')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => moveThreadTo('bin')}
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
+                      >
+                        <Trash className="fill-[#F43F5E]" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                      {t('common.mail.moveToBin')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]">
@@ -433,10 +478,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                           : t('common.threadDisplay.enterFullscreen')}
                       </span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Archive className="fill-iconLight dark:fill-iconDark" />
-                      <span>{t('common.threadDisplay.archive')}</span>
-                    </DropdownMenuItem>
+
                     {isInSpam || isInArchive || isInBin ? (
                       <DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
                         <Inbox className="mr-2 h-4 w-4" />
@@ -477,7 +519,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       className={cn(
                         'transition-all duration-200',
                         index > 0 && 'border-border border-t',
-                        mode && activeReplyId === message.id && 'bg-gray-50 dark:bg-gray-900/20'
+                        mode && activeReplyId === message.id && '',
                       )}
                     >
                       <MailDisplay
