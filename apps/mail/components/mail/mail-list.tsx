@@ -403,7 +403,7 @@ const Thread = memo(
                   ) : (
                     <>
                       <AvatarImage
-                        className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
+                        className="bg-[#FFFFFF] dark:bg-[#373737] rounded-full p-1"
                         src={getEmailLogo(latestMessage.sender.email)}
                       />
                       <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
