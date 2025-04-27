@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { createLabel, updateLabel, deleteLabel } from '@/hooks/use-labels';
 import { useLabels, type Label as LabelType } from '@/hooks/use-labels';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
@@ -29,10 +30,11 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { COLORS } from './colors';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function LabelsPage() {
   const t = useTranslations();
-  const { labels, isLoading, error, createLabel, updateLabel, deleteLabel } = useLabels();
+  const { labels, isLoading, error, mutate } = useLabels();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLabel, setEditingLabel] = useState<LabelType | null>(null);
   const form = useForm<LabelType>({
@@ -46,26 +48,34 @@ export default function LabelsPage() {
 
   const onSubmit = async (data: LabelType) => {
     try {
-      if (editingLabel) {
-        await updateLabel(editingLabel.id!, data);
-      } else {
-        await createLabel(data);
-      }
+      toast.promise(editingLabel ? updateLabel(editingLabel.id!, data) : createLabel(data), {
+        loading: 'Saving label...',
+        success: 'Label saved successfully',
+        error: 'Failed to save label',
+      });
+    } catch (error) {
+      console.error('Error saving label:', error);
+    } finally {
+      await mutate();
       handleClose();
-    } catch (err) {
-      console.error('Error saving label:', err);
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteLabel(id);
-    } catch (err) {
-      console.error('Error deleting label:', err);
+      toast.promise(deleteLabel(id), {
+        loading: 'Deleting label...',
+        success: 'Label deleted successfully',
+        error: 'Failed to delete label',
+      });
+    } catch (error) {
+      console.error('Error deleting label:', error);
+    } finally {
+      await mutate();
     }
   };
 
-  const handleEdit = (label: LabelType) => {
+  const handleEdit = async (label: LabelType) => {
     setEditingLabel(label);
     form.reset({
       name: label.name,

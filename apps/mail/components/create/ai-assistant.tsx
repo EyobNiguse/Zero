@@ -13,14 +13,14 @@ import posthog from 'posthog-js';
 
 // Types
 interface AIAssistantProps {
-  currentContent?: string;
-  recipients?: string[];
-  subject?: string;
-  userContext?: {
+  currentContent: string;
+  subject: string;
+  recipients: string[];
+  userContext: {
     name?: string;
     email?: string;
   };
-  onContentGenerated?: (content: JSONContent, subject?: string) => void;
+  onSuggestion?: (suggestion: { content: string; subject?: string; } | null) => void;
 }
 
 type MessageType = 'email' | 'question' | 'system';
@@ -184,13 +184,13 @@ const ActionButtons = ({
 );
 
 // Main component
-export const AIAssistant = ({
-  currentContent = '',
-  recipients = [],
-  subject = '',
+export function AIAssistant({
+  currentContent,
+  subject,
+  recipients,
   userContext,
-  onContentGenerated,
-}: AIAssistantProps) => {
+  onSuggestion
+}: AIAssistantProps) {
   // State
   const [isExpanded, setIsExpanded] = useState(false);
   const [prompt, setPrompt] = useState('');
@@ -482,4 +482,4 @@ export const AIAssistant = ({
       </div>
     </div>
   );
-};
+}

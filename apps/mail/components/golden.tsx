@@ -7,15 +7,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { Form, FormField, FormItem, FormLabel } from './ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSidebar } from '@/components/ui/sidebar';
+import { MessageKey } from '@/config/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { TicketIcon } from 'lucide-react';
+import { Ticket } from './icons/icons';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import Image from 'next/image';
@@ -85,13 +87,10 @@ export const GoldenTicketModal = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-subtleWhite dark:bg-subtleBlack hover:bg-subtleWhite dark:hover:bg-subtleBlack text-black dark:text-white">
-          {state === 'collapsed' && !isMobile ? (
-            <TicketIcon className="size-4" />
-          ) : (
-            <span className="mr-2">Invite a friend</span>
-          )}
-        </Button>
+        <SidebarMenuButton tooltip={'Invite a friend'} className="flex items-center">
+          <Ticket className="relative mr-2.5 h-3 w-3.5" />
+          <p className="mt-0.5 truncate text-[13px]">Invite a friend</p>
+        </SidebarMenuButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -117,7 +116,6 @@ export const GoldenTicketModal = () => {
               Zero is still in early beta 🚀 and will continue to grow and improve from this point
               on. If you know a friend who wants to test and try out Zero, send them an invite! 💌
             </span>
-
             <span>You can only invite one person, so make it count! 🎯 ⭐️</span>
           </DialogDescription>
         </DialogHeader>

@@ -1,7 +1,7 @@
 import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
+import { IGetThreadResponse, type IConfig, type MailManager } from './types';
 import { deleteActiveConnection, FatalErrors } from '@/actions/utils';
 import { IOutgoingMessage, type ParsedMessage } from '@/types';
-import { type IConfig, type MailManager } from './types';
 import { type gmail_v1, google } from 'googleapis';
 import { filterSuggestions } from '@/lib/filter';
 import { GMAIL_COLORS } from '@/lib/constants';
@@ -52,15 +52,7 @@ const findHtmlBody = (parts: any[]): string => {
   return '';
 };
 
-interface ParsedDraft {
-  id: string;
-  to?: string[];
-  subject?: string;
-  content?: string;
-  rawMessage?: gmail_v1.Schema$Message;
-}
-
-const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
+const parseDraft = (draft: gmail_v1.Schema$Draft) => {
   if (!draft.message) return null;
 
   const headers = draft.message.payload?.headers || [];
@@ -268,7 +260,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       threadId: threadId || '',
       title: snippet ? he.decode(snippet).trim() : 'ERROR',
       tls: wasSentWithTLS(receivedHeaders) || !!hasTLSReport,
-      tags: labelIds || [],
+      tags: labelIds?.map((l) => ({ id: l, name: l })) || [],
       listUnsubscribe,
       listUnsubscribePost,
       replyTo,
@@ -559,6 +551,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
     },
     getScope,
+    getIdType: (id: string) => {
+      if (id.startsWith('r')) {
+        return 'draft';
+      }
+      return 'thread';
+    },
     getUserInfo: (tokens: IConfig['auth']) => {
       return withErrorHandler(
         'getUserInfo',
@@ -932,7 +930,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             return dateB - dateA;
           });
 
-          return { ...res.data, drafts: sortedDrafts } as any;
+          return { ...res.data, threads: sortedDrafts };
         },
         { q, maxResults, pageToken },
       );
@@ -1004,7 +1002,18 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const res = await gmail.users.labels.list({
         userId: 'me',
       });
-      return res.data.labels;
+      // wtf google, null values for EVERYTHING?
+      return (
+        res.data.labels?.map((label) => ({
+          id: label.id ?? '',
+          name: label.name ?? '',
+          type: label.type ?? '',
+          color: {
+            backgroundColor: label.color?.backgroundColor ?? '',
+            textColor: label.color?.textColor ?? '',
+          },
+        })) ?? []
+      );
     },
     getLabel: async (labelId: string) => {
       const res = await gmail.users.labels.get({

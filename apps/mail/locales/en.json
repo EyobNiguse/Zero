@@ -112,7 +112,8 @@
       "documentation": "Documentation",
       "appTheme": "App Theme",
       "accounts": "Accounts",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "otherAccounts": "Other Accounts"
     },
     "mailCategories": {
       "primary": "Primary",
@@ -170,7 +171,9 @@
       "muteThread": "Mute thread",
       "favourites": "Favourites",
       "disableImages": "Hide Images",
-      "enableImages": "Show Images"
+      "enableImages": "Show Images",
+      "star": "Star",
+      "unstar": "Unstar"
     },
     "notes": {
       "title": "Notes",
@@ -436,6 +439,7 @@
       "addMore": "Add more",
       "dropFilesToAttach": "Drop files to attach",
       "writeYourMessageHere": "Write your message here...",
+      "emailSent": "Email sent",
       "emailSentSuccessfully": "Email sent successfully",
       "failedToSendEmail": "Failed to send email. Please try again.",
       "signature": {

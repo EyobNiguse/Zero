@@ -59,11 +59,14 @@ type IconRefType = SVGSVGElement & {
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: session, isPending } = useSession();
   const [category] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
 
   const { labels } = useLabels();
+  const { state } = useSidebar();
+
+  // Check if these are bottom navigation items by looking at the first section's title
+  const isBottomNav = items[0]?.title === '';
 
   /**
    * Validates URLs to prevent open redirect vulnerabilities.
@@ -156,6 +159,8 @@ export function NavMain({ items }: NavMainProps) {
     [pathname, searchParams],
   );
 
+ 
+
   const handleFilterByLabel = (label: Label) => () => {
     const existingValue = searchValue.value;
     if (existingValue.includes(`label:${label.name}`)) {
@@ -175,7 +180,7 @@ export function NavMain({ items }: NavMainProps) {
   };
 
   return (
-    <SidebarGroup className="space-y-2.5 py-0">
+    <SidebarGroup className={`${state !== 'collapsed' ? '' : 'mt-1'} space-y-2.5 py-0`}>
       <SidebarMenu>
         {items.map((section) => (
           <Collapsible
@@ -184,7 +189,14 @@ export function NavMain({ items }: NavMainProps) {
             className="group/collapsible"
           >
             <SidebarMenuItem>
-              <div className="space-y-1 pb-2">
+              {state !== 'collapsed' ? (
+                <p className="mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]">
+                  {section.title}
+                </p>
+              ) : (
+                <div className="mx-2 mb-4 mt-2 h-[0.5px] bg-[#6D6D6D]/50 dark:bg-[#262626]" />
+              )}
+              <div className="z-20 space-y-1 pb-2">
                 {section.items.map((item) => (
                   <NavItem
                     key={item.url}
@@ -192,43 +204,47 @@ export function NavMain({ items }: NavMainProps) {
                     isActive={isUrlActive(item.url)}
                     href={getHref(item)}
                     target={item.target}
+                    title={item.title}
                   />
                 ))}
               </div>
             </SidebarMenuItem>
           </Collapsible>
         ))}
-        {!pathname.includes('/settings') && (
+        {!pathname.includes('/settings') && !isBottomNav && state !== 'collapsed' && (
           <Collapsible defaultOpen={true} className="group/collapsible">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton>Labels</SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent style={{ height: 'auto' }}>
-                <SidebarMenuSub style={{ height: 'auto' }} className="mr-0 pr-0">
-                  <div className="space-y-1 pb-2" style={{ height: 'auto' }}>
-                    {labels.map((label) => (
-                      <NavItem
-                        onClick={handleFilterByLabel(label)}
-                        key={label.id}
-                        title={label.name}
-                        href={`/mail/inbox`}
-                        icon={() => (
-                          <div
-                            className="size-4 rounded-md"
-                            style={{ backgroundColor: label.color?.backgroundColor || '#E2E2E2' }}
-                          />
+              <div className="mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]">Labels</div>
+
+              <div className="mr-0 pr-0">
+                <div
+                  className={cn(
+                    'hide-scrollbar mx-2 flex h-full max-h-[30vh] flex-row flex-wrap gap-2 overflow-auto',
+                  )}
+                >
+                  {labels.map((label) => (
+                    <div
+                      onClick={handleFilterByLabel(label)}
+                      key={label.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span
+                        className={cn(
+                          'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
+                          searchValue.value.includes(`label:${label.name}`)
+                            ? 'border-accent-foreground'
+                            : 'dark:bg-subtleBlack',
                         )}
-                        url={`/mail/inbox`}
-                      />
-                    ))}
-                  </div>
-                </SidebarMenuSub>
-              </CollapsibleContent>
+                      >
+                        {label.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </SidebarMenuItem>
           </Collapsible>
         )}
-        {!session || isPending ? null : !session?.hasUsedTicket ? <GoldenTicketModal /> : null}
       </SidebarMenu>
     </SidebarGroup>
   );
@@ -238,11 +254,12 @@ function NavItem(item: NavItemProps & { href: string }) {
   const iconRef = useRef<IconRefType>(null);
   const { data: stats } = useStats();
   const t = useTranslations();
+  const { state } = useSidebar();
 
   if (item.disabled) {
     return (
       <SidebarMenuButton
-        tooltip={t(item.title as MessageKey)}
+        tooltip={state === 'collapsed' ? t(item.title as MessageKey) : undefined}
         className="flex cursor-not-allowed items-center opacity-50"
       >
         {item.icon && <item.icon ref={iconRef} className="relative mr-2.5 h-3 w-3.5" />}
@@ -262,10 +279,10 @@ function NavItem(item: NavItemProps & { href: string }) {
 
   const buttonContent = (
     <SidebarMenuButton
-      tooltip={t(item.title as MessageKey)}
+      tooltip={state === 'collapsed' ? t(item.title as MessageKey) : undefined}
       className={cn(
-        'hover:bg-subtleWhite dark:hover:bg-subtleBlack flex items-center',
-        item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-subtleBlack',
+        'hover:bg-subtleWhite flex items-center dark:hover:bg-[#202020]',
+        item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-[#202020]',
       )}
       onClick={() => setOpenMobile(false)}
     >
@@ -273,7 +290,10 @@ function NavItem(item: NavItemProps & { href: string }) {
       <p className="mt-0.5 min-w-0 flex-1 truncate text-[13px]">{t(item.title as MessageKey)}</p>
       {stats
         ? stats.find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase()) && (
-            <Badge className="ml-auto shrink-0 rounded-md" variant="outline">
+            <Badge
+              className="text-muted-foreground ml-auto shrink-0 rounded-full dark:bg-transparent border-none "
+    
+            >
               {stats
                 .find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase())
                 ?.count?.toLocaleString() || '0'}
