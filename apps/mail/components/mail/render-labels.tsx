@@ -36,7 +36,7 @@ export const RenderLabels = ({ labels }: { labels: Label[] }) => {
   return (
     <span
       key={label.id}
-      className="bg-subtleBlack text-primary inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium"
+      className="dark:bg-subtleBlack bg-subtleWhite text-primary inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium"
       style={{ backgroundColor: label.color?.backgroundColor, color: label.color?.textColor }}
     >
       {label.name}
@@ -50,7 +50,7 @@ export const RenderLabels = ({ labels }: { labels: Label[] }) => {
               <button
                 onClick={handleFilterByLabel(label)}
                 className={cn(
-                  'bg-subtleBlack inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium',
+                  'dark:bg-subtleBlack bg-subtleWhite inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium',
                   searchValue.value.includes(`label:${label.name}`) &&
                     'border-purple-800 bg-purple-800/30',
                 )}
