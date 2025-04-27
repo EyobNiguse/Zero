@@ -306,9 +306,9 @@ export function MailLayout() {
                     <SidebarToggle className="h-fit px-2" />
                   </div>
                   <div>
-                    <Button variant="ghost" className={cn('md:h-fit md:px-2')}>
+                    {/* <Button variant="ghost" className={cn('md:h-fit md:px-2')}>
                       <Filter className="dark:fill-iconDark fill-iconLight" />
-                    </Button>
+                    </Button> */}
                   </div>
                   {/* <Button
                     variant="ghost"

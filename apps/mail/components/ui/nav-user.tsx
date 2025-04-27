@@ -1,7 +1,7 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { HelpCircle, LogIn, LogOut, MoonIcon, Settings, Plus, ChevronDown } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircleCheck, ThreeDots } from '../icons/icons';
 import { SunIcon } from '../icons/animated/sun';
 import Link from 'next/link';
@@ -22,11 +22,14 @@ import { AddConnectionDialog } from '../connection/add';
 import { putConnection } from '@/actions/connections';
 import { useSidebar } from '@/components/ui/sidebar';
 import { dexieStorageProvider } from '@/lib/idb';
+import { EnableBrain } from '@/actions/brain';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
+import { Button } from './button';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export function NavUser() {
   const { data: session, refetch } = useSession();
@@ -117,7 +120,7 @@ export function NavUser() {
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="ml-3 w-[--radix-dropdown-menu-trigger-width] min-w-56 font-medium bg-white dark:bg-[#131313]"
+                className="ml-3 w-[--radix-dropdown-menu-trigger-width] min-w-56 bg-white font-medium dark:bg-[#131313]"
                 align="end"
                 side={'bottom'}
                 sideOffset={8}
@@ -128,7 +131,10 @@ export function NavUser() {
                       <Avatar className="border-border/50 mb-2 size-14 rounded-xl border">
                         <AvatarImage
                           className="rounded-xl"
-                          src={(activeAccount?.picture ?? undefined) || (session?.user.image ?? undefined)}
+                          src={
+                            (activeAccount?.picture ?? undefined) ||
+                            (session?.user.image ?? undefined)
+                          }
                           alt={activeAccount?.name || session?.user.name || 'User'}
                         />
                         <AvatarFallback className="rounded-xl">
@@ -220,7 +226,9 @@ export function NavUser() {
                         <a href="https://discord.gg/0email" target="_blank" className="w-full">
                           <div className="flex items-center gap-2">
                             <HelpCircle size={16} className="opacity-60" />
-                            <p className="text-[13px] opacity-60">{t('common.navUser.customerSupport')}</p>
+                            <p className="text-[13px] opacity-60">
+                              {t('common.navUser.customerSupport')}
+                            </p>
                           </div>
                         </a>
                       </DropdownMenuItem>
@@ -230,11 +238,13 @@ export function NavUser() {
                           <p className="text-[13px] opacity-60">{t('common.actions.logout')}</p>
                         </div>
                       </DropdownMenuItem>
-
                     </>
                   ) : (
                     <>
-                      <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/login')}>
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => router.push('/login')}
+                      >
                         <LogIn size={16} className="mr-2 opacity-60" />
                         <p className="text-[13px] opacity-60">{t('common.navUser.signIn')}</p>
                       </DropdownMenuItem>
@@ -255,9 +265,7 @@ export function NavUser() {
                       </a>
                     </div>
                     <DropdownMenuSeparator className="mt-1" />
-                    <p className="text-muted-foreground px-2 py-1 text-[11px] font-medium">
-                      Debug
-                    </p>
+                    <p className="text-muted-foreground px-2 py-1 text-[11px] font-medium">Debug</p>
                     <DropdownMenuItem onClick={handleClearCache}>
                       <div className="flex items-center gap-2">
                         <HelpCircle size={16} className="opacity-60" />
@@ -270,55 +278,56 @@ export function NavUser() {
             </DropdownMenu>
           )
         ) : (
-          <div className='flex items-center justify-between w-full mr-2 mt-0.5'>
-            <div className='flex items-center gap-2'>{connections?.map((connection) => (
-              <div
-                key={connection.id}
-                onClick={handleAccountSwitch(connection)}
-                className={`flex cursor-pointer items-center ${
-                  connection.id === session?.connectionId && connections.length > 1
-                    ? 'rounded-[5px] outline outline-2 outline-mainBlue'
-                    : ''
-                }`}
-              >
-                <div className="relative">
-                  <Avatar className="size-7 rounded-[5px]">
-                    <AvatarImage
-                      className="rounded-[5px]"
-                      src={connection.picture || undefined}
-                      alt={connection.name || connection.email}
-                    />
-                    <AvatarFallback className="rounded-[5px] text-[10px]">
-                      {(connection.name || connection.email)
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {connection.id === session?.connectionId && connections.length > 1 && (
-                    <CircleCheck className="absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black fill-mainBlue" />
-                  )}
-                  
+          <div className="mr-2 mt-0. flex w-full items-center justify-between">
+            <div className="flex items-center gap-2">
+              {connections?.map((connection) => (
+                <div
+                  key={connection.id}
+                  onClick={handleAccountSwitch(connection)}
+                  className={`flex cursor-pointer items-center ${
+                    connection.id === session?.connectionId && connections.length > 1
+                      ? 'outline-mainBlue rounded-[5px] outline outline-2'
+                      : ''
+                  }`}
+                >
+                  <div className="relative">
+                    <Avatar className="size-7 rounded-[5px]">
+                      <AvatarImage
+                        className="rounded-[5px]"
+                        src={connection.picture || undefined}
+                        alt={connection.name || connection.email}
+                      />
+                      <AvatarFallback className="rounded-[5px] text-[10px]">
+                        {(connection.name || connection.email)
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {connection.id === session?.connectionId && connections.length > 1 && (
+                      <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black" />
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-            
-            <AddConnectionDialog>
-              <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] dark:bg-[#262626] dark:text-[#929292] border border-dashed">
-                <Plus className="size-4" />
-              </button>
-            </AddConnectionDialog></div>
+              ))}
+
+              <AddConnectionDialog>
+                <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
+                  <Plus className="size-4" />
+                </button>
+              </AddConnectionDialog>
+            </div>
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <div className="cursor-pointer">
-                    <ThreeDots className='fill-iconLight dark:fill-iconDark' />
-                  </div>
+                  <Button variant="ghost" className={cn('md:h-fit md:px-2')}>
+                    <ThreeDots className="fill-iconLight dark:fill-iconDark" />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="ml-3 min-w-56 font-medium bg-white dark:bg-[#131313]"
+                  className="ml-3 min-w-56 bg-white font-medium dark:bg-[#131313]"
                   align="end"
                   side={'bottom'}
                   sideOffset={8}
@@ -346,7 +355,9 @@ export function NavUser() {
                       <a href="https://discord.gg/0email" target="_blank" className="w-full">
                         <div className="flex items-center gap-2">
                           <HelpCircle size={16} className="opacity-60" />
-                          <p className="text-[13px] opacity-60">{t('common.navUser.customerSupport')}</p>
+                          <p className="text-[13px] opacity-60">
+                            {t('common.navUser.customerSupport')}
+                          </p>
                         </div>
                       </a>
                     </DropdownMenuItem>
@@ -389,7 +400,7 @@ export function NavUser() {
         )}
       </div>
       {state !== 'collapsed' && (
-        <div className="flex flex-col items-start gap-1 my-2 space-y-1">
+        <div className="my-2 flex flex-col items-start gap-1 space-y-1">
           <div className="text-[13px] leading-none text-black dark:text-white">
             {activeAccount?.name || session?.user.name || 'User'}
           </div>

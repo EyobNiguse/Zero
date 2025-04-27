@@ -536,7 +536,7 @@ export function EmailComposer({
               setMessageLength(plainText.length);
               setHasUnsavedChanges(true);
             }}
-            className="max-h-[150px] min-h-[150px] w-full cursor-text"
+            className="w-full cursor-text"
             placeholder={isAIComposing ? "Describe how you want to respond to this email..." : "Write your email..."}
             onCommandEnter={isAIComposing ? handleAIGenerate : handleSend}
           />
