@@ -56,8 +56,8 @@ function DeleteAccountDialog() {
     try {
       toast.promise(deleteUser(), {
         loading: t('pages.settings.dangerZone.deleting'),
-        success: 'Account deleted successfully',
-        error: 'Failed to delete account',
+        success: t('pages.settings.dangerZone.deleted'),
+        error: t('pages.settings.dangerZone.error'),
       });
       await signOut();
       router.push('/');

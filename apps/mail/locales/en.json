@@ -428,7 +428,9 @@
         "warning": "This action cannot be undone.",
         "confirmation": "Please type DELETE to confirm account deletion",
         "deleteAccount": "Delete Account",
-        "deleting": "Deleting..."
+        "deleting": "Deleting...",
+        "deleted": "Account deleted successfully",
+        "error": "Failed to delete account"
       }
     },
     "createEmail": {
