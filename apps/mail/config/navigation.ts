@@ -17,6 +17,8 @@ import { ArrowLeftIcon } from '@/components/icons/animated/arrow-left';
 import { ShieldCheckIcon } from '@/components/icons/animated/shield';
 import { KeyboardIcon } from '@/components/icons/animated/keyboard';
 import { SparklesIcon } from '@/components/icons/animated/sparkles';
+import { BadgeAlertIcon } from '@/components/icons/animated/alert';
+import { DeleteIcon } from '@/components/icons/animated/trash';
 import { UsersIcon } from '@/components/icons/animated/users';
 import { MessageSquareIcon } from 'lucide-react';
 import { NestedKeyOf } from 'next-intl';
@@ -176,6 +178,11 @@ export const navigationConfig: Record<string, NavConfig> = {
           //   url: "/settings/notifications",
           //   icon: BellIcon,
           // },
+          {
+            title: 'navigation.settings.dangerZone',
+            url: '/settings/danger-zone',
+            icon: BadgeAlertIcon,
+          },
         ].map((item) => ({
           ...item,
           isSettingsPage: true,

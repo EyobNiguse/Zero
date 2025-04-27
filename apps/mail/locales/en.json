@@ -304,7 +304,7 @@
       "signatures": "Signatures",
       "shortcuts": "Shortcuts",
       "labels": "Labels",
-      "danger-zone": "Danger Zone"
+      "dangerZone": "Danger Zone"
     }
   },
   "pages": {
@@ -422,7 +422,7 @@
         "title": "Labels",
         "description": "Manage your labels for better organization of your emails."
       },
-      "danger-zone": {
+      "dangerZone": {
         "title": "Danger Zone",
         "description": "Permanently delete your account and all associated data.",
         "warning": "This action cannot be undone.",
