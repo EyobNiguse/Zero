@@ -1,15 +1,55 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { hotkeysDB } from './hotkeys-db';
+import { useCallback, useMemo } from 'react';
+import useSWR, { SWRConfiguration } from 'swr';
+import { dexieStorageProvider } from '@/lib/idb';
 
-export const findShortcut = async (action: string): Promise<Shortcut | undefined> => {
-  const savedShortcut = await hotkeysDB.getHotkey(action);
-  if (savedShortcut) return savedShortcut;
+const swrConfig: SWRConfiguration = {
+  provider: () => dexieStorageProvider()
+};
 
+const getShortcuts = async (): Promise<Shortcut[]> => {
+  return keyboardShortcuts;
+};
+
+export const findShortcut = (action: string): Shortcut | undefined => {
+  // First try to get from cache
+  const { data: shortcuts } = useSWR<Shortcut[]>('/api/shortcuts', getShortcuts, swrConfig);
+  if (shortcuts) {
+    const cached = shortcuts.find(sc => sc.action === action);
+    if (cached) return cached;
+  }
+  // Fall back to default shortcuts
   return keyboardShortcuts.find((sc) => sc.action === action);
+};
+
+export const useShortcutCache = () => {
+  const { data: shortcuts, mutate } = useSWR<Shortcut[]>('/api/shortcuts', getShortcuts, swrConfig);
+
+  const updateShortcut = useCallback(async (shortcut: Shortcut) => {
+    const currentShortcuts = shortcuts || [];
+    const index = currentShortcuts.findIndex(s => s.action === shortcut.action);
+    
+    let newShortcuts: Shortcut[];
+    if (index >= 0) {
+      newShortcuts = [
+        ...currentShortcuts.slice(0, index),
+        shortcut,
+        ...currentShortcuts.slice(index + 1)
+      ];
+    } else {
+      newShortcuts = [...currentShortcuts, shortcut];
+    }
+    
+    await mutate(newShortcuts, false);
+  }, [shortcuts, mutate]);
+
+  return {
+    shortcuts: shortcuts || keyboardShortcuts,
+    updateShortcut
+  };
 };
 
 const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -89,39 +129,30 @@ export function useShortcut(
   callback: () => void,
   options: Partial<HotkeyOptions> = {},
 ) {
-  const [currentShortcut, setCurrentShortcut] = useState<Shortcut>(shortcut);
-
-  useEffect(() => {
-    hotkeysDB.saveHotkey(shortcut).catch(console.error);
-
-    hotkeysDB
-      .getHotkey(shortcut.action)
-      .then((saved) => {
-        if (saved && saved.keys !== shortcut.keys) {
-          setCurrentShortcut(saved);
-        }
-      })
-      .catch(console.error);
-  }, [shortcut]);
-
+  const { updateShortcut } = useShortcutCache();
   const { scope, preventDefault, ...restOptions } = {
     ...defaultHotkeyOptions,
     ...options,
-    ...currentShortcut,
+    ...shortcut,
   };
+
+  // Cache the shortcut when it's used
+  useCallback(() => {
+    updateShortcut(shortcut);
+  }, [shortcut, updateShortcut])();
 
   const handleKey = useCallback(
     (event: KeyboardEvent) => {
-      if (currentShortcut.preventDefault || preventDefault) {
+      if (shortcut.preventDefault || preventDefault) {
         event.preventDefault();
       }
       callback();
     },
-    [callback, preventDefault, currentShortcut],
+    [callback, preventDefault, shortcut],
   );
 
   useHotkeys(
-    formatKeys(currentShortcut.keys),
+    formatKeys(shortcut.keys),
     handleKey,
     {
       ...restOptions,
