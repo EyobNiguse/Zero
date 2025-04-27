@@ -11,7 +11,7 @@ import { PostHogProvider } from './posthog-provider';
 
 export function Providers({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
   return (
-    <AISidebarProvider>
+    // <AISidebarProvider>
       <JotaiProvider>
         <NuqsAdapter>
           <NextThemesProvider {...props}>
@@ -21,6 +21,6 @@ export function Providers({ children, ...props }: React.ComponentProps<typeof Ne
           </NextThemesProvider>
         </NuqsAdapter>
       </JotaiProvider>
-    </AISidebarProvider>
+    // </AISidebarProvider>
   );
 }

@@ -117,10 +117,10 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                             className="hidden dark:block"
                           />
                         </div>
-                        <p className="mb-3 mt-2 hidden text-sm text-black md:block dark:text-white">
+                        <p className="mb-1 mt-2 hidden text-sm text-black md:block dark:text-white font-medium">
                           Ask anything about your emails
                         </p>
-                        <p className="text-sm text-[#8C8C8C]">
+                        <p className="text-sm text-[#8C8C8C] dark:text-[#929292] mb-3">
                           Ask to do or show anything using natural language
                         </p>
 
@@ -128,36 +128,36 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                           {/* First row */}
                           <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
                             <div className="flex gap-4 px-4">
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
                                 Find invoice from Stripe
                               </p>
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
                                 Reply to Nick
                               </p>
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
                                 Show recent design feedback
                               </p>
                             </div>
                             {/* Left mask */}
-                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+                            <div className="pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r from-panelLight to-transparent dark:from-panelDark"></div>
                             {/* Right mask */}
-                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
+                            <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l from-panelLight to-transparent dark:from-panelDark"></div>
                           </div>
 
                           {/* Second row */}
                           <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
                             <div className="flex gap-4 px-4">
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
                                 Schedule meeting with Sarah
                               </p>
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#262626] p-1 px-2 text-sm text-[#929292]">
+                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
                                 What did alex say about the design
                               </p>
                             </div>
                             {/* Left mask */}
-                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+                            <div className="pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r from-panelLight to-transparent dark:from-panelDark"></div>
                             {/* Right mask */}
-                            <div className="from-panelDark dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
+                            <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l from-panelLight to-transparent dark:from-panelDark"></div>
                           </div>
                         </div>
                       </div>

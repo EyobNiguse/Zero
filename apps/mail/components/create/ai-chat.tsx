@@ -1,8 +1,8 @@
 'use client';
 
+import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus, Command } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus, Command } from 'lucide-react';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
@@ -290,7 +290,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
               key={message.id}
               className={cn(
                 'flex flex-col gap-2 rounded-lg',
-                message.role === 'user' ? 'bg-[] border-border border p-4' : '',
+                message.role === 'user' ? 'border-border border bg-[] p-4' : '',
               )}
             >
               <div className="flex items-center gap-2">
@@ -334,51 +334,53 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
 
               <div className="prose dark:prose-invert">{message.content}</div>
 
-              {message.type === 'search' && message.searchContent && message.searchContent.results.length > 0 && (
-                <div className="bg-muted space-y-4 rounded-lg px-4 pt-3">
-                  {(expandedResults.has(message.id)
-                    ? message.searchContent.results
-                    : message.searchContent.results.slice(0, 5)
-                  ).map((result: any, i: number) => (
-                    <div key={i} className="border-t pt-4 first:border-t-0 first:pt-0">
-                      <div className="font-medium">
-                        <p className="max-w-sm truncate text-sm">
-                          {result.subject.toLowerCase().includes('meeting') ? (
-                            <span className="text-blue-500">📅 {result.subject}</span>
-                          ) : (
-                            result.subject || 'No subject'
-                          )}
-                        </p>
-                        <span className="text-muted-foreground text-sm">
-                          from {result.from || 'Unknown sender'}
-                        </span>
+              {message.type === 'search' &&
+                message.searchContent &&
+                message.searchContent.results.length > 0 && (
+                  <div className="bg-muted space-y-4 rounded-lg px-4 pt-3">
+                    {(expandedResults.has(message.id)
+                      ? message.searchContent.results
+                      : message.searchContent.results.slice(0, 5)
+                    ).map((result: any, i: number) => (
+                      <div key={i} className="border-t pt-4 first:border-t-0 first:pt-0">
+                        <div className="font-medium">
+                          <p className="max-w-sm truncate text-sm">
+                            {result.subject.toLowerCase().includes('meeting') ? (
+                              <span className="text-blue-500">📅 {result.subject}</span>
+                            ) : (
+                              result.subject || 'No subject'
+                            )}
+                          </p>
+                          <span className="text-muted-foreground text-sm">
+                            from {result.from || 'Unknown sender'}
+                          </span>
+                        </div>
+                        <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                          {sanitizeSnippet(result.snippet)}
+                        </div>
+                        <div className="text-muted-foreground mt-1 text-sm">
+                          <button
+                            onClick={() => handleThreadClick(result.id)}
+                            className="cursor-pointer border-none bg-transparent p-0 text-blue-500 hover:underline"
+                          >
+                            Open email
+                          </button>
+                        </div>
                       </div>
-                      <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">
-                        {sanitizeSnippet(result.snippet)}
-                      </div>
-                      <div className="text-muted-foreground mt-1 text-sm">
-                        <button
-                          onClick={() => handleThreadClick(result.id)}
-                          className="text-blue-500 hover:underline bg-transparent border-none p-0 cursor-pointer"
-                        >
-                          Open email
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {message.searchContent.results.length > 5 && (
-                    <Button
-                      variant="ghost"
-                      className="text-muted-foreground hover:text-foreground w-full"
-                      onClick={() => toggleExpandResults(message.id)}
-                    >
-                      {expandedResults.has(message.id)
-                        ? `Show less (${message.searchContent.results.length - 5} fewer results)`
-                        : `Show more (${message.searchContent.results.length - 5} more results)`}
-                    </Button>
-                  )}
-                </div>
-              )}
+                    ))}
+                    {message.searchContent.results.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-foreground w-full"
+                        onClick={() => toggleExpandResults(message.id)}
+                      >
+                        {expandedResults.has(message.id)
+                          ? `Show less (${message.searchContent.results.length - 5} fewer results)`
+                          : `Show more (${message.searchContent.results.length - 5} more results)`}
+                      </Button>
+                    )}
+                  </div>
+                )}
 
               {message.type === 'email' && message.emailContent && (
                 <div className="bg-background mt-4 rounded border p-4 font-mono text-sm">
@@ -427,8 +429,8 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       </div>
 
       {/* Fixed input at bottom */}
-      <div className="flex-shrink-0 mb-[17px] ml-1.5">
-        <div className="bg-offsetLight dark:bg-[#333333] relative rounded-2xl border border-border/50">
+      <div className="mb-[17px] ml-1.5 flex-shrink-0">
+        <div className="bg-offsetLight border-border/50 relative rounded-2xl border dark:bg-[#141414]">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
           ) : (
@@ -439,12 +441,12 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Message Zero..."
+                  placeholder="Ask AI to do anything..."
                   className="placeholder:text-muted-foreground h-[44px] w-full resize-none rounded-[5px] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
+                {/* <div className="flex items-center gap-1">
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -465,20 +467,21 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
                       </div>
                     </div>
                   </button>
-                </div>
-                <button 
-                  className="inline-flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black dark:bg-white pl-1.5 pr-1 border border-border/50"
+                </div> */}
+                <div></div>
+                <button
+                  className="border-border/50 inline-flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-md border bg-white pl-1.5 pr-1 dark:bg-[#262626] cursor-pointer"
                   disabled={!value.trim() || isLoading}
                   onClick={handleSendMessage}
                 >
                   <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                    <div className="justify-start text-center text-sm leading-none text-white dark:text-neutral-800">
-                      Generate email
+                    <div className="justify-start text-center text-sm leading-none text-black dark:text-white">
+                      Send{' '}
                     </div>
                   </div>
-                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 dark:bg-black/10 px-1">
-                    <Command className="h-3.5 w-3.5 text-white dark:text-black" />
-                    <CurvedArrow className="h-4 w-4 fill-white dark:fill-black mt-1.5" />
+                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1 dark:bg-white/10">
+                    <Command className="h-3.5 w-3.5 text-black dark:text-[#929292]" />
+                    <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
                   </div>
                 </button>
               </div>
