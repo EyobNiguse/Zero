@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "envMode": "loose",
+  "ui": "tui",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -25,7 +26,8 @@
       "cache": false
     },
     "db:push": {
-      "cache": false
+      "cache": false,
+      "interactive": true
     },
     "db:studio": {
       "cache": false
