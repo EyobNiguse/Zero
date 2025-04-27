@@ -101,12 +101,14 @@ const options = {
           return;
         }
 
-        await db.delete(connection).where(eq(connection.userId, user.id));
-        await db.delete(account).where(eq(account.userId, user.id));
-        await db.delete(session).where(eq(session.userId, user.id));
-        await db.delete(userSettings).where(eq(userSettings.userId, user.id));
-        await db.delete(_user).where(eq(_user.id, user.id));
-        await db.delete(userHotkeys).where(eq(userHotkeys.userId, user.id));
+        await db.transaction(async (tx) => {
+          await tx.delete(connection).where(eq(connection.userId, user.id));
+          await tx.delete(account).where(eq(account.userId, user.id));
+          await tx.delete(session).where(eq(session.userId, user.id));
+          await tx.delete(userSettings).where(eq(userSettings.userId, user.id));
+          await tx.delete(_user).where(eq(_user.id, user.id));
+          await tx.delete(userHotkeys).where(eq(userHotkeys.userId, user.id));
+        });
       },
     },
   },
