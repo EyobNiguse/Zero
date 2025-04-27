@@ -488,7 +488,7 @@ const MailDisplay = ({
             <div className="flex w-full justify-center gap-4">
               <Avatar className="mt-1.5 h-8 w-8 rounded-full border dark:border-none">
                 <AvatarImage
-                  className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
+                  className="rounded-full"
                   src={getEmailLogo(emailData?.sender?.email)}
                 />
                 <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
