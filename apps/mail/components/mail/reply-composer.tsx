@@ -14,7 +14,11 @@ import { Sender } from '@/types';
 import { toast } from 'sonner';
 import { SuccessEmailToast } from '../theme/toast';
 
-export default function ReplyCompose() {
+interface ReplyComposeProps {
+  messageId?: string;
+}
+
+export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   const [threadId] = useQueryState('threadId');
   const { data: emailData, mutate } = useThread(threadId);
   const { data: session } = useSession();
@@ -23,35 +27,49 @@ export default function ReplyCompose() {
   const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
   const t = useTranslations();
 
+  // Find the specific message to reply to
+  const replyToMessage = messageId && emailData?.messages.find(msg => msg.id === messageId) || emailData?.latest;
+
   // Initialize recipients and subject when mode changes
   useEffect(() => {
-    if (!emailData?.latest || !mode || !session?.activeConnection?.email) return;
+    if (!replyToMessage || !mode || !session?.activeConnection?.email) return;
 
     const userEmail = session.activeConnection.email.toLowerCase();
-    const latestEmail = emailData.latest;
-    const senderEmail = latestEmail.sender.email.toLowerCase();
+    const senderEmail = replyToMessage.sender.email.toLowerCase();
 
     // Set subject based on mode
     const subject =
       mode === 'forward'
-        ? `Fwd: ${latestEmail.subject || ''}`
-        : latestEmail.subject?.startsWith('Re:')
-          ? latestEmail.subject
-          : `Re: ${latestEmail.subject || ''}`;
+        ? `Fwd: ${replyToMessage.subject || ''}`
+        : replyToMessage.subject?.startsWith('Re:')
+          ? replyToMessage.subject
+          : `Re: ${replyToMessage.subject || ''}`;
 
     if (mode === 'reply') {
       // Reply to sender
+      const to: string[] = [];
+      
+      // If the sender is not the current user, add them to the recipients
+      if (senderEmail !== userEmail) {
+        to.push(replyToMessage.sender.email);
+      } else if (replyToMessage.to && replyToMessage.to.length > 0 && replyToMessage.to[0]?.email) {
+        // If we're replying to our own email, reply to the first recipient
+        to.push(replyToMessage.to[0].email);
+      }
+      
+      // Initialize email composer with these recipients
+      // Note: The actual initialization happens in the EmailComposer component
     } else if (mode === 'replyAll') {
       const to: string[] = [];
       const cc: string[] = [];
 
       // Add original sender if not current user
       if (senderEmail !== userEmail) {
-        to.push(latestEmail.sender.email);
+        to.push(replyToMessage.sender.email);
       }
 
       // Add original recipients from To field
-      latestEmail.to?.forEach((recipient) => {
+      replyToMessage.to?.forEach((recipient) => {
         const recipientEmail = recipient.email.toLowerCase();
         if (recipientEmail !== userEmail && recipientEmail !== senderEmail) {
           to.push(recipient.email);
@@ -59,15 +77,19 @@ export default function ReplyCompose() {
       });
 
       // Add CC recipients
-      latestEmail.cc?.forEach((recipient) => {
+      replyToMessage.cc?.forEach((recipient) => {
         const recipientEmail = recipient.email.toLowerCase();
         if (recipientEmail !== userEmail && !to.includes(recipient.email)) {
           cc.push(recipient.email);
         }
       });
+      
+      // Initialize email composer with these recipients
+    } else if (mode === 'forward') {
+      // For forward, we start with empty recipients
+      // Just set the subject and include the original message
     }
-    // For forward, we start with empty recipients
-  }, [mode, emailData?.latest, session?.activeConnection?.email]);
+  }, [mode, replyToMessage, session?.activeConnection?.email]);
 
   const handleSendEmail = async (data: {
     to: string[];
@@ -77,10 +99,9 @@ export default function ReplyCompose() {
     message: string;
     attachments: File[];
   }) => {
-    if (!emailData?.latest || !session?.activeConnection?.email) return;
+    if (!replyToMessage || !session?.activeConnection?.email) return;
 
     try {
-      const originalEmail = emailData.latest;
       const userEmail = session.activeConnection.email.toLowerCase();
 
       // Convert email strings to Sender objects
@@ -105,10 +126,10 @@ export default function ReplyCompose() {
 
       const replyBody = constructReplyBody(
         data.message,
-        new Date(originalEmail.receivedOn || '').toLocaleString(),
-        originalEmail.sender,
+        new Date(replyToMessage.receivedOn || '').toLocaleString(),
+        replyToMessage.sender,
         toRecipients,
-        originalEmail.decodedBody,
+        replyToMessage.decodedBody,
       );
 
       await sendEmail({
@@ -120,13 +141,16 @@ export default function ReplyCompose() {
         attachments: data.attachments,
         fromEmail: aliases?.[0]?.email || userEmail,
         headers: {
-          'In-Reply-To': originalEmail.messageId ?? '',
-          References: [...(originalEmail.references?.split(' ') || []), originalEmail.messageId]
+          'In-Reply-To': replyToMessage?.messageId ?? '',
+          References: [
+            ...(replyToMessage?.references ? replyToMessage.references.split(' ') : []), 
+            replyToMessage?.messageId
+          ]
             .filter(Boolean)
             .join(' '),
-          'Thread-Id': originalEmail.threadId ?? '',
+          'Thread-Id': replyToMessage?.threadId ?? '',
         },
-        threadId: originalEmail.threadId,
+        threadId: replyToMessage?.threadId,
       });
 
       // Reset states

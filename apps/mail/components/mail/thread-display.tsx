@@ -155,6 +155,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const { folder } = useParams<{ folder: string }>();
   const [threadId, setThreadId] = useQueryState('threadId');
   const [mode, setMode] = useQueryState('mode');
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const {
     data: { threads: items = [] },
@@ -320,6 +321,32 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [handleClose]);
 
+  // When mode changes, set the active reply to the latest message
+  useEffect(() => {
+    // Only clear the active reply when mode is cleared
+    // This prevents overriding the specifically selected message
+    if (!mode) {
+      setActiveReplyId(null);
+    }
+  }, [mode]);
+
+  // Scroll to the active reply composer when it's opened
+  useEffect(() => {
+    if (mode && activeReplyId) {
+      setTimeout(() => {
+        const replyElement = document.getElementById(`reply-composer-${activeReplyId}`);
+        if (replyElement) {
+          replyElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100); // Short delay to ensure the component is rendered
+    }
+  }, [mode, activeReplyId]);
+
+  const replyToMessage = useCallback((messageId: string, replyMode: string = 'reply') => {
+    setActiveReplyId(messageId);
+    setMode(replyMode);
+  }, [setMode]);
+
   return (
     <div
       className={cn(
@@ -375,73 +402,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => {
-                          setMode('reply');
-                        }}
-                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
-                      >
-                        <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                        <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
-                          <div className="justify-start text-sm leading-none text-black dark:text-white">Reply</div>
-                        </div>
-                        <span className="sr-only md:hidden">Reply</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="md:hidden">
-                      Reply
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => {
-                          setMode('replyAll');
-                        }}
-                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border dark:border-none bg-white px-1.5 dark:bg-[#313131]"
-                      >
-                        <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                        <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
-                          <div className="justify-start text-sm leading-none text-black dark:text-white">
-                            Reply All
-                          </div>
-                        </div>
-                        <span className="sr-only md:hidden">Reply All</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="md:hidden">
-                      Reply All
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => {
-                          setMode('forward');
-                        }}
-                        className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border dark:border-none bg-white px-1.5 dark:bg-[#313131]"
-                      >
-                        <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
-                        <div className="hidden items-center justify-center gap-2.5 pl-0.5 pr-1 md:flex">
-                          <div className="justify-start text-sm leading-none text-black dark:text-white">
-                            Forward
-                          </div>
-                        </div>
-                        <span className="sr-only md:hidden">Forward</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="md:hidden">
-                      Forward
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider> */}
+               
                 <button
                   onClick={() => moveThreadTo('bin')}
                   className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
@@ -516,6 +477,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       className={cn(
                         'transition-all duration-200',
                         index > 0 && 'border-border border-t',
+                        mode && activeReplyId === message.id && 'bg-gray-50 dark:bg-gray-900/20'
                       )}
                     >
                       <MailDisplay
@@ -525,14 +487,19 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         isLoading={false}
                         index={index}
                         totalEmails={emailData?.totalReplies}
+                        onReply={() => replyToMessage(message.id, 'reply')}
+                        onReplyAll={() => replyToMessage(message.id, 'replyAll')}
+                        onForward={() => replyToMessage(message.id, 'forward')}
                       />
+                      {mode && activeReplyId === message.id && (
+                        <div className="px-4 py-2" id={`reply-composer-${message.id}`}>
+                          <ReplyCompose messageId={message.id} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </ScrollArea>
-              <div className={cn('relative z-10 mt-3 px-2', isFullscreen ? 'mb-2' : '')}>
-                <ReplyCompose />
-              </div>
             </div>
           </>
         )}

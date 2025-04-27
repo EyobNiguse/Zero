@@ -143,6 +143,9 @@ type Props = {
   totalEmails?: number;
   demo?: boolean;
   subject?: string;
+  onReply?: () => void;
+  onReplyAll?: () => void;
+  onForward?: () => void;
 };
 
 const MailDisplayLabels = ({ labels }: { labels: string[] }) => {
@@ -265,7 +268,17 @@ const AiSummary = ({
   );
 };
 
-const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) => {
+const MailDisplay = ({ 
+  emailData, 
+  isFullscreen, 
+  isMuted, 
+  index, 
+  totalEmails, 
+  demo, 
+  onReply,
+  onReplyAll,
+  onForward
+}: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [unsubscribed, setUnsubscribed] = useState(false);
   const [isUnsubscribing, setIsUnsubscribing] = useState(false);
@@ -775,8 +788,13 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
               ) : null}
               <div className="mb-4 mt-3 flex gap-2">
                 <button
-                  onClick={() => {
-                    setMode('reply');
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onReply) {
+                      onReply();
+                    } else {
+                      setMode('reply');
+                    }
                   }}
                   className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-1.5 dark:border-none dark:bg-[#313131]"
                 >
@@ -788,8 +806,13 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   </div>
                 </button>
                 <button
-                  onClick={() => {
-                    setMode('replyAll');
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onReplyAll) {
+                      onReplyAll();
+                    } else {
+                      setMode('replyAll');
+                    }
                   }}
                   className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-1.5 dark:border-none dark:bg-[#313131]"
                 >
@@ -801,8 +824,13 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   </div>
                 </button>
                 <button
-                  onClick={() => {
-                    setMode('forward');
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onForward) {
+                      onForward();
+                    } else {
+                      setMode('forward');
+                    }
                   }}
                   className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-1.5 dark:border-none dark:bg-[#313131]"
                 >
