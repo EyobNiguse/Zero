@@ -26,7 +26,7 @@ import {
 import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Briefcase, Star, StickyNote, Users } from 'lucide-react';
+import { Briefcase, Star, StickyNote, Users, Lock } from 'lucide-react';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import AttachmentsAccordion from './attachments-accordion';
@@ -269,6 +269,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [unsubscribed, setUnsubscribed] = useState(false);
   const [isUnsubscribing, setIsUnsubscribing] = useState(false);
+  const [preventCollapse, setPreventCollapse] = useState(false);
   const { folder } = useParams<{ folder: string }>();
   const [selectedAttachment, setSelectedAttachment] = useState<null | {
     id: string;
@@ -278,6 +279,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
   }>(null);
   const [openDetailsPopover, setOpenDetailsPopover] = useState<boolean>(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const t = useTranslations();
 
   const { data } = demo
@@ -331,12 +333,55 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
 
   const [mode, setMode] = useQueryState('mode');
 
+  // Clear any pending timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (collapseTimeoutRef.current) {
+        clearTimeout(collapseTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Function to handle popover state changes
+  const handlePopoverChange = useCallback((open: boolean) => {
+    setOpenDetailsPopover(open);
+    
+    if (!open) {
+      // When closing the popover, prevent collapse for a short time
+      setPreventCollapse(true);
+      
+      // Clear any existing timeout
+      if (collapseTimeoutRef.current) {
+        clearTimeout(collapseTimeoutRef.current);
+      }
+      
+      // Set a timeout to allow collapse again after a delay
+      collapseTimeoutRef.current = setTimeout(() => {
+        setPreventCollapse(false);
+      }, 300);
+    }
+  }, []);
+
+  // Handle email collapse toggle
+  const toggleCollapse = useCallback(() => {
+    // Only toggle if we're not in prevention mode
+    if (!preventCollapse && !openDetailsPopover) {
+      setIsCollapsed(!isCollapsed);
+    }
+  }, [isCollapsed, preventCollapse, openDetailsPopover]);
+
   return (
-    <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}>
+    <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}
+         onClick={(e) => {
+           if (openDetailsPopover) {
+             e.stopPropagation();
+           }
+         }}
+    >
       <div className="relative h-full overflow-y-auto">
         <div
           className="flex cursor-pointer flex-col pb-2 transition-all duration-200"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={toggleCollapse}
         >
           <div className={cn('px-4', index === 0 && 'border-b py-4')}>
             {index === 0 && (
@@ -451,7 +496,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                         {formatDate(emailData?.receivedOn)}
                       </time>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1">
                       <p className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
                         To:{' '}
                         {(() => {
@@ -498,8 +543,114 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                           ))}
                         </p>
                       )}
+                      <Popover open={openDetailsPopover} onOpenChange={handlePopoverChange}>
+                        <PopoverTrigger asChild>
+                          <button 
+                            className="flex items-center gap-2 p-2 hover:bg-iconLight dark:hover:bg-iconDark/20 rounded-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setOpenDetailsPopover(!openDetailsPopover);
+                            }}
+                            ref={triggerRef}
+                          >
+                            <ChevronDown className="h-2.5 w-2.5 fill-[#6D6D6D] dark:fill-[#8C8C8C]" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-[420px] text-left align-items-start rounded-lg border p-3 shadow-lg dark:bg-[#1A1A1A]"
+                          onBlur={(e) => {
+                            if (!triggerRef.current?.contains(e.relatedTarget)) {
+                              setOpenDetailsPopover(false);
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="space-y-1 text-sm">
+                            <div className="flex">
+                              <span className="w-24 text-end text-gray-500">
+                                {t('common.mailDisplay.from')}:
+                              </span>
+                              <div className="ml-3">
+                                <span className="text-muted-foreground pr-1 font-bold">
+                                  {cleanNameDisplay(emailData?.sender?.name)}
+                                </span>
+                                {emailData?.sender?.name !== emailData?.sender?.email && (
+                                  <span className="text-muted-foreground">
+                                    {cleanEmailDisplay(emailData?.sender?.email)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex">
+                              <span className="w-24 text-end text-gray-500">
+                                {t('common.mailDisplay.to')}:
+                              </span>
+                              <span className="text-muted-foreground ml-3">
+                                {emailData?.to?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
+                              </span>
+                            </div>
+                            {emailData?.cc && emailData.cc.length > 0 && (
+                              <div className="flex">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.cc')}:
+                                </span>
+                                <span className="text-muted-foreground ml-3">
+                                  {emailData?.cc?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
+                                </span>
+                              </div>
+                            )}
+                            {emailData?.bcc && emailData.bcc.length > 0 && (
+                              <div className="flex">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.bcc')}:
+                                </span>
+                                <span className="text-muted-foreground ml-3">
+                                  {emailData?.bcc?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex">
+                              <span className="w-24 text-end text-gray-500">
+                                {t('common.mailDisplay.date')}:
+                              </span>
+                              <span className="text-muted-foreground ml-3">
+                                {format(new Date(emailData?.receivedOn), 'PPpp')}
+                              </span>
+                            </div>
+                            <div className="flex">
+                              <span className="w-24 text-end text-gray-500">
+                                {t('common.mailDisplay.mailedBy')}:
+                              </span>
+                              <span className="text-muted-foreground ml-3">
+                                {cleanEmailDisplay(emailData?.sender?.email)}
+                              </span>
+                            </div>
+                            <div className="flex">
+                              <span className="w-24 text-end text-gray-500">
+                                {t('common.mailDisplay.signedBy')}:
+                              </span>
+                              <span className="text-muted-foreground ml-3">
+                                {cleanEmailDisplay(emailData?.sender?.email)}
+                              </span>
+                            </div>
+                            {emailData.tls && (
+                              <div className="flex items-center">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.security')}:
+                                </span>
+                                <div className="text-muted-foreground ml-3 flex items-center gap-1">
+                                  <Lock className="h-4 w-4 text-green-600" />{' '}
+                                  {t('common.mailDisplay.standardEncryption')}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
+
                   <span className="text-muted-foreground flex grow-0 items-center gap-2 text-sm">
                     {/* <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                       {emailData?.sender?.email}
@@ -548,116 +699,6 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                     {isMuted && <BellOff className="h-4 w-4" />} */}
                   </span>
                 </div>
-                {/* <div className="flex items-center gap-2">
-                  <time className="text-muted-foreground text-xs">
-                    {formatDate(emailData?.receivedOn)}
-                  </time>
-                  <Popover open={openDetailsPopover} onOpenChange={setOpenDetailsPopover}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-auto p-0 text-xs underline hover:bg-transparent"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenDetailsPopover(!openDetailsPopover);
-                        }}
-                        ref={triggerRef}
-                      >
-                        {t('common.mailDisplay.details')}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[420px] rounded-lg border p-3 shadow-lg"
-                      onBlur={(e) => {
-                        if (!triggerRef.current?.contains(e.relatedTarget)) {
-                          setOpenDetailsPopover(false);
-                        }
-                      }}
-                    >
-                      <div className="space-y-1 text-sm">
-                        <div className="flex">
-                          <span className="w-24 text-end text-gray-500">
-                            {t('common.mailDisplay.from')}:
-                          </span>
-                          <div className="ml-3">
-                            <span className="text-muted-foreground pr-1 font-bold">
-                              {cleanNameDisplay(emailData?.sender?.name)}
-                            </span>
-                            {emailData?.sender?.name !== emailData?.sender?.email && (
-                              <span className="text-muted-foreground">
-                                {cleanEmailDisplay(emailData?.sender?.email)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex">
-                          <span className="w-24 text-end text-gray-500">
-                            {t('common.mailDisplay.to')}:
-                          </span>
-                          <span className="text-muted-foreground ml-3">
-                            {emailData?.to?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
-                          </span>
-                        </div>
-                        {emailData?.cc && emailData.cc.length > 0 && (
-                          <div className="flex">
-                            <span className="w-24 text-end text-gray-500">
-                              {t('common.mailDisplay.cc')}:
-                            </span>
-                            <span className="text-muted-foreground ml-3">
-                              {emailData?.cc?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
-                            </span>
-                          </div>
-                        )}
-                        {emailData?.bcc && emailData.bcc.length > 0 && (
-                          <div className="flex">
-                            <span className="w-24 text-end text-gray-500">
-                              {t('common.mailDisplay.bcc')}:
-                            </span>
-                            <span className="text-muted-foreground ml-3">
-                              {emailData?.bcc?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex">
-                          <span className="w-24 text-end text-gray-500">
-                            {t('common.mailDisplay.date')}:
-                          </span>
-                          <span className="text-muted-foreground ml-3">
-                            {format(new Date(emailData?.receivedOn), 'PPpp')}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="w-24 text-end text-gray-500">
-                            {t('common.mailDisplay.mailedBy')}:
-                          </span>
-                          <span className="text-muted-foreground ml-3">
-                            {cleanEmailDisplay(emailData?.sender?.email)}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="w-24 text-end text-gray-500">
-                            {t('common.mailDisplay.signedBy')}:
-                          </span>
-                          <span className="text-muted-foreground ml-3">
-                            {cleanEmailDisplay(emailData?.sender?.email)}
-                          </span>
-                        </div>
-                        {emailData.tls && (
-                          <div className="flex items-center">
-                            <span className="w-24 text-end text-gray-500">
-                              {t('common.mailDisplay.security')}:
-                            </span>
-                            <div className="text-muted-foreground ml-3 flex items-center gap-1">
-                              <Lock className="h-4 w-4 text-green-600" />{' '}
-                              {t('common.mailDisplay.standardEncryption')}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div> */}
               </div>
             </div>
           </div>
@@ -694,7 +735,7 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button
-                        className="flex h-7 items-center gap-1 rounded-[5px] bg-[#FAFAFA] border dark: px-4 text-sm font-medium hover:bg-[#F0F0F0] dark:bg-[#262626] dark:hover:bg-[#303030]"
+                        className="dark: flex h-7 items-center gap-1 rounded-[5px] border bg-[#FAFAFA] px-4 text-sm font-medium hover:bg-[#F0F0F0] dark:bg-[#262626] dark:hover:bg-[#303030]"
                         onClick={() => {
                           try {
                             // Convert base64 to blob
@@ -737,33 +778,39 @@ const MailDisplay = ({ emailData, isMuted, index, totalEmails, demo }: Props) =>
                   onClick={() => {
                     setMode('reply');
                   }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-1.5 dark:border-none dark:bg-[#313131]"
                 >
                   <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-black dark:text-white">Reply</div>
+                    <div className="justify-start text-sm leading-none text-black dark:text-white">
+                      Reply
+                    </div>
                   </div>
                 </button>
                 <button
                   onClick={() => {
                     setMode('replyAll');
                   }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-1.5 dark:border-none dark:bg-[#313131]"
                 >
                   <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-black dark:text-white">Reply All</div>
+                    <div className="justify-start text-sm leading-none text-black dark:text-white">
+                      Reply All
+                    </div>
                   </div>
                 </button>
                 <button
                   onClick={() => {
                     setMode('forward');
                   }}
-                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white px-1.5 dark:bg-[#313131] border dark:border-none"
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-1.5 dark:border-none dark:bg-[#313131]"
                 >
                   <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
-                    <div className="justify-start text-sm leading-none text-black dark:text-white">Forward</div>
+                    <div className="justify-start text-sm leading-none text-black dark:text-white">
+                      Forward
+                    </div>
                   </div>
                 </button>
               </div>

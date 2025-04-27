@@ -375,7 +375,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <TooltipProvider delayDuration={0}>
+                {/* <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
@@ -441,7 +441,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       Forward
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider>
+                </TooltipProvider> */}
                 <button
                   onClick={() => moveThreadTo('bin')}
                   className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
