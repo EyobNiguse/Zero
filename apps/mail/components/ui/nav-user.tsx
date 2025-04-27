@@ -278,7 +278,7 @@ export function NavUser() {
             </DropdownMenu>
           )
         ) : (
-          <div className="mr-2 mt-0. flex w-full items-center justify-between">
+          <div className="mt-0. flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
               {connections?.map((connection) => (
                 <div

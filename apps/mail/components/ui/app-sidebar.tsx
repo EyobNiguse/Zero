@@ -33,10 +33,9 @@ import Link from 'next/link';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
-  const { data: session, isPending } = useSession();
 
   const pathname = usePathname();
-
+  const { data: session, isPending } = useSession();
   const { currentSection, navItems } = useMemo(() => {
     // Find which section we're in based on the pathname
     const section = Object.entries(navigationConfig).find(([, config]) =>
@@ -77,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {...props}
         className={`flex select-none flex-col items-center ${state === 'collapsed' ? '' : ''}`}
       >
-        <div className="relative z-20 flex w-full flex-col">
+        <div className="relative z-20 flex w-full flex-col px-2">
           <SidebarHeader className="flex flex-col gap-2 pt-[18px]">
             <NavUser />
             <AnimatePresence mode="wait">
@@ -109,9 +108,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarContent>
         </div>
 
-        <div className="mt-auto flex w-full flex-col">
+        <div className="mt-auto flex w-full flex-col px-2">
           <div className="mx-2">
-            <GoldenTicketModal />
+            {!session || isPending ? null : !session?.hasUsedTicket ? <GoldenTicketModal /> : null}
           </div>
           <SidebarContent className="py-0 pt-0">
             <NavMain items={bottomNavItems} />
@@ -131,7 +130,7 @@ function ComposeButton() {
   const [dialogOpen, setDialogOpen] = useQueryState('isComposeOpen');
   const [, setDraftId] = useQueryState('draftId');
   const [, setTo] = useQueryState('to');
-  
+
   const handleOpenChange = (open: boolean) => {
     setDialogOpen(open ? 'true' : null);
     if (!open) {
