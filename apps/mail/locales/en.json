@@ -171,7 +171,9 @@
       "muteThread": "Mute thread",
       "favourites": "Favourites",
       "disableImages": "Hide Images",
-      "enableImages": "Show Images"
+      "enableImages": "Show Images",
+      "star": "Star",
+      "unstar": "Unstar"
     },
     "notes": {
       "title": "Notes",

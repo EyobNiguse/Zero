@@ -291,8 +291,8 @@ function NavItem(item: NavItemProps & { href: string }) {
       {stats
         ? stats.find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase()) && (
             <Badge
-              className="text-muted-foreground ml-auto shrink-0 rounded-full dark:bg-[#2B2B2B]"
-              variant="outline"
+              className="text-muted-foreground ml-auto shrink-0 rounded-full dark:bg-transparent border-none "
+    
             >
               {stats
                 .find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase())

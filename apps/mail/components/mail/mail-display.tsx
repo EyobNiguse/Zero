@@ -25,8 +25,8 @@ import {
 } from '../ui/dialog';
 import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Briefcase, Star, StickyNote, Users, Lock } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import AttachmentsAccordion from './attachments-accordion';
@@ -268,16 +268,16 @@ const AiSummary = ({
   );
 };
 
-const MailDisplay = ({ 
-  emailData, 
-  isFullscreen, 
-  isMuted, 
-  index, 
-  totalEmails, 
-  demo, 
+const MailDisplay = ({
+  emailData,
+  isFullscreen,
+  isMuted,
+  index,
+  totalEmails,
+  demo,
   onReply,
   onReplyAll,
-  onForward
+  onForward,
 }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [unsubscribed, setUnsubscribed] = useState(false);
@@ -358,16 +358,16 @@ const MailDisplay = ({
   // Function to handle popover state changes
   const handlePopoverChange = useCallback((open: boolean) => {
     setOpenDetailsPopover(open);
-    
+
     if (!open) {
       // When closing the popover, prevent collapse for a short time
       setPreventCollapse(true);
-      
+
       // Clear any existing timeout
       if (collapseTimeoutRef.current) {
         clearTimeout(collapseTimeoutRef.current);
       }
-      
+
       // Set a timeout to allow collapse again after a delay
       collapseTimeoutRef.current = setTimeout(() => {
         setPreventCollapse(false);
@@ -384,108 +384,106 @@ const MailDisplay = ({
   }, [isCollapsed, preventCollapse, openDetailsPopover]);
 
   return (
-    <div className={cn('relative flex-1 overflow-hidden')} id={`mail-${emailData.id}`}
-         onClick={(e) => {
-           if (openDetailsPopover) {
-             e.stopPropagation();
-           }
-         }}
+    <div
+      className={cn('relative flex-1 overflow-hidden')}
+      id={`mail-${emailData.id}`}
+      onClick={(e) => {
+        if (openDetailsPopover) {
+          e.stopPropagation();
+        }
+      }}
     >
       <div className="relative h-full overflow-y-auto">
+        <div className={cn('px-4', index === 0 && 'border-b py-4')}>
+          {index === 0 && (
+            <>
+              <p className="font-medium text-black dark:text-white">
+                {emailData.subject}{' '}
+                <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
+                  {totalEmails && `[${totalEmails}]`}
+                </span>
+              </p>
+              <div className="mb-4 mt-1 flex items-center gap-1">
+                <Calendar className="size-3.5 fill-[#6D6D6D] dark:fill-[#8C8C8C]" />
+                <span className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
+                  {formatDate(emailData?.receivedOn)}
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                {emailData?.tags ? (
+                  <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []} />
+                ) : null}
+                <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
+                <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
+                  {(() => {
+                    interface Person {
+                      name: string;
+                      email: string;
+                    }
+
+                    const allPeople = [
+                      ...(folder === 'sent' ? [] : [emailData.sender]),
+                      ...(emailData.to || []),
+                      ...(emailData.cc || []),
+                      ...(emailData.bcc || []),
+                    ];
+
+                    const people = allPeople.filter(
+                      (p): p is Person =>
+                        Boolean(p?.email) &&
+                        p.name !== 'No Sender Name' &&
+                        p === allPeople.find((other) => other?.email === p?.email),
+                    );
+
+                    const renderPerson = (person: Person) => (
+                      <div
+                        key={person.email}
+                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+                      >
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
+                          <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold dark:bg-[#373737]">
+                            {getFirstLetterCharacter(person.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
+                          {person.name || person.email}
+                        </div>
+                      </div>
+                    );
+
+                    if (people.length <= 2) {
+                      return people.map(renderPerson);
+                    }
+
+                    // Only show first two people plus count if we have at least two people
+                    const firstPerson = people[0];
+                    const secondPerson = people[1];
+
+                    if (firstPerson && secondPerson) {
+                      return (
+                        <>
+                          {renderPerson(firstPerson)}
+                          {renderPerson(secondPerson)}
+                          <span className="text-sm">
+                            +{people.length - 2} {people.length - 2 === 1 ? 'other' : 'others'}
+                          </span>
+                        </>
+                      );
+                    }
+
+                    return null;
+                  })()}
+                </div>
+              </div>
+              <AiSummary />
+            </>
+          )}
+        </div>
         <div
           className="flex cursor-pointer flex-col pb-2 transition-all duration-200"
           onClick={toggleCollapse}
         >
-          <div className={cn('px-4', index === 0 && 'border-b py-4')}>
-            {index === 0 && (
-              <>
-                <p className="font-medium text-black dark:text-white">
-                  {emailData.subject}{' '}
-                  <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
-                    {totalEmails && `[${totalEmails}]`}
-                  </span>
-                </p>
-                <div className="mb-4 mt-1 flex items-center gap-1">
-                  <Calendar className="size-3.5 fill-[#6D6D6D] dark:fill-[#8C8C8C]" />
-                  <span className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
-                    {formatDate(emailData?.receivedOn)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  {emailData?.tags ? (
-                    <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []} />
-                  ) : null}
-                  <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
-                  <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
-                    {(() => {
-                      interface Person {
-                        name: string;
-                        email: string;
-                      }
-
-                      const allPeople = [
-                        ...(folder === 'sent' ? [] : [emailData.sender]),
-                        ...(emailData.to || []),
-                        ...(emailData.cc || []),
-                        ...(emailData.bcc || []),
-                      ];
-
-                      const people = allPeople.filter(
-                        (p): p is Person =>
-                          Boolean(p?.email) &&
-                          p.name !== 'No Sender Name' &&
-                          p === allPeople.find((other) => other?.email === p?.email),
-                      );
-
-                      const renderPerson = (person: Person) => (
-                        <div
-                          key={person.email}
-                          className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
-                        >
-                          <Avatar className="h-5 w-5">
-                            <AvatarImage
-                              src={getEmailLogo(person.email)}
-                              className="rounded-full"
-                            />
-                            <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold dark:bg-[#373737]">
-                              {getFirstLetterCharacter(person.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
-                            {person.name || person.email}
-                          </div>
-                        </div>
-                      );
-
-                      if (people.length <= 2) {
-                        return people.map(renderPerson);
-                      }
-
-                      // Only show first two people plus count if we have at least two people
-                      const firstPerson = people[0];
-                      const secondPerson = people[1];
-
-                      if (firstPerson && secondPerson) {
-                        return (
-                          <>
-                            {renderPerson(firstPerson)}
-                            {renderPerson(secondPerson)}
-                            <span className="text-sm">
-                              +{people.length - 2} {people.length - 2 === 1 ? 'other' : 'others'}
-                            </span>
-                          </>
-                        );
-                      }
-
-                      return null;
-                    })()}
-                  </div>
-                </div>
-                <AiSummary />
-              </>
-            )}
-          </div>
-
           <div className="mt-3 flex w-full items-start justify-between gap-4 px-4">
             <div className="flex w-full justify-center gap-4">
               <Avatar className="mt-1.5 h-8 w-8 rounded-full border dark:border-none">
@@ -502,9 +500,123 @@ const MailDisplay = ({
                 <div className="flex w-full items-center justify-start gap-2">
                   <div className="flex w-full flex-col">
                     <div className="flex w-full items-center justify-between">
-                      <span className="font-semibold">
-                        {cleanNameDisplay(emailData?.sender?.name)}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">
+                          {cleanNameDisplay(emailData?.sender?.name)}
+                        </span>
+                        <Popover open={openDetailsPopover} onOpenChange={handlePopoverChange}>
+                          <PopoverTrigger asChild>
+                            <button
+                              className="hover:bg-iconLight dark:hover:bg-iconDark/20 flex items-center gap-2 rounded-md p-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                setOpenDetailsPopover(!openDetailsPopover);
+                              }}
+                              ref={triggerRef}
+                            >
+                              <p className="text-xs text-[#6D6D6D] underline dark:text-[#8C8C8C]">
+                                Details
+                              </p>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="align-items-start w-[420px] rounded-lg border p-3 text-left shadow-lg dark:bg-[#1A1A1A]"
+                            onBlur={(e) => {
+                              if (!triggerRef.current?.contains(e.relatedTarget)) {
+                                setOpenDetailsPopover(false);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="space-y-1 text-sm">
+                              <div className="flex">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.from')}:
+                                </span>
+                                <div className="ml-3">
+                                  <span className="text-muted-foreground pr-1 font-bold">
+                                    {cleanNameDisplay(emailData?.sender?.name)}
+                                  </span>
+                                  {emailData?.sender?.name !== emailData?.sender?.email && (
+                                    <span className="text-muted-foreground">
+                                      {cleanEmailDisplay(emailData?.sender?.email)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.to')}:
+                                </span>
+                                <span className="text-muted-foreground ml-3">
+                                  {emailData?.to?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
+                                </span>
+                              </div>
+                              {emailData?.cc && emailData.cc.length > 0 && (
+                                <div className="flex">
+                                  <span className="w-24 text-end text-gray-500">
+                                    {t('common.mailDisplay.cc')}:
+                                  </span>
+                                  <span className="text-muted-foreground ml-3">
+                                    {emailData?.cc
+                                      ?.map((t) => cleanEmailDisplay(t.email))
+                                      .join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                              {emailData?.bcc && emailData.bcc.length > 0 && (
+                                <div className="flex">
+                                  <span className="w-24 text-end text-gray-500">
+                                    {t('common.mailDisplay.bcc')}:
+                                  </span>
+                                  <span className="text-muted-foreground ml-3">
+                                    {emailData?.bcc
+                                      ?.map((t) => cleanEmailDisplay(t.email))
+                                      .join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.date')}:
+                                </span>
+                                <span className="text-muted-foreground ml-3">
+                                  {format(new Date(emailData?.receivedOn), 'PPpp')}
+                                </span>
+                              </div>
+                              <div className="flex">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.mailedBy')}:
+                                </span>
+                                <span className="text-muted-foreground ml-3">
+                                  {cleanEmailDisplay(emailData?.sender?.email)}
+                                </span>
+                              </div>
+                              <div className="flex">
+                                <span className="w-24 text-end text-gray-500">
+                                  {t('common.mailDisplay.signedBy')}:
+                                </span>
+                                <span className="text-muted-foreground ml-3">
+                                  {cleanEmailDisplay(emailData?.sender?.email)}
+                                </span>
+                              </div>
+                              {emailData.tls && (
+                                <div className="flex items-center">
+                                  <span className="w-24 text-end text-gray-500">
+                                    {t('common.mailDisplay.security')}:
+                                  </span>
+                                  <div className="text-muted-foreground ml-3 flex items-center gap-1">
+                                    <Lock className="h-4 w-4 text-green-600" />{' '}
+                                    {t('common.mailDisplay.standardEncryption')}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
                       <time className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
                         {formatDate(emailData?.receivedOn)}
                       </time>
@@ -556,111 +668,6 @@ const MailDisplay = ({
                           ))}
                         </p>
                       )}
-                      <Popover open={openDetailsPopover} onOpenChange={handlePopoverChange}>
-                        <PopoverTrigger asChild>
-                          <button 
-                            className="flex items-center gap-2 p-2 hover:bg-iconLight dark:hover:bg-iconDark/20 rounded-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              setOpenDetailsPopover(!openDetailsPopover);
-                            }}
-                            ref={triggerRef}
-                          >
-                            <ChevronDown className="h-2.5 w-2.5 fill-[#6D6D6D] dark:fill-[#8C8C8C]" />
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-[420px] text-left align-items-start rounded-lg border p-3 shadow-lg dark:bg-[#1A1A1A]"
-                          onBlur={(e) => {
-                            if (!triggerRef.current?.contains(e.relatedTarget)) {
-                              setOpenDetailsPopover(false);
-                            }
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="space-y-1 text-sm">
-                            <div className="flex">
-                              <span className="w-24 text-end text-gray-500">
-                                {t('common.mailDisplay.from')}:
-                              </span>
-                              <div className="ml-3">
-                                <span className="text-muted-foreground pr-1 font-bold">
-                                  {cleanNameDisplay(emailData?.sender?.name)}
-                                </span>
-                                {emailData?.sender?.name !== emailData?.sender?.email && (
-                                  <span className="text-muted-foreground">
-                                    {cleanEmailDisplay(emailData?.sender?.email)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex">
-                              <span className="w-24 text-end text-gray-500">
-                                {t('common.mailDisplay.to')}:
-                              </span>
-                              <span className="text-muted-foreground ml-3">
-                                {emailData?.to?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
-                              </span>
-                            </div>
-                            {emailData?.cc && emailData.cc.length > 0 && (
-                              <div className="flex">
-                                <span className="w-24 text-end text-gray-500">
-                                  {t('common.mailDisplay.cc')}:
-                                </span>
-                                <span className="text-muted-foreground ml-3">
-                                  {emailData?.cc?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
-                                </span>
-                              </div>
-                            )}
-                            {emailData?.bcc && emailData.bcc.length > 0 && (
-                              <div className="flex">
-                                <span className="w-24 text-end text-gray-500">
-                                  {t('common.mailDisplay.bcc')}:
-                                </span>
-                                <span className="text-muted-foreground ml-3">
-                                  {emailData?.bcc?.map((t) => cleanEmailDisplay(t.email)).join(', ')}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex">
-                              <span className="w-24 text-end text-gray-500">
-                                {t('common.mailDisplay.date')}:
-                              </span>
-                              <span className="text-muted-foreground ml-3">
-                                {format(new Date(emailData?.receivedOn), 'PPpp')}
-                              </span>
-                            </div>
-                            <div className="flex">
-                              <span className="w-24 text-end text-gray-500">
-                                {t('common.mailDisplay.mailedBy')}:
-                              </span>
-                              <span className="text-muted-foreground ml-3">
-                                {cleanEmailDisplay(emailData?.sender?.email)}
-                              </span>
-                            </div>
-                            <div className="flex">
-                              <span className="w-24 text-end text-gray-500">
-                                {t('common.mailDisplay.signedBy')}:
-                              </span>
-                              <span className="text-muted-foreground ml-3">
-                                {cleanEmailDisplay(emailData?.sender?.email)}
-                              </span>
-                            </div>
-                            {emailData.tls && (
-                              <div className="flex items-center">
-                                <span className="w-24 text-end text-gray-500">
-                                  {t('common.mailDisplay.security')}:
-                                </span>
-                                <div className="text-muted-foreground ml-3 flex items-center gap-1">
-                                  <Lock className="h-4 w-4 text-green-600" />{' '}
-                                  {t('common.mailDisplay.standardEncryption')}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
                     </div>
                   </div>
 

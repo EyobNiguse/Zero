@@ -9,18 +9,16 @@ import {
   parseNaturalLanguageSearch,
 } from '@/lib/utils';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
-import { Bell, ExclamationTriangle, GroupPeople, Lightning, Tag, User } from '../icons/icons';
+import { Bell, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Briefcase, ChevronDown, Star, StickyNote, Users } from 'lucide-react';
-import { EmptyState, type FolderType } from '@/components/mail/empty-state';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
 import { ThreadContextMenu } from '@/components/context/thread-context';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { Label, useThreadLabels } from '@/hooks/use-labels';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { markAsRead, markAsUnread } from '@/actions/mail';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
 import { useHotkeysContext } from 'react-hotkeys-hook';
@@ -38,7 +36,7 @@ import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
 import Image from 'next/image';
-import { toast } from 'sonner';
+
 const HOVER_DELAY = 1000; // ms before prefetching
 
 const ThreadWrapper = ({
@@ -202,7 +200,7 @@ const Thread = memo(
         ...(latestMessage.cc || []),
         ...(latestMessage.bcc || []),
       ].length;
-      return totalRecipients > 1; // More than 1 recipient (excluding the sender)
+      return totalRecipients > 1; 
     }, [latestMessage]);
 
     const cleanName = useMemo(() => {

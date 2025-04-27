@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbo",
     "dev:turbo": "next dev",
-    "build": "next build",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint . --cache --cache-location ./node_modules/.cache/eslint",
     "scripts": "bun run ./scripts/run.ts"
@@ -89,7 +89,7 @@
     "lz-string": "1.5.0",
     "mimetext": "^3.0.27",
     "motion": "12.4.7",
-    "next": "15.2.3",
+    "next": "15.3.1",
     "next-intl": "3.26.5",
     "next-themes": "0.4.4",
     "novel": "1.0.2",
