@@ -438,7 +438,7 @@ const MailDisplay = ({
                     const renderPerson = (person: Person) => (
                       <div
                         key={person.email}
-                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white py-1 pl-1 pr-2.5 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white  dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
                       >
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
@@ -486,7 +486,7 @@ const MailDisplay = ({
         >
           <div className="mt-3 flex w-full items-start justify-between gap-4 px-4">
             <div className="flex w-full justify-center gap-4">
-              <Avatar className="mt-1.5 h-8 w-8 rounded-full border dark:border-none">
+              <Avatar className="mt-3 h-8 w-8 rounded-full border dark:border-none">
                 <AvatarImage
                   className="rounded-full"
                   src={getEmailLogo(emailData?.sender?.email)}
@@ -497,7 +497,7 @@ const MailDisplay = ({
               </Avatar>
 
               <div className="flex w-full items-center justify-between">
-                <div className="flex w-full items-center justify-start gap-2">
+                <div className="flex w-full items-center justify-start">
                   <div className="flex w-full flex-col">
                     <div className="flex w-full items-center justify-between">
                       <div className="flex items-center gap-1">
