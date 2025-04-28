@@ -64,6 +64,9 @@ export function MailIframe({ html, senderEmail }: { html: string; senderEmail: s
 
     // Use the larger of the two values to ensure all content is visible
     setHeight(Math.max(boundingRectHeight, scrollHeight));
+    if (body.innerText.trim() === '') {
+      setHeight(0);
+    }
   }, [iframeRef, setHeight]);
 
   useEffect(() => {
@@ -72,6 +75,7 @@ export function MailIframe({ html, senderEmail }: { html: string; senderEmail: s
       if (!iframeRef.current) return;
       const url = URL.createObjectURL(new Blob([htmlDoc], { type: 'text/html' }));
       iframeRef.current.src = url;
+
       const handler = () => {
         if (iframeRef.current?.contentWindow?.document.body) {
           calculateAndSetHeight();
