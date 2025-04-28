@@ -47,6 +47,7 @@
     "@radix-ui/react-toggle-group": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.8",
     "@radix-ui/react-visually-hidden": "1.1.2",
+    "@react-email/components": "^0.0.36",
     "@tiptap/core": "2.11.5",
     "@tiptap/extension-bold": "2.11.5",
     "@tiptap/extension-document": "2.11.5",
@@ -147,5 +148,7 @@
     "enquirer": "2.4.1",
     "p-all": "^5.0.0",
     "remeda": "2.21.3"
+    "@radix-ui/react-navigation-menu": "^1.2.10",
+    "@radix-ui/react-slot": "^1.2.0"
   }
 }

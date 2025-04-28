@@ -9,11 +9,11 @@ import {
   parseNaturalLanguageSearch,
 } from '@/lib/utils';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
-import { Bell, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Briefcase, ChevronDown, Star, StickyNote, Users } from 'lucide-react';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
+import { Bell, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { ThreadContextMenu } from '@/components/context/thread-context';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
@@ -145,18 +145,21 @@ const Thread = memo(
     const t = useTranslations();
     const { folder } = useParams<{ folder: string }>();
     const { mutate } = useThreads();
-    const [threadId, setThreadId] = useQueryState('threadId');
+    const [threadId] = useQueryState('threadId');
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
-    const { data: getThreadData, isLoading } = useThread(demo ? null : message.id);
+    const {
+      data: getThreadData,
+      labels,
+      isLoading,
+      isGroupThread,
+    } = useThread(demo ? null : message.id);
 
     const latestMessage = demo ? demoMessage : getThreadData?.latest;
     const emailContent = demo ? demoMessage?.body : getThreadData?.latest?.body;
 
-    const { labels: threadLabels } = useThreadLabels(
-      latestMessage ? latestMessage.tags?.map((t) => t.id!) : [],
-    );
+    const { labels: threadLabels } = useThreadLabels(labels ? labels.map((l) => l.id) : []);
 
     const mainSearchTerm = useMemo(() => {
       if (!searchValue.highlight) return '';
@@ -192,16 +195,6 @@ const Thread = memo(
     const isFolderSpam = folder === FOLDERS.SPAM;
     const isFolderSent = folder === FOLDERS.SENT;
     const isFolderBin = folder === FOLDERS.BIN;
-
-    const isGroupThread = useMemo(() => {
-      if (!latestMessage) return false;
-      const totalRecipients = [
-        ...(latestMessage.to || []),
-        ...(latestMessage.cc || []),
-        ...(latestMessage.bcc || []),
-      ].length;
-      return totalRecipients > 1; 
-    }, [latestMessage]);
 
     const cleanName = useMemo(() => {
       if (!latestMessage?.sender?.name) return '';
@@ -318,7 +311,7 @@ const Thread = memo(
                           <span className="size-2 rounded bg-[#006FFE]" />
                         ) : null}
                       </p>
-                      <MailLabels labels={latestMessage.tags} />
+                      {/* <MailLabels labels={latestMessage.tags} /> */}
                       {Math.random() > 0.5 &&
                         (() => {
                           const count = Math.floor(Math.random() * 10) + 1;
@@ -395,7 +388,7 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4 px-4">
               <div>
-                <Avatar className="h-8 w-8 border rounded-full dark:border-none">
+                <Avatar className="h-8 w-8 rounded-full border dark:border-none">
                   {isGroupThread ? (
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">
                       <GroupPeople className="h-4 w-4" />
@@ -403,7 +396,7 @@ const Thread = memo(
                   ) : (
                     <>
                       <AvatarImage
-                        className="bg-[#FFFFFF] dark:bg-[#373737] rounded-full"
+                        className="rounded-full bg-[#FFFFFF] dark:bg-[#373737]"
                         src={getEmailLogo(latestMessage.sender.email)}
                       />
                       <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
@@ -429,7 +422,7 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span className={cn('max-w-[30ch] truncate text-sm')}>
+                        <span className={cn('max-w-[18ch] truncate text-sm')}>
                           {highlightText(
                             cleanNameDisplay(latestMessage.sender.name) || '',
                             searchValue.highlight,
@@ -446,7 +439,7 @@ const Thread = memo(
                               [{getThreadData.totalReplies}]
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent className="px-1 py-0 text-xs">
+                          <TooltipContent className="p-1 text-xs">
                             {t('common.mail.replies', { count: getThreadData.totalReplies })}
                           </TooltipContent>
                         </Tooltip>
@@ -471,7 +464,7 @@ const Thread = memo(
                     >
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
-                    <MailLabels labels={latestMessage.tags} />
+                    {labels ? <MailLabels labels={labels} /> : null}
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
@@ -644,6 +637,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     return 'single';
   }, [isKeyPressed]);
 
+  const [, setActiveReplyId] = useQueryState('activeReplyId');
+
   const handleMailClick = useCallback(
     (message: ParsedMessage) => () => {
       handleMouseEnter(message.id);
@@ -652,6 +647,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
       // Update URL param without navigation
       void setThreadId(messageThreadId);
+      void setActiveReplyId(null);
     },
     [],
   );
@@ -778,7 +774,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 MailList.displayName = 'MailList';
 
 export const MailLabels = memo(
-  ({ labels }: { labels: Label[] }) => {
+  ({ labels }: { labels: { id: string; name: string }[] }) => {
     const t = useTranslations();
 
     if (!labels?.length) return null;
