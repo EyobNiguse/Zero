@@ -1,10 +1,10 @@
 'use server';
 
 import { Shortcut } from '@/config/shortcuts';
-import { db } from '@zero/db';
 import { userHotkeys } from '@zero/db/schema';
-import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { db } from '@zero/db';
 
 export async function getShortcuts(): Promise<Shortcut[]> {
   try {
@@ -16,7 +16,7 @@ export async function getShortcuts(): Promise<Shortcut[]> {
       where: (hotkeys, { eq }) => eq(hotkeys.userId, session.user.id),
     });
 
-    return result?.shortcuts as Shortcut[] || [];
+    return (result?.shortcuts as Shortcut[]) || [];
   } catch (error) {
     console.error('Error fetching shortcuts from DB:', error);
     throw error;
