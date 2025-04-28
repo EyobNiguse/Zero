@@ -1,54 +1,77 @@
 'use client';
 
 import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { useCallback, useMemo } from 'react';
-import useSWR, { SWRConfiguration } from 'swr';
 import { dexieStorageProvider } from '@/lib/idb';
+import { useHotkeys } from 'react-hotkeys-hook';
+import useSWR, { SWRConfiguration } from 'swr';
+import { useCallback, useMemo } from 'react';
 
 const swrConfig: SWRConfiguration = {
-  provider: () => dexieStorageProvider()
+  provider: () => dexieStorageProvider(),
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false,
+  dedupingInterval: 24 * 60 * 60 * 1000, // 24 hours
 };
 
+import { getShortcuts as getShortcutsAction, updateShortcuts } from '@/actions/shortcuts';
+
 const getShortcuts = async (): Promise<Shortcut[]> => {
-  return keyboardShortcuts;
+  try {
+    return await getShortcutsAction();
+  } catch (error) {
+    console.error('Error fetching shortcuts:', error);
+    return keyboardShortcuts;
+  }
 };
 
 export const findShortcut = (action: string): Shortcut | undefined => {
-  // First try to get from cache
-  const { data: shortcuts } = useSWR<Shortcut[]>('/api/shortcuts', getShortcuts, swrConfig);
+  const { data: shortcuts } = useSWR<Shortcut[]>('/api/v1/hotkeys', getShortcuts, swrConfig);
   if (shortcuts) {
-    const cached = shortcuts.find(sc => sc.action === action);
+    const cached = shortcuts.find((sc) => sc.action === action);
     if (cached) return cached;
   }
-  // Fall back to default shortcuts
   return keyboardShortcuts.find((sc) => sc.action === action);
 };
 
 export const useShortcutCache = () => {
-  const { data: shortcuts, mutate } = useSWR<Shortcut[]>('/api/shortcuts', getShortcuts, swrConfig);
+  const { data: shortcuts, mutate } = useSWR<Shortcut[]>(
+    '/api/v1/hotkeys',
+    getShortcuts,
+    swrConfig,
+  );
 
-  const updateShortcut = useCallback(async (shortcut: Shortcut) => {
-    const currentShortcuts = shortcuts || [];
-    const index = currentShortcuts.findIndex(s => s.action === shortcut.action);
-    
-    let newShortcuts: Shortcut[];
-    if (index >= 0) {
-      newShortcuts = [
-        ...currentShortcuts.slice(0, index),
-        shortcut,
-        ...currentShortcuts.slice(index + 1)
-      ];
-    } else {
-      newShortcuts = [...currentShortcuts, shortcut];
-    }
-    
-    await mutate(newShortcuts, false);
-  }, [shortcuts, mutate]);
+  const updateShortcut = useCallback(
+    async (shortcut: Shortcut) => {
+      const currentShortcuts = shortcuts || [];
+      const index = currentShortcuts.findIndex((s) => s.action === shortcut.action);
+
+      let newShortcuts: Shortcut[];
+      if (index >= 0) {
+        newShortcuts = [
+          ...currentShortcuts.slice(0, index),
+          shortcut,
+          ...currentShortcuts.slice(index + 1),
+        ];
+      } else {
+        newShortcuts = [...currentShortcuts, shortcut];
+      }
+
+      try {
+        // Update server using server action
+        await updateShortcuts(newShortcuts);
+        // Update cache only after successful server update
+        await mutate(newShortcuts, false);
+      } catch (error) {
+        console.error('Error updating shortcuts:', error);
+        throw error;
+      }
+    },
+    [shortcuts, mutate],
+  );
 
   return {
     shortcuts: shortcuts || keyboardShortcuts,
-    updateShortcut
+    updateShortcut,
   };
 };
 
@@ -136,7 +159,6 @@ export function useShortcut(
     ...shortcut,
   };
 
-  // Cache the shortcut when it's used
   useCallback(() => {
     updateShortcut(shortcut);
   }, [shortcut, updateShortcut])();
@@ -189,7 +211,7 @@ export function useShortcuts(
       .join(',');
   }, [shortcutMap, handlers]);
 
-  console.log('GETTING SETTING SHORTCUTS');
+  console.log(`GETTING ${options.scope}`);
 
   useHotkeys(
     shortcutString,
