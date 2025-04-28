@@ -51,16 +51,18 @@ function DeleteAccountDialog() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit() {
     setIsDeleting(true);
     try {
       toast.promise(deleteUser(), {
         loading: t('pages.settings.dangerZone.deleting'),
         success: t('pages.settings.dangerZone.deleted'),
         error: t('pages.settings.dangerZone.error'),
+        async finally() {
+          await signOut();
+          router.push('/');
+        },
       });
-      await signOut();
-      router.push('/');
     } catch (error) {
       console.error('Failed to delete account:', error);
     }
