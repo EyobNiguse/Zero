@@ -137,7 +137,7 @@ export function MailIframe({ html, senderEmail }: { html: string; senderEmail: s
       <iframe
         height={height}
         ref={iframeRef}
-        className={cn('w-full flex-1 overflow-hidden transition-opacity duration-200')}
+        className={cn('!min-h-0 w-full flex-1 overflow-hidden transition-opacity duration-200')}
         title="Email Content"
         // allow-scripts is safe, because the CSP will prevent scripts from running that don't have our unique nonce.
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-scripts"
