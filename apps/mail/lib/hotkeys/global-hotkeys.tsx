@@ -13,9 +13,10 @@ export function GlobalHotkeys() {
     inbox: () => router.push('/mail/inbox'),
     sentMail: () => router.push('/mail/sent'),
     search: () => {
+      // TODO: Implement search - kinda tricky :/
       console.log('search');
     },
-    newEmail: () => router.push('/mail/compose'),
+    newEmail: () => router.push('isComposeOpen=true'),
   };
 
   const globalShortcuts = keyboardShortcuts.filter((shortcut) => shortcut.scope === scope);
