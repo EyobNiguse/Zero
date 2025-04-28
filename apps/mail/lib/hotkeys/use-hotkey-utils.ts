@@ -24,18 +24,9 @@ const getShortcuts = async (): Promise<Shortcut[]> => {
   }
 };
 
-export const findShortcut = (action: string): Shortcut | undefined => {
-  const { data: shortcuts } = useSWR<Shortcut[]>('/api/v1/hotkeys', getShortcuts, swrConfig);
-  if (shortcuts) {
-    const cached = shortcuts.find((sc) => sc.action === action);
-    if (cached) return cached;
-  }
-  return keyboardShortcuts.find((sc) => sc.action === action);
-};
-
-export const useShortcutCache = () => {
+export const useShortcutCache = (userId?: string) => {
   const { data: shortcuts, mutate } = useSWR<Shortcut[]>(
-    '/api/v1/hotkeys',
+    userId ? `/hotkeys/${userId}` : null,
     getShortcuts,
     swrConfig,
   );
