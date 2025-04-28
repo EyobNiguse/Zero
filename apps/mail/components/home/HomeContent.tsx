@@ -32,9 +32,9 @@ import React from 'react';
 import { z } from 'zod';
 
 const tabs = [
-  { label: 'Smart Categorization', value: 'smart-categorization' },
-  { label: 'AI Features', value: 'ai-features' },
-  { label: 'Feature Name', value: 'feature-3' },
+  { label: 'Chat With Your Inbox', value: 'smart-categorization' },
+  { label: 'Smart Labels', value: 'ai-features' },
+  { label: 'Write Better Emails', value: 'feature-3' },
 ];
 
 const resources = [
