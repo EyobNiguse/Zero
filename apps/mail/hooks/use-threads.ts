@@ -164,7 +164,5 @@ export const useThread = (threadId: string | null) => {
     () => axios.get<IGetThreadResponse>(`/api/driver/${id}`).then((res) => res.data),
   );
 
-  const hasUnread = useMemo(() => data?.messages.some((e) => e.unread), [data]);
-
-  return { data, isLoading, error, hasUnread, mutate };
+  return { data, isLoading, error, hasUnread: data?.hasUnread, mutate };
 };
