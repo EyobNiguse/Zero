@@ -59,8 +59,6 @@ interface ThreadDisplayProps {
 
 export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
   const isFullscreen = false;
-  const [mail, setMail] = useMail();
-
   return (
     <div
       className={cn(
@@ -148,7 +146,6 @@ function ThreadActionButton({
 export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const { data: emailData, isLoading, mutate: mutateThread } = useThread(id ?? null);
   const { mutate: mutateThreads } = useThreads();
-  const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mail, setMail] = useMail();
   const [isStarred, setIsStarred] = useState(false);
@@ -163,14 +160,6 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     data: { threads: items = [] },
   } = useThreads();
 
-  const handleNavigateToThread = useCallback(
-    (threadId: string) => {
-      setThreadId(threadId);
-      return false;
-    },
-    [setThreadId],
-  );
-
   const handlePrevious = useCallback(() => {
     if (!id || !items.length) return;
     const currentIndex = items.findIndex((item) => item.id === id);
@@ -183,7 +172,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   }, [items, id, setThreadId]);
 
   const handleNext = useCallback(() => {
-    if (!id || !items.length) return;
+    if (!id || !items.length) return setThreadId(null);
     const currentIndex = items.findIndex((item) => item.id === id);
     if (currentIndex < items.length - 1) {
       const nextThread = items[currentIndex + 1];
@@ -267,42 +256,34 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
         error: t('common.actions.failedToMove'),
         finally: async () => {
           await Promise.all([mutateStats(), mutateThreads()]);
-          setBackgroundQueue({ type: 'delete', threadId: `thread:${threadId}` });
+          //   setBackgroundQueue({ type: 'delete', threadId: `thread:${threadId}` });
         },
       });
     },
-    [threadId, folder, mutateStats, mutateThreads, handleClose, t],
+    [threadId, folder, t],
   );
 
   // Add handleToggleStar function
   const handleToggleStar = useCallback(async () => {
     if (!emailData || !threadId) return;
-    
+
     const newStarredState = !isStarred;
     setIsStarred(newStarredState);
-    
-    const done = Promise.all([mutateThreads()]);
     if (newStarredState) {
-      toast.custom((id) => (
-        <SuccessEmailToast
-          message={t('common.actions.addedToFavorites')}
-        />
-      ));
+      toast.custom((id) => <SuccessEmailToast message={t('common.actions.addedToFavorites')} />);
     } else {
       toast.custom((id) => (
-        <SuccessEmailToast
-          message={t('common.actions.removedFromFavorites')}
-        />
+        <SuccessEmailToast message={t('common.actions.removedFromFavorites')} />
       ));
-      
     }
+    mutateThreads();
   }, [emailData, threadId, isStarred, mutateThreads, t]);
 
   // Set initial star state based on email data
   useEffect(() => {
     if (emailData?.latest?.tags) {
       // Check if any tag has the name 'STARRED'
-      setIsStarred(emailData.latest.tags.some(tag => tag.name === 'STARRED'));
+      setIsStarred(emailData.latest.tags.some((tag) => tag.name === 'STARRED'));
     }
   }, [emailData?.latest?.tags]);
 
@@ -407,18 +388,20 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         onClick={handleToggleStar}
                         className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]"
                       >
-                        <Star 
+                        <Star
                           className={cn(
-                            "h-5 w-5 mt-[2.4px] ml-[2px]",
-                            isStarred 
-                              ? "fill-yellow-400 stroke-yellow-400" 
-                              : "fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]"
-                          )} 
+                            'ml-[2px] mt-[2.4px] h-5 w-5',
+                            isStarred
+                              ? 'fill-yellow-400 stroke-yellow-400'
+                              : 'fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]',
+                          )}
                         />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
-                      {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
+                      {isStarred
+                        ? t('common.threadDisplay.unstar')
+                        : t('common.threadDisplay.star')}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -525,7 +508,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                       <MailDisplay
                         emailData={message}
                         isFullscreen={isFullscreen}
-                        isMuted={isMuted}
+                        isMuted={false}
                         isLoading={false}
                         index={index}
                         totalEmails={emailData?.totalReplies}

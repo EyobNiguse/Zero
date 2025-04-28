@@ -9,11 +9,11 @@ import {
   parseNaturalLanguageSearch,
 } from '@/lib/utils';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
-import { Bell, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Briefcase, ChevronDown, Star, StickyNote, Users } from 'lucide-react';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
+import { Bell, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { ThreadContextMenu } from '@/components/context/thread-context';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
@@ -145,7 +145,7 @@ const Thread = memo(
     const t = useTranslations();
     const { folder } = useParams<{ folder: string }>();
     const { mutate } = useThreads();
-    const [threadId, setThreadId] = useQueryState('threadId');
+    const [threadId] = useQueryState('threadId');
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
@@ -200,7 +200,7 @@ const Thread = memo(
         ...(latestMessage.cc || []),
         ...(latestMessage.bcc || []),
       ].length;
-      return totalRecipients > 1; 
+      return totalRecipients > 1;
     }, [latestMessage]);
 
     const cleanName = useMemo(() => {
@@ -395,7 +395,7 @@ const Thread = memo(
             />
             <div className="flex w-full items-center justify-between gap-4 px-4">
               <div>
-                <Avatar className="h-8 w-8 border rounded-full dark:border-none">
+                <Avatar className="h-8 w-8 rounded-full border dark:border-none">
                   {isGroupThread ? (
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">
                       <GroupPeople className="h-4 w-4" />
@@ -403,7 +403,7 @@ const Thread = memo(
                   ) : (
                     <>
                       <AvatarImage
-                        className="bg-[#FFFFFF] dark:bg-[#373737] rounded-full"
+                        className="rounded-full bg-[#FFFFFF] dark:bg-[#373737]"
                         src={getEmailLogo(latestMessage.sender.email)}
                       />
                       <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
