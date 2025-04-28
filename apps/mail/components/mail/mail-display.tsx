@@ -438,7 +438,7 @@ const MailDisplay = ({
                     const renderPerson = (person: Person) => (
                       <div
                         key={person.email}
-                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white  dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white p-1 pr-2 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
                       >
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
