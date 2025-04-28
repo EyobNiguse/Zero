@@ -130,7 +130,7 @@ const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) =>
           `}
         </script>
       </Head>
-      <Body style={{ margin: 0, padding: 0 }} className="bg-red-500">
+      <Body style={{ margin: 0, padding: 0 }}>
         <Container>
           <Section>
             <Row>

@@ -169,20 +169,24 @@ export function ThreadContextMenu({
       },
     });
   };
+  const [, setActiveReplyId] = useQueryState('activeReplyId');
 
   const handleThreadReply = () => {
     setMode('reply');
     setThreadId(threadId);
+    if (threadData?.latest) setActiveReplyId(threadData?.latest?.id);
   };
 
   const handleThreadReplyAll = () => {
     setMode('replyAll');
     setThreadId(threadId);
+    if (threadData?.latest) setActiveReplyId(threadData?.latest?.id);
   };
 
   const handleThreadForward = () => {
     setMode('forward');
     setThreadId(threadId);
+    if (threadData?.latest) setActiveReplyId(threadData?.latest?.id);
   };
 
   const primaryActions: EmailAction[] = [

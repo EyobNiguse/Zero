@@ -149,5 +149,15 @@ export const useThread = (threadId: string | null) => {
     () => axios.get<IGetThreadResponse>(`/api/driver/${id}`).then((res) => res.data),
   );
 
-  return { data, isLoading, error, hasUnread: data?.hasUnread, mutate };
+  const isGroupThread = useMemo(() => {
+    if (!data?.latest?.id) return false;
+    const totalRecipients = [
+      ...(data.latest.to || []),
+      ...(data.latest.cc || []),
+      ...(data.latest.bcc || []),
+    ].length;
+    return totalRecipients > 1;
+  }, [data]);
+
+  return { data, isLoading, error, isGroupThread, hasUnread: data?.hasUnread, mutate };
 };

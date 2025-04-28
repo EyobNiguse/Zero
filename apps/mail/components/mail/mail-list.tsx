@@ -149,7 +149,7 @@ const Thread = memo(
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
-    const { data: getThreadData, isLoading } = useThread(demo ? null : message.id);
+    const { data: getThreadData, isLoading, isGroupThread } = useThread(demo ? null : message.id);
 
     const latestMessage = demo ? demoMessage : getThreadData?.latest;
     const emailContent = demo ? demoMessage?.body : getThreadData?.latest?.body;
@@ -192,16 +192,6 @@ const Thread = memo(
     const isFolderSpam = folder === FOLDERS.SPAM;
     const isFolderSent = folder === FOLDERS.SENT;
     const isFolderBin = folder === FOLDERS.BIN;
-
-    const isGroupThread = useMemo(() => {
-      if (!latestMessage) return false;
-      const totalRecipients = [
-        ...(latestMessage.to || []),
-        ...(latestMessage.cc || []),
-        ...(latestMessage.bcc || []),
-      ].length;
-      return totalRecipients > 1;
-    }, [latestMessage]);
 
     const cleanName = useMemo(() => {
       if (!latestMessage?.sender?.name) return '';
@@ -644,6 +634,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     return 'single';
   }, [isKeyPressed]);
 
+  const [, setActiveReplyId] = useQueryState('activeReplyId');
+
   const handleMailClick = useCallback(
     (message: ParsedMessage) => () => {
       handleMouseEnter(message.id);
@@ -652,6 +644,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
       // Update URL param without navigation
       void setThreadId(messageThreadId);
+      void setActiveReplyId(null);
     },
     [],
   );

@@ -259,9 +259,11 @@ export function MailLayout() {
       disableScope('mail-list');
     };
   }, [threadId, enableScope, disableScope]);
+  const [, setActiveReplyId] = useQueryState('activeReplyId');
 
   const handleClose = useCallback(() => {
     setThreadId(null);
+    setActiveReplyId(null);
   }, [setThreadId]);
 
   // Add mailto protocol handler registration

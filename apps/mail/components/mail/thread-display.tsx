@@ -154,8 +154,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const { folder } = useParams<{ folder: string }>();
   const [threadId, setThreadId] = useQueryState('threadId');
   const [mode, setMode] = useQueryState('mode');
-  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
+  const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
+
   const {
     data: { threads: items = [] },
   } = useThreads();
@@ -178,6 +179,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       const nextThread = items[currentIndex + 1];
       if (nextThread) {
         setThreadId(nextThread.id);
+        setActiveReplyId(null);
       }
     }
   }, [items, id, setThreadId]);
@@ -226,6 +228,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const handleClose = useCallback(() => {
     setThreadId(null);
     setMode(null);
+    setActiveReplyId(null);
   }, [setThreadId, setMode]);
 
   const moveThreadTo = useCallback(
@@ -317,14 +320,6 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       }, 100); // Short delay to ensure the component is rendered
     }
   }, [mode, activeReplyId]);
-
-  const replyToMessage = useCallback(
-    (messageId: string, replyMode: string = 'reply') => {
-      setActiveReplyId(messageId);
-      setMode(replyMode);
-    },
-    [setMode],
-  );
 
   return (
     <div
@@ -482,20 +477,6 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
             <div className="flex min-h-0 flex-1 flex-col">
               <ScrollArea className="h-full flex-1" type="auto">
                 <div className="pb-4">
-                  {hasImages && !mail.showImages && (
-                    <div className="bg-warning/10 border-warning/20 m-4 rounded-lg border p-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-warning text-sm">{t('common.mail.imagesHidden')}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setMail((prev) => ({ ...prev, showImages: true }))}
-                        >
-                          {t('common.mail.showImages')}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                   {(emailData.messages || []).map((message, index) => (
                     <div
                       key={message.id}
@@ -512,9 +493,6 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         isLoading={false}
                         index={index}
                         totalEmails={emailData?.totalReplies}
-                        onReply={() => replyToMessage(message.id, 'reply')}
-                        onReplyAll={() => replyToMessage(message.id, 'replyAll')}
-                        onForward={() => replyToMessage(message.id, 'forward')}
                       />
                       {mode && activeReplyId === message.id && (
                         <div className="px-4 py-2" id={`reply-composer-${message.id}`}>
