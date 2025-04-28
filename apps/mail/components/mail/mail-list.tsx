@@ -149,14 +149,17 @@ const Thread = memo(
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const isHovering = useRef<boolean>(false);
     const hasPrefetched = useRef<boolean>(false);
-    const { data: getThreadData, isLoading, isGroupThread } = useThread(demo ? null : message.id);
+    const {
+      data: getThreadData,
+      labels,
+      isLoading,
+      isGroupThread,
+    } = useThread(demo ? null : message.id);
 
     const latestMessage = demo ? demoMessage : getThreadData?.latest;
     const emailContent = demo ? demoMessage?.body : getThreadData?.latest?.body;
 
-    const { labels: threadLabels } = useThreadLabels(
-      latestMessage ? latestMessage.tags?.map((t) => t.id!) : [],
-    );
+    const { labels: threadLabels } = useThreadLabels(labels ? labels.map((l) => l.id) : []);
 
     const mainSearchTerm = useMemo(() => {
       if (!searchValue.highlight) return '';
@@ -308,7 +311,7 @@ const Thread = memo(
                           <span className="size-2 rounded bg-[#006FFE]" />
                         ) : null}
                       </p>
-                      <MailLabels labels={latestMessage.tags} />
+                      {/* <MailLabels labels={latestMessage.tags} /> */}
                       {Math.random() > 0.5 &&
                         (() => {
                           const count = Math.floor(Math.random() * 10) + 1;
@@ -419,7 +422,7 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span className={cn('max-w-[30ch] truncate text-sm')}>
+                        <span className={cn('max-w-[18ch] truncate text-sm')}>
                           {highlightText(
                             cleanNameDisplay(latestMessage.sender.name) || '',
                             searchValue.highlight,
@@ -436,7 +439,7 @@ const Thread = memo(
                               [{getThreadData.totalReplies}]
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent className="px-1 py-0 text-xs">
+                          <TooltipContent className="p-1 text-xs">
                             {t('common.mail.replies', { count: getThreadData.totalReplies })}
                           </TooltipContent>
                         </Tooltip>
@@ -461,7 +464,7 @@ const Thread = memo(
                     >
                       {highlightText(latestMessage.subject, searchValue.highlight)}
                     </p>
-                    <MailLabels labels={latestMessage.tags} />
+                    {labels ? <MailLabels labels={labels} /> : null}
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
@@ -771,7 +774,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 MailList.displayName = 'MailList';
 
 export const MailLabels = memo(
-  ({ labels }: { labels: Label[] }) => {
+  ({ labels }: { labels: { id: string; name: string }[] }) => {
     const t = useTranslations();
 
     if (!labels?.length) return null;

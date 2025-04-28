@@ -9,10 +9,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <HotkeyProviderWrapper>
       <CommandPaletteProvider>
-        <div className="relative flex overflow-hidden max-h-screen w-full">
+        <div className="relative flex max-h-screen w-full overflow-hidden">
           <SWRConfig
             value={{
-              provider: typeof window !== 'undefined' ? dexieStorageProvider : undefined,
+              //   provider: typeof window !== 'undefined' ? dexieStorageProvider : undefined,
               revalidateOnFocus: false,
               revalidateIfStale: false,
               shouldRetryOnError: false,
