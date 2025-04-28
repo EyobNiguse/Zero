@@ -485,7 +485,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                         <Popover open={openDetailsPopover} onOpenChange={handlePopoverChange}>
                           <PopoverTrigger asChild>
                             <button
-                              className="hover:bg-iconLight dark:hover:bg-iconDark/20 flex items-center gap-2 rounded-md p-2"
+                              className="hover:bg-iconLight/10 dark:hover:bg-iconDark/20 flex items-center gap-2 rounded-md p-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
