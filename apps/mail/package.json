@@ -135,6 +135,8 @@
     "prettier-plugin-sort-imports": "1.8.6",
     "prettier-plugin-tailwindcss": "0.6.11",
     "tailwindcss": "3.4.17",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "@radix-ui/react-navigation-menu": "^1.2.10",
+    "@radix-ui/react-slot": "^1.2.0"
   }
 }
