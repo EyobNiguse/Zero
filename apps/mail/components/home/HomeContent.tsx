@@ -23,13 +23,13 @@ import { Input } from '@/components/ui/input';
 import { CurvedArrow } from '../icons/icons';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import axios from 'axios';
-import { z } from 'zod';
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { z } from 'zod';
 
 const tabs = [
   { label: 'Smart Categorization', value: 'smart-categorization' },
@@ -39,29 +39,29 @@ const tabs = [
 
 const resources = [
   {
-    title: "GitHub",
-    href: "https://github.com/Mail-0/Zero",
-    description: "Check out our open-source projects and contributions.",
-    platform: 'github' as const
+    title: 'GitHub',
+    href: 'https://github.com/Mail-0/Zero',
+    description: 'Check out our open-source projects and contributions.',
+    platform: 'github' as const,
   },
   {
-    title: "Twitter",
-    href: "https://x.com/zerodotemail",
-    description: "Follow us for the latest updates and announcements.",
-    platform: 'twitter' as const
+    title: 'Twitter',
+    href: 'https://x.com/zerodotemail',
+    description: 'Follow us for the latest updates and announcements.',
+    platform: 'twitter' as const,
   },
   {
-    title: "LinkedIn",
-    href: "https://www.linkedin.com/company/zerodotemail/",
-    description: "Connect with us professionally and stay updated.",
-    platform: 'linkedin' as const
+    title: 'LinkedIn',
+    href: 'https://www.linkedin.com/company/zerodotemail/',
+    description: 'Connect with us professionally and stay updated.',
+    platform: 'linkedin' as const,
   },
   {
-    title: "Discord",
-    href: "https://discord.gg/0email",
-    description: "Join our community and chat with the team.",
-    platform: 'discord' as const
-  }
+    title: 'Discord',
+    href: 'https://discord.gg/0email',
+    description: 'Join our community and chat with the team.',
+    platform: 'discord' as const,
+  },
 ];
 
 const betaSignupSchema = z.object({
@@ -162,12 +162,14 @@ export default function HomeContent() {
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
                 <NavigationMenuItem>
-                  <NavigationMenuLink href="/investor" className={navigationMenuTriggerStyle()}>
-                    Investors
+                  <NavigationMenuLink href="/about" className={navigationMenuTriggerStyle()}>
+                    About
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger>Solutions</NavigationMenuTrigger>
+                  <NavigationMenuLink href="/pricing" className={navigationMenuTriggerStyle()}>
+                    Pricing
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
@@ -261,52 +263,7 @@ export default function HomeContent() {
           Zero is an AI native email client that manages your inbox, so you don't have to.
         </p>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex items-center justify-center gap-4"
-            onKeyDown={handleKeyDown}
-          >
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      className="h-8 bg-[#141414] text-xs placeholder:text-[#727272] md:w-80"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <div>
-              <button
-                type="submit"
-                className="ring-offset-background focus-visible:ring-ring inline-flex h-8 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-white px-2 text-sm font-medium text-black transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                disabled={isSubmitting}
-              >
-                Join waitlist
-                <div className="h- flex items-center justify-center gap-1 rounded-sm bg-black/10 p-0.5">
-                  <Command className="h-3 w-3 text-black dark:text-[#929292]" />
-                  <CurvedArrow className="relative top-0.5 h-3.5 w-3.5 fill-black dark:fill-[#929292]" />
-                </div>
-              </button>
-            </div>
-          </form>
-        </Form>
-
-        {signupCount > 0 && (
-          <div className="mt-2 flex items-center gap-2">
-            <div className="text-center text-sm text-[#B7B7B7]">
-              <span className="font-semibold text-white">{signupCount}</span> people have already
-              joined the waitlist
-            </div>
-          </div>
-        )}
+        <Button className="h-8">Get Started</Button>
       </section>
       <section className="relative mt-10 hidden flex-col justify-center md:flex">
         <div className="bg-border absolute left-1/2 top-0 h-px w-full -translate-x-1/2 md:container xl:max-w-7xl" />
@@ -365,7 +322,7 @@ export default function HomeContent() {
         </Tabs>
       </section>
       <div className="mx-auto mt-8 w-full max-w-5xl px-4">
-        <div className="border-muted-foreground/30 bg-muted md:animate-move-up relative items-center justify-center rounded-xl border p-1 shadow-xl shadow-black/40 backdrop-blur-lg md:flex md:p-2">
+        <div className="border-muted-foreground/30 bg-muted md:animate-move-up relative flex items-center justify-center rounded-xl border p-1 shadow-xl shadow-black/40 backdrop-blur-lg md:hidden md:p-2">
           <Image
             src="/email-preview.png"
             alt="hero"
