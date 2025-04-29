@@ -47,7 +47,6 @@ import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
-import { SuccessEmailToast } from '../theme/toast';
 import { useKeyState } from '@/hooks/use-hot-key';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
@@ -204,11 +203,9 @@ const Thread = memo(
       const newStarredState = !isStarred;
       setIsStarred(newStarredState);
       if (newStarredState) {
-        toast.custom((id) => <SuccessEmailToast message={t('common.actions.addedToFavorites')} />);
+        toast.success(t('common.actions.addedToFavorites'));
       } else {
-        toast.custom((id) => (
-          <SuccessEmailToast message={t('common.actions.removedFromFavorites')} />
-        ));
+        toast.success(t('common.actions.removedFromFavorites'));
       }
       await toggleStar({ ids: [message.id] });
       mutateThreads();
@@ -224,19 +221,15 @@ const Thread = memo(
         });
         setBackgroundQueue({ type: 'add', threadId: `thread:${message.id}` });
 
-        toast.custom((id) => (
-          <SuccessEmailToast
-            message={
-              destination === 'inbox'
-                ? t('common.actions.movedToInbox')
-                : destination === 'spam'
-                  ? t('common.actions.movedToSpam')
-                  : destination === 'bin'
-                    ? t('common.actions.movedToBin')
-                    : t('common.actions.archived')
-            }
-          />
-        ));
+        toast.success(
+          destination === 'inbox'
+            ? t('common.actions.movedToInbox')
+            : destination === 'spam'
+              ? t('common.actions.movedToSpam')
+              : destination === 'bin'
+                ? t('common.actions.movedToBin')
+                : t('common.actions.archived')
+        );
         toast.promise(promise, {
           error: t('common.actions.failedToMove'),
           finally: async () => {

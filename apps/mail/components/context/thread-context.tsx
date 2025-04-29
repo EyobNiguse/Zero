@@ -31,7 +31,6 @@ import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useParams, useRouter } from 'next/navigation';
-import { SuccessEmailToast } from '../theme/toast';
 import { modifyLabels } from '@/actions/mail';
 import { LABELS, FOLDERS } from '@/lib/utils';
 import { useStats } from '@/hooks/use-stats';
@@ -144,11 +143,9 @@ export function ThreadContextMenu({
   const handleFavorites = async () => {
     const targets = mail.bulkSelected.length ? mail.bulkSelected : [threadId];
     if (!isStarred) {
-      toast.custom((id) => <SuccessEmailToast message={t('common.actions.addedToFavorites')} />);
+      toast.success(t('common.actions.addedToFavorites'));
     } else {
-      toast.custom((id) => (
-        <SuccessEmailToast message={t('common.actions.removedFromFavorites')} />
-      ));
+      toast.success(t('common.actions.removedFromFavorites'));
     }
     await toggleStar({ ids: targets });
     setMail((prev) => ({ ...prev, bulkSelected: [] }));

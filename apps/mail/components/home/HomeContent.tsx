@@ -17,7 +17,6 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Command, Menu, MoveRight } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SuccessEmailToast } from '../theme/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CurvedArrow } from '../icons/icons';
@@ -225,8 +224,8 @@ export default function HomeContent() {
               </SheetTitle>
             </SheetHeader>
             <div className="mt-4 flex flex-col space-y-4">
-              <Link href="/investor" className="text-sm font-medium">
-                Investors
+              <Link href="/about" className="text-sm font-medium">
+                About
               </Link>
               <Link href="#" className="text-sm font-medium">
                 Solutions
