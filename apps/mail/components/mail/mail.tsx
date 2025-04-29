@@ -680,9 +680,9 @@ function getCategoryColor(categoryId: string): string {
 }
 
 function CategorySelect() {
+  const [mail, setMail] = useMail();
   const [, setSearchValue] = useSearchValue();
   const categories = Categories();
-  const router = useRouter();
   const { folder } = useParams<{ folder: string }>();
   const [category, setCategory] = useQueryState('category', {
     defaultValue: 'Important',
@@ -739,6 +739,7 @@ function CategorySelect() {
     const activeTabElement = activeTabElementRef.current;
 
     if (category && container && activeTabElement) {
+      setMail({ ...mail, bulkSelected: [] });
       const { offsetLeft, offsetWidth } = activeTabElement;
       const clipLeft = Math.max(0, offsetLeft - 2);
       const clipRight = Math.min(container.offsetWidth, offsetLeft + offsetWidth + 2);
