@@ -314,7 +314,7 @@ const extractStyleMatrix = async (emailBody: string) => {
 };
 
 const StyleMatrixExtractorPrompt = () => `
-   <system_prompt>
+  <system_prompt>
     <role>
         You are StyleMetricExtractor, a tool that distills writing-style metrics from a single email.
     </role>
@@ -386,11 +386,11 @@ const StyleMatrixExtractorPrompt = () => `
 
         <extraction_guidelines>
             <!-- string metrics -->
-            <item>greeting: first word or phrase before the first line break, lower-cased.</item>
-            <item>signOff: last word or phrase before the signature block or end of text, lower-cased.</item>
+            <item>greeting: first word or phrase before the first line break. Remove any names or personal titles (e.g., Mr., Ms., Dr.). Lower-case the result.</item>
+            <item>signOff: last word or phrase before the signature block or end of text. Remove any names or personal titles. Lower-case the result.</item>
             <!-- greeting/sign-off presence flags -->
-            <item>greetingTotal: 1 if greeting is not empty, else 0.</item>
-            <item>signOffTotal: 1 if signOff is not empty, else 0.</item>
+            <item>greetingTotal: 1 if greeting is not empty after removing names and titles, else 0.</item>
+            <item>signOffTotal: 1 if signOff is not empty after removing names and titles, else 0.</item>
 
             <!-- structure -->
             <item>avgSentenceLen: number of words per sentence (split on . ! ?).</item>
@@ -447,7 +447,7 @@ dak
             </example_input>
 
             <example_output>
-{{"greeting":"hey jordan","signOff":"catch ya soon","greetingTotal":1,"signOffTotal":1,"avgSentenceLen":16,"avgParagraphLen":33,"listUsageRatio":0,"sentimentScore":0.4,"politenessScore":0.6,"confidenceScore":0.8,"urgencyScore":0.5,"empathyScore":0.4,"formalityScore":0.2,"passiveVoiceRatio":0,"hedgingRatio":0.03,"intensifierRatio":0.06,"slangRatio":0.11,"contractionRatio":0.08,"lowercaseSentenceStartRatio":1,"casualPunctuationRatio":0.2,"capConsistencyScore":0,"readabilityFlesch":75,"lexicalDiversity":0.57,"jargonRatio":0,"questionCount":1,"ctaCount":1,"emojiCount":1,"emojiDensity":2,"exclamationFreq":0,"subjectEmojiCount":1,"subjectInformalityScore":0.9,"honorificPresence":0,"phaticPhraseRatio":0.17}}
+{{"greeting":"hey","signOff":"catch ya soon","greetingTotal":1,"signOffTotal":1,"avgSentenceLen":16,"avgParagraphLen":33,"listUsageRatio":0,"sentimentScore":0.4,"politenessScore":0.6,"confidenceScore":0.8,"urgencyScore":0.5,"empathyScore":0.4,"formalityScore":0.2,"passiveVoiceRatio":0,"hedgingRatio":0.03,"intensifierRatio":0.06,"slangRatio":0.11,"contractionRatio":0.08,"lowercaseSentenceStartRatio":1,"casualPunctuationRatio":0.2,"capConsistencyScore":0,"readabilityFlesch":75,"lexicalDiversity":0.57,"jargonRatio":0,"questionCount":1,"ctaCount":1,"emojiCount":1,"emojiDensity":2,"exclamationFreq":0,"subjectEmojiCount":1,"subjectInformalityScore":0.9,"honorificPresence":0,"phaticPhraseRatio":0.17}}
             </example_output>
         </output_format>
 
