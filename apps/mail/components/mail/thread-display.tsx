@@ -32,7 +32,6 @@ import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { MailDisplaySkeleton } from './mail-skeleton';
-import { SuccessEmailToast } from '../theme/toast';
 import { Button } from '@/components/ui/button';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
@@ -244,19 +243,15 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       setBackgroundQueue({ type: 'add', threadId: `thread:${threadId}` });
       handleNext();
 
-      toast.custom((id) => (
-        <SuccessEmailToast
-          message={
-            destination === 'inbox'
-              ? t('common.actions.movedToInbox')
-              : destination === 'spam'
-                ? t('common.actions.movedToSpam')
-                : destination === 'bin'
-                  ? t('common.actions.movedToBin')
-                  : t('common.actions.archived')
-          }
-        />
-      ));
+      toast.success(
+        destination === 'inbox'
+          ? t('common.actions.movedToInbox')
+          : destination === 'spam'
+            ? t('common.actions.movedToSpam')
+            : destination === 'bin'
+              ? t('common.actions.movedToBin')
+              : t('common.actions.archived')
+      );
       toast.promise(promise, {
         error: t('common.actions.failedToMove'),
         finally: async () => {
@@ -275,11 +270,9 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     const newStarredState = !isStarred;
     setIsStarred(newStarredState);
     if (newStarredState) {
-      toast.custom((id) => <SuccessEmailToast message={t('common.actions.addedToFavorites')} />);
+      toast.success(t('common.actions.addedToFavorites'));
     } else {
-      toast.custom((id) => (
-        <SuccessEmailToast message={t('common.actions.removedFromFavorites')} />
-      ));
+      toast.success(t('common.actions.removedFromFavorites'));
     }
     mutateThreads();
   }, [emailData, threadId, isStarred, mutateThreads, t]);

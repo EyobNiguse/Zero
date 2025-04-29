@@ -308,7 +308,8 @@
       "signatures": "Signatures",
       "shortcuts": "Shortcuts",
       "labels": "Labels",
-      "dangerZone": "Danger Zone"
+      "dangerZone": "Danger Zone",
+      "deleteAccount": "Delete Account"
     }
   },
   "pages": {
