@@ -24,6 +24,7 @@ import { z } from 'zod';
 import { EditorContent } from '@tiptap/react';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import type { JSONContent } from 'novel';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EmailComposerProps {
   initialTo?: string[];
@@ -84,6 +85,7 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
+  const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
@@ -253,7 +255,8 @@ export function EmailComposer({
         emailSubject: values.subject,
       })
 
-      editor.commands.setContent(result.newBody)
+      setAiGeneratedMessage(result.newBody)
+      // editor.commands.setContent(result.newBody)
       toast.success('Email generated successfully')
     } catch (error) {
       console.error('Error generating AI email:', error);
@@ -582,23 +585,30 @@ export function EmailComposer({
                 </div>
               </button>
 
-              <button
-                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
-                onClick={async () => {
-                  await handleAiGenerate(); // TODO: Set conversation here for replies
-                }}
-                type="button"
-                disabled={isLoading}
-              >
-                <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
-                    <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+              <div className="relative">
+                <AnimatePresence>
+                  {aiGeneratedMessage && (
+                    <ContentPreview content={aiGeneratedMessage} animations={animations} />
+                  )}
+                </AnimatePresence>
+                <button
+                  className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
+                  onClick={async () => {
+                    await handleAiGenerate(); // TODO: Set conversation here for replies
+                  }}
+                  type="button"
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                    <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
+                      <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+                    </div>
+                    <div className="text-center text-sm leading-none text-black dark:text-white">
+                      Generate
+                    </div>
                   </div>
-                  <div className="text-center text-sm leading-none text-black dark:text-white">
-                    Generate
-                  </div>
-                </div>
-              </button>
+                </button>
+              </div>
 
               <button
                 className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md border bg-white/5 px-1.5 shadow-sm hover:bg-white/10 dark:border-none"
@@ -689,3 +699,68 @@ export function EmailComposer({
     </div>
   );
 }
+
+const animations = {
+  container: {
+    initial: { width: 32, opacity: 0 },
+    animate: (width: number) => ({
+      width: width < 640 ? '200px' : '400px',
+      opacity: 1,
+      transition: {
+        width: { type: 'spring', stiffness: 250, damping: 35 },
+        opacity: { duration: 0.4 },
+      },
+    }),
+    exit: {
+      width: 32,
+      opacity: 0,
+      transition: {
+        width: { type: 'spring', stiffness: 250, damping: 35 },
+        opacity: { duration: 0.4 },
+      },
+    },
+  },
+  content: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1, transition: { delay: 0.15, duration: 0.4 } },
+    exit: { opacity: 0, transition: { duration: 0.3 } },
+  },
+  input: {
+    initial: { y: 10, opacity: 0 },
+    animate: { y: 0, opacity: 1, transition: { delay: 0.3, duration: 0.4 } },
+    exit: { y: 10, opacity: 0, transition: { duration: 0.3 } },
+  },
+  button: {
+    initial: { opacity: 0, scale: 0.8 },
+    animate: { opacity: 1, scale: 1, transition: { delay: 0.4, duration: 0.3 } },
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
+  },
+  card: {
+    initial: { opacity: 0, y: 10, scale: 0.95 },
+    animate: { opacity: 1, y: -10, scale: 1, transition: { duration: 0.3 } },
+    exit: { opacity: 0, y: 10, scale: 0.95, transition: { duration: 0.2 } },
+  },
+};
+
+const ContentPreview = ({
+  content,
+}: {
+  content: string
+}) => (
+  <motion.div
+    variants={animations.card}
+    initial="initial"
+    animate="animate"
+    exit="exit"
+    className="absolute bottom-full left-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white shadow-md dark:bg-black"
+  >
+    <div className="p-3">
+      <div className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 text-sm">
+        <div className="whitespace-pre-wrap">{content}</div>
+      </div>
+    </div>
+    <div className="p-2 flex justify-end">
+      Accept
+    </div>
+  </motion.div>
+);
