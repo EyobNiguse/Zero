@@ -202,7 +202,7 @@ export function useShortcuts(
       .join(',');
   }, [shortcutMap, handlers]);
 
-  console.log(`GETTING ${options.scope}`);
+  // console.log(`GETTING ${options.scope}`);
 
   useHotkeys(
     shortcutString,
