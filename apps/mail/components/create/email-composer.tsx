@@ -24,6 +24,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
+import { NewEditor } from './editor-v2';
 import { z } from 'zod';
 
 interface EmailComposerProps {
@@ -565,6 +566,9 @@ export function EmailComposer({
       {/* Message Content */}
       <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div className="flex flex-col gap-2.5 self-stretch">
+          <NewEditor
+            value={editorContent}
+          />
           <Editor
             initialValue={editorContent}
             onChange={(content) => {
