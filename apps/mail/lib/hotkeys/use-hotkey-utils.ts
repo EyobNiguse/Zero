@@ -202,8 +202,6 @@ export function useShortcuts(
       .join(',');
   }, [shortcutMap, handlers]);
 
-  // console.log(`GETTING ${options.scope}`);
-
   useHotkeys(
     shortcutString,
     (event: KeyboardEvent, hotkeysEvent) => {
