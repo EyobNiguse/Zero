@@ -542,21 +542,22 @@ const Thread = memo(
             <div className="flex w-full items-center justify-between gap-4 px-4">
               <div>
                 <Avatar className="h-8 w-8 rounded-full border dark:border-none">
-                  {isMailBulkSelected ? (
-                    <div
-                      className="flex h-full w-full items-center justify-center rounded-full bg-blue-500 p-2 dark:bg-blue-500"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        const threadId = latestMessage.threadId ?? message.id;
-                        setMail((prev: Config) => ({
-                          ...prev,
-                          bulkSelected: prev.bulkSelected.filter((id: string) => id !== threadId),
-                        }));
-                      }}
-                    >
-                      <Check className="h-4 w-4 text-white" />
-                    </div>
-                  ) : null}
+                  <div
+                    className={cn(
+                      'flex h-full w-full items-center justify-center rounded-full bg-blue-500 p-2 dark:bg-blue-500',
+                      `${isMailBulkSelected ? 'block' : 'hidden'}`,
+                    )}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      const threadId = latestMessage.threadId ?? message.id;
+                      setMail((prev: Config) => ({
+                        ...prev,
+                        bulkSelected: prev.bulkSelected.filter((id: string) => id !== threadId),
+                      }));
+                    }}
+                  >
+                    <Check className="h-4 w-4 text-white" />
+                  </div>
                   {isGroupThread ? (
                     <div
                       className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]"
