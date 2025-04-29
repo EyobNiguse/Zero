@@ -10,10 +10,14 @@ import { groq } from '@ai-sdk/groq';
 export const aiCompose = async ({
   prompt,
   emailSubject,
+  to,
+  cc,
   threadMessages = [],
 }: {
   prompt: string
   emailSubject?: string
+  to?: string[],
+  cc?: string[],
   threadMessages?: {
     from: string
     to: string[]
@@ -33,9 +37,13 @@ export const aiCompose = async ({
     EmailAssistantSystemPrompt(session.username)
 
   const userPrompt = EmailAssistantPrompt({
+    threadContent: threadMessages,
     currentSubject: emailSubject,
     currentDraft: prompt,
-    recipients: [],
+    recipients: [
+      ...to ?? [],
+      ...cc ?? [],
+    ],
     prompt,
   })
 

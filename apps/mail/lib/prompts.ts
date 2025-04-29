@@ -145,11 +145,16 @@ export const EmailReplySystemPrompt = (userName: string = 'the user'): string =>
 }
 
 export const EmailAssistantPrompt = ({
+    threadContent,
     currentSubject,
     currentDraft,
     recipients,
     prompt,
 }: {
+    threadContent?: {
+        from: string,
+        body: string
+    }[]
     currentSubject?: string,
     currentDraft?: string,
     recipients?: string[]
@@ -158,12 +163,24 @@ export const EmailAssistantPrompt = ({
     const currentSubjectContent = currentSubject ? `\n\n<current_subject>${currentSubject}</current_subject>\n\n` : '';
     const currentDraftContent = currentDraft ? `\n\n<current_draft>${currentDraft}</current_draft>\n\n` : '';
     const recipientsContent = recipients ? `\n\n<recipients>${recipients.join(', ')}</recipients>\n\n` : '';
+    const currentThreadContent = threadContent?.map((thread) => {
+        return `
+          <email from="${thread.from}">
+            ${thread.body}
+          </email>
+        `
+    }) ?? []
 
     const dynamicContext = `\n\n
     <dynamic_context>
         ${currentSubjectContent}
         ${currentDraftContent}
         ${recipientsContent}
+        ${currentThreadContent.length > 0 ? `
+            <current_thread_content>
+                ${currentThreadContent.join('\n')}
+            </current_thread_content>
+        ` : ''}
     </dynamic_context>
     \n\n`;
 

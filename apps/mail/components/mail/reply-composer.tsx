@@ -48,7 +48,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
     if (mode === 'reply') {
       // Reply to sender
       const to: string[] = [];
-      
+
       // If the sender is not the current user, add them to the recipients
       if (senderEmail !== userEmail) {
         to.push(replyToMessage.sender.email);
@@ -56,7 +56,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
         // If we're replying to our own email, reply to the first recipient
         to.push(replyToMessage.to[0].email);
       }
-      
+
       // Initialize email composer with these recipients
       // Note: The actual initialization happens in the EmailComposer component
     } else if (mode === 'replyAll') {
@@ -83,7 +83,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
           cc.push(recipient.email);
         }
       });
-      
+
       // Initialize email composer with these recipients
     } else if (mode === 'forward') {
       // For forward, we start with empty recipients
@@ -143,7 +143,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
         headers: {
           'In-Reply-To': replyToMessage?.messageId ?? '',
           References: [
-            ...(replyToMessage?.references ? replyToMessage.references.split(' ') : []), 
+            ...(replyToMessage?.references ? replyToMessage.references.split(' ') : []),
             replyToMessage?.messageId
           ]
             .filter(Boolean)
@@ -186,6 +186,19 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
         className="w-full !max-w-none border pb-1 dark:bg-[#141414]"
         onSendEmail={handleSendEmail}
         onClose={() => setMode(null)}
+        threadContent={emailData.messages.map((message) => {
+          return {
+            body: message.body,
+            from: message.sender.name ?? message.sender.email,
+            to: message.to.reduce<string[]>((to, recipient) => {
+              if (recipient && recipient.name) {
+                to.push(recipient.name);
+              }
+
+              return to;
+            }, []),
+          }
+        })}
       />
     </div>
   );

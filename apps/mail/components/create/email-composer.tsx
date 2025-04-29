@@ -27,6 +27,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TextEffect } from '@/components/motion-primitives/text-effect'
 
 interface EmailComposerProps {
+  threadContent?: {
+    from: string
+    to: string[]
+    body: string
+  }[]
   initialTo?: string[];
   initialCc?: string[];
   initialBcc?: string[];
@@ -63,6 +68,7 @@ const schema = z.object({
 });
 
 export function EmailComposer({
+  threadContent = [],
   initialTo = [],
   initialCc = [],
   initialBcc = [],
@@ -254,6 +260,8 @@ export function EmailComposer({
       const result = await aiCompose({
         prompt: values.message,
         emailSubject: values.subject,
+        to: values.to,
+        cc: values.cc,
       })
 
       setAiGeneratedMessage(result.newBody)
@@ -591,8 +599,15 @@ export function EmailComposer({
                     <ContentPreview
                       content={aiGeneratedMessage}
                       onAccept={() => {
-                        editor.commands.setContent(aiGeneratedMessage, false, {
-                          preserveWhitespace: 'full',
+                        editor.commands.setContent({
+                          type: 'doc',
+                          content: aiGeneratedMessage.split(/\r?\n/)
+                            .map((line) => {
+                              return {
+                                type: 'paragraph',
+                                content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
+                              }
+                            })
                         })
                         setAiGeneratedMessage(null)
                       }}
