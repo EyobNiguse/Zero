@@ -17,12 +17,12 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Command, Menu, MoveRight } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SuccessEmailToast } from '../theme/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CurvedArrow } from '../icons/icons';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -30,7 +30,6 @@ import Link from 'next/link';
 import axios from 'axios';
 import React from 'react';
 import { z } from 'zod';
-import { useTheme } from 'next-themes';
 
 const tabs = [
   { label: 'Chat With Your Inbox', value: 'smart-categorization' },
