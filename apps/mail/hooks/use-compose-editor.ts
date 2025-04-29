@@ -222,6 +222,12 @@ const useComposeEditor = ({
 
   return useEditor({
     editable: !isReadOnly,
+    onCreate: ({ editor }) => {
+      if (onLengthChange) {
+        const content = editor.getText()
+        void onLengthChange(content.length)
+      }
+    },
     onUpdate: ({ editor }) => {
       if (onChange) {
         void onChange(editor.getJSON())

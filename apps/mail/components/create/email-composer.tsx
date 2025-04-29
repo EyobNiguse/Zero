@@ -25,6 +25,7 @@ import { EditorContent } from '@tiptap/react';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TextEffect } from '@/components/motion-primitives/text-effect'
+import pluralize from 'pluralize'
 
 interface EmailComposerProps {
   threadContent?: {
@@ -665,7 +666,7 @@ export function EmailComposer({
                   <PopoverTrigger asChild>
                     <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
                       <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
-                      <span>{attachments.length} files</span>
+                      <span>{pluralize('file', attachments.length, true)}</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80 bg-[#202020] p-3" align="start">
