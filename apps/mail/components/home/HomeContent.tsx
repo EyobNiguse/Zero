@@ -30,6 +30,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import React from 'react';
 import { z } from 'zod';
+import { useTheme } from 'next-themes';
 
 const tabs = [
   { label: 'Chat With Your Inbox', value: 'smart-categorization' },
@@ -75,6 +76,7 @@ export default function HomeContent() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [signupCount, setSignupCount] = useState<number>(0);
   const [open, setOpen] = useState(false);
+  const { setTheme } = useTheme();
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -82,6 +84,10 @@ export default function HomeContent() {
       email: '',
     },
   });
+
+  useEffect(() => {
+    setTheme('dark');
+  }, [setTheme]);
 
   useEffect(() => {
     const fetchSignupCount = async () => {

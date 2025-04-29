@@ -2,6 +2,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import { useTheme } from 'next-themes';
 
 import {
   ChevronLeft,
@@ -156,6 +157,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const [mode, setMode] = useQueryState('mode');
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
+  const { resolvedTheme } = useTheme();
 
   const {
     data: { threads: items = [] },
@@ -340,10 +342,15 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
         {!id ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <Image src="/empty-state.svg" alt="Empty Thread" width={200} height={200} />
+              <Image 
+                src={resolvedTheme === 'dark' ? "/empty-state.svg" : "/empty-state-light.svg"} 
+                alt="Empty Thread" 
+                width={200} 
+                height={200} 
+              />
               <div className="mt-5">
                 <p className="text-lg">It's empty here</p>
-                <p className="text-md text-white/50">Choose an email to view details</p>
+                <p className="text-md text-[#6D6D6D] dark:text-white/50">Choose an email to view details</p>
               </div>
             </div>
           </div>
@@ -421,7 +428,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => moveThreadTo('bin')}
-                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5]  dark:border-[#6E2532] dark:bg-[#411D23] bg-[#FDE4E9]"
                       >
                         <Trash className="fill-[#F43F5E]" />
                       </button>
