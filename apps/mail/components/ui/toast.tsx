@@ -1,5 +1,9 @@
-import { CircleX, AlertCircle, AlertOctagon } from 'lucide-react';
-import { CircleCheck } from '@/components/icons/icons';
+import {
+  CircleCheck,
+  ExclamationCircle,
+  ExclamationTriangle,
+  InfoCircle,
+} from '@/components/icons/icons';
 import { Toaster } from 'sonner';
 import React from 'react';
 
@@ -11,9 +15,9 @@ const CustomToaster = (props: Props) => {
       position="bottom-center"
       icons={{
         success: <CircleCheck className="h-4.5 w-4.5 border-none fill-[#36B981]" />,
-        error: <CircleX className="h-4.5 w-4.5 fill-[#FF0000]" />,
-        warning: <AlertCircle className="h-4.5 w-4.5 fill-[#FFC107]" />,
-        info: <AlertOctagon className="h-4.5 w-4.5 fill-[#5767fb]" />,
+        error: <ExclamationCircle className="h-4.5 w-4.5 fill-[#FF0000]" />,
+        warning: <ExclamationTriangle className="h-4.5 w-4.5 fill-[#FFC107]" />,
+        info: <InfoCircle className="h-4.5 w-4.5 fill-[#5767fb]" />,
       }}
       toastOptions={{
         classNames: {
@@ -22,8 +26,8 @@ const CustomToaster = (props: Props) => {
           actionButton: 'action-button',
           cancelButton: 'cancel-button',
           closeButton: 'close-button',
-          loading: 'px-3',
-          loader: 'px-3',
+          loading: 'px-4',
+          loader: 'px-4',
           icon: 'px-4',
           content: 'px py-3',
           default:
