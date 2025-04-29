@@ -1,6 +1,19 @@
 'use client';
 
 import {
+  Bell,
+  GroupPeople,
+  Lightning,
+  People,
+  Tag,
+  User,
+  Star2,
+  Archive,
+  Trash,
+  Archive2,
+  ChevronDown,
+} from '../icons/icons';
+import {
   cn,
   FOLDERS,
   formatDate,
@@ -8,14 +21,24 @@ import {
   getMainSearchTerm,
   parseNaturalLanguageSearch,
 } from '@/lib/utils';
+import {
+  type ComponentProps,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
-import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Briefcase, CheckCircle2, Star, StickyNote, Users } from 'lucide-react';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
-import { Bell, GroupPeople, Lightning, People, Tag, User, Star2, Archive, Trash, Archive2, ChevronDown } from '../icons/icons';
 import { ThreadContextMenu } from '@/components/context/thread-context';
+import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
+import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { Label, useThreadLabels } from '@/hooks/use-labels';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,27 +47,24 @@ import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import type { VirtuosoHandle } from 'react-virtuoso';
+import { SuccessEmailToast } from '../theme/toast';
 import { useKeyState } from '@/hooks/use-hot-key';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
 import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
 import { useDraft } from '@/hooks/use-drafts';
+import { useStats } from '@/hooks/use-stats';
+import { toggleStar } from '@/actions/mail';
 import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
-import Image from 'next/image';
-import { useTheme } from 'next-themes';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useAtom } from 'jotai';
-import { backgroundQueueAtom } from '@/store/backgroundQueue';
-import { useStats } from '@/hooks/use-stats';
+import Image from 'next/image';
 import { toast } from 'sonner';
-import { SuccessEmailToast } from '../theme/toast';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
-import { toggleStar } from '@/actions/mail';
-import { CheckCircle2 } from 'lucide-react';
 
 const HOVER_DELAY = 1000; // ms before prefetching
 
@@ -323,7 +343,6 @@ const Thread = memo(
 
     if (!demo && (isLoading || !latestMessage || !getThreadData)) return null;
 
-
     const demoContent =
       demo && latestMessage ? (
         <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
@@ -436,7 +455,7 @@ const Thread = memo(
       ) : null;
 
     if (demo) return demoContent;
-  
+
     const content =
       latestMessage && getThreadData ? (
         <div className="select-none py-1" onClick={onClick ? onClick(latestMessage) : undefined}>
@@ -459,56 +478,66 @@ const Thread = memo(
                 isMailBulkSelected && 'translate-x-0',
               )}
             />
-            
+
             {/* Quick Action Row */}
             {isHovered && !isMobile && (
-              <div className={cn(
-                "dark:bg-[#1A1A1A] bg-white rounded-xl border absolute right-2 z-[25] flex -translate-y-1/2 items-center p-1 gap-1 shadow-sm",
-                index === 0 ? "top-4" : "top-[-1]"
-              )}>
+              <div
+                className={cn(
+                  'absolute right-2 z-[25] flex -translate-y-1/2 items-center gap-1 rounded-xl border bg-white p-1 shadow-sm dark:bg-[#1A1A1A]',
+                  index === 0 ? 'top-4' : 'top-[-1]',
+                )}
+              >
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-6 w-6 [&_svg]:size-3.5"
                       onClick={handleToggleStar}
                     >
-                      <Star2 className={cn(
-                        "h-4 w-4",
-                        isStarred
-                          ? 'fill-yellow-400 stroke-yellow-400'
-                          : 'fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]',
-                      )} />
+                      <Star2
+                        className={cn(
+                          'h-4 w-4',
+                          isStarred
+                            ? 'fill-yellow-400 stroke-yellow-400'
+                            : 'fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]',
+                        )}
+                      />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className='mb-1 dark:bg-[#1A1A1A] bg-white'>{isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}</TooltipContent>
+                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                    {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
+                  </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-6 w-6 [&_svg]:size-3.5"
                       onClick={() => moveThreadTo('archive')}
                     >
                       <Archive2 className="fill-[#9D9D9D]" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className='mb-1 dark:bg-[#1A1A1A] bg-white'>{t('common.threadDisplay.archive')}</TooltipContent>
+                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                    {t('common.threadDisplay.archive')}
+                  </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 [&_svg]:size-3.5 dark:hover:bg-[#411D23] hover:bg-[#FDE4E9]"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] [&_svg]:size-3.5"
                       onClick={() => moveThreadTo('bin')}
                     >
                       <Trash className="fill-[#F43F5E]" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className='mb-1 dark:bg-[#1A1A1A] bg-white'>{t('common.actions.Bin')}</TooltipContent>
+                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                    {t('common.actions.Bin')}
+                  </TooltipContent>
                 </Tooltip>
               </div>
             )}
@@ -852,11 +881,11 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           ) : !items || items.length === 0 ? (
             <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
-                <Image 
-                  src={resolvedTheme === 'dark' ? "/empty-state.svg" : "/empty-state-light.svg"} 
-                  alt="Empty Inbox" 
-                  width={200} 
-                  height={200} 
+                <Image
+                  src={resolvedTheme === 'dark' ? '/empty-state.svg' : '/empty-state-light.svg'}
+                  alt="Empty Inbox"
+                  width={200}
+                  height={200}
                 />
                 <div className="mt-5">
                   <p className="text-lg">It's empty here</p>
