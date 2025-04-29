@@ -259,11 +259,11 @@ export default function HomeContent() {
             <MoveRight className="!size-4" />
           </Link>
         </div>
-        <Balancer className="mb-3 max-w-[1130px] text-center text-6xl font-semibold">
-          <h1 className="text-center text-4xl font-medium md:text-6xl">
+        <h1 className="text-center text-4xl font-medium md:text-6xl">
+          <Balancer className="mb-3 max-w-[1130px]">
             AI Powered Email, Built to Save You Time
-          </h1>
-        </Balancer>
+          </Balancer>
+        </h1>
         <p className="mx-auto mb-4 max-w-2xl text-center text-base font-medium text-[#B7B7B7] md:text-lg">
           Zero is an AI native email client that manages your inbox, so you don't have to.
         </p>
