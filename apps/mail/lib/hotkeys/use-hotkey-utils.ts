@@ -1,13 +1,69 @@
+'use client';
+
 import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
-import { useCallback, useEffect, useState } from 'react';
+import { dexieStorageProvider } from '@/lib/idb';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { hotkeysDB } from './hotkeys-db';
+import useSWR, { SWRConfiguration } from 'swr';
+import { useCallback, useMemo } from 'react';
 
-export const findShortcut = async (action: string): Promise<Shortcut | undefined> => {
-  const savedShortcut = await hotkeysDB.getHotkey(action);
-  if (savedShortcut) return savedShortcut;
+const swrConfig: SWRConfiguration = {
+  provider: () => dexieStorageProvider(),
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false,
+  dedupingInterval: 24 * 60 * 60 * 1000, // 24 hours
+};
 
-  return keyboardShortcuts.find((sc) => sc.action === action);
+import { getShortcuts as getShortcutsAction, updateShortcuts } from '@/actions/shortcuts';
+
+const getShortcuts = async (): Promise<Shortcut[]> => {
+  try {
+    return await getShortcutsAction();
+  } catch (error) {
+    console.error('Error fetching shortcuts:', error);
+    return keyboardShortcuts;
+  }
+};
+
+export const useShortcutCache = (userId?: string) => {
+  const { data: shortcuts, mutate } = useSWR<Shortcut[]>(
+    userId ? `/hotkeys/${userId}` : null,
+    getShortcuts,
+    swrConfig,
+  );
+
+  const updateShortcut = useCallback(
+    async (shortcut: Shortcut) => {
+      const currentShortcuts = shortcuts || [];
+      const index = currentShortcuts.findIndex((s) => s.action === shortcut.action);
+
+      let newShortcuts: Shortcut[];
+      if (index >= 0) {
+        newShortcuts = [
+          ...currentShortcuts.slice(0, index),
+          shortcut,
+          ...currentShortcuts.slice(index + 1),
+        ];
+      } else {
+        newShortcuts = [...currentShortcuts, shortcut];
+      }
+
+      try {
+        // Update server using server action
+        await updateShortcuts(newShortcuts);
+        // Update cache only after successful server update
+        await mutate(newShortcuts, false);
+      } catch (error) {
+        console.error('Error updating shortcuts:', error);
+        throw error;
+      }
+    },
+    [shortcuts, mutate],
+  );
+
+  return {
+    shortcuts: shortcuts || keyboardShortcuts,
+    updateShortcut,
+  };
 };
 
 const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -87,39 +143,29 @@ export function useShortcut(
   callback: () => void,
   options: Partial<HotkeyOptions> = {},
 ) {
-  const [currentShortcut, setCurrentShortcut] = useState<Shortcut>(shortcut);
-
-  useEffect(() => {
-    hotkeysDB.saveHotkey(shortcut).catch(console.error);
-
-    hotkeysDB
-      .getHotkey(shortcut.action)
-      .then((saved) => {
-        if (saved && saved.keys !== shortcut.keys) {
-          setCurrentShortcut(saved);
-        }
-      })
-      .catch(console.error);
-  }, [shortcut]);
-
+  const { updateShortcut } = useShortcutCache();
   const { scope, preventDefault, ...restOptions } = {
     ...defaultHotkeyOptions,
     ...options,
-    ...currentShortcut,
+    ...shortcut,
   };
+
+  useCallback(() => {
+    updateShortcut(shortcut);
+  }, [shortcut, updateShortcut])();
 
   const handleKey = useCallback(
     (event: KeyboardEvent) => {
-      if (currentShortcut.preventDefault || preventDefault) {
+      if (shortcut.preventDefault || preventDefault) {
         event.preventDefault();
       }
       callback();
     },
-    [callback, preventDefault, currentShortcut],
+    [callback, preventDefault, shortcut],
   );
 
   useHotkeys(
-    formatKeys(currentShortcut.keys),
+    formatKeys(shortcut.keys),
     handleKey,
     {
       ...restOptions,
@@ -135,11 +181,55 @@ export function useShortcuts(
   handlers: { [key: string]: () => void },
   options: Partial<HotkeyOptions> = {},
 ) {
-  // DISABLED
-  //   shortcuts.forEach((shortcut) => {
-  //     const handler = handlers[shortcut.action];
-  //     if (handler) {
-  //       useShortcut(shortcut, handler, options);
-  //     }
-  //   });
+  const shortcutMap = useMemo(() => {
+    return shortcuts.reduce<Record<string, Shortcut>>((acc, shortcut) => {
+      if (handlers[shortcut.action]) {
+        acc[shortcut.action] = shortcut;
+      }
+      return acc;
+    }, {});
+  }, [shortcuts]);
+
+  const shortcutString = useMemo(() => {
+    return Object.entries(shortcutMap)
+      .map(([action, shortcut]) => {
+        if (handlers[action]) {
+          return formatKeys(shortcut.keys);
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .join(',');
+  }, [shortcutMap, handlers]);
+
+  // console.log(`GETTING ${options.scope}`);
+
+  useHotkeys(
+    shortcutString,
+    (event: KeyboardEvent, hotkeysEvent) => {
+      const pressedKeys = hotkeysEvent.keys?.join('+') || '';
+      const matchingEntry = Object.entries(shortcutMap).find(
+        ([_, shortcut]) => formatKeys(shortcut.keys) === pressedKeys,
+      );
+
+      if (matchingEntry) {
+        const [action, shortcut] = matchingEntry;
+        const handlerFn = handlers[action];
+        if (handlerFn) {
+          if (shortcut.preventDefault || options.preventDefault) {
+            event.preventDefault();
+          }
+          handlerFn();
+        }
+      }
+    },
+    {
+      ...options,
+      scopes: options.scope ? [options.scope] : undefined,
+      preventDefault: false, // We'll handle preventDefault per-shortcut
+      keyup: false,
+      keydown: true,
+    },
+    [shortcutMap, handlers, options],
+  );
 }

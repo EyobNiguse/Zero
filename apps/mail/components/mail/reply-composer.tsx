@@ -157,11 +157,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
       // Reset states
       setMode(null);
       await mutate();
-      toast.custom((id) => (
-        <div className="relative left-32 top-0">
-          <SuccessEmailToast message={t('pages.createEmail.emailSent')} />
-        </div>
-      ));
+      toast.success(t('pages.createEmail.emailSent'));
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error(t('pages.createEmail.failedToSendEmail'));

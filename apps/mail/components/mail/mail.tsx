@@ -372,7 +372,7 @@ export function MailLayout() {
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
-              <div className="h-[calc(100vh-9.8rem)] overflow-hidden pt-0 relative z-[1]">
+              <div className="relative z-[1] h-[calc(100vh-9.8rem)] overflow-hidden pt-0">
                 <MailList isCompact={true} />
               </div>
             </div>

@@ -8,12 +8,22 @@ import {
   useSidebar,
   SidebarMenuSub,
 } from './sidebar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { createLabel } from '@/hooks/use-labels';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { clearBulkSelectionAtom } from '../mail/use-mail';
 import { type MessageKey } from '@/config/navigation';
-import { Label, useLabels } from '@/hooks/use-labels';
+import { Label as UILabel } from '@/components/ui/label';
+import { Label as LabelType, useLabels } from '@/hooks/use-labels';
 import { type NavItem } from '@/config/navigation';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +38,12 @@ import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
 import * as React from 'react';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { HexColorPicker } from 'react-colorful';
+import { toast } from 'sonner';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -61,6 +77,15 @@ export function NavMain({ items }: NavMainProps) {
   const searchParams = useSearchParams();
   const [category] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const form = useForm<LabelType>({
+    defaultValues: {
+      name: '',
+      color: { backgroundColor: '#E2E2E2', textColor: '#ffffff' },
+    },
+  });
+
+  const formColor = form.watch('color');
 
   const { labels } = useLabels();
   const { state } = useSidebar();
@@ -159,7 +184,7 @@ export function NavMain({ items }: NavMainProps) {
     [pathname, searchParams],
   );
 
-  const handleFilterByLabel = (label: Label) => () => {
+  const handleFilterByLabel = (label: LabelType) => () => {
     const existingValue = searchValue.value;
     if (existingValue.includes(`label:${label.name}`)) {
       setSearchValue({
@@ -174,6 +199,28 @@ export function NavMain({ items }: NavMainProps) {
       value: newValue,
       highlight: '',
       folder: '',
+    });
+  };
+
+  const onSubmit = async (data: LabelType) => {
+    try {
+      toast.promise(createLabel(data), {
+        loading: 'Creating label...',
+        success: 'Label created successfully',
+        error: 'Failed to create label',
+      });
+    } catch (error) {
+      console.error('Error creating label:', error);
+    } finally {
+      handleClose();
+    }
+  };
+
+  const handleClose = () => {
+    setIsDialogOpen(false);
+    form.reset({
+      name: '',
+      color: { backgroundColor: '#E2E2E2', textColor: '#ffffff' },
     });
   };
 
@@ -212,7 +259,83 @@ export function NavMain({ items }: NavMainProps) {
         {!pathname.includes('/settings') && !isBottomNav && state !== 'collapsed' && (
           <Collapsible defaultOpen={true} className="group/collapsible">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
-              <div className="mx-2 mb-2 text-[13px] text-[#6D6D6D] dark:text-[#898989]">Labels</div>
+              <div className="mx-2 mb-4 flex items-center justify-between w-full">
+                <span className="text-[13px] text-[#6D6D6D] dark:text-[#898989]">Labels</span>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0 hover:bg-transparent mr-2">
+                      <Plus className="h-3 w-3 text-[#6D6D6D] dark:text-[#898989]" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent showOverlay={true} className="bg-panelLight dark:bg-panelDark w-full p-4 max-w-[500px] rounded-xl">
+                    <DialogHeader>
+                      <DialogTitle>Create New Label</DialogTitle>
+                    </DialogHeader>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <FormField
+                              control={form.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Label Name</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Enter label name" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <UILabel>Color</UILabel>
+                            <div className="space-y-4 w-full">
+                              <div className="w-full [&>.react-colorful]:w-full">
+                                <HexColorPicker
+                                  color={formColor?.backgroundColor || '#E2E2E2'}
+                                  onChange={(color) =>
+                                    form.setValue('color', {
+                                      backgroundColor: color,
+                                      textColor: '#ffffff',
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={formColor?.backgroundColor || '#E2E2E2'}
+                                  onChange={(e) =>
+                                    form.setValue('color', {
+                                      backgroundColor: e.target.value,
+                                      textColor: '#ffffff',
+                                    })
+                                  }
+                                  placeholder="#000000"
+                                  className="font-mono flex-1"
+                                />
+                                <div
+                                  className="h-9 w-9 rounded-md border flex-shrink-0"
+                                  style={{
+                                    backgroundColor: formColor?.backgroundColor || '#E2E2E2',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button type="button" variant="outline" onClick={handleClose}>
+                            Cancel
+                          </Button>
+                          <Button type="submit">Create Label</Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
               <div className="mr-0 pr-0">
                 <div

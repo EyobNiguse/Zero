@@ -1,5 +1,6 @@
 import {
   CurvedArrow,
+  Lightning,
   MediumStack,
   ShortStack,
   LongStack,
@@ -595,50 +596,6 @@ export function EmailComposer({
                 </div>
               </button>
 
-              <div className="relative">
-                <AnimatePresence>
-                  {aiGeneratedMessage !== null ? (
-                    <ContentPreview
-                      content={aiGeneratedMessage}
-                      onAccept={() => {
-                        editor.commands.setContent({
-                          type: 'doc',
-                          content: aiGeneratedMessage.split(/\r?\n/).map((line) => {
-                            return {
-                              type: 'paragraph',
-                              content:
-                                line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
-                            };
-                          }),
-                        });
-                        setAiGeneratedMessage(null);
-                      }}
-                      onReject={() => {
-                        setAiGeneratedMessage(null);
-                      }}
-                    />
-                  ) : null}
-                </AnimatePresence>
-                <button
-                  className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
-                  onClick={async () => {
-                    setAiGeneratedMessage(null);
-                    await handleAiGenerate(); // TODO: Set conversation here for replies
-                  }}
-                  type="button"
-                  disabled={isLoading}
-                >
-                  <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                    <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
-                      <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
-                    </div>
-                    <div className="text-center text-sm leading-none text-black dark:text-white">
-                      Generate
-                    </div>
-                  </div>
-                </button>
-              </div>
-
               <button
                 className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md border bg-white/5 px-1.5 shadow-sm hover:bg-white/10 dark:border-none"
                 onClick={() => fileInputRef.current?.click()}
@@ -704,6 +661,48 @@ export function EmailComposer({
           </div>
 
           <div className="flex items-start justify-start gap-2">
+            <div className="relative">
+              <AnimatePresence>
+                {aiGeneratedMessage !== null ? (
+                  <ContentPreview
+                    content={aiGeneratedMessage}
+                    onAccept={() => {
+                      editor.commands.setContent({
+                        type: 'doc',
+                        content: aiGeneratedMessage.split(/\r?\n/).map((line) => {
+                          return {
+                            type: 'paragraph',
+                            content:
+                              line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
+                          };
+                        }),
+                      });
+                      setAiGeneratedMessage(null);
+                    }}
+                    onReject={() => {
+                      setAiGeneratedMessage(null);
+                    }}
+                  />
+                ) : null}
+              </AnimatePresence>
+            <button
+              className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
+              onClick={async () => {
+                setAiGeneratedMessage(null);
+                await handleAiGenerate(); // TODO: Set conversation here for replies
+              }}
+              disabled={isLoading || !toEmails.length || !subjectInput.trim()}
+            >
+              <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
+                  <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+                </div>
+                <div className="text-center text-sm leading-none text-black dark:text-white">
+                  Generate
+                </div>
+              </div>
+            </button>
+            </div>
             <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
               <Smile className="h-3 w-3 fill-[#9A9A9A]" />
               <span className="px-0.5 text-sm">Casual</span>
