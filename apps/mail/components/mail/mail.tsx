@@ -363,7 +363,11 @@ export function MailLayout() {
               </div>
               <div className="p-2 px-[22px]">
                 <SearchBar />
-                <div className="mt-2">{folder === 'inbox' && <CategorySelect />}</div>
+                <div className="mt-2">
+                  {folder === 'inbox' && (
+                    <CategorySelect isMultiSelectMode={mail.bulkSelected.length > 0} />
+                  )}
+                </div>
               </div>
               <div
                 className={cn(
@@ -807,7 +811,7 @@ function getCategoryColor(categoryId: string): string {
   }
 }
 
-function CategorySelect() {
+function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const [mail, setMail] = useMail();
   const [, setSearchValue] = useSearchValue();
   const categories = Categories();
@@ -878,6 +882,10 @@ function CategorySelect() {
       }
     }
   }, [category]);
+
+  if (isMultiSelectMode) {
+    return <BulkSelectActions />;
+  }
 
   return (
     <div className="relative w-full">
