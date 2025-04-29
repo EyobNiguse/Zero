@@ -225,8 +225,8 @@ export default function HomeContent() {
               </SheetTitle>
             </SheetHeader>
             <div className="mt-4 flex flex-col space-y-4">
-              <Link href="/investor" className="text-sm font-medium">
-                Investors
+              <Link href="/about" className="text-sm font-medium">
+                About
               </Link>
               <Link href="#" className="text-sm font-medium">
                 Solutions
