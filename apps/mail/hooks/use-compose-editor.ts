@@ -1,14 +1,52 @@
-'use client';
-
-import { Extension, EditorContent, type KeyboardShortcutCommand, useEditor } from '@tiptap/react';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
+import type { JSONContent } from 'novel';
+import { useEditor, type KeyboardShortcutCommand, Extension } from '@tiptap/react';
 import { defaultExtensions } from '@/components/create/extensions';
-import { AutoComplete } from './editor-autocomplete';
-import { cn } from '@/lib/utils';
-import { TextSelection } from 'prosemirror-state';
 import { Markdown } from 'tiptap-markdown';
-import { useEffect } from 'react';
-import React from 'react';
+import { cn } from '@/lib/utils';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { AutoComplete } from '@/components/create/editor-autocomplete';
+import { TextSelection } from 'prosemirror-state';
+import Placeholder from '@tiptap/extension-placeholder';
+
+const PreventNavigateOnDragOver = (handleFiles: (files: File[]) => void | Promise<void>) => {
+  return Extension.create({
+    name: 'preventNavigateOnDrop',
+    addProseMirrorPlugins: () => {
+      return [
+        new Plugin({
+          key: new PluginKey('preventNavigateOnDrop'),
+          props: {
+            handleDOMEvents: {
+              dragover: (_view, event) => {
+                if (event.dataTransfer?.types?.includes('Files')) {
+                  event.preventDefault()
+
+                  return true
+                }
+
+                return false
+              },
+              drop: (_view, event) => {
+                const fileList = event.dataTransfer?.files
+                if (fileList && fileList.length) {
+                  event.preventDefault()
+                  event.stopPropagation()
+
+                  const files = Array.from(fileList)
+                  void handleFiles(files)
+
+                  return true
+                }
+
+                return false
+              }
+            }
+          }
+        })
+      ]
+    }
+  })
+}
 
 const CustomModEnter = (onModEnter: KeyboardShortcutCommand) => {
   return Extension.create({
@@ -121,19 +159,10 @@ export const defaultEditorContent = {
   ],
 };
 
-interface EditorProps {
-  value?: JSONContent;
-  onChange: (content: string) => void;
-  className?: string;
-  placeholder?: string;
-  onCommandEnter?: () => void;
-}
-
-export const NewEditor = ({
-  value = defaultEditorContent,
-  isReadOnly = false,
-  placeholder = 'Start your email here',
-  // Events
+const useComposeEditor = ({
+  initialValue,
+  isReadOnly,
+  placeholder,
   onChange,
   onAttachmentsChange,
   onLengthChange,
@@ -141,14 +170,12 @@ export const NewEditor = ({
   onFocus,
   onKeydown,
   onMousedown,
-  // Keyboard Shortcuts
   onModEnter,
   onTab,
-  // State Information
   myInfo,
   sender,
 }: {
-  value?: JSONContent | null
+  initialValue?: JSONContent | null
   isReadOnly?: boolean
   placeholder?: string
   // Events
@@ -172,12 +199,12 @@ export const NewEditor = ({
     email?: string;
   }
 }) => {
-  const editor = useEditor({
+  return useEditor({
     editable: !isReadOnly,
     onUpdate: ({ editor }) => {
       void onChange?.(editor.getJSON())
     },
-    content: value ?? defaultEditorContent,
+    content: initialValue ?? defaultEditorContent,
     immediatelyRender: true,
     shouldRerenderOnTransaction: false,
     extensions: [
@@ -200,6 +227,14 @@ export const NewEditor = ({
       ...isReadOnly ? [] : [
         MouseDownSelection,
       ],
+      Placeholder.configure({
+        placeholder,
+      }),
+      ...onAttachmentsChange ? [
+        PreventNavigateOnDragOver((files) => {
+          onAttachmentsChange(files)
+        }),
+      ] : [],
     ],
     onFocus: isReadOnly ? undefined : onFocus,
     onBlur: isReadOnly ? undefined : onBlur,
@@ -209,7 +244,6 @@ export const NewEditor = ({
           'prose dark:prose-invert prose-headings:font-title focus:outline-none max-w-full min-h-[200px]',
           isReadOnly && 'pointer-events-none select-text',
         ),
-        'data-placeholder': placeholder,
       },
       handleDOMEvents: {
         mousedown: (_, event) => {
@@ -229,17 +263,6 @@ export const NewEditor = ({
       }
     }
   })
-
-  useEffect(() => {
-
-  }, [])
-
-  return (
-    <div>
-      <EditorContent
-        className="hide-scrollbar relative max-h-[150px] cursor-text overflow-auto"
-        editor={editor}
-      />
-    </div>
-  )
 }
+
+export default useComposeEditor

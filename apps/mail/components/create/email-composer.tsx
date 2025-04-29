@@ -7,7 +7,6 @@ import {
   X,
   Sparkles,
 } from '../icons/icons';
-import type { Editor } from '@tiptap/react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, Paperclip, Plus } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,13 +18,13 @@ import { Input } from '@/components/ui/input';
 import { useDraft } from '@/hooks/use-drafts';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
-import { JSONContent, EditorInstance } from 'novel';
 import { cn } from '@/lib/utils';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import * as React from 'react';
-import { NewEditor } from './editor-v2';
 import { z } from 'zod';
+import { EditorContent } from '@tiptap/react';
+import useComposeEditor from '@/hooks/use-compose-editor';
+import type { JSONContent } from 'novel';
 
 interface EmailComposerProps {
   initialTo?: string[];
@@ -45,6 +44,17 @@ interface EmailComposerProps {
   onClose?: () => void;
   className?: string;
 }
+
+// Helper function to create JSONContent from text
+const createJsonContentFromText = (text: string): JSONContent => ({
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text }],
+    },
+  ],
+});
 
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -74,14 +84,13 @@ export function EmailComposer({
   onClose,
   className,
 }: EmailComposerProps) {
-  const editorRef = useRef<Editor | null>(null);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [messageLength, setMessageLength] = useState(0);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const toInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const [mode] = useQueryState('mode');
   const [isComposeOpen] = useQueryState('isComposeOpen');
@@ -89,15 +98,14 @@ export function EmailComposer({
   const { data: session } = useSession();
   const [draftId] = useQueryState('draftId');
   const { data: draft } = useDraft(draftId ?? null);
-  const [editorKey, setEditorKey] = useState(0)
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
       toInputRef.current.focus();
     }
   }, [isComposeOpen]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (draft) {
       if (draft.to) form.setValue('to', draft.to);
       // TODO: Fix this
@@ -118,7 +126,7 @@ export function EmailComposer({
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Don't populate from threadId if we're in compose mode
     if (isComposeOpen === 'true') return;
 
@@ -198,13 +206,15 @@ export function EmailComposer({
   const bccEmails = watch('bcc');
   const subjectInput = watch('subject');
   const messageContent = watch('message');
-  console.log('messageContent', messageContent)
   const attachments = watch('attachments');
 
-  const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const handleAttachment = (files: File[]) => {
     if (files && files.length > 0) {
-      setValue('attachments', [...(attachments || []), ...Array.from(files)]);
+      setValue('attachments', [
+        ...(attachments ?? []),
+        ...files,
+      ])
+
       setHasUnsavedChanges(true);
     }
   };
@@ -217,22 +227,22 @@ export function EmailComposer({
     setHasUnsavedChanges(true);
   };
 
-  // Helper function to create JSONContent from text
-  const createJsonContentFromText = (text: string): JSONContent => ({
-    type: 'doc',
-    content: [
-      {
-        type: 'paragraph',
-        content: [{ type: 'text', text }],
-      },
-    ],
-  });
+  const editor = useComposeEditor({
+    initialValue: draftId && draft?.content ? createJsonContentFromText(draft.content) : undefined,
+    isReadOnly: isLoading,
+    onLengthChange: (length) => {
+      setMessageLength(length)
+    },
+    onModEnter: () => {
+      void handleSend()
 
-  useEffect(() => {
-    console.log('EDITOR_REF', editorRef)
-  }, [
-    editorRef.current
-  ])
+      return true
+    },
+    onAttachmentsChange: (files) => {
+      handleAttachment(files)
+    },
+    placeholder: 'Start your email here',
+  })
 
   const handleSend = async () => {
     try {
@@ -247,7 +257,7 @@ export function EmailComposer({
         attachments: values.attachments || [],
       });
       setHasUnsavedChanges(false);
-      editorRef.current?.commands.clearContent(true)
+      editor.commands.clearContent(true)
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');
@@ -266,9 +276,7 @@ export function EmailComposer({
         emailSubject: values.subject,
       })
 
-      console.log('editorRef', editorRef.current?.commands.setContent)
-      console.log('result.newBody', result.newBody, createJsonContentFromText(result.newBody))
-      editorRef.current?.commands.setContent(createJsonContentFromText(result.newBody), true)
+      editor.commands.setContent(createJsonContentFromText(result.newBody))
       toast.success('Email generated successfully')
     } catch (error) {
       console.error('Error generating AI email:', error);
@@ -572,33 +580,9 @@ export function EmailComposer({
       {/* Message Content */}
       <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div className="flex flex-col gap-2.5 self-stretch">
-          <NewEditor
-            ref={editorRef}
-            isReadOnly={isLoading}
-            onLengthChange={(length) => {
-              setMessageLength(length)
-            }}
-            onModEnter={() => {
-              void handleSend()
-
-              return true
-            }}
-          />
-          {/*<Editor*/}
-          {/*  initialValue={editorContent}*/}
-          {/*  onChange={(content) => {*/}
-          {/*    // Extract plain text from the HTML content*/}
-          {/*    const tempDiv = document.createElement('div');*/}
-          {/*    tempDiv.innerHTML = content;*/}
-          {/*    const plainText = tempDiv.textContent || tempDiv.innerText || '';*/}
-
-          {/*    setMessageLength(plainText.length);*/}
-          {/*    setHasUnsavedChanges(true);*/}
-          {/*  }}*/}
-          {/*  className="w-full cursor-text"*/}
-          {/*  placeholder={'Start writing your email...'}*/}
-          {/*  onCommandEnter={handleSend}*/}
-          {/*/>*/}
+          {draftId && draft?.content || !draftId ? (
+            <EditorContent editor={editor} />
+          ) : undefined}
         </div>
 
         {/* Bottom Actions */}
@@ -653,7 +637,12 @@ export function EmailComposer({
                 type="file"
                 id="attachment-input"
                 className="hidden"
-                onChange={handleAttachment}
+                onChange={(event) => {
+                  const fileList = event.target.files
+                  if (fileList) {
+                    handleAttachment(Array.from(fileList))
+                  }
+                }}
                 multiple
                 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                 ref={fileInputRef}

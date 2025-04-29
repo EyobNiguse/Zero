@@ -112,6 +112,8 @@ const Draft = memo(({ message }: { message: { id: string } }) => {
     return;
   }, [message.id]);
 
+  console.log('draft', draft)
+
   return (
     <div className="select-none py-1" onClick={handleMailClick}>
       <div
