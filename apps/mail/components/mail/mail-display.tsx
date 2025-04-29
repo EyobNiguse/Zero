@@ -31,10 +31,11 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import AttachmentsAccordion from './attachments-accordion';
 import { cn, getEmailLogo, formatDate } from '@/lib/utils';
+import { Sender, type ParsedMessage } from '@/types';
 import AttachmentDialog from './attachment-dialog';
 import { useSummary } from '@/hooks/use-summary';
 import { TextShimmer } from '../ui/text-shimmer';
-import { type ParsedMessage } from '@/types';
+import { useSession } from '@/lib/auth-client';
 import ReplyCompose from './reply-composer';
 import { Separator } from '../ui/separator';
 import { useParams } from 'next/navigation';
@@ -285,6 +286,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
   const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const t = useTranslations();
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
+  const { data: session } = useSession();
 
   useEffect(() => {
     if (!demo) {
@@ -369,6 +371,43 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
     }
   }, [isCollapsed, preventCollapse, openDetailsPopover]);
 
+  const renderPerson = useCallback(
+    (person: Sender) => (
+      <div
+        key={person.email}
+        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white p-1 pr-2 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+      >
+        <Avatar className="h-5 w-5">
+          <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
+          <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold dark:bg-[#373737]">
+            {getFirstLetterCharacter(person.name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
+          {person.name || person.email}
+        </div>
+      </div>
+    ),
+    [],
+  );
+
+  const people = useMemo(() => {
+    if (!session?.activeConnection) return [];
+    const allPeople = [
+      ...(folder === 'sent' ? [] : [emailData.sender]),
+      ...(emailData.to || []),
+      ...(emailData.cc || []),
+      ...(emailData.bcc || []),
+    ];
+    return allPeople.filter(
+      (p): p is Sender =>
+        Boolean(p?.email) &&
+        p.email !== session.activeConnection!.email &&
+        p.name !== 'No Sender Name' &&
+        p === allPeople.find((other) => other?.email === p?.email),
+    );
+  }, [emailData]);
+
   return (
     <div
       className={cn('relative flex-1 overflow-hidden')}
@@ -396,42 +435,6 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                 <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
                 <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
                   {(() => {
-                    interface Person {
-                      name: string;
-                      email: string;
-                    }
-
-                    const allPeople = [
-                      ...(folder === 'sent' ? [] : [emailData.sender]),
-                      ...(emailData.to || []),
-                      ...(emailData.cc || []),
-                      ...(emailData.bcc || []),
-                    ];
-
-                    const people = allPeople.filter(
-                      (p): p is Person =>
-                        Boolean(p?.email) &&
-                        p.name !== 'No Sender Name' &&
-                        p === allPeople.find((other) => other?.email === p?.email),
-                    );
-
-                    const renderPerson = (person: Person) => (
-                      <div
-                        key={person.email}
-                        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white p-1 pr-2 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
-                      >
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
-                          <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold dark:bg-[#373737]">
-                            {getFirstLetterCharacter(person.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
-                          {person.name || person.email}
-                        </div>
-                      </div>
-                    );
-
                     if (people.length <= 2) {
                       return people.map(renderPerson);
                     }
