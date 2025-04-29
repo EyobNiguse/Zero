@@ -287,7 +287,7 @@ const extractStyleMatrix = async (emailBody: string) => {
   const llm = new ChatGroq({
     model: 'llama-3.1-8b-instant',
     temperature: 0,
-    maxTokens: 300,
+    maxTokens: 600,
     maxRetries: 5,
   }).bind({
     response_format: {
