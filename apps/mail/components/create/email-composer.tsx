@@ -1,6 +1,5 @@
 import {
   CurvedArrow,
-  Lightning,
   MediumStack,
   ShortStack,
   LongStack,
@@ -9,30 +8,23 @@ import {
   Sparkles,
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
+import { Command, Paperclip, Plus } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { generateAIEmailBody } from '@/actions/ai';
+import { aiCompose } from '@/actions/ai-composer';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
 import { useDraft } from '@/hooks/use-drafts';
 import { useForm } from 'react-hook-form';
-import { useMemo, useState } from 'react';
-import { ISendEmail } from '@/types';
 import { useQueryState } from 'nuqs';
 import { JSONContent } from 'novel';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Editor from './editor';
 import { z } from 'zod';
-
-interface AIBodyResponse {
-  content: string;
-  jsonContent: JSONContent;
-  type: 'email' | 'question' | 'system';
-}
 
 interface EmailComposerProps {
   initialTo?: string[];
@@ -203,6 +195,7 @@ export function EmailComposer({
   const bccEmails = watch('bcc');
   const subjectInput = watch('subject');
   const messageContent = watch('message');
+  console.log('messageContent', messageContent)
   const attachments = watch('attachments');
 
   const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,38 +256,19 @@ export function EmailComposer({
     }
   };
 
-  const handleAIGenerate = async () => {
+  const handleAiGenerate = async () => {
     try {
       setIsLoading(true);
-      const values = getValues();
-      const result = await generateAIEmailBody({
-        prompt: values.message, // Use the current message as the prompt
-        currentContent: '',
-        subject: values.subject,
-        to: values.to,
-        userContext: {
-          name: session?.user?.name,
-          email: session?.user?.email,
-        },
-      });
+      const values = getValues()
 
-      if (result.type === 'system') {
-        toast.error(result.content || 'Failed to generate email');
-        return;
-      }
+      // const result = await aiCompose({
+      //   prompt: values.message,
+      //   emailSubject: values.subject,
+      // })
 
-      if (result.type === 'question') {
-        // Keep the AI compose mode active if we got a question back
-        setValue('message', '');
-        toast.info("Please answer the AI's question to continue");
-      } else {
-        // If we got email content, set it and exit AI compose mode
-        setValue('message', result.content);
-        // Update the editor content with the jsonContent
-        setEditorContent(result.jsonContent || createJsonContentFromText(result.content));
-        toast.success('Email generated successfully');
-      }
-      setHasUnsavedChanges(true);
+      // setValue('message', result.newBody)
+      setValue('message', 'adfdasfasdfadsfasd')
+      toast.success('Email generated successfully')
     } catch (error) {
       console.error('Error generating AI email:', error);
       toast.error('Failed to generate email');
@@ -302,8 +276,6 @@ export function EmailComposer({
       setIsLoading(false);
     }
   };
-
-  const handleGenerateReply = async () => {};
 
   return (
     <div
@@ -635,8 +607,12 @@ export function EmailComposer({
 
               <button
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
-                onClick={handleGenerateReply}
-                disabled={isLoading || !toEmails.length || !subjectInput.trim()}
+                onClick={async () => {
+                  console.log('test');
+                  await handleAiGenerate(); // TODO: Set conversation here for replies
+                }}
+                type="button"
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
