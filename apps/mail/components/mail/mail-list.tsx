@@ -9,9 +9,9 @@ import {
   parseNaturalLanguageSearch,
 } from '@/lib/utils';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
+import { Briefcase, CheckCircle2, ChevronDown, Star, StickyNote, Users } from 'lucide-react';
 import { type ComponentProps, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Briefcase, ChevronDown, Star, StickyNote, Users } from 'lucide-react';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
 import { Bell, GroupPeople, Lightning, Tag, User } from '../icons/icons';
 import { ThreadContextMenu } from '@/components/context/thread-context';
@@ -380,16 +380,14 @@ const Thread = memo(
               isKeyboardFocused && 'ring-primary/50',
             )}
           >
-            <div
-              className={cn(
-                'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
-                isMailBulkSelected && 'translate-x-0',
-              )}
-            />
             <div className="flex w-full items-center justify-between gap-4 px-4">
               <div>
                 <Avatar className="h-8 w-8 rounded-full border dark:border-none">
-                  {isGroupThread ? (
+                  {isMailBulkSelected ? (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#fff]">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    </div>
+                  ) : isGroupThread ? (
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">
                       <GroupPeople className="h-4 w-4" />
                     </div>
@@ -638,9 +636,29 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   }, [isKeyPressed]);
 
   const [, setActiveReplyId] = useQueryState('activeReplyId');
+  const [mail, setMail] = useMail();
+
+  const handleSelectMail = useCallback(
+    (message: ParsedMessage) => {
+      const itemId = message.threadId ?? message.id;
+      switch (getSelectMode()) {
+        case 'mass': {
+          const newSelected = mail.bulkSelected.includes(itemId)
+            ? mail.bulkSelected.filter((id) => id !== itemId)
+            : [...mail.bulkSelected, itemId];
+          return setMail({ ...mail, bulkSelected: newSelected });
+        }
+      }
+      setMail({ ...mail, bulkSelected: [message.threadId ?? message.id] });
+    },
+    [mail, setMail, getSelectMode],
+  );
 
   const handleMailClick = useCallback(
     (message: ParsedMessage) => () => {
+      if (getSelectMode() !== 'single') {
+        return handleSelectMail(message);
+      }
       handleMouseEnter(message.id);
 
       const messageThreadId = message.threadId ?? message.id;
@@ -649,7 +667,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       void setThreadId(messageThreadId);
       void setActiveReplyId(null);
     },
-    [],
+    [mail],
   );
 
   const isFiltering = searchValue.value.trim().length > 0;
