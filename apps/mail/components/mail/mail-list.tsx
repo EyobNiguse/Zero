@@ -545,7 +545,9 @@ const Thread = memo(
                   <div
                     className={cn(
                       'flex h-full w-full items-center justify-center rounded-full bg-blue-500 p-2 dark:bg-blue-500',
-                      `${isMailBulkSelected ? 'block' : 'hidden'}`,
+                      {
+                        hidden: !isMailBulkSelected,
+                      },
                     )}
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
