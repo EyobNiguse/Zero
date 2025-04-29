@@ -81,19 +81,7 @@ export const highlightText = (text: string, highlight: string) => {
   });
 };
 
-import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Column,
-  Row,
-  Text,
-  Link,
-  Preview,
-  render,
-} from '@react-email/components';
+import { Html, Head, Body, Container, Section, Column, Row, render } from '@react-email/components';
 
 interface EmailTemplateProps {
   content: string;
@@ -105,6 +93,18 @@ const generateNonce = () => {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
   return btoa(String.fromCharCode(...array));
+};
+
+const forceExternalLinks = (html: string): string => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const links = doc.querySelectorAll('a:not([target="_blank"])');
+  links.forEach((link) => {
+    link.setAttribute('target', '_blank');
+  });
+
+  return doc.body.innerHTML;
 };
 
 const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) => {
@@ -159,11 +159,22 @@ const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) =>
         </script>
       </Head>
       <Body style={{ margin: 0, padding: 0, background: 'transparent' }}>
-        <Container style={{ width: '100%', maxWidth: '100%', background: 'transparent', padding: 0, margin: 0 }}>
+        <Container
+          style={{
+            width: '100%',
+            maxWidth: '100%',
+            background: 'transparent',
+            padding: 0,
+            margin: 0,
+          }}
+        >
           <Section style={{ width: '100%', background: 'transparent', padding: 0, margin: 0 }}>
             <Row style={{ background: 'transparent', padding: 0, margin: 0 }}>
               <Column style={{ background: 'transparent', padding: 0, margin: 0 }}>
-                <div style={{ background: 'transparent', fontSize: '16px', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: content }} />
+                <div
+                  style={{ background: 'transparent', fontSize: '16px', lineHeight: '1.5' }}
+                  dangerouslySetInnerHTML={{ __html: content }}
+                />
               </Column>
             </Row>
           </Section>
@@ -176,10 +187,10 @@ const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) =>
 export const template = async (html: string, imagesEnabled: boolean = false) => {
   if (typeof DOMParser === 'undefined') return html;
   const nonce = generateNonce();
+  const processedHtml = forceExternalLinks(html);
 
-  // Create the email template
   const emailHtml = await render(
-    <EmailTemplate content={html} imagesEnabled={imagesEnabled} nonce={nonce} />,
+    <EmailTemplate content={processedHtml} imagesEnabled={imagesEnabled} nonce={nonce} />,
   );
   return emailHtml;
 };
