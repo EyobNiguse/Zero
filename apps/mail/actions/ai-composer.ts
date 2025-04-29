@@ -4,6 +4,8 @@ import { getWritingStyleMatrixForConnectionId, type WritingStyleMatrix } from '@
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { EmailAssistantPrompt, EmailAssistantSystemPrompt } from '@/lib/prompts';
+import { generateText } from 'ai';
+import { groq } from '@ai-sdk/groq';
 
 export const aiCompose = async ({
   prompt,
@@ -37,8 +39,23 @@ export const aiCompose = async ({
     prompt,
   })
 
+  const {
+    text,
+  } = await generateText({
+    model: groq('llama-3.1-8b-instant'),
+    system: systemPrompt,
+    prompt: userPrompt,
+    maxTokens: 600,
+    temperature: 0.35, // controlled creativity
+    frequencyPenalty: 0.2, // dampen phrase repetition
+    presencePenalty: 0.1, // nudge the model to add fresh info
+    maxRetries: 1,
+  })
+
+  console.log('test', text)
+
   return {
-    newBody: 'Test meeeeeeeeee',
+    newBody: text,
   }
 }
 

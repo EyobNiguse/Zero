@@ -18,14 +18,13 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { EditorContent, generateJSON } from '@tiptap/react';
+import { EditorContent } from '@tiptap/react';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TextEffect } from '@/components/motion-primitives/text-effect'
-import { Button } from '@/components/ui/button';
 
 interface EmailComposerProps {
   initialTo?: string[];
@@ -227,13 +226,14 @@ export function EmailComposer({
   const handleSend = async () => {
     try {
       setIsLoading(true);
+      setAiGeneratedMessage(null)
       const values = getValues();
       await onSendEmail({
         to: values.to,
         cc: showCc ? values.cc : undefined,
         bcc: showBcc ? values.bcc : undefined,
         subject: values.subject,
-        message: values.message,
+        message: editor.getHTML(),
         attachments: values.attachments || [],
       });
       setHasUnsavedChanges(false);
@@ -257,7 +257,6 @@ export function EmailComposer({
       })
 
       setAiGeneratedMessage(result.newBody)
-      // editor.commands.setContent(result.newBody)
       toast.success('Email generated successfully')
     } catch (error) {
       console.error('Error generating AI email:', error);
@@ -592,7 +591,9 @@ export function EmailComposer({
                     <ContentPreview
                       content={aiGeneratedMessage}
                       onAccept={() => {
-                        editor.commands.setContent(aiGeneratedMessage)
+                        editor.commands.setContent(aiGeneratedMessage, false, {
+                          preserveWhitespace: 'full',
+                        })
                         setAiGeneratedMessage(null)
                       }}
                       onReject={() => {
@@ -769,12 +770,19 @@ const ContentPreview = ({
     exit="exit"
     className="absolute bottom-full left-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white shadow-md dark:bg-black"
   >
-    <div className="p-3">
-      <div className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 text-sm">
-        <TextEffect per="char" preset="blur" as="div" className="whitespace-pre-wrap">
-          {content}
-        </TextEffect>
-      </div>
+    <div
+      className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 text-sm p-3"
+      style={{
+        scrollbarGutter: 'stable',
+      }}
+    >
+      {content.split('\n').map((line, i) => {
+        return (
+          <TextEffect per="char" preset="blur" as="div" className="whitespace-pre-wrap" key={i}>
+            {line}
+          </TextEffect>
+        )
+      })}
     </div>
     <div className="p-2 flex justify-end gap-2">
       <button

@@ -223,7 +223,14 @@ const useComposeEditor = ({
   return useEditor({
     editable: !isReadOnly,
     onUpdate: ({ editor }) => {
-      void onChange?.(editor.getJSON())
+      if (onChange) {
+        void onChange(editor.getJSON())
+      }
+
+      if (onLengthChange) {
+        const content = editor.getText()
+        void onLengthChange(content.length)
+      }
     },
     content: initialValue ?
       isObjectType(initialValue) ?
