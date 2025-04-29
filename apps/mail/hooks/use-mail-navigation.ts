@@ -113,7 +113,7 @@ export function useMailNavigation({ items, containerRef, onNavigate }: UseMailNa
         return newIndex;
       });
     },
-    [isQuickActionMode, items.length, scrollIntoView, getHoveredIndex, navigateToThread],
+    [isQuickActionMode, items],
   );
 
   const handleArrowDown = useCallback(
@@ -220,9 +220,9 @@ export function useMailNavigation({ items, containerRef, onNavigate }: UseMailNa
   useHotkeys('ArrowUp', handleArrowUp);
   useHotkeys('ArrowDown', handleArrowDown);
   useHotkeys('Enter', handleEnter);
-  useHotkeys('Tab', handleTab);
-  useHotkeys('ArrowRight', handleArrowRight);
-  useHotkeys('ArrowLeft', handleArrowLeft);
+  //   useHotkeys('Tab', handleTab);
+  //   useHotkeys('ArrowRight', handleArrowRight);
+  //   useHotkeys('ArrowLeft', handleArrowLeft);
   useHotkeys('Escape', handleEscape);
 
   const handleMouseEnter = useCallback((threadId: string) => {
