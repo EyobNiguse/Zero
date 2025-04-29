@@ -245,6 +245,7 @@ export function EmailComposer({
       });
       setHasUnsavedChanges(false);
       editor.commands.clearContent(true)
+      form.reset();
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');
