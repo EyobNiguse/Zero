@@ -7,6 +7,7 @@ import {
   X,
   Sparkles,
 } from '../icons/icons';
+import type { Editor } from '@tiptap/react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, Paperclip, Plus } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,12 +19,11 @@ import { Input } from '@/components/ui/input';
 import { useDraft } from '@/hooks/use-drafts';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
-import { JSONContent } from 'novel';
+import { JSONContent, EditorInstance } from 'novel';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import * as React from 'react';
-import Editor from './editor';
 import { NewEditor } from './editor-v2';
 import { z } from 'zod';
 
@@ -74,6 +74,7 @@ export function EmailComposer({
   onClose,
   className,
 }: EmailComposerProps) {
+  const editorRef = useRef<Editor | null>(null);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,6 +89,7 @@ export function EmailComposer({
   const { data: session } = useSession();
   const [draftId] = useQueryState('draftId');
   const { data: draft } = useDraft(draftId ?? null);
+  const [editorKey, setEditorKey] = useState(0)
 
   React.useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
@@ -226,15 +228,11 @@ export function EmailComposer({
     ],
   });
 
-  // Add state for editor content
-  const [editorContent, setEditorContent] = React.useState<JSONContent>(
-    createJsonContentFromText(messageContent || ''),
-  );
-
-  // Update editorContent when messageContent changes
-  React.useEffect(() => {
-    setEditorContent(createJsonContentFromText(messageContent || ''));
-  }, [messageContent]);
+  useEffect(() => {
+    console.log('EDITOR_REF', editorRef)
+  }, [
+    editorRef.current
+  ])
 
   const handleSend = async () => {
     try {
@@ -249,6 +247,7 @@ export function EmailComposer({
         attachments: values.attachments || [],
       });
       setHasUnsavedChanges(false);
+      editorRef.current?.commands.clearContent(true)
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');
@@ -262,13 +261,14 @@ export function EmailComposer({
       setIsLoading(true);
       const values = getValues()
 
-      // const result = await aiCompose({
-      //   prompt: values.message,
-      //   emailSubject: values.subject,
-      // })
+      const result = await aiCompose({
+        prompt: values.message,
+        emailSubject: values.subject,
+      })
 
-      // setValue('message', result.newBody)
-      setValue('message', 'adfdasfasdfadsfasd')
+      console.log('editorRef', editorRef.current?.commands.setContent)
+      console.log('result.newBody', result.newBody, createJsonContentFromText(result.newBody))
+      editorRef.current?.commands.setContent(createJsonContentFromText(result.newBody), true)
       toast.success('Email generated successfully')
     } catch (error) {
       console.error('Error generating AI email:', error);
@@ -567,24 +567,32 @@ export function EmailComposer({
       <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div className="flex flex-col gap-2.5 self-stretch">
           <NewEditor
-            value={editorContent}
-          />
-          <Editor
-            initialValue={editorContent}
-            onChange={(content) => {
-              // Extract plain text from the HTML content
-              const tempDiv = document.createElement('div');
-              tempDiv.innerHTML = content;
-              const plainText = tempDiv.textContent || tempDiv.innerText || '';
-
-              setValue('message', plainText);
-              setMessageLength(plainText.length);
-              setHasUnsavedChanges(true);
+            ref={editorRef}
+            isReadOnly={isLoading}
+            onLengthChange={(length) => {
+              setMessageLength(length)
             }}
-            className="w-full cursor-text"
-            placeholder={'Start writing your email...'}
-            onCommandEnter={handleSend}
+            onModEnter={() => {
+              void handleSend()
+
+              return true
+            }}
           />
+          {/*<Editor*/}
+          {/*  initialValue={editorContent}*/}
+          {/*  onChange={(content) => {*/}
+          {/*    // Extract plain text from the HTML content*/}
+          {/*    const tempDiv = document.createElement('div');*/}
+          {/*    tempDiv.innerHTML = content;*/}
+          {/*    const plainText = tempDiv.textContent || tempDiv.innerText || '';*/}
+
+          {/*    setMessageLength(plainText.length);*/}
+          {/*    setHasUnsavedChanges(true);*/}
+          {/*  }}*/}
+          {/*  className="w-full cursor-text"*/}
+          {/*  placeholder={'Start writing your email...'}*/}
+          {/*  onCommandEnter={handleSend}*/}
+          {/*/>*/}
         </div>
 
         {/* Bottom Actions */}
@@ -612,7 +620,6 @@ export function EmailComposer({
               <button
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
                 onClick={async () => {
-                  console.log('test');
                   await handleAiGenerate(); // TODO: Set conversation here for replies
                 }}
                 type="button"
