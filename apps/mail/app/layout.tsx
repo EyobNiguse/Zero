@@ -4,11 +4,11 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { siteConfig } from '@/lib/site-config';
-import { Toast } from '@/components/ui/toast';
 import { Providers } from '@/lib/providers';
 import { headers } from 'next/headers';
 import type { Viewport } from 'next';
 import { cn } from '@/lib/utils';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const geistSans = Geist({
@@ -59,7 +59,7 @@ export default async function RootLayout({
           <NextIntlClientProvider messages={messages}>
             {children}
             {cookies}
-            <Toast />
+            <Toaster position="bottom-center" richColors closeButton />
             <Analytics />
             {/* {isEuRegion && <CookieConsent />} */}
           </NextIntlClientProvider>
