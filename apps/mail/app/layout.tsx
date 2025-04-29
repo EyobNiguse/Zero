@@ -5,12 +5,12 @@ import { CircleCheck } from '@/components/icons/icons';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { NextIntlClientProvider } from 'next-intl';
+import CustomToaster from '@/components/ui/toast';
 import { siteConfig } from '@/lib/site-config';
 import { Providers } from '@/lib/providers';
 import { headers } from 'next/headers';
 import type { Viewport } from 'next';
 import { cn } from '@/lib/utils';
-import { Toaster } from 'sonner';
 import './globals.css';
 
 const geistSans = Geist({
@@ -61,35 +61,7 @@ export default async function RootLayout({
           <NextIntlClientProvider messages={messages}>
             {children}
             {cookies}
-            <Toaster
-              position="bottom-center"
-              icons={{
-                success: <CircleCheck className="h-4.5 w-4.5 border-none fill-[#36B981]" />,
-                error: <CircleX className="h-4.5 w-4.5 fill-[#FF0000]" />,
-                warning: <AlertCircle className="h-4.5 w-4.5 fill-[#FFC107]" />,
-                info: <AlertOctagon className="h-4.5 w-4.5 fill-[#5767fb]" />,
-              }}
-              toastOptions={{
-                classNames: {
-                  title:
-                    'title flex-1 justify-center text-black dark:text-white text-sm leading-none',
-                  description: 'description',
-                  actionButton: 'action-button',
-                  cancelButton: 'cancel-button',
-                  closeButton: 'close-button',
-                  loading: 'px-3',
-                  loader: 'px-3',
-                  icon: 'px-4',
-                  content: 'px py-3',
-                  default:
-                    'w-96 px-1.5 py-1.5 bg-white dark:bg-[#2C2C2C] rounded-xl inline-flex items-center gap-2 overflow-visible border dark:border-none',
-                },
-              }}
-              // remove these
-              expand
-              duration={1000000000}
-              visibleToasts={10}
-            />
+            <CustomToaster />
             <Analytics />
             {/* {isEuRegion && <CookieConsent />} */}
           </NextIntlClientProvider>
