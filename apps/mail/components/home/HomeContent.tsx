@@ -17,12 +17,12 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Command, Menu, MoveRight } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SuccessEmailToast } from '../theme/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CurvedArrow } from '../icons/icons';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -75,6 +75,7 @@ export default function HomeContent() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [signupCount, setSignupCount] = useState<number>(0);
   const [open, setOpen] = useState(false);
+  const { setTheme } = useTheme();
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -82,6 +83,10 @@ export default function HomeContent() {
       email: '',
     },
   });
+
+  useEffect(() => {
+    setTheme('dark');
+  }, [setTheme]);
 
   useEffect(() => {
     const fetchSignupCount = async () => {
@@ -219,8 +224,8 @@ export default function HomeContent() {
               </SheetTitle>
             </SheetHeader>
             <div className="mt-4 flex flex-col space-y-4">
-              <Link href="/investor" className="text-sm font-medium">
-                Investors
+              <Link href="/about" className="text-sm font-medium">
+                About
               </Link>
               <Link href="#" className="text-sm font-medium">
                 Solutions
@@ -254,11 +259,11 @@ export default function HomeContent() {
             <MoveRight className="!size-4" />
           </Link>
         </div>
-        <Balancer className="mb-3 max-w-[1130px] text-center text-6xl font-semibold">
-          <h1 className="text-center text-4xl font-medium md:text-6xl">
+        <h1 className="text-center text-4xl font-medium md:text-6xl">
+          <Balancer className="mb-3 max-w-[1130px]">
             AI Powered Email, Built to Save You Time
-          </h1>
-        </Balancer>
+          </Balancer>
+        </h1>
         <p className="mx-auto mb-4 max-w-2xl text-center text-base font-medium text-[#B7B7B7] md:text-lg">
           Zero is an AI native email client that manages your inbox, so you don't have to.
         </p>
