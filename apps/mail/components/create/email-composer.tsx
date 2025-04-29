@@ -97,22 +97,12 @@ export function EmailComposer({
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
   const [draftId] = useQueryState('draftId');
-  const { data: draft } = useDraft(draftId ?? null);
 
   useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
       toInputRef.current.focus();
     }
   }, [isComposeOpen]);
-
-  useEffect(() => {
-    if (draft) {
-      if (draft.to) form.setValue('to', draft.to);
-      // TODO: Fix this
-      if (draft.content) form.setValue('message', draft.content);
-      if (draft.subject) form.setValue('subject', draft.subject);
-    }
-  }, [draft]);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -228,7 +218,7 @@ export function EmailComposer({
   };
 
   const editor = useComposeEditor({
-    initialValue: draftId && draft?.content ? createJsonContentFromText(draft.content) : undefined,
+    initialValue: createJsonContentFromText(initialMessage),
     isReadOnly: isLoading,
     onLengthChange: (length) => {
       setMessageLength(length)

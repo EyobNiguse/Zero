@@ -4,6 +4,7 @@ import { getActiveDriver } from '@/actions/utils';
 import { Ratelimit } from '@upstash/ratelimit';
 
 export const GET = async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  console.log('L;KASDJFHALSDJFLASD')
   try {
     const finalIp = processIP(req);
     const { id } = await params;
