@@ -156,7 +156,7 @@ function ComposeButton() {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-screen h-screen border-none bg-transparent p-0 shadow-none">
+      <DialogContent className="h-screen w-screen max-w-none border-none bg-[#FAFAFA] dark:bg-[#141414] p-0 shadow-none">
         <CreateEmail />
       </DialogContent>
     </Dialog>
