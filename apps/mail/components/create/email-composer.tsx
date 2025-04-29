@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, Paperclip, Plus } from 'lucide-react';
+import { Command, Paperclip, Plus, Check, X as XIcon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { aiCompose } from '@/actions/ai-composer';
@@ -21,10 +21,11 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { EditorContent } from '@tiptap/react';
+import { EditorContent, generateJSON } from '@tiptap/react';
 import useComposeEditor from '@/hooks/use-compose-editor';
-import type { JSONContent } from 'novel';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TextEffect } from '@/components/motion-primitives/text-effect'
+import { Button } from '@/components/ui/button';
 
 interface EmailComposerProps {
   initialTo?: string[];
@@ -587,13 +588,23 @@ export function EmailComposer({
 
               <div className="relative">
                 <AnimatePresence>
-                  {aiGeneratedMessage && (
-                    <ContentPreview content={aiGeneratedMessage} animations={animations} />
-                  )}
+                  {aiGeneratedMessage !== null ? (
+                    <ContentPreview
+                      content={aiGeneratedMessage}
+                      onAccept={() => {
+                        editor.commands.setContent(aiGeneratedMessage)
+                        setAiGeneratedMessage(null)
+                      }}
+                      onReject={() => {
+                        setAiGeneratedMessage(null)
+                      }}
+                    />
+                  ) : null}
                 </AnimatePresence>
                 <button
                   className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
                   onClick={async () => {
+                    setAiGeneratedMessage(null)
                     await handleAiGenerate(); // TODO: Set conversation here for replies
                   }}
                   type="button"
@@ -744,8 +755,12 @@ const animations = {
 
 const ContentPreview = ({
   content,
+  onAccept,
+  onReject,
 }: {
   content: string
+  onAccept?: (value: string) => void | Promise<void>
+  onReject?: () => void | Promise<void>
 }) => (
   <motion.div
     variants={animations.card}
@@ -756,11 +771,42 @@ const ContentPreview = ({
   >
     <div className="p-3">
       <div className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 text-sm">
-        <div className="whitespace-pre-wrap">{content}</div>
+        <TextEffect per="char" preset="blur" as="div" className="whitespace-pre-wrap">
+          {content}
+        </TextEffect>
       </div>
     </div>
-    <div className="p-2 flex justify-end">
-      Accept
+    <div className="p-2 flex justify-end gap-2">
+      <button
+        className="flex h-7 text-sm items-center gap-0.5 overflow-hidden rounded-md border bg-red-700 px-1.5 shadow-sm hover:bg-red-800 dark:border-none"
+        onClick={async () => {
+          if (onReject) {
+            await onReject()
+          }
+        }}
+      >
+        <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
+          <XIcon className="h-3.5 w-3.5" />
+        </div>
+        <span>
+          Reject
+        </span>
+      </button>
+      <button
+        className="flex h-7 text-sm items-center gap-0.5 overflow-hidden rounded-md border bg-green-700 px-1.5 shadow-sm hover:bg-green-800 dark:border-none"
+        onClick={async () => {
+          if (onAccept) {
+            await onAccept(content)
+          }
+        }}
+      >
+        <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
+          <Check className="h-3.5 w-3.5" />
+        </div>
+        <span>
+          Accept
+        </span>
+      </button>
     </div>
   </motion.div>
 );
