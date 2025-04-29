@@ -9,30 +9,30 @@ import {
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, Paperclip, Plus, Check, X as XIcon } from 'lucide-react';
+import { TextEffect } from '@/components/motion-primitives/text-effect';
+import { useState, useEffect, useRef, Fragment } from 'react';
+import useComposeEditor from '@/hooks/use-compose-editor';
+import { motion, AnimatePresence } from 'framer-motion';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { aiCompose } from '@/actions/ai-composer';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
+import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
+import pluralize from 'pluralize';
 import { cn } from '@/lib/utils';
-import { useState, useEffect, useRef, Fragment } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { EditorContent } from '@tiptap/react';
-import useComposeEditor from '@/hooks/use-compose-editor';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TextEffect } from '@/components/motion-primitives/text-effect'
-import pluralize from 'pluralize'
 
 interface EmailComposerProps {
   threadContent?: {
-    from: string
-    to: string[]
-    body: string
-  }[]
+    from: string;
+    to: string[];
+    body: string;
+  }[];
   initialTo?: string[];
   initialCc?: string[];
   initialBcc?: string[];
@@ -92,7 +92,7 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null)
+  const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
@@ -196,11 +196,7 @@ export function EmailComposer({
 
   const handleAttachment = (files: File[]) => {
     if (files && files.length > 0) {
-      setValue('attachments', [
-        ...(attachments ?? []),
-        ...files,
-      ])
-
+      setValue('attachments', [...(attachments ?? []), ...files]);
       setHasUnsavedChanges(true);
     }
   };
@@ -217,23 +213,23 @@ export function EmailComposer({
     initialValue: initialMessage,
     isReadOnly: isLoading,
     onLengthChange: (length) => {
-      setMessageLength(length)
+      setMessageLength(length);
     },
     onModEnter: () => {
-      void handleSend()
+      void handleSend();
 
-      return true
+      return true;
     },
     onAttachmentsChange: (files) => {
-      handleAttachment(files)
+      handleAttachment(files);
     },
     placeholder: 'Start your email here',
-  })
+  });
 
   const handleSend = async () => {
     try {
       setIsLoading(true);
-      setAiGeneratedMessage(null)
+      setAiGeneratedMessage(null);
       const values = getValues();
       await onSendEmail({
         to: values.to,
@@ -244,7 +240,7 @@ export function EmailComposer({
         attachments: values.attachments || [],
       });
       setHasUnsavedChanges(false);
-      editor.commands.clearContent(true)
+      editor.commands.clearContent(true);
       form.reset();
     } catch (error) {
       console.error('Error sending email:', error);
@@ -256,18 +252,22 @@ export function EmailComposer({
 
   const handleAiGenerate = async () => {
     try {
+      console.log('test');
       setIsLoading(true);
-      const values = getValues()
+      const values = getValues();
+
+      console.log('editor.getText()', editor.getText());
 
       const result = await aiCompose({
-        prompt: values.message,
+        prompt: editor.getText(),
         emailSubject: values.subject,
         to: values.to,
         cc: values.cc,
-      })
+        threadMessages: threadContent,
+      });
 
-      setAiGeneratedMessage(result.newBody)
-      toast.success('Email generated successfully')
+      setAiGeneratedMessage(result.newBody);
+      toast.success('Email generated successfully');
     } catch (error) {
       console.error('Error generating AI email:', error);
       toast.error('Failed to generate email');
@@ -603,18 +603,18 @@ export function EmailComposer({
                       onAccept={() => {
                         editor.commands.setContent({
                           type: 'doc',
-                          content: aiGeneratedMessage.split(/\r?\n/)
-                            .map((line) => {
-                              return {
-                                type: 'paragraph',
-                                content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
-                              }
-                            })
-                        })
-                        setAiGeneratedMessage(null)
+                          content: aiGeneratedMessage.split(/\r?\n/).map((line) => {
+                            return {
+                              type: 'paragraph',
+                              content:
+                                line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
+                            };
+                          }),
+                        });
+                        setAiGeneratedMessage(null);
                       }}
                       onReject={() => {
-                        setAiGeneratedMessage(null)
+                        setAiGeneratedMessage(null);
                       }}
                     />
                   ) : null}
@@ -622,7 +622,7 @@ export function EmailComposer({
                 <button
                   className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
                   onClick={async () => {
-                    setAiGeneratedMessage(null)
+                    setAiGeneratedMessage(null);
                     await handleAiGenerate(); // TODO: Set conversation here for replies
                   }}
                   type="button"
@@ -652,9 +652,9 @@ export function EmailComposer({
                 id="attachment-input"
                 className="hidden"
                 onChange={(event) => {
-                  const fileList = event.target.files
+                  const fileList = event.target.files;
                   if (fileList) {
-                    handleAttachment(Array.from(fileList))
+                    handleAttachment(Array.from(fileList));
                   }
                 }}
                 multiple
@@ -776,9 +776,9 @@ const ContentPreview = ({
   onAccept,
   onReject,
 }: {
-  content: string
-  onAccept?: (value: string) => void | Promise<void>
-  onReject?: () => void | Promise<void>
+  content: string;
+  onAccept?: (value: string) => void | Promise<void>;
+  onReject?: () => void | Promise<void>;
 }) => (
   <motion.div
     variants={animations.card}
@@ -788,7 +788,7 @@ const ContentPreview = ({
     className="absolute bottom-full left-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white shadow-md dark:bg-black"
   >
     <div
-      className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 text-sm p-3"
+      className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 p-3 text-sm"
       style={{
         scrollbarGutter: 'stable',
       }}
@@ -798,39 +798,35 @@ const ContentPreview = ({
           <TextEffect per="char" preset="blur" as="div" className="whitespace-pre-wrap" key={i}>
             {line}
           </TextEffect>
-        )
+        );
       })}
     </div>
-    <div className="p-2 flex justify-end gap-2">
+    <div className="flex justify-end gap-2 p-2">
       <button
-        className="flex h-7 text-sm items-center gap-0.5 overflow-hidden rounded-md border bg-red-700 px-1.5 shadow-sm hover:bg-red-800 dark:border-none"
+        className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md border bg-red-700 px-1.5 text-sm shadow-sm hover:bg-red-800 dark:border-none"
         onClick={async () => {
           if (onReject) {
-            await onReject()
+            await onReject();
           }
         }}
       >
         <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
           <XIcon className="h-3.5 w-3.5" />
         </div>
-        <span>
-          Reject
-        </span>
+        <span>Reject</span>
       </button>
       <button
-        className="flex h-7 text-sm items-center gap-0.5 overflow-hidden rounded-md border bg-green-700 px-1.5 shadow-sm hover:bg-green-800 dark:border-none"
+        className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md border bg-green-700 px-1.5 text-sm shadow-sm hover:bg-green-800 dark:border-none"
         onClick={async () => {
           if (onAccept) {
-            await onAccept(content)
+            await onAccept(content);
           }
         }}
       >
         <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
           <Check className="h-3.5 w-3.5" />
         </div>
-        <span>
-          Accept
-        </span>
+        <span>Accept</span>
       </button>
     </div>
   </motion.div>

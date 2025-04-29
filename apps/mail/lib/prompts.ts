@@ -1,5 +1,5 @@
-import { PromptTemplate } from '@langchain/core/prompts';
 import type { WritingStyleMatrix } from '@/services/writing-style-service';
+import { PromptTemplate } from '@langchain/core/prompts';
 
 // apps/mail/lib/prompts.ts
 
@@ -10,16 +10,17 @@ import type { WritingStyleMatrix } from '@/services/writing-style-service';
 
 // --- add this helper at the top of the file ---
 const escapeXml = (s: string) =>
-    s.replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 
 // --- update the existing prompt function ---
 export const EmailAssistantSystemPrompt = (userName: string = 'the user'): string => {
-    const safeName = escapeXml(userName);
-    return `
+  const safeName = escapeXml(userName);
+  return `
 <system_prompt>
     <role>You are an AI Assistant specialized in generating professional email *body* content based on user requests.</role>
 
@@ -67,7 +68,7 @@ export const EmailAssistantSystemPrompt = (userName: string = 'the user'): strin
 
 </system_prompt>
 `;
-}
+};
 
 // ==================================
 // Subject Generation Prompt
@@ -111,8 +112,8 @@ export const SubjectGenerationSystemPrompt = `
 // Email Reply Generation Prompt
 // ==================================
 export const EmailReplySystemPrompt = (userName: string = 'the user'): string => {
-    const safeName = escapeXml(userName);
-    return `
+  const safeName = escapeXml(userName);
+  return `
 <system_prompt>
     <role>You are an AI assistant helping ${safeName} write professional and concise email replies.</role>
     
@@ -142,61 +143,87 @@ export const EmailReplySystemPrompt = (userName: string = 'the user'): string =>
     <sign_off_name>${safeName}</sign_off_name> 
 </system_prompt>
 `;
-}
+};
 
 export const EmailAssistantPrompt = ({
-    threadContent,
-    currentSubject,
-    currentDraft,
-    recipients,
-    prompt,
+  threadContent,
+  currentSubject,
+  recipients,
+  prompt,
+  username,
 }: {
-    threadContent?: {
-        from: string,
-        body: string
-    }[]
-    currentSubject?: string,
-    currentDraft?: string,
-    recipients?: string[]
-    prompt: string,
+  threadContent?: {
+    from: string;
+    body: string;
+  }[];
+  currentSubject?: string;
+  recipients?: string[];
+  prompt: string;
+  username: string;
 }) => {
-    const currentSubjectContent = currentSubject ? `\n\n<current_subject>${currentSubject}</current_subject>\n\n` : '';
-    const currentDraftContent = currentDraft ? `\n\n<current_draft>${currentDraft}</current_draft>\n\n` : '';
-    const recipientsContent = recipients ? `\n\n<recipients>${recipients.join(', ')}</recipients>\n\n` : '';
-    const currentThreadContent = threadContent?.map((thread) => {
-        return `
-          <email from="${thread.from}">
-            ${thread.body}
-          </email>
-        `
-    }) ?? []
+  return `
+<dynamic_context>
+  <current_subject>${currentSubject}</current_subject>
 
-    const dynamicContext = `\n\n
-    <dynamic_context>
-        ${currentSubjectContent}
-        ${currentDraftContent}
-        ${recipientsContent}
-        ${currentThreadContent.length > 0 ? `
-            <current_thread_content>
-                ${currentThreadContent.join('\n')}
-            </current_thread_content>
-        ` : ''}
-    </dynamic_context>
-    \n\n`;
+  ${recipients
+    ?.reduce<string[]>((acc, recipient, index, arr) => {
+      if (arr.length === 0) {
+        return [''];
+      }
 
-    const promptMessage = `\n<message role="user">${escapeXml(prompt)}</message>`;
+      if (index === 0) {
+        acc.push('<recipients>');
+      }
 
-    return `
-        ${dynamicContext}
-        ${promptMessage}
-    `
-}
+      acc.push(`<recipient>${recipient}</recipient>`);
 
-export const StyledEmailAssistantSystemPrompt = (userName: string, styleProfile: WritingStyleMatrix) => {
-    const safeName = escapeXml(userName);
-    const styleProfileJSON = JSON.stringify(styleProfile, null, 2);
+      if (arr.length === index + 1) {
+        acc.push('</recipients>');
+      }
 
-    return `
+      return acc;
+    }, [])
+    .join('\n')}
+
+  ${threadContent
+    ?.reduce<string[]>((acc, recipient, index, arr) => {
+      if (arr.length === 0) {
+        return [''];
+      }
+
+      if (index === 0) {
+        acc.push('<current_thread_content>');
+      }
+
+      acc.push(`
+    <email from="${recipient.from}">
+      ${recipient.body}
+    </email>
+  `);
+
+      if (arr.length === index + 1) {
+        acc.push('</current_thread_content>');
+      }
+
+      return acc;
+    }, [])
+    .join('\n')}
+
+  <user_name>${username}</user_name>
+</dynamic_context>
+
+${prompt}
+  `;
+};
+
+export const StyledEmailAssistantSystemPrompt = (
+  userName: string,
+  styleProfile: WritingStyleMatrix,
+) => {
+  const safeName = escapeXml(userName);
+  const styleProfileJSON = JSON.stringify(styleProfile, null, 2);
+
+  return `
    <system_prompt>
     <role>
         You are an AI assistant that composes professional email bodies on demand while faithfully mirroring the sender’s personal writing style.
@@ -330,215 +357,139 @@ catch ya soon,
 ${safeName}
     </expected_output>
 </system_prompt>
-`
-}
+`;
+};
 
 export const StyleMatrixExtractorPrompt = () => `
-   <system_prompt>
-    <role>
-        You are StyleMetricExtractor, a tool that distills writing-style metrics from a single email.
-    </role>
+<system_prompt>
+  <role>
+    You are <b>StyleMetricExtractor</b>, a deterministic tool that distills
+    writing-style metrics from a single email.
+  </role>
 
-    <instructions>
-        <goal>
-            Treat the entire incoming message as one email body, extract every metric below, and reply with a minified JSON object whose keys appear in the exact order shown.
-        </goal>
+  <instructions>
+    <goal>
+      Treat the entire incoming message as one email body, extract every metric
+      below, and reply with a minified JSON object whose keys appear in the
+      exact order shown.
+    </goal>
 
-        <tasks>
-            <item>Identify and calculate each metric.</item>
-            <item>Supply neutral defaults when a metric is absent (string → "", float → 0, int → 0).</item>
-            <item>Return only the JSON, with no commentary, extra keys, or whitespace outside the object.</item>
-            <!-- new -->
-            <item>Ensure all 33 metrics appear exactly once, in order, using correct JSON types (strings quoted, numbers bare). Do not output NaN, null, or omit any key.</item>
-            <item>Guarantee the output parses as valid JSON in any standard JSON parser.</item>
-        </tasks>
+    <tasks>
+      <item>Identify and calculate each metric.</item>
+      <item>Supply neutral defaults when a metric is absent
+            (string → "", float → 0, int → 0).</item>
+      <item>Return only the JSON—no commentary, no extra keys, no whitespace
+            outside the object.</item>
+      <item>Ensure <b>all 52 metrics</b> appear exactly once, in order, using
+            correct JSON types (strings quoted, numbers bare). Do not output
+            NaN, null, or omit any key.</item>
+      <item>Guarantee the output parses as valid JSON in every standard parser.</item>
+    </tasks>
 
-        <metrics>
-            <!-- core markers -->
-            <metric key="greeting"                        type="string" />
-            <metric key="signOff"                         type="string" />
-            <metric key="greetingTotal"                   type="int"    />
-            <metric key="signOffTotal"                    type="int"    />
+    <metrics>
+      <!-- greeting / sign-off -->
+      <metric key="greetingForm"                type="string"/>
+      <metric key="signOffForm"                 type="string"/>
+      <metric key="greetingPresent"             type="int"/>
+      <metric key="signOffPresent"              type="int"/>
 
-            <!-- structure and layout -->
-            <metric key="avgSentenceLen"                  type="float"  />
-            <metric key="avgParagraphLen"                 type="float"  />
-            <metric key="listUsageRatio"                  type="float"  />
+      <!-- simple totals & flags -->
+      <metric key="tokenTotal"                  type="int"/>
+      <metric key="charTotal"                   type="int"/>
+      <metric key="paragraphs"                  type="int"/>
+      <metric key="bulletListPresent"           type="int"/>
 
-            <!-- tone sliders -->
-            <metric key="sentimentScore"                  type="float"  />
-            <metric key="politenessScore"                 type="float"  />
-            <metric key="confidenceScore"                 type="float"  />
-            <metric key="urgencyScore"                    type="float"  />
-            <metric key="empathyScore"                    type="float"  />
-            <metric key="formalityScore"                  type="float"  />
+      <!-- structural averages -->
+      <metric key="averageSentenceLength"       type="float"/>
+      <metric key="averageLinesPerParagraph"    type="float"/>
+      <metric key="averageWordLength"           type="float"/>
 
-            <!-- style ratios -->
-            <metric key="passiveVoiceRatio"               type="float"  />
-            <metric key="hedgingRatio"                    type="float"  />
-            <metric key="intensifierRatio"                type="float"  />
-            <metric key="slangRatio"                      type="float"  />
-            <metric key="contractionRatio"                type="float"  />
-            <metric key="lowercaseSentenceStartRatio"     type="float"  />
-            <metric key="casualPunctuationRatio"          type="float"  />
-            <metric key="capConsistencyScore"             type="float"  />
+      <!-- vocabulary & diversity -->
+      <metric key="typeTokenRatio"              type="float"/>
+      <metric key="movingAverageTtr"            type="float"/>
+      <metric key="hapaxProportion"             type="float"/>
+      <metric key="shannonEntropy"              type="float"/>
+      <metric key="lexicalDensity"              type="float"/>
+      <metric key="contractionRate"             type="float"/>
 
-            <!-- readability and vocabulary -->
-            <metric key="readabilityFlesch"               type="float"  />
-            <metric key="lexicalDiversity"                type="float"  />
-            <metric key="jargonRatio"                     type="float"  />
+      <!-- syntax & grammar -->
+      <metric key="subordinationRatio"          type="float"/>
+      <metric key="passiveVoiceRate"            type="float"/>
+      <metric key="modalVerbRate"               type="float"/>
+      <metric key="parseTreeDepthMean"          type="float"/>
 
-            <!-- engagement cues -->
-            <metric key="questionCount"                   type="int"    />
-            <metric key="ctaCount"                        type="int"    />
-            <metric key="emojiCount"                      type="int"    />
-            <metric key="emojiDensity"                    type="float"  />
-            <metric key="exclamationFreq"                 type="float"  />
+      <!-- punctuation & symbols -->
+      <metric key="commasPerSentence"           type="float"/>
+      <metric key="exclamationPerThousandWords" type="float"/>
+      <metric key="questionMarkRate"            type="float"/>
+      <metric key="ellipsisRate"                type="float"/>
+      <metric key="parenthesesRate"             type="float"/>
+      <metric key="emojiRate"                   type="float"/>
 
-            <!-- subject line specifics -->
-            <metric key="subjectEmojiCount"               type="int"    />
-            <metric key="subjectInformalityScore"         type="float"  />
+      <!-- tone -->
+      <metric key="sentimentPolarity"           type="float"/>
+      <metric key="sentimentSubjectivity"       type="float"/>
+      <metric key="formalityScore"              type="float"/>
+      <metric key="hedgeRate"                   type="float"/>
+      <metric key="certaintyRate"               type="float"/>
 
-            <!-- other markers -->
-            <metric key="honorificPresence"               type="int"    />
-            <metric key="phaticPhraseRatio"               type="float"  />
-        </metrics>
+      <!-- readability & flow -->
+      <metric key="fleschReadingEase"           type="float"/>
+      <metric key="gunningFogIndex"             type="float"/>
+      <metric key="smogIndex"                   type="float"/>
+      <metric key="averageForwardReferences"    type="float"/>
+      <metric key="cohesionIndex"               type="float"/>
 
-        <extraction_guidelines>
-            <!-- string metrics -->
-            <item>greeting: first word or phrase before the first line break, lower-cased.</item>
-            <item>signOff: last word or phrase before the signature block or end of text, lower-cased.</item>
-            <!-- greeting/sign-off presence flags -->
-            <item>greetingTotal: 1 if greeting is not empty, else 0.</item>
-            <item>signOffTotal: 1 if signOff is not empty, else 0.</item>
+      <!-- persona markers -->
+      <metric key="firstPersonSingularRate"     type="float"/>
+      <metric key="firstPersonPluralRate"       type="float"/>
+      <metric key="secondPersonRate"            type="float"/>
+      <metric key="selfReferenceRatio"          type="float"/>
+      <metric key="empathyPhraseRate"           type="float"/>
+      <metric key="humorMarkerRate"             type="float"/>
 
-            <!-- structure -->
-            <item>avgSentenceLen: number of words per sentence (split on . ! ?).</item>
-            <item>avgParagraphLen: number of words per paragraph (split on two or more line breaks).</item>
-            <item>listUsageRatio: bulleted or numbered lines divided by paragraphs, clamp 0-1.</item>
+      <!-- formatting habits -->
+      <metric key="markupBoldRate"              type="float"/>
+      <metric key="markupItalicRate"            type="float"/>
+      <metric key="hyperlinkRate"               type="float"/>
+      <metric key="codeBlockRate"               type="float"/>
 
-            <!-- tone -->
-            <item>sentimentScore: scale −1 very negative to 1 very positive.</item>
-            <item>politenessScore: 0 blunt to 1 very polite (please, thank you, modal verbs).</item>
-            <item>confidenceScore: 0 uncertain to 1 very confident (few hedges, decisive verbs).</item>
-            <item>urgencyScore: 0 relaxed to 1 urgent (words like urgent, asap, high exclamationFreq).</item>
-            <item>empathyScore: 0 detached to 1 empathetic (apologies, supportive phrases).</item>
-            <item>formalityScore: 0 casual to 1 formal (contractions lower score, honorifics raise score).</item>
+      <!-- rhetorical devices -->
+      <metric key="rhetoricalQuestionRate"      type="float"/>
+      <metric key="analogyRate"                 type="float"/>
+      <metric key="imperativeSentenceRate"      type="float"/>
+      <metric key="expletiveOpeningRate"        type="float"/>
+      <metric key="parallelismRate"             type="float"/>
+    </metrics>
 
-            <!-- style ratios -->
-            <item>passiveVoiceRatio: passive sentences divided by total sentences, clamp 0-1.</item>
-            <item>hedgingRatio: hedging words (might, maybe, could) per sentence, clamp 0-1.</item>
-            <item>intensifierRatio: intensifiers (very, extremely) per sentence, clamp 0-1.</item>
-            <item>slangRatio: slang tokens divided by total tokens.</item>
-            <item>contractionRatio: apostrophe contractions divided by total verbs.</item>
-            <item>lowercaseSentenceStartRatio: sentences beginning with lowercase divided by total sentences.</item>
-            <item>casualPunctuationRatio: informal punctuation (!!, ?!, …) divided by all punctuation.</item>
-            <item>capConsistencyScore: sentences starting with a capital divided by total sentences.</item>
+    <!-- minimal extraction notes (samples—do NOT output) -->
+    <extraction_guidelines>
+      <item>greetingForm: first line before break, lower-cased; greetingPresent = 1 if non-empty.</item>
+      <item>signOffForm: last non-blank line, lower-cased; signOffPresent = 1 if non-empty.</item>
+      <item>bulletListPresent: 1 if any line starts with •, –, *, or numeral plus “.”.</item>
+      <item>emojiRate: (emoji / tokens)*1000.</item>
+      <!-- similar one-line tips may be added for each metric -->
+    </extraction_guidelines>
 
-            <!-- readability and vocabulary -->
-            <item>readabilityFlesch: Flesch reading-ease score, higher is easier to read.</item>
-            <item>lexicalDiversity: unique word count divided by total words.</item>
-            <item>jargonRatio: occurrences of technical or buzzwords divided by total words.</item>
+    <output_format>
+      <example_input>
+Hey Jordan 👋
 
-            <!-- engagement cues -->
-            <item>questionCount: count of ?.</item>
-            <item>ctaCount: phrases that request action (let me know, please confirm).</item>
-            <item>emojiCount: Unicode emoji characters in the body.</item>
-            <item>emojiDensity: emoji characters per 100 words in the body.</item>
-            <item>exclamationFreq: ! per 100 words.</item>
+Hope your week’s chill! The new rollout is basically cooked and I wanna make sure it slaps for your crew. Got like 15 min Thurs or Fri to hop on a call? Drop a time that works and I’ll toss it on the cal.
 
-            <!-- subject line -->
-            <item>subjectEmojiCount: emoji characters in the subject line.</item>
-            <item>subjectInformalityScore: composite of lowercase, emoji presence, and slang in subject scaled 0-1.</item>
+Catch ya soon,
+Dak
+      </example_input>
 
-            <!-- other markers -->
-            <item>honorificPresence: 1 if titles like mr, ms, dr appear, else 0.</item>
-            <item>phaticPhraseRatio: social pleasantries (hope you are well) divided by total sentences.</item>
-        </extraction_guidelines>
+      <example_output>
+{{"greetingForm":"hey jordan","signOffForm":"catch ya soon","greetingPresent":1,"signOffPresent":1,"tokenTotal":57,"charTotal":315,"paragraphs":2,"bulletListPresent":0,"averageSentenceLength":14.25,"averageLinesPerParagraph":3.00,"averageWordLength":4.21,"typeTokenRatio":0.63,"movingAverageTtr":80.12,"hapaxProportion":0.55,"shannonEntropy":4.88,"lexicalDensity":0.61,"contractionRate":17.54,"subordinationRatio":0.20,"passiveVoiceRate":0.00,"modalVerbRate":17.54,"parseTreeDepthMean":2.30,"commasPerSentence":0.25,"exclamationPerThousandWords":0.00,"questionMarkRate":17.54,"ellipsisRate":0.00,"parenthesesRate":0.00,"emojiRate":17.54,"sentimentPolarity":0.45,"sentimentSubjectivity":0.55,"formalityScore":0.30,"hedgeRate":5.85,"certaintyRate":2.93,"fleschReadingEase":75.0,"gunningFogIndex":7.8,"smogIndex":8.1,"averageForwardReferences":0.20,"cohesionIndex":0.71,"firstPersonSingularRate":37.00,"firstPersonPluralRate":0.00,"secondPersonRate":18.50,"selfReferenceRatio":0.48,"empathyPhraseRate":3.70,"humorMarkerRate":18.50,"markupBoldRate":0.00,"markupItalicRate":0.00,"hyperlinkRate":0.00,"codeBlockRate":0.00,"rhetoricalQuestionRate":9.25,"analogyRate":0.00,"imperativeSentenceRate":18.50,"expletiveOpeningRate":0.00,"parallelismRate":0.00}}
+      </example_output>
+    </output_format>
 
-        <output_format>
-            <example_input>
-hey jordan 👋
-
-hope your week’s chill! the new rollout is basically cooked and i wanna make sure it slaps for your crew. got like 15 min thurs or fri to hop on a call? drop a time that works and i’ll toss it on the cal.
-
-catch ya soon,
-dak
-            </example_input>
-
-            <example_output>
-{{"greeting":"hey jordan","signOff":"catch ya soon","greetingTotal":1,"signOffTotal":1,"avgSentenceLen":16,"avgParagraphLen":33,"listUsageRatio":0,"sentimentScore":0.4,"politenessScore":0.6,"confidenceScore":0.8,"urgencyScore":0.5,"empathyScore":0.4,"formalityScore":0.2,"passiveVoiceRatio":0,"hedgingRatio":0.03,"intensifierRatio":0.06,"slangRatio":0.11,"contractionRatio":0.08,"lowercaseSentenceStartRatio":1,"casualPunctuationRatio":0.2,"capConsistencyScore":0,"readabilityFlesch":75,"lexicalDiversity":0.57,"jargonRatio":0,"questionCount":1,"ctaCount":1,"emojiCount":1,"emojiDensity":2,"exclamationFreq":0,"subjectEmojiCount":1,"subjectInformalityScore":0.9,"honorificPresence":0,"phaticPhraseRatio":0.17}}
-            </example_output>
-        </output_format>
-
-        <strict_guidelines>
-            <rule>Any deviation from the required JSON output counts as non-compliance.</rule>
-            <rule>The output must be valid JSON and include all 33 keys in the exact order specified.</rule>
-        </strict_guidelines>
-    </instructions>
+    <strict_guidelines>
+      <rule>Any deviation from the required JSON output counts as non-compliance.</rule>
+      <rule>The output must be valid JSON and include all 52 keys in the exact order specified.</rule>
+    </strict_guidelines>
+  </instructions>
 </system_prompt>
-`
-
-export const EmailStyleSummaryUpdaterSystemPrompt = () => {
-    return `
-<Role>
-  You update a running style summary of an email author.
-</Role>
-
-<Goal>
-  Keep a concise (≤120 words) third-person summary of the user’s stylistic
-  quirks: cadence, slang, punctuation rhythm, emoji use, greeting/closing
-  habits, register shifts.  Do NOT include any names, addresses, email
-  handles, phone numbers, domains, dates beyond weekday names, or signature
-  text.  Never exceed 120 words.
-</Goal>
-
-<Input>
-  • currentSummary        — the existing style summary (may be empty)  
-  • currentSummaryWeight  — how many emails were used to build currentSummary  
-  • newEmail              — the latest outbound email (PII already scrubbed)
-</Input>
-
-<Instructions>
-  1. Treat currentSummary as weight = currentSummaryWeight.  
-  2. Treat newEmail as weight = 1.  
-  3. Merge: keep traits still evident; remove traits the new email contradicts;
-     add any new patterns introduced by the new email.  
-  4. If currentSummaryWeight < 20, allow faster change; otherwise adjust
-     gradually.  
-  5. Return ONLY the revised summary text, no JSON or commentary.
-</Instructions>
-
-<OutputConstraint>
-  Return the updated style summary as a single paragraph ≤ 120 words.
-</OutputConstraint>
-
-<Refusal>
-  If newEmail is empty, reply with: Unable to update style summary.
-</Refusal>
-    `
-}
-
-export const EmailStyleSummaryUserPrompt = ({
-  currentSummary,
-  weight,
-  newEmail,
-}: {
-    currentSummary?: string,
-    weight: number,
-    newEmail: string,
-}) => {
-    return `
-<currentSummary>
-${currentSummary || ""}
-</currentSummary>
-
-<currentSummaryWeight>
-${weight}
-</currentSummaryWeight>
-
-<newEmail>
-${newEmail}
-</newEmail>
-    `
-}
+`;

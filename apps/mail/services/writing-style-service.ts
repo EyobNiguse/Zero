@@ -1,15 +1,15 @@
-import { extractStyleMatrix } from '@/lib/ai';
-import { db } from '@zero/db';
-import { writingStyleMatrix } from '@zero/db/schema';
 import { mapToObj, pipe, entries, sortBy, take, fromEntries, sum, values, takeWhile } from 'remeda';
+import { writingStyleMatrix } from '@zero/db/schema';
+import { extractStyleMatrix } from '@/lib/ai';
 import { eq } from 'drizzle-orm';
+import { db } from '@zero/db';
 import pRetry from 'p-retry';
 
 // leaving these in here for testing between them
 // (switching to `k` will surely truncate what `coverage` was keeping)
-const TAKE_TOP_COVERAGE = 0.95
-const TAKE_TOP_K = 10
-const TAKE_TYPE: 'coverage' | 'k' = 'coverage'
+const TAKE_TOP_COVERAGE = 0.95;
+const TAKE_TOP_K = 10;
+const TAKE_TYPE: 'coverage' | 'k' = 'coverage';
 
 // Using Welford Variance Algorithm (https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance)
 // Welford’s online algorithm continuously updates the running mean and variance using just three
@@ -17,215 +17,202 @@ const TAKE_TYPE: 'coverage' | 'k' = 'coverage'
 // can be processed the moment it arrives, with no need to store earlier data, while maintaining high
 // numerical accuracy.
 const MEAN_METRIC_KEYS = [
-  'avgSentenceLen',                 // average number of words in one sentence
-  'avgParagraphLen',                // average number of words in one paragraph
-  'listUsageRatio',                 // fraction of lines that use bullets or numbers
-  'passiveVoiceRatio',              // fraction of sentences written in passive voice
-  'sentimentScore',                 // overall feeling from −1 negative to 1 positive
-  'politenessScore',                // how often polite words like please appear
-  'confidenceScore',                // how strongly the writer sounds sure of themself
-  'urgencyScore',                   // how urgent or time-sensitive the wording is
-  'empathyScore',                   // how much care or concern is shown for others
-  'formalityScore',                 // how formal versus casual the language is
-  'hedgingRatio',                   // share of softeners like maybe or might per sentence
-  'intensifierRatio',               // share of strong words like very or extremely per sentence
-  'readabilityFlesch',              // flesch reading ease score higher means simpler to read (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests)
-  'lexicalDiversity',               // unique words divided by total words
-  'jargonRatio',                    // fraction of technical or buzzword terms
-  'exclamationFreq',                // exclamation marks per 100 words
-  'slangRatio',                     // fraction of slang words like vibe or wanna
-  'contractionRatio',               // fraction of words that use apostrophe contractions
-  'lowercaseSentenceStartRatio',    // fraction of sentences that begin with a lowercase letter
-  'emojiDensity',                   // emoji characters per 100 words in the body
-  'casualPunctuationRatio',         // share of informal punctuation like "!!" or "?!"
-  'capConsistencyScore',            // fraction of sentences that start with a capital letter
-  'phaticPhraseRatio',              // share of small-talk phrases like "hope you are well"
-] as const
+  'averageSentenceLength', // average number of words in one sentence
+  'averageLinesPerParagraph', // average number of lines in one paragraph
+  'averageWordLength', // average number of characters per token
+  'typeTokenRatio', // unique words divided by total words
+  'movingAverageTtr', // MTLD lexical diversity metric
+  'hapaxProportion', // share of words that occur exactly once
+  'shannonEntropy', // entropy of unigram distribution
+  'lexicalDensity', // content words divided by total words
+  'contractionRate', // apostrophe contractions per 1 000 tokens
+  'subordinationRatio', // subordinate clauses divided by total clauses
+  'passiveVoiceRate', // passive sentences per 1 000 tokens
+  'modalVerbRate', // modal verbs like can/could per 1 000 tokens
+  'parseTreeDepthMean', // mean depth of constituency parse trees
+  'commasPerSentence', // commas per sentence
+  'exclamationPerThousandWords', // exclamation marks per 1 000 tokens
+  'questionMarkRate', // question marks per 1 000 tokens
+  'ellipsisRate', // ellipses (…) per 1 000 tokens
+  'parenthesesRate', // parentheses per 1 000 tokens
+  'emojiRate', // emoji characters per 1 000 tokens
+  'sentimentPolarity', // polarity score −1 negative to 1 positive
+  'sentimentSubjectivity', // subjectivity score 0 objective to 1 subjective
+  'formalityScore', // formality 0 casual to 100 formal
+  'hedgeRate', // hedging words like maybe per 1 000 tokens
+  'certaintyRate', // certainty words like definitely per 1 000 tokens
+  'fleschReadingEase', // flesch reading ease (higher easier)
+  'gunningFogIndex', // gunning fog readability index
+  'smogIndex', // smog readability index
+  'averageForwardReferences', // forward references per sentence
+  'cohesionIndex', // semantic cohesion 0–1
+  'firstPersonSingularRate', // I/me/my per 1 000 tokens
+  'firstPersonPluralRate', // we/our per 1 000 tokens
+  'secondPersonRate', // you/your per 1 000 tokens
+  'selfReferenceRatio', // first-person pronouns ÷ total pronouns
+  'empathyPhraseRate', // phrases like "I understand" per 1 000 tokens
+  'humorMarkerRate', // humour markers like :) per 1 000 tokens
+  'markupBoldRate', // bold markers per 1 000 tokens
+  'markupItalicRate', // italic markers per 1 000 tokens
+  'hyperlinkRate', // hyperlinks per 1 000 tokens
+  'codeBlockRate', // fenced code blocks per 1 000 tokens
+  'rhetoricalQuestionRate', // rhetorical questions per 1 000 tokens
+  'analogyRate', // analogies with like/as per 1 000 tokens
+  'imperativeSentenceRate', // imperative sentences per 1 000 tokens
+  'expletiveOpeningRate', // openings like "There is" per 1 000 tokens
+  'parallelismRate', // parallel syntactic patterns per 1 000 tokens
+] as const;
 
 const SUM_METRIC_KEYS = [
-  'questionCount',                  // total question marks in the body
-  'ctaCount',                       // number of direct requests for action
-  'emojiCount',                     // total emoji characters in the body
-  'honorificPresence',              // 1 if titles like "mr" or "dr" appear otherwise 0
-  'greetingTotal',                  // total number of greetings
-  'signOffTotal',                   // total number of sign offs
-] as const
+  'tokenTotal', // total tokens in the body
+  'charTotal', // total characters in the body
+  'paragraphs', // number of paragraph blocks
+  'bulletListPresent', // 1 if any bullet/numbered list present
+  'greetingPresent', // 1 if greeting exists otherwise 0
+  'signOffPresent', // 1 if sign-off exists otherwise 0
+] as const;
 
 const TOP_COUNTS_KEYS = [
-  'greeting',
-  'signOff',
-] as const
+  'greetingForm', // raw greeting phrase
+  'signOffForm', // raw sign-off phrase
+] as const;
 
+// ---------------------------------------------------------------------------
+// Public helpers
+// ---------------------------------------------------------------------------
 export const getWritingStyleMatrixForConnectionId = async (connectionId: string) => {
-  return await db.query.writingStyleMatrix.findFirst({
-    where: (table, ops) => {
-      return ops.eq(table.connectionId, connectionId)
-    },
-    columns: {
-      numMessages: true,
-      style: true,
-    },
-  })
-}
+  return db.query.writingStyleMatrix.findFirst({
+    where: (t, o) => o.eq(t.connectionId, connectionId),
+    columns: { numMessages: true, style: true },
+  });
+};
 
 export const updateWritingStyleMatrix = async (connectionId: string, emailBody: string) => {
-  const emailStyleMatrix = await extractStyleMatrix(emailBody)
+  const emailMetrics = await extractStyleMatrix(emailBody);
 
-  await pRetry(async () => {
-    await db.transaction(async (tx) => {
-      const [existingMatrix] = await tx
-        .select({
-          numMessages: writingStyleMatrix.numMessages,
-          style: writingStyleMatrix.style,
-        })
-        .from(writingStyleMatrix)
-        .where(eq(writingStyleMatrix.connectionId, connectionId))
-        .for('update')
+  await pRetry(
+    async () => {
+      await db.transaction(async (tx) => {
+        const [row] = await tx
+          .select({ numMessages: writingStyleMatrix.numMessages, style: writingStyleMatrix.style })
+          .from(writingStyleMatrix)
+          .where(eq(writingStyleMatrix.connectionId, connectionId))
+          .for('update');
 
-      if (!existingMatrix) {
-        const newStyle = initializeStyleMatrixFromEmail(emailStyleMatrix)
+        if (!row) {
+          await tx.insert(writingStyleMatrix).values({
+            connectionId,
+            numMessages: 1,
+            style: initMatrix(emailMetrics),
+          });
+          return;
+        }
 
-        await tx.insert(writingStyleMatrix).values({
-          connectionId,
-          numMessages: 1,
-          style: newStyle,
-        })
-      } else {
-        const newStyle = createUpdatedMatrixFromNewEmail(existingMatrix.numMessages, existingMatrix.style, emailStyleMatrix)
+        await tx
+          .update(writingStyleMatrix)
+          .set({
+            numMessages: row.numMessages + 1,
+            style: mergeMatrix(row.style, emailMetrics),
+          })
+          .where(eq(writingStyleMatrix.connectionId, connectionId));
+      });
+    },
+    { retries: 1 },
+  );
+};
 
-        await tx.update(writingStyleMatrix).set({
-          numMessages: existingMatrix.numMessages + 1,
-          style: newStyle,
-        }).where(eq(writingStyleMatrix.connectionId, connectionId))
-      }
-    })
-  }, {
-    retries: 1,
-  })
-}
+// ---------------------------------------------------------------------------
+// Merge logic
+// ---------------------------------------------------------------------------
+const mergeMatrix = (current: WritingStyleMatrix, email: EmailMatrix): WritingStyleMatrix => {
+  const next: WritingStyleMatrix = { ...current };
 
-const createUpdatedMatrixFromNewEmail = (numMessages: number, currentStyleMatrix: WritingStyleMatrix, emailStyleMatrix: EmailMatrix) => {
-  const newStyle = {
-    ...currentStyleMatrix,
+  // update running means / variance
+  for (const k of MEAN_METRIC_KEYS) {
+    next[k] = welfordUpdate(current[k], email[k]);
   }
 
-  for (const key of MEAN_METRIC_KEYS) {
-    newStyle[key] = updateWelfordMetric(currentStyleMatrix[key], emailStyleMatrix[key])
+  // update simple sums
+  for (const k of SUM_METRIC_KEYS) {
+    (next as any)[k] = (current as any)[k] + (email as any)[k];
   }
 
-  for (const key of SUM_METRIC_KEYS) {
-    newStyle[key] = currentStyleMatrix[key] + emailStyleMatrix[key]
+  // update categorical frequency maps
+  for (const k of TOP_COUNTS_KEYS) {
+    const v = email[k];
+    if (!v) continue;
+    const map = { ...(next as any)[k] } as Record<string, number>;
+    map[v] = (map[v] ?? 0) + 1;
+    (next as any)[k] = TAKE_TYPE === 'coverage' ? topCoverage(map) : topK(map);
   }
 
-  for (const key of TOP_COUNTS_KEYS) {
-    const emailValue = emailStyleMatrix[key]
-    if (emailValue) {
-      newStyle[key][emailValue] = (newStyle[key][emailValue] ?? 0) + 1
-      newStyle[key] = TAKE_TYPE === 'coverage' ? takeTopCoverage(newStyle[key]) : takeTopK(newStyle[key])
-    }
-  }
+  return next;
+};
 
-  return newStyle
-}
-
-const takeTopCoverage = (data: Record<string, number>, coverage = TAKE_TOP_COVERAGE) => {
-  const total = pipe(
-    data,
-    values(),
-    sum(),
-  )
-
-  if (total === 0) {
-    return {}
-  }
-
-  let running = 0
-
+// ---------------------------------------------------------------------------
+// Frequency-map pruning helpers
+// ---------------------------------------------------------------------------
+const topCoverage = (data: Record<string, number>, coverage = TAKE_TOP_COVERAGE) => {
+  const total = pipe(data, values(), sum());
+  if (!total) return {};
+  let running = 0;
   return pipe(
     data,
     entries(),
-    sortBy(([_, count]) => -count),
-    takeWhile(([_, count]) => {
-      running += count
-
-      return running / total < coverage
+    sortBy(([_, c]) => -c),
+    takeWhile(([_, c]) => {
+      running += c;
+      return running / total <= coverage;
     }),
     fromEntries(),
-  )
-}
+  );
+};
 
-const takeTopK = (data: Record<string, number>, k = TAKE_TOP_K) => {
-  return pipe(
+const topK = (data: Record<string, number>, k = TAKE_TOP_K) =>
+  pipe(
     data,
     entries(),
-    sortBy(([_, count]) => -count),
+    sortBy(([_, c]) => -c),
     take(k),
     fromEntries(),
-  )
-}
+  );
 
-const initializeStyleMatrixFromEmail = (matrix: EmailMatrix) => {
-  const initializedWelfordMetrics = mapToObj(MEAN_METRIC_KEYS, (key) => {
-    return [
-      key,
-      initializeWelfordMetric(matrix[key]),
-    ]
-  })
+// ---------------------------------------------------------------------------
+// Initialisation
+// ---------------------------------------------------------------------------
+const initMatrix = (email: EmailMatrix): WritingStyleMatrix =>
+  ({
+    ...mapToObj(MEAN_METRIC_KEYS, (k) => [k, welfordInit(email[k])]),
+    ...mapToObj(SUM_METRIC_KEYS, (k) => [k, (email as any)[k]]),
+    ...mapToObj(TOP_COUNTS_KEYS, (k) => [k, (email as any)[k] ? { [(email as any)[k]!]: 1 } : {}]),
+  }) as WritingStyleMatrix;
 
-  const initializedSumMetrics = mapToObj(SUM_METRIC_KEYS, (key) => {
-    return [
-      key,
-      matrix[key],
-    ]
-  })
+// ---------------------------------------------------------------------------
+// Welford utilities
+// ---------------------------------------------------------------------------
+const welfordUpdate = (prev: WelfordState, value: number): WelfordState => {
+  const count = prev.count + 1;
+  const delta = value - prev.mean;
+  const mean = prev.mean + delta / count;
+  const m2 = prev.m2 + delta * (value - mean);
+  return { count, mean, m2 };
+};
 
-  const initializedTopCountMetrics = mapToObj(TOP_COUNTS_KEYS, (key) => {
-    return [
-      key,
-      matrix[key] ? { [matrix[key]]: 1 } : {},
-    ]
-  })
+const welfordInit = (value: number): WelfordState => ({ count: 1, mean: value, m2: 0 });
 
-  return {
-    ...initializedWelfordMetrics,
-    ...initializedSumMetrics,
-    ...initializedTopCountMetrics,
-  }
-}
-
-const updateWelfordMetric = (previousState: WelfordState, value: number) => {
-  const count = previousState.count + 1
-  const delta = value - previousState.mean
-  const mean = previousState.mean + delta / count
-  const m2 = previousState.m2 + delta * (value - mean)
-
-  return {
-    count,
-    mean,
-    m2,
-  }
-}
-
-const initializeWelfordMetric = (statValue: number) => {
-  return {
-    count: 1,
-    mean: statValue,
-    m2: 0,
-  }
-}
-
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 export type WelfordState = {
-  count: number
-  mean: number
-  m2: number
-}
+  count: number;
+  mean: number;
+  m2: number;
+};
 
-export type EmailMatrix =
-  & Record<typeof MEAN_METRIC_KEYS[number], number>
-  & Record<typeof SUM_METRIC_KEYS[number], number>
-  & Record<typeof TOP_COUNTS_KEYS[number], string | null>
+export type EmailMatrix = Record<(typeof MEAN_METRIC_KEYS)[number], number> &
+  Record<(typeof SUM_METRIC_KEYS)[number], number> &
+  Record<(typeof TOP_COUNTS_KEYS)[number], string | null>;
 
-export type WritingStyleMatrix =
-  & Record<typeof MEAN_METRIC_KEYS[number], WelfordState>
-  & Record<typeof SUM_METRIC_KEYS[number], number>
-  & Record<typeof TOP_COUNTS_KEYS[number], Record<string, number>>
+export type WritingStyleMatrix = Record<(typeof MEAN_METRIC_KEYS)[number], WelfordState> &
+  Record<(typeof SUM_METRIC_KEYS)[number], number> &
+  Record<(typeof TOP_COUNTS_KEYS)[number], Record<string, number>>;

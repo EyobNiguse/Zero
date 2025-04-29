@@ -1,18 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useEmailAliases } from '@/hooks/use-email-aliases';
 import { EmailComposer } from '../create/email-composer';
 import { useHotkeysContext } from 'react-hotkeys-hook';
+import { SuccessEmailToast } from '../theme/toast';
 import { constructReplyBody } from '@/lib/utils';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
 import { useQueryState } from 'nuqs';
+import { useEffect } from 'react';
 import { Sender } from '@/types';
 import { toast } from 'sonner';
-import { SuccessEmailToast } from '../theme/toast';
 
 interface ReplyComposeProps {
   messageId?: string;
@@ -28,7 +28,8 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   const t = useTranslations();
 
   // Find the specific message to reply to
-  const replyToMessage = messageId && emailData?.messages.find(msg => msg.id === messageId) || emailData?.latest;
+  const replyToMessage =
+    (messageId && emailData?.messages.find((msg) => msg.id === messageId)) || emailData?.latest;
 
   // Initialize recipients and subject when mode changes
   useEffect(() => {
@@ -144,7 +145,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
           'In-Reply-To': replyToMessage?.messageId ?? '',
           References: [
             ...(replyToMessage?.references ? replyToMessage.references.split(' ') : []),
-            replyToMessage?.messageId
+            replyToMessage?.messageId,
           ]
             .filter(Boolean)
             .join(' '),
@@ -157,7 +158,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
       setMode(null);
       await mutate();
       toast.custom((id) => (
-        <div className='relative top-0 left-32'>
+        <div className="relative left-32 top-0">
           <SuccessEmailToast message={t('pages.createEmail.emailSent')} />
         </div>
       ));
@@ -191,13 +192,13 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
             body: message.body,
             from: message.sender.name ?? message.sender.email,
             to: message.to.reduce<string[]>((to, recipient) => {
-              if (recipient && recipient.name) {
+              if (recipient.name) {
                 to.push(recipient.name);
               }
 
               return to;
             }, []),
-          }
+          };
         })}
       />
     </div>
