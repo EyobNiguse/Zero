@@ -1,17 +1,16 @@
 'use client';
 
 import {
+  Archive2,
   Bell,
+  ChevronDown,
   GroupPeople,
   Lightning,
   People,
-  Tag,
-  User,
   Star2,
-  Archive,
+  Tag,
   Trash,
-  Archive2,
-  ChevronDown,
+  User,
 } from '../icons/icons';
 import {
   cn,
@@ -32,20 +31,20 @@ import {
 } from 'react';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Briefcase, CheckCircle2, Star, StickyNote, Users } from 'lucide-react';
 import { preloadThread, useThread, useThreads } from '@/hooks/use-threads';
+import { Briefcase, Check, Star, StickyNote, Users } from 'lucide-react';
 import { ThreadContextMenu } from '@/components/context/thread-context';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
-import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
-import { Label, useThreadLabels } from '@/hooks/use-labels';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
+import { useThreadLabels } from '@/hooks/use-labels';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { SuccessEmailToast } from '../theme/toast';
 import { useKeyState } from '@/hooks/use-hot-key';
@@ -359,12 +358,6 @@ const Thread = memo(
               isKeyboardFocused && 'ring-primary/50 ring-2',
             )}
           >
-            <div
-              className={cn(
-                'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
-                isMailBulkSelected && 'translate-x-0',
-              )}
-            />
             <div className="flex w-full items-center justify-between gap-4">
               <Avatar className="h-8 w-8">
                 {isGroupThread ? (
@@ -492,7 +485,7 @@ const Thread = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 [&_svg]:size-3.5"
+                      className="h-6 w-6 overflow-visible [&_svg]:size-3.5"
                       onClick={handleToggleStar}
                     >
                       <Star2
@@ -546,8 +539,8 @@ const Thread = memo(
               <div>
                 <Avatar className="h-8 w-8 rounded-full border dark:border-none">
                   {isMailBulkSelected ? (
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#fff]">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-blue-500 p-2 dark:bg-blue-500">
+                      <Check className="h-4 w-4 text-white" />
                     </div>
                   ) : isGroupThread ? (
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">

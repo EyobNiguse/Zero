@@ -280,7 +280,10 @@
       "showImages": "Show Images",
       "noEmails": "No emails available",
       "noSearchResults": "No search results found",
-      "clearSearch": "Clear search"
+      "clearSearch": "Clear search",
+      "markAsImportant": "Mark as Important",
+      "unSubscribeFromAll": "Unsubscribe from all",
+      "starAll": "Star all"
     },
     "units": {
       "mb": "{amount} MB"
