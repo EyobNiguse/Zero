@@ -1,9 +1,12 @@
 import { mapToObj, pipe, entries, sortBy, take, fromEntries, sum, values, takeWhile } from 'remeda';
+import { JsonOutputParser } from '@langchain/core/output_parsers';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { writingStyleMatrix } from '@zero/db/schema';
-import { extractStyleMatrix } from '@/lib/ai';
+import { ChatGroq } from '@langchain/groq';
 import { eq } from 'drizzle-orm';
 import { db } from '@zero/db';
 import pRetry from 'p-retry';
+import { z } from 'zod';
 
 // leaving these in here for testing between them
 // (switching to `k` will surely truncate what `coverage` was keeping)
@@ -17,192 +20,202 @@ const TAKE_TYPE: 'coverage' | 'k' = 'coverage';
 // can be processed the moment it arrives, with no need to store earlier data, while maintaining high
 // numerical accuracy.
 const MEAN_METRIC_KEYS = [
-  'averageSentenceLength', // average number of words in one sentence
-  'averageLinesPerParagraph', // average number of lines in one paragraph
-  'averageWordLength', // average number of characters per token
-  'typeTokenRatio', // unique words divided by total words
-  'movingAverageTtr', // MTLD lexical diversity metric
-  'hapaxProportion', // share of words that occur exactly once
-  'shannonEntropy', // entropy of unigram distribution
-  'lexicalDensity', // content words divided by total words
-  'contractionRate', // apostrophe contractions per 1 000 tokens
-  'subordinationRatio', // subordinate clauses divided by total clauses
-  'passiveVoiceRate', // passive sentences per 1 000 tokens
-  'modalVerbRate', // modal verbs like can/could per 1 000 tokens
-  'parseTreeDepthMean', // mean depth of constituency parse trees
-  'commasPerSentence', // commas per sentence
-  'exclamationPerThousandWords', // exclamation marks per 1 000 tokens
-  'questionMarkRate', // question marks per 1 000 tokens
-  'ellipsisRate', // ellipses (…) per 1 000 tokens
-  'parenthesesRate', // parentheses per 1 000 tokens
-  'emojiRate', // emoji characters per 1 000 tokens
-  'sentimentPolarity', // polarity score −1 negative to 1 positive
-  'sentimentSubjectivity', // subjectivity score 0 objective to 1 subjective
-  'formalityScore', // formality 0 casual to 100 formal
-  'hedgeRate', // hedging words like maybe per 1 000 tokens
-  'certaintyRate', // certainty words like definitely per 1 000 tokens
-  'fleschReadingEase', // flesch reading ease (higher easier)
-  'gunningFogIndex', // gunning fog readability index
-  'smogIndex', // smog readability index
-  'averageForwardReferences', // forward references per sentence
-  'cohesionIndex', // semantic cohesion 0–1
-  'firstPersonSingularRate', // I/me/my per 1 000 tokens
-  'firstPersonPluralRate', // we/our per 1 000 tokens
-  'secondPersonRate', // you/your per 1 000 tokens
-  'selfReferenceRatio', // first-person pronouns ÷ total pronouns
-  'empathyPhraseRate', // phrases like "I understand" per 1 000 tokens
-  'humorMarkerRate', // humour markers like :) per 1 000 tokens
-  'markupBoldRate', // bold markers per 1 000 tokens
-  'markupItalicRate', // italic markers per 1 000 tokens
-  'hyperlinkRate', // hyperlinks per 1 000 tokens
-  'codeBlockRate', // fenced code blocks per 1 000 tokens
-  'rhetoricalQuestionRate', // rhetorical questions per 1 000 tokens
-  'analogyRate', // analogies with like/as per 1 000 tokens
-  'imperativeSentenceRate', // imperative sentences per 1 000 tokens
-  'expletiveOpeningRate', // openings like "There is" per 1 000 tokens
-  'parallelismRate', // parallel syntactic patterns per 1 000 tokens
+  'avgSentenceLen', // average number of words in one sentence
+  'avgParagraphLen', // average number of words in one paragraph
+  'listUsageRatio', // fraction of lines that use bullets or numbers
+  'passiveVoiceRatio', // fraction of sentences written in passive voice
+  'sentimentScore', // overall feeling from −1 negative to 1 positive
+  'politenessScore', // how often polite words like please appear
+  'confidenceScore', // how strongly the writer sounds sure of themself
+  'urgencyScore', // how urgent or time-sensitive the wording is
+  'empathyScore', // how much care or concern is shown for others
+  'formalityScore', // how formal versus casual the language is
+  'hedgingRatio', // share of softeners like maybe or might per sentence
+  'intensifierRatio', // share of strong words like very or extremely per sentence
+  'readabilityFlesch', // flesch reading ease score higher means simpler to read (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests)
+  'lexicalDiversity', // unique words divided by total words
+  'jargonRatio', // fraction of technical or buzzword terms
+  'exclamationFreq', // exclamation marks per 100 words
+  'slangRatio', // fraction of slang words like vibe or wanna
+  'contractionRatio', // fraction of words that use apostrophe contractions
+  'lowercaseSentenceStartRatio', // fraction of sentences that begin with a lowercase letter
+  'emojiDensity', // emoji characters per 100 words in the body
+  'casualPunctuationRatio', // share of informal punctuation like "!!" or "?!"
+  'capConsistencyScore', // fraction of sentences that start with a capital letter
+  'phaticPhraseRatio', // share of small-talk phrases like "hope you are well"
 ] as const;
 
 const SUM_METRIC_KEYS = [
-  'tokenTotal', // total tokens in the body
-  'charTotal', // total characters in the body
-  'paragraphs', // number of paragraph blocks
-  'bulletListPresent', // 1 if any bullet/numbered list present
-  'greetingPresent', // 1 if greeting exists otherwise 0
-  'signOffPresent', // 1 if sign-off exists otherwise 0
+  'questionCount', // total question marks in the body
+  'ctaCount', // number of direct requests for action
+  'emojiCount', // total emoji characters in the body
+  'honorificPresence', // 1 if titles like "mr" or "dr" appear otherwise 0
+  'greetingTotal', // total number of greetings
+  'signOffTotal', // total number of sign offs
 ] as const;
 
-const TOP_COUNTS_KEYS = [
-  'greetingForm', // raw greeting phrase
-  'signOffForm', // raw sign-off phrase
-] as const;
+const TOP_COUNTS_KEYS = ['greeting', 'signOff'] as const;
 
-// ---------------------------------------------------------------------------
-// Public helpers
-// ---------------------------------------------------------------------------
 export const getWritingStyleMatrixForConnectionId = async (connectionId: string) => {
-  return db.query.writingStyleMatrix.findFirst({
-    where: (t, o) => o.eq(t.connectionId, connectionId),
-    columns: { numMessages: true, style: true },
+  return await db.query.writingStyleMatrix.findFirst({
+    where: (table, ops) => {
+      return ops.eq(table.connectionId, connectionId);
+    },
+    columns: {
+      numMessages: true,
+      style: true,
+    },
   });
 };
 
 export const updateWritingStyleMatrix = async (connectionId: string, emailBody: string) => {
-  const emailMetrics = await extractStyleMatrix(emailBody);
+  const emailStyleMatrix = await extractStyleMatrix(emailBody);
 
   await pRetry(
     async () => {
       await db.transaction(async (tx) => {
-        const [row] = await tx
-          .select({ numMessages: writingStyleMatrix.numMessages, style: writingStyleMatrix.style })
+        const [existingMatrix] = await tx
+          .select({
+            numMessages: writingStyleMatrix.numMessages,
+            style: writingStyleMatrix.style,
+          })
           .from(writingStyleMatrix)
           .where(eq(writingStyleMatrix.connectionId, connectionId))
           .for('update');
 
-        if (!row) {
+        if (!existingMatrix) {
+          const newStyle = initializeStyleMatrixFromEmail(emailStyleMatrix);
+
           await tx.insert(writingStyleMatrix).values({
             connectionId,
             numMessages: 1,
-            style: initMatrix(emailMetrics),
+            style: newStyle,
           });
-          return;
-        }
+        } else {
+          const newStyle = createUpdatedMatrixFromNewEmail(
+            existingMatrix.numMessages,
+            existingMatrix.style,
+            emailStyleMatrix,
+          );
 
-        await tx
-          .update(writingStyleMatrix)
-          .set({
-            numMessages: row.numMessages + 1,
-            style: mergeMatrix(row.style, emailMetrics),
-          })
-          .where(eq(writingStyleMatrix.connectionId, connectionId));
+          await tx
+            .update(writingStyleMatrix)
+            .set({
+              numMessages: existingMatrix.numMessages + 1,
+              style: newStyle,
+            })
+            .where(eq(writingStyleMatrix.connectionId, connectionId));
+        }
       });
     },
-    { retries: 1 },
+    {
+      retries: 1,
+    },
   );
 };
 
-// ---------------------------------------------------------------------------
-// Merge logic
-// ---------------------------------------------------------------------------
-const mergeMatrix = (current: WritingStyleMatrix, email: EmailMatrix): WritingStyleMatrix => {
-  const next: WritingStyleMatrix = { ...current };
+const createUpdatedMatrixFromNewEmail = (
+  numMessages: number,
+  currentStyleMatrix: WritingStyleMatrix,
+  emailStyleMatrix: EmailMatrix,
+) => {
+  const newStyle = {
+    ...currentStyleMatrix,
+  };
 
-  // update running means / variance
-  for (const k of MEAN_METRIC_KEYS) {
-    next[k] = welfordUpdate(current[k], email[k]);
+  for (const key of MEAN_METRIC_KEYS) {
+    newStyle[key] = updateWelfordMetric(currentStyleMatrix[key], emailStyleMatrix[key]);
   }
 
-  // update simple sums
-  for (const k of SUM_METRIC_KEYS) {
-    (next as any)[k] = (current as any)[k] + (email as any)[k];
+  for (const key of SUM_METRIC_KEYS) {
+    newStyle[key] = currentStyleMatrix[key] + emailStyleMatrix[key];
   }
 
-  // update categorical frequency maps
-  for (const k of TOP_COUNTS_KEYS) {
-    const v = email[k];
-    if (!v) continue;
-    const map = { ...(next as any)[k] } as Record<string, number>;
-    map[v] = (map[v] ?? 0) + 1;
-    (next as any)[k] = TAKE_TYPE === 'coverage' ? topCoverage(map) : topK(map);
+  for (const key of TOP_COUNTS_KEYS) {
+    const emailValue = emailStyleMatrix[key];
+    if (emailValue) {
+      newStyle[key][emailValue] = (newStyle[key][emailValue] ?? 0) + 1;
+      newStyle[key] =
+        TAKE_TYPE === 'coverage' ? takeTopCoverage(newStyle[key]) : takeTopK(newStyle[key]);
+    }
   }
 
-  return next;
+  return newStyle;
 };
 
-// ---------------------------------------------------------------------------
-// Frequency-map pruning helpers
-// ---------------------------------------------------------------------------
-const topCoverage = (data: Record<string, number>, coverage = TAKE_TOP_COVERAGE) => {
+const takeTopCoverage = (data: Record<string, number>, coverage = TAKE_TOP_COVERAGE) => {
   const total = pipe(data, values(), sum());
-  if (!total) return {};
+
+  if (total === 0) {
+    return {};
+  }
+
   let running = 0;
+
   return pipe(
     data,
     entries(),
-    sortBy(([_, c]) => -c),
-    takeWhile(([_, c]) => {
-      running += c;
-      return running / total <= coverage;
+    sortBy(([_, count]) => -count),
+    takeWhile(([_, count]) => {
+      running += count;
+
+      return running / total < coverage;
     }),
     fromEntries(),
   );
 };
 
-const topK = (data: Record<string, number>, k = TAKE_TOP_K) =>
-  pipe(
+const takeTopK = (data: Record<string, number>, k = TAKE_TOP_K) => {
+  return pipe(
     data,
     entries(),
-    sortBy(([_, c]) => -c),
+    sortBy(([_, count]) => -count),
     take(k),
     fromEntries(),
   );
-
-// ---------------------------------------------------------------------------
-// Initialisation
-// ---------------------------------------------------------------------------
-const initMatrix = (email: EmailMatrix): WritingStyleMatrix =>
-  ({
-    ...mapToObj(MEAN_METRIC_KEYS, (k) => [k, welfordInit(email[k])]),
-    ...mapToObj(SUM_METRIC_KEYS, (k) => [k, (email as any)[k]]),
-    ...mapToObj(TOP_COUNTS_KEYS, (k) => [k, (email as any)[k] ? { [(email as any)[k]!]: 1 } : {}]),
-  }) as WritingStyleMatrix;
-
-// ---------------------------------------------------------------------------
-// Welford utilities
-// ---------------------------------------------------------------------------
-const welfordUpdate = (prev: WelfordState, value: number): WelfordState => {
-  const count = prev.count + 1;
-  const delta = value - prev.mean;
-  const mean = prev.mean + delta / count;
-  const m2 = prev.m2 + delta * (value - mean);
-  return { count, mean, m2 };
 };
 
-const welfordInit = (value: number): WelfordState => ({ count: 1, mean: value, m2: 0 });
+const initializeStyleMatrixFromEmail = (matrix: EmailMatrix) => {
+  const initializedWelfordMetrics = mapToObj(MEAN_METRIC_KEYS, (key) => {
+    return [key, initializeWelfordMetric(matrix[key])];
+  });
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+  const initializedSumMetrics = mapToObj(SUM_METRIC_KEYS, (key) => {
+    return [key, matrix[key]];
+  });
+
+  const initializedTopCountMetrics = mapToObj(TOP_COUNTS_KEYS, (key) => {
+    return [key, matrix[key] ? { [matrix[key]]: 1 } : {}];
+  });
+
+  return {
+    ...initializedWelfordMetrics,
+    ...initializedSumMetrics,
+    ...initializedTopCountMetrics,
+  };
+};
+
+const updateWelfordMetric = (previousState: WelfordState, value: number) => {
+  const count = previousState.count + 1;
+  const delta = value - previousState.mean;
+  const mean = previousState.mean + delta / count;
+  const m2 = previousState.m2 + delta * (value - mean);
+
+  return {
+    count,
+    mean,
+    m2,
+  };
+};
+
+const initializeWelfordMetric = (statValue: number) => {
+  return {
+    count: 1,
+    mean: statValue,
+    m2: 0,
+  };
+};
+
 export type WelfordState = {
   count: number;
   mean: number;
@@ -216,3 +229,232 @@ export type EmailMatrix = Record<(typeof MEAN_METRIC_KEYS)[number], number> &
 export type WritingStyleMatrix = Record<(typeof MEAN_METRIC_KEYS)[number], WelfordState> &
   Record<(typeof SUM_METRIC_KEYS)[number], number> &
   Record<(typeof TOP_COUNTS_KEYS)[number], Record<string, number>>;
+
+const extractStyleMatrix = async (emailBody: string) => {
+  if (!emailBody.trim()) {
+    throw new Error('Invalid body provided.');
+  }
+
+  const schema = z.object({
+    // greeting and sign-off may be absent
+    greeting: z.string().nullable(),
+    signOff: z.string().nullable(),
+
+    // structural
+    avgSentenceLen: z.number(),
+    avgParagraphLen: z.number(),
+    listUsageRatio: z.number().min(0).max(1),
+
+    // tone
+    sentimentScore: z.number().min(-1).max(1),
+    politenessScore: z.number().min(0).max(1),
+    confidenceScore: z.number().min(0).max(1),
+    urgencyScore: z.number().min(0).max(1),
+    empathyScore: z.number().min(0).max(1),
+    formalityScore: z.number().min(0).max(1),
+
+    // style ratios
+    passiveVoiceRatio: z.number().min(0).max(1),
+    hedgingRatio: z.number().min(0).max(1),
+    intensifierRatio: z.number().min(0).max(1),
+
+    // readability and vocabulary
+    readabilityFlesch: z.number(),
+    lexicalDiversity: z.number().min(0).max(1),
+    jargonRatio: z.number().min(0).max(1),
+
+    // engagement cues
+    questionCount: z.number().int().nonnegative(),
+    ctaCount: z.number().int().nonnegative(),
+    emojiCount: z.number().int().nonnegative(),
+    exclamationFreq: z.number(),
+
+    // casual-vs-formal extensions
+    slangRatio: z.number().min(0).max(1),
+    contractionRatio: z.number().min(0).max(1),
+    lowercaseSentenceStartRatio: z.number().min(0).max(1),
+    emojiDensity: z.number().min(0),
+    casualPunctuationRatio: z.number().min(0).max(1),
+    capConsistencyScore: z.number().min(0).max(1),
+    honorificPresence: z.number().int().min(0).max(1),
+    phaticPhraseRatio: z.number().min(0).max(1),
+  });
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    ['system', StyleMatrixExtractorPrompt()],
+    ['human', '{input}'],
+  ]);
+  const llm = new ChatGroq({
+    model: 'llama-3.1-8b-instant',
+    temperature: 0,
+    maxTokens: 300,
+    maxRetries: 5,
+  }).bind({
+    response_format: {
+      type: 'json_object',
+    },
+  });
+
+  const parser = new JsonOutputParser<z.infer<typeof schema>>();
+  const chain = prompt.pipe(llm).pipe(parser);
+
+  const result = await chain.invoke({
+    input: emailBody.trim(),
+  });
+
+  const greeting = result.greeting?.trim().toLowerCase();
+  const signOff = result.signOff?.trim().toLowerCase();
+  return {
+    ...result,
+    greeting: greeting ?? null,
+    signOff: signOff ?? null,
+    greetingTotal: greeting ? 1 : 0,
+    signOffTotal: signOff ? 1 : 0,
+  };
+};
+
+const StyleMatrixExtractorPrompt = () => `
+   <system_prompt>
+    <role>
+        You are StyleMetricExtractor, a tool that distills writing-style metrics from a single email.
+    </role>
+
+    <instructions>
+        <goal>
+            Treat the entire incoming message as one email body, extract every metric below, and reply with a minified JSON object whose keys appear in the exact order shown.
+        </goal>
+
+        <tasks>
+            <item>Identify and calculate each metric.</item>
+            <item>Supply neutral defaults when a metric is absent (string → "", float → 0, int → 0).</item>
+            <item>Return only the JSON, with no commentary, extra keys, or whitespace outside the object.</item>
+            <!-- new -->
+            <item>Ensure all 33 metrics appear exactly once, in order, using correct JSON types (strings quoted, numbers bare). Do not output NaN, null, or omit any key.</item>
+            <item>Guarantee the output parses as valid JSON in any standard JSON parser.</item>
+        </tasks>
+
+        <metrics>
+            <!-- core markers -->
+            <metric key="greeting"                        type="string" />
+            <metric key="signOff"                         type="string" />
+            <metric key="greetingTotal"                   type="int"    />
+            <metric key="signOffTotal"                    type="int"    />
+
+            <!-- structure and layout -->
+            <metric key="avgSentenceLen"                  type="float"  />
+            <metric key="avgParagraphLen"                 type="float"  />
+            <metric key="listUsageRatio"                  type="float"  />
+
+            <!-- tone sliders -->
+            <metric key="sentimentScore"                  type="float"  />
+            <metric key="politenessScore"                 type="float"  />
+            <metric key="confidenceScore"                 type="float"  />
+            <metric key="urgencyScore"                    type="float"  />
+            <metric key="empathyScore"                    type="float"  />
+            <metric key="formalityScore"                  type="float"  />
+
+            <!-- style ratios -->
+            <metric key="passiveVoiceRatio"               type="float"  />
+            <metric key="hedgingRatio"                    type="float"  />
+            <metric key="intensifierRatio"                type="float"  />
+            <metric key="slangRatio"                      type="float"  />
+            <metric key="contractionRatio"                type="float"  />
+            <metric key="lowercaseSentenceStartRatio"     type="float"  />
+            <metric key="casualPunctuationRatio"          type="float"  />
+            <metric key="capConsistencyScore"             type="float"  />
+
+            <!-- readability and vocabulary -->
+            <metric key="readabilityFlesch"               type="float"  />
+            <metric key="lexicalDiversity"                type="float"  />
+            <metric key="jargonRatio"                     type="float"  />
+
+            <!-- engagement cues -->
+            <metric key="questionCount"                   type="int"    />
+            <metric key="ctaCount"                        type="int"    />
+            <metric key="emojiCount"                      type="int"    />
+            <metric key="emojiDensity"                    type="float"  />
+            <metric key="exclamationFreq"                 type="float"  />
+
+            <!-- subject line specifics -->
+            <metric key="subjectEmojiCount"               type="int"    />
+            <metric key="subjectInformalityScore"         type="float"  />
+
+            <!-- other markers -->
+            <metric key="honorificPresence"               type="int"    />
+            <metric key="phaticPhraseRatio"               type="float"  />
+        </metrics>
+
+        <extraction_guidelines>
+            <!-- string metrics -->
+            <item>greeting: first word or phrase before the first line break, lower-cased.</item>
+            <item>signOff: last word or phrase before the signature block or end of text, lower-cased.</item>
+            <!-- greeting/sign-off presence flags -->
+            <item>greetingTotal: 1 if greeting is not empty, else 0.</item>
+            <item>signOffTotal: 1 if signOff is not empty, else 0.</item>
+
+            <!-- structure -->
+            <item>avgSentenceLen: number of words per sentence (split on . ! ?).</item>
+            <item>avgParagraphLen: number of words per paragraph (split on two or more line breaks).</item>
+            <item>listUsageRatio: bulleted or numbered lines divided by paragraphs, clamp 0-1.</item>
+
+            <!-- tone -->
+            <item>sentimentScore: scale −1 very negative to 1 very positive.</item>
+            <item>politenessScore: 0 blunt to 1 very polite (please, thank you, modal verbs).</item>
+            <item>confidenceScore: 0 uncertain to 1 very confident (few hedges, decisive verbs).</item>
+            <item>urgencyScore: 0 relaxed to 1 urgent (words like urgent, asap, high exclamationFreq).</item>
+            <item>empathyScore: 0 detached to 1 empathetic (apologies, supportive phrases).</item>
+            <item>formalityScore: 0 casual to 1 formal (contractions lower score, honorifics raise score).</item>
+
+            <!-- style ratios -->
+            <item>passiveVoiceRatio: passive sentences divided by total sentences, clamp 0-1.</item>
+            <item>hedgingRatio: hedging words (might, maybe, could) per sentence, clamp 0-1.</item>
+            <item>intensifierRatio: intensifiers (very, extremely) per sentence, clamp 0-1.</item>
+            <item>slangRatio: slang tokens divided by total tokens.</item>
+            <item>contractionRatio: apostrophe contractions divided by total verbs.</item>
+            <item>lowercaseSentenceStartRatio: sentences beginning with lowercase divided by total sentences.</item>
+            <item>casualPunctuationRatio: informal punctuation (!!, ?!, …) divided by all punctuation.</item>
+            <item>capConsistencyScore: sentences starting with a capital divided by total sentences.</item>
+
+            <!-- readability and vocabulary -->
+            <item>readabilityFlesch: Flesch reading-ease score, higher is easier to read.</item>
+            <item>lexicalDiversity: unique word count divided by total words.</item>
+            <item>jargonRatio: occurrences of technical or buzzwords divided by total words.</item>
+
+            <!-- engagement cues -->
+            <item>questionCount: count of ?.</item>
+            <item>ctaCount: phrases that request action (let me know, please confirm).</item>
+            <item>emojiCount: Unicode emoji characters in the body.</item>
+            <item>emojiDensity: emoji characters per 100 words in the body.</item>
+            <item>exclamationFreq: ! per 100 words.</item>
+
+            <!-- subject line -->
+            <item>subjectEmojiCount: emoji characters in the subject line.</item>
+            <item>subjectInformalityScore: composite of lowercase, emoji presence, and slang in subject scaled 0-1.</item>
+
+            <!-- other markers -->
+            <item>honorificPresence: 1 if titles like mr, ms, dr appear, else 0.</item>
+            <item>phaticPhraseRatio: social pleasantries (hope you are well) divided by total sentences.</item>
+        </extraction_guidelines>
+
+        <output_format>
+            <example_input>
+hey jordan 👋
+
+hope your week’s chill! the new rollout is basically cooked and i wanna make sure it slaps for your crew. got like 15 min thurs or fri to hop on a call? drop a time that works and i’ll toss it on the cal.
+
+catch ya soon,
+dak
+            </example_input>
+
+            <example_output>
+{{"greeting":"hey jordan","signOff":"catch ya soon","greetingTotal":1,"signOffTotal":1,"avgSentenceLen":16,"avgParagraphLen":33,"listUsageRatio":0,"sentimentScore":0.4,"politenessScore":0.6,"confidenceScore":0.8,"urgencyScore":0.5,"empathyScore":0.4,"formalityScore":0.2,"passiveVoiceRatio":0,"hedgingRatio":0.03,"intensifierRatio":0.06,"slangRatio":0.11,"contractionRatio":0.08,"lowercaseSentenceStartRatio":1,"casualPunctuationRatio":0.2,"capConsistencyScore":0,"readabilityFlesch":75,"lexicalDiversity":0.57,"jargonRatio":0,"questionCount":1,"ctaCount":1,"emojiCount":1,"emojiDensity":2,"exclamationFreq":0,"subjectEmojiCount":1,"subjectInformalityScore":0.9,"honorificPresence":0,"phaticPhraseRatio":0.17}}
+            </example_output>
+        </output_format>
+
+        <strict_guidelines>
+            <rule>Any deviation from the required JSON output counts as non-compliance.</rule>
+            <rule>The output must be valid JSON and include all 33 keys in the exact order specified.</rule>
+        </strict_guidelines>
+    </instructions>
+</system_prompt>
+`;

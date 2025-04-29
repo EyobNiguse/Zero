@@ -173,76 +173,47 @@ export const extractStyleMatrix = async (emailBody: string) => {
 
   const schema = z.object({
     // greeting and sign-off may be absent
-    greetingForm: z.string().nullable(),
-    signOffForm: z.string().nullable(),
+    greeting: z.string().nullable(),
+    signOff: z.string().nullable(),
 
-    // simple totals and flags
-    tokenTotal: z.number().int().nonnegative(),
-    charTotal: z.number().int().nonnegative(),
-    paragraphs: z.number().int().nonnegative(),
-    bulletListPresent: z.number().int().min(0).max(1),
-    greetingPresent: z.number().int().min(0).max(1),
-    signOffPresent: z.number().int().min(0).max(1),
-
-    // structural averages
-    averageSentenceLength: z.number(),
-    averageLinesPerParagraph: z.number(),
-    averageWordLength: z.number(),
-    typeTokenRatio: z.number().min(0).max(1),
-    movingAverageTtr: z.number().min(0),
-    hapaxProportion: z.number().min(0).max(1),
-    shannonEntropy: z.number().min(0),
-    lexicalDensity: z.number().min(0).max(1),
-    contractionRate: z.number().min(0),
-
-    // syntax and usage
-    subordinationRatio: z.number().min(0).max(1),
-    passiveVoiceRate: z.number().min(0),
-    modalVerbRate: z.number().min(0),
-    parseTreeDepthMean: z.number().min(0),
-
-    // punctuation-level rates
-    commasPerSentence: z.number().min(0),
-    exclamationPerThousandWords: z.number().min(0),
-    questionMarkRate: z.number().min(0),
-    ellipsisRate: z.number().min(0),
-    parenthesesRate: z.number().min(0),
-    emojiRate: z.number().min(0),
+    // structural
+    avgSentenceLen: z.number(),
+    avgParagraphLen: z.number(),
+    listUsageRatio: z.number().min(0).max(1),
 
     // tone
-    sentimentPolarity: z.number().min(-1).max(1),
-    sentimentSubjectivity: z.number().min(0).max(1),
-    formalityScore: z.number().min(0).max(100),
-    hedgeRate: z.number().min(0),
-    certaintyRate: z.number().min(0),
+    sentimentScore: z.number().min(-1).max(1),
+    politenessScore: z.number().min(0).max(1),
+    confidenceScore: z.number().min(0).max(1),
+    urgencyScore: z.number().min(0).max(1),
+    empathyScore: z.number().min(0).max(1),
+    formalityScore: z.number().min(0).max(1),
 
-    // readability and cohesion
-    fleschReadingEase: z.number(),
-    gunningFogIndex: z.number(),
-    smogIndex: z.number(),
-    averageForwardReferences: z.number().min(0),
-    cohesionIndex: z.number().min(0).max(1),
+    // style ratios
+    passiveVoiceRatio: z.number().min(0).max(1),
+    hedgingRatio: z.number().min(0).max(1),
+    intensifierRatio: z.number().min(0).max(1),
 
-    // persona markers
-    firstPersonSingularRate: z.number().min(0),
-    firstPersonPluralRate: z.number().min(0),
-    secondPersonRate: z.number().min(0),
-    selfReferenceRatio: z.number().min(0).max(1),
-    empathyPhraseRate: z.number().min(0),
-    humorMarkerRate: z.number().min(0),
+    // readability and vocabulary
+    readabilityFlesch: z.number(),
+    lexicalDiversity: z.number().min(0).max(1),
+    jargonRatio: z.number().min(0).max(1),
 
-    // formatting habits
-    markupBoldRate: z.number().min(0),
-    markupItalicRate: z.number().min(0),
-    hyperlinkRate: z.number().min(0),
-    codeBlockRate: z.number().min(0),
+    // engagement cues
+    questionCount: z.number().int().nonnegative(),
+    ctaCount: z.number().int().nonnegative(),
+    emojiCount: z.number().int().nonnegative(),
+    exclamationFreq: z.number(),
 
-    // rhetorical devices
-    rhetoricalQuestionRate: z.number().min(0),
-    analogyRate: z.number().min(0),
-    imperativeSentenceRate: z.number().min(0),
-    expletiveOpeningRate: z.number().min(0),
-    parallelismRate: z.number().min(0),
+    // casual-vs-formal extensions
+    slangRatio: z.number().min(0).max(1),
+    contractionRatio: z.number().min(0).max(1),
+    lowercaseSentenceStartRatio: z.number().min(0).max(1),
+    emojiDensity: z.number().min(0),
+    casualPunctuationRatio: z.number().min(0).max(1),
+    capConsistencyScore: z.number().min(0).max(1),
+    honorificPresence: z.number().int().min(0).max(1),
+    phaticPhraseRatio: z.number().min(0).max(1),
   });
 
   const prompt = ChatPromptTemplate.fromMessages([
@@ -252,7 +223,7 @@ export const extractStyleMatrix = async (emailBody: string) => {
   const llm = new ChatGroq({
     model: 'llama-3.1-8b-instant',
     temperature: 0,
-    maxTokens: 600,
+    maxTokens: 300,
     maxRetries: 5,
   }).bind({
     response_format: {
@@ -267,8 +238,8 @@ export const extractStyleMatrix = async (emailBody: string) => {
     input: emailBody.trim(),
   });
 
-  const greeting = result.greetingForm?.trim().toLowerCase();
-  const signOff = result.signOffForm?.trim().toLowerCase();
+  const greeting = result.greeting?.trim().toLowerCase();
+  const signOff = result.signOff?.trim().toLowerCase();
   return {
     ...result,
     greeting: greeting ?? null,
