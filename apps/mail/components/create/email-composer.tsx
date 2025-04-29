@@ -358,7 +358,10 @@ export function EmailComposer({
                     } else {
                       toast.error('Please enter a valid email address');
                     }
-                  } else if (e.key === ' ' && e.currentTarget.value.trim()) {
+                  } else if (
+                    (e.key === ' ' && e.currentTarget.value.trim()) ||
+                    (e.key === 'Tab' && e.currentTarget.value.trim())
+                  ) {
                     e.preventDefault();
                     if (isValidEmail(e.currentTarget.value.trim())) {
                       setValue('to', [...toEmails, e.currentTarget.value.trim()]);
@@ -393,12 +396,14 @@ export function EmailComposer({
 
           <div className="flex gap-2">
             <button
+              tabIndex={-1}
               className="flex h-full items-center gap-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
               onClick={() => setShowCc(!showCc)}
             >
               <span>Cc</span>
             </button>
             <button
+              tabIndex={-1}
               className="flex h-full items-center gap-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
               onClick={() => setShowBcc(!showBcc)}
             >
@@ -406,6 +411,7 @@ export function EmailComposer({
             </button>
             {onClose && (
               <button
+                tabIndex={-1}
                 className="flex h-full items-center gap-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
                 onClick={onClose}
               >
