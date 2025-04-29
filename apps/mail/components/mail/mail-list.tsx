@@ -556,7 +556,8 @@ const Thread = memo(
                     >
                       <Check className="h-4 w-4 text-white" />
                     </div>
-                  ) : isGroupThread ? (
+                  ) : null}
+                  {isGroupThread ? (
                     <div
                       className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]"
                       onClick={(e: React.MouseEvent) => {
