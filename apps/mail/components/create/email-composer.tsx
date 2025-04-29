@@ -15,7 +15,6 @@ import { aiCompose } from '@/actions/ai-composer';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
-import { useDraft } from '@/hooks/use-drafts';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
@@ -84,8 +83,8 @@ export function EmailComposer({
   onClose,
   className,
 }: EmailComposerProps) {
-  const [showCc, setShowCc] = useState(false);
-  const [showBcc, setShowBcc] = useState(false);
+  const [showCc, setShowCc] = useState(initialCc.length > 0);
+  const [showBcc, setShowBcc] = useState(initialBcc.length > 0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [messageLength, setMessageLength] = useState(0);
@@ -96,7 +95,6 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [draftId] = useQueryState('draftId');
 
   useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
@@ -218,7 +216,7 @@ export function EmailComposer({
   };
 
   const editor = useComposeEditor({
-    initialValue: createJsonContentFromText(initialMessage),
+    initialValue: initialMessage,
     isReadOnly: isLoading,
     onLengthChange: (length) => {
       setMessageLength(length)
@@ -570,9 +568,7 @@ export function EmailComposer({
       {/* Message Content */}
       <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div className="flex flex-col gap-2.5 self-stretch">
-          {draftId && draft?.content || !draftId ? (
-            <EditorContent editor={editor} />
-          ) : undefined}
+          <EditorContent editor={editor} />
         </div>
 
         {/* Bottom Actions */}

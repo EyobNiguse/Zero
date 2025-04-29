@@ -1,6 +1,6 @@
 'use client';
 
-import { Extension, EditorContent, type KeyboardShortcutCommand, useEditor } from '@tiptap/react';
+import { Extension, EditorContent, type KeyboardShortcutCommand, useEditor, generateJSON } from '@tiptap/react';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { defaultExtensions } from '@/components/create/extensions';
 import { AutoComplete } from './editor-autocomplete';
@@ -122,7 +122,7 @@ export const defaultEditorContent = {
 };
 
 interface EditorProps {
-  value?: JSONContent;
+  value?: Record<string, unknown>;
   onChange: (content: string) => void;
   className?: string;
   placeholder?: string;
@@ -148,11 +148,11 @@ export const NewEditor = ({
   myInfo,
   sender,
 }: {
-  value?: JSONContent | null
+  value?: Record<string, unknown> | null
   isReadOnly?: boolean
   placeholder?: string
   // Events
-  onChange?: (content: JSONContent) => void | Promise<void>
+  onChange?: (content: Record<string, unknown>) => void | Promise<void>
   onAttachmentsChange?: (attachments: File[]) => void | Promise<void>
   onLengthChange?: (length: number) => void | Promise<void>
   onBlur?: NonNullable<Parameters<typeof useEditor>[0]>['onBlur']

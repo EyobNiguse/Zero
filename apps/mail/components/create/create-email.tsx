@@ -62,8 +62,8 @@ export function CreateEmail({
         subject: data.subject,
         message: data.message,
         attachments: data.attachments,
-        fromEmail: fromEmail,
-        draftId: draftId || undefined,
+        fromEmail,
+        draftId: draftId ?? undefined,
       });
 
       // Track different email sending scenarios

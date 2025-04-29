@@ -1,5 +1,5 @@
 import type { JSONContent } from 'novel';
-import { useEditor, type KeyboardShortcutCommand, Extension } from '@tiptap/react';
+import { useEditor, type KeyboardShortcutCommand, Extension, generateJSON } from '@tiptap/react';
 import { defaultExtensions } from '@/components/create/extensions';
 import { Markdown } from 'tiptap-markdown';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,7 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { AutoComplete } from '@/components/create/editor-autocomplete';
 import { TextSelection } from 'prosemirror-state';
 import Placeholder from '@tiptap/extension-placeholder';
+import { isObjectType } from 'remeda';
 
 const PreventNavigateOnDragOver = (handleFiles: (files: File[]) => void | Promise<void>) => {
   return Extension.create({
@@ -149,16 +150,6 @@ const AutoCompleteExtension = ({
   })
 }
 
-export const defaultEditorContent = {
-  type: 'doc',
-  content: [
-    {
-      type: 'paragraph',
-      content: [],
-    },
-  ],
-};
-
 const useComposeEditor = ({
   initialValue,
   isReadOnly,
@@ -175,11 +166,11 @@ const useComposeEditor = ({
   myInfo,
   sender,
 }: {
-  initialValue?: JSONContent | null
+  initialValue?: Record<string, unknown> | string | null
   isReadOnly?: boolean
   placeholder?: string
   // Events
-  onChange?: (content: JSONContent) => void | Promise<void>
+  onChange?: (content: Record<string, unknown>) => void | Promise<void>
   onAttachmentsChange?: (attachments: File[]) => void | Promise<void>
   onLengthChange?: (length: number) => void | Promise<void>
   onBlur?: NonNullable<Parameters<typeof useEditor>[0]>['onBlur']
@@ -199,43 +190,49 @@ const useComposeEditor = ({
     email?: string;
   }
 }) => {
+  const extensions = [
+    ...defaultExtensions,
+    Markdown,
+    AutoCompleteExtension({
+      myInfo,
+      sender,
+    }),
+    ...onModEnter ? [
+      CustomModEnter((props) => {
+        return onModEnter(props)
+      })
+    ] : [],
+    ...onTab ? [
+      CustomModTab((props) => {
+        return onTab(props)
+      })
+    ] : [],
+    ...isReadOnly ? [] : [
+      MouseDownSelection,
+    ],
+    Placeholder.configure({
+      placeholder,
+    }),
+    ...onAttachmentsChange ? [
+      PreventNavigateOnDragOver((files) => {
+        onAttachmentsChange(files)
+      }),
+    ] : [],
+  ]
+
   return useEditor({
     editable: !isReadOnly,
     onUpdate: ({ editor }) => {
       void onChange?.(editor.getJSON())
     },
-    content: initialValue ?? defaultEditorContent,
+    content: initialValue ?
+      isObjectType(initialValue) ?
+        initialValue :
+        generateJSON(initialValue, extensions) :
+        undefined,
     immediatelyRender: true,
     shouldRerenderOnTransaction: false,
-    extensions: [
-      ...defaultExtensions,
-      Markdown,
-      AutoCompleteExtension({
-        myInfo,
-        sender,
-      }),
-      ...onModEnter ? [
-        CustomModEnter((props) => {
-          return onModEnter(props)
-        })
-      ] : [],
-      ...onTab ? [
-        CustomModTab((props) => {
-          return onTab(props)
-        })
-      ] : [],
-      ...isReadOnly ? [] : [
-        MouseDownSelection,
-      ],
-      Placeholder.configure({
-        placeholder,
-      }),
-      ...onAttachmentsChange ? [
-        PreventNavigateOnDragOver((files) => {
-          onAttachmentsChange(files)
-        }),
-      ] : [],
-    ],
+    extensions,
     onFocus: isReadOnly ? undefined : onFocus,
     onBlur: isReadOnly ? undefined : onBlur,
     editorProps: {
