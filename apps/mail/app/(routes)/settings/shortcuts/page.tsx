@@ -1,34 +1,21 @@
 'use client';
 
-import { SettingsCard } from '@/components/settings/settings-card';
 import { keyboardShortcuts, type Shortcut } from '@/config/shortcuts';
+import { SettingsCard } from '@/components/settings/settings-card';
+import { formatDisplayKeys } from '@/lib/hotkeys/use-hotkey-utils';
+import { useShortcutCache } from '@/lib/hotkeys/use-hotkey-utils';
+import { useState, type ReactNode, useEffect } from 'react';
 import type { MessageKey } from '@/config/navigation';
 import { HotkeyRecorder } from './hotkey-recorder';
-import { useState, type ReactNode, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useSession } from '@/lib/auth-client';
 import { useTranslations } from 'next-intl';
-import { formatDisplayKeys } from '@/lib/hotkeys/use-hotkey-utils';
-import { hotkeysDB } from '@/lib/hotkeys/hotkeys-db';
 import { toast } from 'sonner';
 
 export default function ShortcutsPage() {
-  const [shortcuts, setShortcuts] = useState<Shortcut[]>(keyboardShortcuts);
   const t = useTranslations();
-
-  useEffect(() => {
-    // Load any custom shortcuts from IndexedDB
-    hotkeysDB.getAllHotkeys()
-      .then(savedShortcuts => {
-        if (savedShortcuts.length > 0) {
-          const updatedShortcuts = keyboardShortcuts.map(defaultShortcut => {
-            const savedShortcut = savedShortcuts.find(s => s.action === defaultShortcut.action);
-            return savedShortcut || defaultShortcut;
-          });
-          setShortcuts(updatedShortcuts);
-        }
-      })
-      .catch(console.error);
-  }, []);
+  const { data: session } = useSession();
+  const { shortcuts, updateShortcut } = useShortcutCache(session?.user?.id);
 
   return (
     <div className="grid gap-6">
@@ -37,13 +24,11 @@ export default function ShortcutsPage() {
         description={t('pages.settings.shortcuts.description')}
         footer={
           <div className="flex gap-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={async () => {
                 try {
-                  // Save all default shortcuts to IndexedDB
-                  await Promise.all(keyboardShortcuts.map(shortcut => hotkeysDB.saveHotkey(shortcut)));
-                  setShortcuts(keyboardShortcuts);
+                  await Promise.all(keyboardShortcuts.map((shortcut) => updateShortcut(shortcut)));
                   toast.success('Shortcuts reset to defaults');
                 } catch (error) {
                   console.error('Failed to reset shortcuts:', error);
@@ -75,6 +60,8 @@ export default function ShortcutsPage() {
 function Shortcut({ children, keys, action }: { children: ReactNode; keys: string[]; action: string }) {
   const [isRecording, setIsRecording] = useState(false);
   const displayKeys = formatDisplayKeys(keys);
+  const { data: session } = useSession();
+  const { updateShortcut } = useShortcutCache(session?.user?.id);
 
   const handleHotkeyRecorded = async (newKeys: string[]) => {
     try {
@@ -88,8 +75,8 @@ function Shortcut({ children, keys, action }: { children: ReactNode; keys: strin
         ...originalShortcut,
         keys: newKeys,
       };
-      
-      await hotkeysDB.saveHotkey(updatedShortcut);
+
+      await updateShortcut(updatedShortcut);
       toast.success('Shortcut saved successfully');
     } catch (error) {
       console.error('Failed to save shortcut:', error);
