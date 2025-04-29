@@ -44,17 +44,6 @@ interface EmailComposerProps {
   className?: string;
 }
 
-// Helper function to create JSONContent from text
-const createJsonContentFromText = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [
-    {
-      type: 'paragraph',
-      content: [{ type: 'text', text }],
-    },
-  ],
-});
-
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -264,7 +253,7 @@ export function EmailComposer({
         emailSubject: values.subject,
       })
 
-      editor.commands.setContent(createJsonContentFromText(result.newBody))
+      editor.commands.setContent(result.newBody)
       toast.success('Email generated successfully')
     } catch (error) {
       console.error('Error generating AI email:', error);
