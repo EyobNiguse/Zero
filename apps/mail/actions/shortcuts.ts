@@ -6,23 +6,6 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { db } from '@zero/db';
 
-export async function getShortcuts(): Promise<Shortcut[]> {
-  try {
-    const headersList = await headers();
-    const session = await auth.api.getSession({ headers: headersList });
-    if (!session?.user?.id) throw new Error('Unauthorized');
-
-    const result = await db.query.userHotkeys.findFirst({
-      where: (hotkeys, { eq }) => eq(hotkeys.userId, session.user.id),
-    });
-
-    return (result?.shortcuts as Shortcut[]) || [];
-  } catch (error) {
-    console.error('Error fetching shortcuts from DB:', error);
-    throw error;
-  }
-}
-
 export async function updateShortcuts(shortcuts: Shortcut[]): Promise<void> {
   try {
     const headersList = await headers();

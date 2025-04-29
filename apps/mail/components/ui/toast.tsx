@@ -1,6 +1,6 @@
 import {
   CircleCheck,
-  ExclamationCircle,
+  ExclamationCircle2,
   ExclamationTriangle,
   InfoCircle,
 } from '@/components/icons/icons';
@@ -15,7 +15,7 @@ const CustomToaster = (props: Props) => {
       position="bottom-center"
       icons={{
         success: <CircleCheck className="h-4.5 w-4.5 border-none fill-[#36B981]" />,
-        error: <ExclamationCircle className="h-4.5 w-4.5 fill-[#FF0000]" />,
+        error: <ExclamationCircle2 className="h-4.5 w-4.5 fill-[#FF0000]" />,
         warning: <ExclamationTriangle className="h-4.5 w-4.5 fill-[#FFC107]" />,
         info: <InfoCircle className="h-4.5 w-4.5 fill-[#5767fb]" />,
       }}
