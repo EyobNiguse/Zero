@@ -2,7 +2,7 @@ import { atom, useAtom } from 'jotai';
 
 import { type InitialThread } from '@/types';
 
-type Config = {
+export type Config = {
   selected: InitialThread['id'] | null;
   bulkSelected: InitialThread['id'][];
   replyComposerOpen: boolean;

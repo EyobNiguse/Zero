@@ -36,6 +36,7 @@ import { Briefcase, Check, Star, StickyNote, Users } from 'lucide-react';
 import { ThreadContextMenu } from '@/components/context/thread-context';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useMail, type Config } from '@/components/mail/use-mail';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -43,7 +44,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
-import { useMail } from '@/components/mail/use-mail';
 import { useThreadLabels } from '@/hooks/use-labels';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import { SuccessEmailToast } from '../theme/toast';
@@ -273,13 +273,17 @@ const Thread = memo(
       }
     }, [semanticSearchQuery]);
 
+    const [mailState, setMail] = useMail();
+
     const isMailSelected = useMemo(() => {
       if (!threadId || !latestMessage) return false;
       const _threadId = latestMessage.threadId ?? message.id;
-      return _threadId === threadId || threadId === mail.selected;
-    }, [threadId, message.id, latestMessage, mail.selected]);
+      return _threadId === threadId || threadId === mailState.selected;
+    }, [threadId, message.id, latestMessage, mailState.selected]);
 
-    const isMailBulkSelected = mail.bulkSelected.includes(latestMessage?.threadId ?? message.id);
+    const isMailBulkSelected = mailState.bulkSelected.includes(
+      latestMessage?.threadId ?? message.id,
+    );
 
     const isFolderInbox = folder === FOLDERS.INBOX || !folder;
     const isFolderSpam = folder === FOLDERS.SPAM;
@@ -539,16 +543,44 @@ const Thread = memo(
               <div>
                 <Avatar className="h-8 w-8 rounded-full border dark:border-none">
                   {isMailBulkSelected ? (
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-blue-500 p-2 dark:bg-blue-500">
+                    <div
+                      className="flex h-full w-full items-center justify-center rounded-full bg-blue-500 p-2 dark:bg-blue-500"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        const threadId = latestMessage.threadId ?? message.id;
+                        setMail((prev: Config) => ({
+                          ...prev,
+                          bulkSelected: prev.bulkSelected.filter((id: string) => id !== threadId),
+                        }));
+                      }}
+                    >
                       <Check className="h-4 w-4 text-white" />
                     </div>
                   ) : isGroupThread ? (
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">
+                    <div
+                      className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        const threadId = latestMessage.threadId ?? message.id;
+                        setMail((prev: Config) => ({
+                          ...prev,
+                          bulkSelected: [...prev.bulkSelected, threadId],
+                        }));
+                      }}
+                    >
                       <GroupPeople className="h-4 w-4" />
                     </div>
                   ) : (
                     <>
                       <AvatarImage
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          const threadId = latestMessage.threadId ?? message.id;
+                          setMail((prev: Config) => ({
+                            ...prev,
+                            bulkSelected: [...prev.bulkSelected, threadId],
+                          }));
+                        }}
                         className="rounded-full bg-[#FFFFFF] dark:bg-[#373737]"
                         src={getEmailLogo(latestMessage.sender.email)}
                       />
