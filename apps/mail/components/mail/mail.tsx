@@ -365,7 +365,7 @@ export function MailLayout() {
               <div
                 className={cn(
                   `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : 'bg-[#F59E0D]'}`,
-                  'relative bottom-0.5 z-0 z-[5] h-0.5 w-full transition-opacity',
+                  'relative bottom-0.5 z-[5] h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
@@ -395,12 +395,12 @@ export function MailLayout() {
                 if (!isOpen) handleClose();
               }}
             >
-              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100vh-4rem)] overflow-hidden p-0">
+              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-3rem)] p-0 mx-1">
                 <DrawerHeader className="sr-only">
                   <DrawerTitle>Email Details</DrawerTitle>
                 </DrawerHeader>
-                <div className="flex h-full flex-col overflow-hidden">
-                  <div className="flex-1 overflow-hidden">
+                <div className="flex h-full flex-col">
+                  <div className="h-full overflow-y-auto">
                     {threadId ? (
                       <ThreadDisplay onClose={handleClose} isMobile={true} id={threadId} />
                     ) : null}

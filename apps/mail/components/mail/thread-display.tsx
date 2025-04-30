@@ -320,12 +320,12 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     <div
       className={cn(
         'flex flex-col',
-        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100vh-19px)]',
+        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-19px)] rounded-xl',
       )}
     >
       <div
         className={cn(
-          'bg-panelLight dark:bg-panelDark relative flex flex-col overflow-hidden transition-all duration-300',
+          'bg-panelLight dark:bg-panelDark relative flex flex-col overflow-hidden transition-all duration-300 rounded-xl',
           isMobile ? 'h-full' : 'h-full',
           !isMobile && !isFullscreen && 'rounded-r-lg',
           isFullscreen ? 'fixed inset-0 z-50' : '',
@@ -357,7 +357,10 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           </div>
         ) : (
           <>
-            <div className="flex flex-shrink-0 items-center border-b border-[#E7E7E7] dark:border-[#252525] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px] ">
+            <div className={cn(
+              "flex flex-shrink-0 items-center border-b border-[#E7E7E7] dark:border-[#252525] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px]",
+              isMobile && "sticky top-0 z-10 bg-panelLight dark:bg-panelDark "
+            )}>
               <div className="flex flex-1 items-center gap-2">
                 <ThreadActionButton
                   icon={X}
@@ -474,8 +477,8 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 </DropdownMenu>
               </div>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col">
-              <ScrollArea className="h-full flex-1" type="auto">
+            <div className={cn("flex min-h-0 flex-1 flex-col", isMobile && "h-full")}>
+              <ScrollArea className={cn("flex-1", isMobile ? "h-[calc(100%-1px)]" : "h-full")} type="auto">
                 <div className="pb-4">
                   {(emailData.messages || []).map((message, index) => (
                     <div
