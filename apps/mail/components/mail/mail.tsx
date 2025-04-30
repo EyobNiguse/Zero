@@ -10,6 +10,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  bulkArchive,
+  bulkDeleteThread,
+  bulkStar,
+  getMail,
+  markAsImportant,
+  markAsRead,
+} from '@/actions/mail';
+import {
   Archive2,
   Bell,
   Eye,
@@ -21,13 +29,6 @@ import {
   User,
   X,
 } from '../icons/icons';
-import {
-  bulkArchive,
-  bulkDeleteThread,
-  getMail,
-  markAsImportant,
-  markAsRead,
-} from '@/actions/mail';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
@@ -364,7 +365,7 @@ export function MailLayout() {
               <div
                 className={cn(
                   `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : 'bg-[#F59E0D]'}`,
-                  'relative bottom-0.5 z-[5] h-0.5 w-full transition-opacity',
+                  'relative bottom-0.5 z-0 z-[5] h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
@@ -523,7 +524,17 @@ function BulkSelectActions() {
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80">
+          <button
+            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
+            onClick={() => {
+              if (mail.bulkSelected.length === 0) return;
+              toast.promise(bulkStar({ ids: mail.bulkSelected }).then(onMoveSuccess), {
+                loading: 'Marking as starred...',
+                success: 'All done! marked as starred',
+                error: 'Something went wrong!',
+              });
+            }}
+          >
             <div className="relative overflow-visible">
               <Star2 className="fill-[#9D9D9D] stroke-[#9D9D9D] dark:stroke-[#9D9D9D]" />
             </div>

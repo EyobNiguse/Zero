@@ -28,8 +28,10 @@ export function CreateEmail({
   const { data: session } = useSession();
   const { data: connections } = useConnections();
   const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
-  const [draftId, setDraftId] = useQueryState('draftId');
+  const [draftId] = useQueryState('draftId');
   const [composeOpen, setComposeOpen] = useQueryState('isComposeOpen');
+  const { data: draft } = useDraft(draftId ?? null);
+
 
   const activeAccount = React.useMemo(() => {
     if (!session) return null;
@@ -60,8 +62,8 @@ export function CreateEmail({
         subject: data.subject,
         message: data.message,
         attachments: data.attachments,
-        fromEmail: fromEmail,
-        draftId: draftId || undefined,
+        fromEmail,
+        draftId: draftId ?? undefined,
       });
 
       // Track different email sending scenarios
@@ -95,7 +97,13 @@ export function CreateEmail({
             </button>
           </DialogClose>
         </div>
-        <EmailComposer className="mb-12 rounded-2xl border" onSendEmail={handleSendEmail} />
+        <EmailComposer
+          className="mb-12 rounded-2xl border"
+          onSendEmail={handleSendEmail}
+          initialMessage={draft?.content}
+          initialTo={draft?.to}
+          initialSubject={draft?.subject}
+        />
       </div>
     </>
   );
