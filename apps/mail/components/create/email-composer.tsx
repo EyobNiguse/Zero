@@ -281,7 +281,7 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'w-full max-w-[750px] rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#1A1A1A]',
+        'w-full max-w-[750px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#1A1A1A]',
         className,
       )}
     >

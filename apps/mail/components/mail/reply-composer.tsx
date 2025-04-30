@@ -3,7 +3,6 @@
 import { useEmailAliases } from '@/hooks/use-email-aliases';
 import { EmailComposer } from '../create/email-composer';
 import { useHotkeysContext } from 'react-hotkeys-hook';
-import { SuccessEmailToast } from '../theme/toast';
 import { constructReplyBody } from '@/lib/utils';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
@@ -185,7 +184,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
         onClose={() => setMode(null)}
         threadContent={emailData.messages.map((message) => {
           return {
-            body: message.body,
+            body: message.decodedBody ?? '',
             from: message.sender.name ?? message.sender.email,
             to: message.to.reduce<string[]>((to, recipient) => {
               if (recipient.name) {

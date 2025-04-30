@@ -6,7 +6,6 @@ import {
 } from '@/services/writing-style-service';
 import { google } from '@ai-sdk/google';
 import { headers } from 'next/headers';
-import { groq } from '@ai-sdk/groq';
 import { auth } from '@/lib/auth';
 import { generateText } from 'ai';
 
@@ -27,17 +26,11 @@ export const aiCompose = async ({
     body: string;
   }[];
 }) => {
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error('Groq API key is not configured');
-  }
-
   const session = await getUser();
 
   const writingStyleMatrix = await getWritingStyleMatrixForConnectionId(session.connectionId);
 
   const systemPrompt = StyledEmailAssistantSystemPrompt();
-
-  console.log('systemPrompt', systemPrompt);
 
   const userPrompt = EmailAssistantPrompt({
     threadContent: threadMessages,
@@ -117,8 +110,11 @@ const StyledEmailAssistantSystemPrompt = () => {
 
             Use this context to inform the email body. For example:
             <item>Use the subject and recipients to determine the tone and content of the email.</item>
-            <item>If this is a reply to a thread, use the contents of the thread messages to understand the context and respond accordingly.</item>
+            <item>Interpret each message within the thread as a complete email, potentially including previous replies within its body. Analyze these embedded replies to further understand context and relationships.</item>
             <item>Use the prompt to determine the type of email to write, such as a formal response or a casual update.</item>
+            <item>**Analyze the "to," "from," and content of each message in the thread to understand the relationships between participants. Give significantly more weight to the sender of the most recent message when determining the appropriate level of formality and familiarity when addressing them.**</item>
+            <item>**When choosing a greeting, do not choose greetings solely based on their frequency in the style metrics. Prioritize the sender of the most recent message and the overall thread context. Mirror the greeting style of the last sender, if one exists, unless there are explicit instructions to do otherwise. If their message contains no greeting, select a greeting that is contextually appropriate given the content of the email thread. If it is impossible to choose one, then do not use any at all.**</item>
+            <item>**Unless explicitly instructed otherwise, when replying to a thread, address the person who sent the most recent message in the thread.**</item>
         </context>
 
         <style_adaptation>
@@ -210,10 +206,12 @@ ${JSON.stringify(styleProfile, null, 2)}
   }
 
   parts.push('## User Prompt');
-  parts.push(prompt);
+  parts.push(escapeXml(prompt));
 
   parts.push("## User's Name");
-  parts.push(username);
+  parts.push(escapeXml(username));
+
+  console.log('parts', parts);
 
   return parts.join('\n\n');
 };
