@@ -686,7 +686,8 @@ export function EmailComposer({
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="text-center text-sm leading-none text-white dark:text-black">
-                    {'Send email'}
+                    <span className="hidden md:block">Send email</span>
+                    <span className="block md:hidden">Send</span>
                   </div>
                 </div>
                 <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
@@ -700,7 +701,7 @@ export function EmailComposer({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Plus className="h-3 w-3 fill-[#9A9A9A]" />
-                <span className="px-0.5 text-sm">Add files</span>
+                <span className="px-0.5 text-sm hidden md:block">Add files</span>
               </button>
 
               <Input
