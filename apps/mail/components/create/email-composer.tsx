@@ -7,24 +7,31 @@ import {
   X,
   Sparkles,
 } from '../icons/icons';
-import { Loader, Command, Paperclip, Plus, Check, X as XIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import useComposeEditor from '@/hooks/use-compose-editor';
+import { Loader, Check, X as XIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { useState, useEffect, useRef } from 'react';
 import { aiCompose } from '@/actions/ai-composer';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
+import { createDraft } from '@/actions/drafts';
 import { Input } from '@/components/ui/input';
+import { useDraft } from '@/hooks/use-drafts';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
+import { ISendEmail } from '@/types';
 import { useQueryState } from 'nuqs';
+import { JSONContent } from 'novel';
 import pluralize from 'pluralize';
+import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import Editor from './editor';
 import { z } from 'zod';
 
 interface EmailComposerProps {
@@ -92,6 +99,8 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
+  const [draftId, setDraftId] = useQueryState('draftId');
+  const { data: draft } = useDraft(draftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
 
@@ -100,6 +109,14 @@ export function EmailComposer({
       toInputRef.current.focus();
     }
   }, [isComposeOpen]);
+
+  useEffect(() => {
+    if (draft) {
+      if (draft.to) form.setValue('to', draft.to);
+      if (draft.content) form.setValue('message', draft.content);
+      if (draft.subject) form.setValue('subject', draft.subject);
+    }
+  }, [draft]);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -210,6 +227,27 @@ export function EmailComposer({
     setHasUnsavedChanges(true);
   };
 
+  // Helper function to create JSONContent from text
+  const createJsonContentFromText = (text: string): JSONContent => ({
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text }],
+      },
+    ],
+  });
+
+  // Add state for editor content
+  const [editorContent, setEditorContent] = useState<JSONContent>(
+    createJsonContentFromText(messageContent || ''),
+  );
+
+  // Update editorContent when messageContent changes
+  useEffect(() => {
+    setEditorContent(createJsonContentFromText(messageContent || ''));
+  }, [messageContent]);
+
   const editor = useComposeEditor({
     initialValue: initialMessage,
     isReadOnly: isLoading,
@@ -275,6 +313,52 @@ export function EmailComposer({
       setAiIsLoading(false);
     }
   };
+
+  const handleGenerateReply = async () => {};
+
+  const saveDraft = useCallback(async () => {
+    console.log('trying to save email');
+    if (!hasUnsavedChanges) return;
+    if (!toEmails.length || !subjectInput || !messageContent) return;
+    const values = getValues();
+
+    try {
+      setIsLoading(true);
+      const draftData = {
+        to: values?.to?.join(', '),
+        cc: values?.cc?.join(', '),
+        bcc: values?.bcc?.join(', '),
+        subject: values?.subject,
+        message: values?.message,
+        attachments: values?.attachments,
+        id: draftId,
+      };
+
+      const response = await createDraft(draftData);
+
+      if (response?.id && response.id !== draftId) {
+        setDraftId(response.id);
+      }
+
+      setHasUnsavedChanges(false);
+      // toast.success(`Draft saved successfully: ${response.id}`);
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      saveDraft();
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [hasUnsavedChanges, saveDraft]);
 
   return (
     <div
