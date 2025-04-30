@@ -20,6 +20,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@11labs/react": "^0.1.3",
+        "@ai-sdk/google": "^1.2.14",
         "@ai-sdk/groq": "^1.2.8",
         "@ai-sdk/openai": "^1.3.17",
         "@better-fetch/fetch": "^1.1.18",
@@ -29,6 +30,7 @@
         "@dnd-kit/sortable": "10.0.0",
         "@dnd-kit/utilities": "3.2.2",
         "@flags-sdk/statsig": "^0.2.2",
+        "@floating-ui/react-dom": "^2.1.2",
         "@hookform/resolvers": "4.1.2",
         "@langchain/core": "^0.3.49",
         "@langchain/groq": "^0.2.2",
@@ -95,6 +97,7 @@
         "husky": "9.1.7",
         "input-otp": "1.4.2",
         "jotai": "2.12.1",
+        "jsonrepair": "^3.12.0",
         "lucide-react": "0.474.0",
         "lz-string": "1.5.0",
         "mimetext": "^3.0.27",
@@ -213,6 +216,8 @@
     "@11labs/client": ["@11labs/client@0.1.3", "", {}, "sha512-Mvr+jau4bNq74Sm/e7pyu4pW7mkJGn7g4gfPQw0TH4RgSlCOeU355ZZ1Y/1w8U2OqUU2kV5qnLBG3yqOJn1QjA=="],
 
     "@11labs/react": ["@11labs/react@0.1.3", "", { "dependencies": { "@11labs/client": "0.1.3" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-1cQ+JcTglEnHpL3bqmnj8XrTNyBrSO8wP1r4bKXYlzrkN/XMBRSq4Uisewv3SgwGBMUVkB1Ll/gA19VVmCoABg=="],
+
+    "@ai-sdk/google": ["@ai-sdk/google@1.2.14", "", { "dependencies": { "@ai-sdk/provider": "1.1.3", "@ai-sdk/provider-utils": "2.2.7" }, "peerDependencies": { "zod": "^3.0.0" } }, "sha512-r3FSyyWl0KVjUlKn5o+vMl+Nk8Z/mV6xrqW+49g7fMoRVr/wkRxJZtHorrdDGRreCJubZyAk8ziSQSLpgv2H6w=="],
 
     "@ai-sdk/groq": ["@ai-sdk/groq@1.2.8", "", { "dependencies": { "@ai-sdk/provider": "1.1.3", "@ai-sdk/provider-utils": "2.2.7" }, "peerDependencies": { "zod": "^3.0.0" } }, "sha512-DRq0b4twVUh52DFnIhVC4F14Po8w+76sCdigMRRIcAiSmGRr9I3Vyot36tun1q4tBZMYSvQUss60W3eiaoa6mg=="],
 
@@ -1509,6 +1514,8 @@
     "json5": ["json5@1.0.2", "", { "dependencies": { "minimist": "^1.2.0" }, "bin": { "json5": "lib/cli.js" } }, "sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA=="],
 
     "jsondiffpatch": ["jsondiffpatch@0.6.0", "", { "dependencies": { "@types/diff-match-patch": "^1.0.36", "chalk": "^5.3.0", "diff-match-patch": "^1.0.5" }, "bin": { "jsondiffpatch": "bin/jsondiffpatch.js" } }, "sha512-3QItJOXp2AP1uv7waBkao5nCvhEv+QmJAd38Ybq7wNI74Q+BBmnLn4EDKz6yI9xGAIQoUF87qHt+kc1IVxB4zQ=="],
+
+    "jsonrepair": ["jsonrepair@3.12.0", "", { "bin": { "jsonrepair": "bin/cli.js" } }, "sha512-SWfjz8SuQ0wZjwsxtSJ3Zy8vvLg6aO/kxcp9TWNPGwJKgTZVfhNEQBMk/vPOpYCDFWRxD6QWuI6IHR1t615f0w=="],
 
     "jsx-ast-utils": ["jsx-ast-utils@3.3.5", "", { "dependencies": { "array-includes": "^3.1.6", "array.prototype.flat": "^1.3.1", "object.assign": "^4.1.4", "object.values": "^1.1.6" } }, "sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ=="],
 

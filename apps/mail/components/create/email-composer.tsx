@@ -10,12 +10,13 @@ import {
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, Paperclip, Plus, Check, X as XIcon } from 'lucide-react';
+import { useFloating, offset, flip, shift } from '@floating-ui/react-dom';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
-import { useState, useEffect, useRef, Fragment } from 'react';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { motion, AnimatePresence } from 'framer-motion';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { useState, useEffect, useRef } from 'react';
 import { aiCompose } from '@/actions/ai-composer';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
@@ -280,7 +281,7 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'w-full max-w-[750px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#1A1A1A]',
+        'w-full max-w-[750px] rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#1A1A1A]',
         className,
       )}
     >
@@ -672,8 +673,7 @@ export function EmailComposer({
                         content: aiGeneratedMessage.split(/\r?\n/).map((line) => {
                           return {
                             type: 'paragraph',
-                            content:
-                              line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
+                            content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
                           };
                         }),
                       });
@@ -685,23 +685,23 @@ export function EmailComposer({
                   />
                 ) : null}
               </AnimatePresence>
-            <button
-              className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
-              onClick={async () => {
-                setAiGeneratedMessage(null);
-                await handleAiGenerate(); // TODO: Set conversation here for replies
-              }}
-              disabled={isLoading || !toEmails.length || !subjectInput.trim()}
-            >
-              <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
-                  <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+              <button
+                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
+                onClick={async () => {
+                  setAiGeneratedMessage(null);
+                  await handleAiGenerate(); // TODO: Set conversation here for replies
+                }}
+                disabled={isLoading || !toEmails.length || !subjectInput.trim()}
+              >
+                <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
+                    <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+                  </div>
+                  <div className="text-center text-sm leading-none text-black dark:text-white">
+                    Generate
+                  </div>
                 </div>
-                <div className="text-center text-sm leading-none text-black dark:text-white">
-                  Generate
-                </div>
-              </div>
-            </button>
+              </button>
             </div>
             <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
               <Smile className="h-3 w-3 fill-[#9A9A9A]" />
@@ -784,7 +784,7 @@ const ContentPreview = ({
     initial="initial"
     animate="animate"
     exit="exit"
-    className="absolute bottom-full left-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white shadow-md dark:bg-black"
+    className="absolute bottom-full right-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white shadow-md dark:bg-black"
   >
     <div
       className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 p-3 text-sm"

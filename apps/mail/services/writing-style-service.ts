@@ -1,8 +1,8 @@
 import { mapToObj, pipe, entries, sortBy, take, fromEntries, sum, values, takeWhile } from 'remeda';
-import { JsonOutputParser } from '@langchain/core/output_parsers';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { writingStyleMatrix } from '@zero/db/schema';
-import { ChatGroq } from '@langchain/groq';
+import { google } from '@ai-sdk/google';
+import { jsonrepair } from 'jsonrepair';
+import { generateObject } from 'ai';
 import { eq } from 'drizzle-orm';
 import { db } from '@zero/db';
 import pRetry from 'p-retry';
@@ -10,9 +10,7 @@ import { z } from 'zod';
 
 // leaving these in here for testing between them
 // (switching to `k` will surely truncate what `coverage` was keeping)
-const TAKE_TOP_COVERAGE = 0.95;
-const TAKE_TOP_K = 10;
-const TAKE_TYPE: 'coverage' | 'k' = 'coverage';
+const TAKE_TOP_K = 12;
 
 // Using Welford Variance Algorithm (https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance)
 // Welford’s online algorithm continuously updates the running mean and variance using just three
@@ -135,34 +133,11 @@ const createUpdatedMatrixFromNewEmail = (
     const emailValue = emailStyleMatrix[key];
     if (emailValue) {
       newStyle[key][emailValue] = (newStyle[key][emailValue] ?? 0) + 1;
-      newStyle[key] =
-        TAKE_TYPE === 'coverage' ? takeTopCoverage(newStyle[key]) : takeTopK(newStyle[key]);
+      newStyle[key] = takeTopK(newStyle[key]);
     }
   }
 
   return newStyle;
-};
-
-const takeTopCoverage = (data: Record<string, number>, coverage = TAKE_TOP_COVERAGE) => {
-  const total = pipe(data, values(), sum());
-
-  if (total === 0) {
-    return {};
-  }
-
-  let running = 0;
-
-  return pipe(
-    data,
-    entries(),
-    sortBy(([_, count]) => -count),
-    takeWhile(([_, count]) => {
-      running += count;
-
-      return running / total < coverage;
-    }),
-    fromEntries(),
-  );
 };
 
 const takeTopK = (data: Record<string, number>, k = TAKE_TOP_K) => {
@@ -280,27 +255,53 @@ const extractStyleMatrix = async (emailBody: string) => {
     phaticPhraseRatio: z.number().min(0).max(1),
   });
 
-  const prompt = ChatPromptTemplate.fromMessages([
-    ['system', StyleMatrixExtractorPrompt()],
-    ['human', '{input}'],
-  ]);
-  const llm = new ChatGroq({
-    model: 'llama-3.1-8b-instant',
+  const { object: result } = await generateObject({
+    model: google('gemini-2.0-flash'),
+    schema,
     temperature: 0,
     maxTokens: 600,
     maxRetries: 5,
-  }).bind({
-    response_format: {
-      type: 'json_object',
+    system: StyleMatrixExtractorPrompt(),
+    prompt: emailBody.trim(),
+    experimental_repairText: async ({ text }) => {
+      try {
+        JSON.parse(text);
+
+        return text;
+      } catch {
+        try {
+          return jsonrepair(text);
+        } catch {
+          // 3. Fallback – trim to the last complete object/array
+          const lastClosing = Math.max(text.lastIndexOf('}'), text.lastIndexOf(']'));
+
+          return lastClosing !== -1 ? text.slice(0, lastClosing + 1) : text;
+        }
+      }
     },
   });
 
-  const parser = new JsonOutputParser<z.infer<typeof schema>>();
-  const chain = prompt.pipe(llm).pipe(parser);
-
-  const result = await chain.invoke({
-    input: emailBody.trim(),
-  });
+  // const prompt = ChatPromptTemplate.fromMessages([
+  //   ['system', StyleMatrixExtractorPrompt()],
+  //   ['human', '{input}'],
+  // ]);
+  // const llm = new ChatGroq({
+  //   model: 'gemma2-9b-it',
+  //   temperature: 0,
+  //   maxTokens: 600,
+  //   maxRetries: 5,
+  // }).bind({
+  //   response_format: {
+  //     type: 'json_object',
+  //   },
+  // });
+  //
+  // const parser = new JsonOutputParser<z.infer<typeof schema>>();
+  // const chain = prompt.pipe(llm).pipe(parser);
+  //
+  // const result = await chain.invoke({
+  //   input: emailBody.trim(),
+  // });
 
   const greeting = result.greeting?.trim().toLowerCase();
   const signOff = result.signOff?.trim().toLowerCase();
@@ -314,7 +315,7 @@ const extractStyleMatrix = async (emailBody: string) => {
 };
 
 const StyleMatrixExtractorPrompt = () => `
-  <system_prompt>
+<system_prompt>
     <role>
         You are StyleMetricExtractor, a tool that distills writing-style metrics from a single email.
     </role>
@@ -372,8 +373,7 @@ const StyleMatrixExtractorPrompt = () => `
             <metric key="questionCount"                   type="int"    />
             <metric key="ctaCount"                        type="int"    />
             <metric key="emojiCount"                      type="int"    />
-            <metric key="emojiDensity"                    type="float"  />
-            <metric key="exclamationFreq"                 type="float"  />
+            <metric key="emojiDensity"                    type="float"  <metric key="exclamationFreq"                 type="float"  />
 
             <!-- subject line specifics -->
             <metric key="subjectEmojiCount"               type="int"    />
@@ -386,7 +386,7 @@ const StyleMatrixExtractorPrompt = () => `
 
         <extraction_guidelines>
             <!-- string metrics -->
-            <item>greeting: first word or phrase before the first line break. Remove any subsequent words that start with a capital letter (considered as names). Lower-case the remaining result. If empty, consider the greeting as empty.</item>
+            <item>greeting: the salutation, make sure to not include names.</item>
             <item>signOff: last word or phrase before the signature block or end of text. Remove any names or personal titles. Lower-case the result.</item>
             <!-- greeting/sign-off presence flags -->
             <item>greetingTotal: 1 if greeting is not empty, else 0.</item>
@@ -447,7 +447,7 @@ dak
             </example_input>
 
             <example_output>
-{{"greeting":"","signOff":"catch ya soon","greetingTotal":0,"signOffTotal":1,"avgSentenceLen":16,"avgParagraphLen":33,"listUsageRatio":0,"sentimentScore":0.4,"politenessScore":0.6,"confidenceScore":0.8,"urgencyScore":0.5,"empathyScore":0.4,"formalityScore":0.2,"passiveVoiceRatio":0,"hedgingRatio":0.03,"intensifierRatio":0.06,"slangRatio":0.11,"contractionRatio":0.08,"lowercaseSentenceStartRatio":1,"casualPunctuationRatio":0.2,"capConsistencyScore":0,"readabilityFlesch":75,"lexicalDiversity":0.57,"jargonRatio":0,"questionCount":1,"ctaCount":1,"emojiCount":1,"emojiDensity":2,"exclamationFreq":0,"subjectEmojiCount":1,"subjectInformalityScore":0.9,"honorificPresence":0,"phaticPhraseRatio":0.17}}
+{{"greeting":"hey","signOff":"catch ya soon","greetingTotal":1,"signOffTotal":1,"avgSentenceLen":16,"avgParagraphLen":33,"listUsageRatio":0,"sentimentScore":0.4,"politenessScore":0.6,"confidenceScore":0.8,"urgencyScore":0.5,"empathyScore":0.4,"formalityScore":0.2,"passiveVoiceRatio":0,"hedgingRatio":0.03,"intensifierRatio":0.06,"slangRatio":0.11,"contractionRatio":0.08,"lowercaseSentenceStartRatio":1,"casualPunctuationRatio":0.2,"capConsistencyScore":0,"readabilityFlesch":75,"lexicalDiversity":0.57,"jargonRatio":0,"questionCount":1,"ctaCount":1,"emojiCount":1,"emojiDensity":2,"exclamationFreq":0,"subjectEmojiCount":1,"subjectInformalityScore":0.9,"honorificPresence":0,"phaticPhraseRatio":0.17}}
             </example_output>
         </output_format>
 
