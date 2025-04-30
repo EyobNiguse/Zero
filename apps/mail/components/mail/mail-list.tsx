@@ -227,7 +227,7 @@ const Thread = memo(
               ? t('common.actions.movedToSpam')
               : destination === 'bin'
                 ? t('common.actions.movedToBin')
-                : t('common.actions.archived')
+                : t('common.actions.archived'),
         );
         toast.promise(promise, {
           error: t('common.actions.failedToMove'),
@@ -719,7 +719,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const { data: session } = useSession();
   const t = useTranslations();
   const router = useRouter();
-  const [threadId, setThreadId] = useQueryState('threadId');
+  const [, setThreadId] = useQueryState('threadId');
+  const [, setDraftId] = useQueryState('draftId');
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
   const { enableScope, disableScope } = useHotkeysContext();
@@ -849,6 +850,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
       // Update URL param without navigation
       void setThreadId(messageThreadId);
+      void setDraftId(null);
       void setActiveReplyId(null);
     },
     [mail],

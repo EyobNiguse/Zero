@@ -32,7 +32,6 @@ export function CreateEmail({
   const [composeOpen, setComposeOpen] = useQueryState('isComposeOpen');
   const { data: draft } = useDraft(draftId ?? null);
 
-
   const activeAccount = React.useMemo(() => {
     if (!session) return null;
     return connections?.find((connection) => connection.id === session?.activeConnection?.id);
@@ -101,7 +100,7 @@ export function CreateEmail({
           className="mb-12 rounded-2xl border"
           onSendEmail={handleSendEmail}
           initialMessage={draft?.content}
-          initialTo={draft?.to}
+          initialTo={draft?.to?.map((e) => e.replace(/[<>]/g, ''))}
           initialSubject={draft?.subject}
         />
       </div>
