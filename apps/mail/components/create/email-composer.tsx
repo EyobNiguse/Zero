@@ -10,6 +10,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { Loader, Check, X as XIcon } from 'lucide-react';
@@ -656,7 +657,7 @@ export function EmailComposer({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Plus className="h-3 w-3 fill-[#9A9A9A]" />
-                <span className="px-0.5 text-sm hidden md:block">Add files</span>
+                <span className="hidden px-0.5 text-sm md:block">Add files</span>
               </button>
 
               <Input
@@ -765,24 +766,44 @@ export function EmailComposer({
                 </div>
               </button>
             </div>
-            <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
-              <Smile className="h-3 w-3 fill-[#9A9A9A]" />
-              <span className="px-0.5 text-sm">Casual</span>
-            </button>
-            <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
-              {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
-              {messageLength >= 50 && messageLength < 200 && (
-                <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
-              )}
-              {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
-              <span className="px-0.5 text-sm">
-                {messageLength < 50
-                  ? 'short-length'
-                  : messageLength < 200
-                    ? 'medium-length'
-                    : 'long-length'}
-              </span>
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  disabled
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                >
+                  <Smile className="h-3 w-3 fill-[#9A9A9A]" />
+                  <span className="px-0.5 text-sm">Casual</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon...</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  disabled
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                >
+                  {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                  {messageLength >= 50 && messageLength < 200 && (
+                    <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
+                  )}
+                  {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                  <span className="px-0.5 text-sm">
+                    {messageLength < 50
+                      ? 'short-length'
+                      : messageLength < 200
+                        ? 'medium-length'
+                        : 'long-length'}
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon...</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
