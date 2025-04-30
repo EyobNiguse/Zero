@@ -448,14 +448,14 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         </div>
                       </DropdownMenuItem>
                     )} */}
-                    <DropdownMenuItem onClick={() => setIsFullscreen(!isFullscreen)}>
+                    {/* <DropdownMenuItem onClick={() => setIsFullscreen(!isFullscreen)}>
                       <Expand className="fill-iconLight dark:fill-iconDark mr-2" />
                       <span>
                         {isFullscreen
                           ? t('common.threadDisplay.exitFullscreen')
                           : t('common.threadDisplay.enterFullscreen')}
                       </span>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
 
                     {isInSpam || isInArchive || isInBin ? (
                       <DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
