@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbo",
     "dev:turbo": "next dev",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint . --cache --cache-location ./node_modules/.cache/eslint",
     "scripts": "bun run ./scripts/run.ts"
