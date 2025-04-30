@@ -1,13 +1,12 @@
-import { AppSidebar } from '@/components/ui/app-sidebar';
-import { GlobalHotkeys } from '@/lib/hotkeys/global-hotkeys';
 import { HotkeyProviderWrapper } from '@/components/providers/hotkey-provider-wrapper';
+import { GlobalHotkeys } from '@/lib/hotkeys/global-hotkeys';
+import { AppSidebar } from '@/components/ui/app-sidebar';
 
 export default function MailLayout({ children }: { children: React.ReactNode }) {
   return (
     <HotkeyProviderWrapper>
       <AppSidebar />
-      <GlobalHotkeys />
-      <div className="w-full bg-lightBackground dark:bg-darkBackground">{children}</div>
+      <div className="bg-lightBackground dark:bg-darkBackground w-full">{children}</div>
     </HotkeyProviderWrapper>
   );
 }

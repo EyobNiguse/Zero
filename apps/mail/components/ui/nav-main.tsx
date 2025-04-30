@@ -15,35 +15,43 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { createLabel } from '@/hooks/use-labels';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Label as LabelType, useLabels } from '@/hooks/use-labels';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { clearBulkSelectionAtom } from '../mail/use-mail';
-import { type MessageKey } from '@/config/navigation';
 import { Label as UILabel } from '@/components/ui/label';
-import { Label as LabelType, useLabels } from '@/hooks/use-labels';
+import { type MessageKey } from '@/config/navigation';
 import { type NavItem } from '@/config/navigation';
+import { createLabel } from '@/hooks/use-labels';
+import { Button } from '@/components/ui/button';
+import { HexColorPicker } from 'react-colorful';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { GoldenTicketModal } from '../golden';
 import { useStats } from '@/hooks/use-stats';
-import { SettingsIcon } from 'lucide-react';
+import { Command, SettingsIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRef, useCallback } from 'react';
 import { BASE_URL } from '@/lib/constants';
+import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
+import { toast } from 'sonner';
 import * as React from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useForm } from 'react-hook-form';
-import { HexColorPicker } from 'react-colorful';
-import { toast } from 'sonner';
+import { CurvedArrow } from '../icons/icons';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -259,20 +267,32 @@ export function NavMain({ items }: NavMainProps) {
         {!pathname.includes('/settings') && !isBottomNav && state !== 'collapsed' && (
           <Collapsible defaultOpen={true} className="group/collapsible">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
-              <div className="mx-2 mb-4 flex items-center justify-between w-full">
+              <div className="mx-2 mb-4 flex w-full items-center justify-between">
                 <span className="text-[13px] text-[#6D6D6D] dark:text-[#898989]">Labels</span>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0 hover:bg-transparent mr-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="mr-2 h-4 w-4 p-0 hover:bg-transparent"
+                    >
                       <Plus className="h-3 w-3 text-[#6D6D6D] dark:text-[#898989]" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent showOverlay={true} className="bg-panelLight dark:bg-panelDark w-full p-4 max-w-[500px] rounded-xl">
+                  <DialogContent
+                    showOverlay={true}
+                    className="bg-panelLight dark:bg-panelDark w-full max-w-[500px] rounded-xl p-4"
+                  >
                     <DialogHeader>
                       <DialogTitle>Create New Label</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                          e.preventDefault();
+                          form.handleSubmit(onSubmit)();
+                        }
+                      }}>
                         <div className="space-y-4 py-4">
                           <div className="space-y-2">
                             <FormField
@@ -291,7 +311,7 @@ export function NavMain({ items }: NavMainProps) {
                           </div>
                           <div className="space-y-2">
                             <UILabel>Color</UILabel>
-                            <div className="space-y-4 w-full">
+                            <div className="w-full space-y-4">
                               <div className="w-full [&>.react-colorful]:w-full">
                                 <HexColorPicker
                                   color={formColor?.backgroundColor || '#E2E2E2'}
@@ -313,10 +333,10 @@ export function NavMain({ items }: NavMainProps) {
                                     })
                                   }
                                   placeholder="#000000"
-                                  className="font-mono flex-1"
+                                  className="flex-1 font-mono"
                                 />
                                 <div
-                                  className="h-9 w-9 rounded-md border flex-shrink-0"
+                                  className="h-9 w-9 flex-shrink-0 rounded-md border"
                                   style={{
                                     backgroundColor: formColor?.backgroundColor || '#E2E2E2',
                                   }}
@@ -326,10 +346,21 @@ export function NavMain({ items }: NavMainProps) {
                           </div>
                         </div>
                         <div className="flex justify-end space-x-2">
-                          <Button type="button" variant="outline" onClick={handleClose}>
+                          <Button
+                            className="h-8"
+                            type="button"
+                            variant="outline"
+                            onClick={handleClose}
+                          >
                             Cancel
                           </Button>
-                          <Button type="submit">Create Label</Button>
+                          <Button className="h-8" type="submit">
+                            Create Label
+                            <div className="flex h-5 items-center justify-center gap- rounded-sm bg-white/10 px-1 dark:bg-black/10">
+                              <Command className="h-2 w-2 text-white dark:text-[#929292]" />
+                              <CurvedArrow className="mt-1.5 h-3 w-3 fill-white dark:fill-[#929292]" />
+                            </div>
+                          </Button>
                         </div>
                       </form>
                     </Form>

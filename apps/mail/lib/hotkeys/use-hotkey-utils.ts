@@ -1,34 +1,20 @@
 'use client';
 
 import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
-import { dexieStorageProvider } from '@/lib/idb';
 import { useHotkeys } from 'react-hotkeys-hook';
-import useSWR, { SWRConfiguration } from 'swr';
 import { useCallback, useMemo } from 'react';
+import useSWR from 'swr';
 
-const swrConfig: SWRConfiguration = {
-  provider: () => dexieStorageProvider(),
-  revalidateOnFocus: false,
-  revalidateOnReconnect: false,
-  dedupingInterval: 24 * 60 * 60 * 1000, // 24 hours
-};
-
-import { getShortcuts as getShortcutsAction, updateShortcuts } from '@/actions/shortcuts';
-
-const getShortcuts = async (): Promise<Shortcut[]> => {
-  try {
-    return await getShortcutsAction();
-  } catch (error) {
-    console.error('Error fetching shortcuts:', error);
-    return keyboardShortcuts;
-  }
-};
+import { updateShortcuts } from '@/actions/shortcuts';
+import axios from 'axios';
 
 export const useShortcutCache = (userId?: string) => {
   const { data: shortcuts, mutate } = useSWR<Shortcut[]>(
     userId ? `/hotkeys/${userId}` : null,
-    getShortcuts,
-    swrConfig,
+    () => axios.get('/api/v1/shortcuts').then((res) => res.data),
+    {
+      dedupingInterval: 24 * 60 * 60 * 1000,
+    },
   );
 
   const updateShortcut = useCallback(
@@ -201,8 +187,6 @@ export function useShortcuts(
       .filter(Boolean)
       .join(',');
   }, [shortcutMap, handlers]);
-
-  // console.log(`GETTING ${options.scope}`);
 
   useHotkeys(
     shortcutString,
