@@ -10,40 +10,44 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  ArchiveX,
-  BellOff,
-  Inbox,
-  ListMinusIcon,
-  ArrowRightIcon,
-  Loader2,
-  Archive,
-  MailOpen,
-  Trash,
-} from 'lucide-react';
+  bulkArchive,
+  bulkDeleteThread,
+  getMail,
+  markAsImportant,
+  markAsRead,
+} from '@/actions/mail';
+import {
+  Archive2,
+  Bell,
+  Eye,
+  Important,
+  Lightning,
+  Mail,
+  Star2,
+  Tag,
+  User,
+  X,
+} from '../icons/icons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { moveThreadsTo, ThreadDestination, getAvailableActions } from '@/lib/thread-actions';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
-import { ThreadDisplay, ThreadDemo } from '@/components/mail/thread-display';
+import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { Filter, Lightning, Mail, X } from '../icons/icons';
+import { ArrowRightIcon, Loader2 } from 'lucide-react';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useHotkeysContext } from 'react-hotkeys-hook';
+import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
-import { getMail, markAsRead } from '@/actions/mail';
 import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
-import { Tag, User, Bell } from '../icons/icons';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
-import { useParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
@@ -310,9 +314,30 @@ export function MailLayout() {
                     <SidebarToggle className="h-fit px-2" />
                   </div>
                   <div>
-                    {/* <Button variant="ghost" className={cn('md:h-fit md:px-2')}>
-                      <Filter className="dark:fill-iconDark fill-iconLight" />
+                    {mail.bulkSelected.length > 0 ? (
+                      <div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => {
+                                setMail({ ...mail, bulkSelected: [] });
+                              }}
+                              className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
+                            >
+                              <X className="h-3 w-3 fill-[#A0A0A0]" />
+                              <span>esc</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Click or press ESC to exit selection mode</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    ) : (
+                      <>
+                        {/* <Button variant="ghost" className={cn('md:h-fit md:px-2')}>
+                    <Filter className="dark:fill-iconDark fill-iconLight" />
                     </Button> */}
+                      </>
+                    )}
                   </div>
                   {/* <Button
                     variant="ghost"
@@ -327,43 +352,14 @@ export function MailLayout() {
                     <ArrowCircle className="dark:fill-iconDark fill-iconLight" />
                   </Button> */}
                 </div>
-
-                {/* {mail.bulkSelected.length > 0 ? (
-                  <>
-                    <div className="flex flex-1 items-center justify-center">
-                      <span className="text-sm font-medium tabular-nums">
-                        {t('common.mail.selected', { count: mail.bulkSelected.length })}
-                      </span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground ml-1.5 h-8 w-fit px-2"
-                            onClick={() => setMail({ ...mail, bulkSelected: [] })}
-                          >
-                            <X />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t('common.mail.clearSelection')}</TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <BulkSelectActions />
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-1 justify-center">
-                      <SearchBar />
-                    </div>
-                    <div className="flex items-center">
-                      <CategorySelect />
-                    </div>
-                  </>
-                )} */}
               </div>
               <div className="p-2 px-[22px]">
                 <SearchBar />
-                <div className="mt-2">{folder === 'inbox' && <CategorySelect />}</div>
+                <div className="mt-2">
+                  {folder === 'inbox' && (
+                    <CategorySelect isMultiSelectMode={mail.bulkSelected.length > 0} />
+                  )}
+                </div>
               </div>
               <div
                 className={cn(
@@ -456,67 +452,112 @@ function BulkSelectActions() {
   const { mutate: mutateThreads } = useThreads();
   const { mutate: mutateStats } = useStats();
 
-  const handleMarkAsRead = useCallback(async () => {
-    try {
-      const response = await markAsRead({ ids: mail.bulkSelected });
-      if (response.success) {
-        // TODO: fix this, it needs useThread mutation
-        // TODO: fix this, it needs useThread mutation
-        await mutateThreads();
-        await mutateStats();
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-        toast.success(t('common.mail.markedAsRead'));
-      }
-    } catch (error) {
-      console.error('Error marking as read', error);
-      toast.error(t('common.mail.failedToMarkAsRead'));
-    }
-  }, [mail, setMail, mutateThreads, mutateStats, t]);
-
   const onMoveSuccess = useCallback(async () => {
     await mutateThreads();
     await mutateStats();
     setMail({ ...mail, bulkSelected: [] });
   }, [mail, setMail, mutateThreads, mutateStats]);
 
-  const availableActions = getAvailableActions(folder).filter(
-    (action): action is Exclude<ThreadDestination, null> => action !== null,
-  );
-
-  const actionButtons = {
-    spam: {
-      icon: <ArchiveX />,
-      tooltip: t('common.mail.moveToSpam'),
-    },
-    archive: {
-      icon: <Archive />,
-      tooltip: t('common.mail.archive'),
-    },
-    inbox: {
-      icon: <Inbox />,
-      tooltip: t('common.mail.moveToInbox'),
-    },
-    bin: {
-      icon: <Trash />,
-      tooltip: t('common.mail.moveToBin'),
-    },
-  };
-
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
+      <button
+        className="flex h-8 flex-1 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-3 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
+        onClick={() => {
+          if (mail.bulkSelected.length === 0) return;
+          toast.promise(markAsRead({ ids: mail.bulkSelected }).then(onMoveSuccess), {
+            loading: 'Marking as read...',
+            success: 'All done! marked as read',
+            error: 'Something went wrong!',
+          });
+        }}
+      >
+        <div className="relative overflow-visible">
+          <Eye className="fill-[#9D9D9D] dark:fill-[#9D9D9D]" />
+        </div>
+        <div className="flex items-center justify-center gap-2.5">
+          <div className="justify-start leading-none">Mark all as read</div>
+        </div>
+      </button>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
+            onClick={() => {
+              if (mail.bulkSelected.length === 0) return;
+              toast.promise(markAsImportant({ ids: mail.bulkSelected }).then(onMoveSuccess), {
+                loading: 'Marking as important...',
+                success: 'All done! marked as important',
+                error: 'Something went wrong!',
+              });
+            }}
+          >
+            <div className="relative overflow-visible">
+              <Important className="fill-[#9D9D9D] dark:fill-[#9D9D9D]" />
+            </div>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{t('common.mail.markAsImportant')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
+            onClick={() => {
+              if (mail.bulkSelected.length === 0) return;
+              toast.promise(bulkArchive({ ids: mail.bulkSelected }).then(onMoveSuccess), {
+                loading: 'Moving to archive...',
+                success: 'All done! moved to archive',
+                error: 'Something went wrong!',
+              });
+            }}
+          >
+            <div className="relative overflow-visible">
+              <Archive2 className="fill-[#9D9D9D]" />
+            </div>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{t('common.mail.archive')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80">
+            <div className="relative overflow-visible">
+              <Star2 className="fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]" />
+            </div>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{t('common.mail.starAll')}</TooltipContent>
+      </Tooltip>
+
       <Dialog onOpenChange={setIsUnsub} open={isUnsub}>
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <Button variant="ghost" className="md:h-fit md:px-2">
-                <ListMinusIcon />
-              </Button>
+              <button className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border border-amber-400 bg-amber-500 px-2 text-sm text-amber-100 transition-all duration-300 ease-out hover:bg-amber-500/80 hover:bg-amber-600 dark:border-amber-700">
+                <div className="relative overflow-visible">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.3}
+                    stroke="currentColor"
+                    className="size-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
+                      strokeOpacity={0.6}
+                    />
+                  </svg>
+                </div>
+              </button>
             </DialogTrigger>
           </TooltipTrigger>
-          <TooltipContent>{t('common.mailDisplay.unsubscribe')}</TooltipContent>
+          <TooltipContent>{t('common.mail.unSubscribeFromAll')}</TooltipContent>
         </Tooltip>
 
         <DialogContent>
@@ -540,44 +581,41 @@ function BulkSelectActions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" className="md:h-fit md:px-2">
-            <BellOff />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t('common.mail.mute')}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" className="md:h-fit md:px-2" onClick={handleMarkAsRead}>
-            <MailOpen />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t('common.mail.markAsRead')}</TooltipContent>
-      </Tooltip>
 
-      {availableActions.map((action) => (
-        <Tooltip key={action}>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              className="md:h-fit md:px-2"
-              onClick={() => {
-                if (mail.bulkSelected.length === 0) return;
-                moveThreadsTo({
-                  threadIds: mail.bulkSelected,
-                  currentFolder: folder,
-                  destination: action,
-                }).then(onMoveSuccess);
-              }}
-            >
-              {actionButtons[action].icon}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{actionButtons[action].tooltip}</TooltipContent>
-        </Tooltip>
-      ))}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border border-red-500 bg-red-600 px-2 text-sm transition-all duration-300 ease-out hover:bg-red-600/80 dark:border-[#6E2532] dark:bg-[#411D23] dark:hover:bg-[#313131]/80 hover:dark:bg-[#411D23]/60"
+            onClick={() => {
+              if (mail.bulkSelected.length === 0) return;
+              toast.promise(bulkDeleteThread({ ids: mail.bulkSelected }).then(onMoveSuccess), {
+                loading: 'Moving to bin...',
+                success: 'All done! moved to bin',
+                error: 'Something went wrong!',
+              });
+            }}
+          >
+            <div className="relative overflow-visible">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M5 3.25V4H2.75C2.33579 4 2 4.33579 2 4.75C2 5.16421 2.33579 5.5 2.75 5.5H3.05L3.86493 13.6493C3.94161 14.4161 4.58685 15 5.35748 15H10.6425C11.4131 15 12.0584 14.4161 12.1351 13.6493L12.95 5.5H13.25C13.6642 5.5 14 5.16421 14 4.75C14 4.33579 13.6642 4 13.25 4H11V3.25C11 2.00736 9.99264 1 8.75 1H7.25C6.00736 1 5 2.00736 5 3.25ZM7.25 2.5C6.83579 2.5 6.5 2.83579 6.5 3.25V4H9.5V3.25C9.5 2.83579 9.16421 2.5 8.75 2.5H7.25ZM6.05044 6.00094C6.46413 5.98025 6.81627 6.29885 6.83696 6.71255L7.11195 12.2125C7.13264 12.6262 6.81404 12.9784 6.40034 12.9991C5.98665 13.0197 5.63451 12.7011 5.61383 12.2875L5.33883 6.78745C5.31814 6.37376 5.63674 6.02162 6.05044 6.00094ZM9.95034 6.00094C10.364 6.02162 10.6826 6.37376 10.662 6.78745L10.387 12.2875C10.3663 12.7011 10.0141 13.0197 9.60044 12.9991C9.18674 12.9784 8.86814 12.6262 8.88883 12.2125L9.16383 6.71255C9.18451 6.29885 9.53665 5.98025 9.95034 6.00094Z"
+                  fill="#F43F5E"
+                  style={{ fill: '#F43F5E', fillOpacity: 1 }}
+                />
+              </svg>
+            </div>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{t('common.mail.moveToBin')}</TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -679,7 +717,7 @@ function getCategoryColor(categoryId: string): string {
   }
 }
 
-function CategorySelect() {
+function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const [mail, setMail] = useMail();
   const [, setSearchValue] = useSearchValue();
   const categories = Categories();
@@ -721,7 +759,7 @@ function CategorySelect() {
         )}
         tabIndex={isOverlay ? -1 : undefined}
       >
-        <div className="relative overflow-hidden">{cat.icon}</div>
+        <div className="relative overflow-visible">{cat.icon}</div>
         {isSelected && (
           <div className="flex items-center justify-center gap-2.5 px-0.5">
             <div className="animate-in fade-in-0 slide-in-from-right-4 justify-start text-sm leading-none text-white duration-300">
@@ -750,6 +788,10 @@ function CategorySelect() {
       }
     }
   }, [category]);
+
+  if (isMultiSelectMode) {
+    return <BulkSelectActions />;
+  }
 
   return (
     <div className="relative w-full">
