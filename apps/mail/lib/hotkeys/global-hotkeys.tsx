@@ -10,8 +10,6 @@ export function GlobalHotkeys() {
   const router = useRouter();
   const scope = 'global';
 
-  console.log('i am loaded');
-
   const handlers = {
     goToDrafts: () => router.push('/mail/draft'),
     inbox: () => router.push('/mail/inbox'),
