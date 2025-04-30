@@ -357,7 +357,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           </div>
         ) : (
           <>
-            <div className="flex flex-shrink-0 items-center border-b border-[#E7E7E7] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px] dark:border-[#252525]">
+            <div className="flex flex-shrink-0 items-center border-b border-[#E7E7E7] dark:border-[#252525] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px] ">
               <div className="flex flex-1 items-center gap-2">
                 <ThreadActionButton
                   icon={X}
