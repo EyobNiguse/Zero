@@ -166,6 +166,8 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
     }
   };
 
+  console.log('draftcontent', draft);
+
   useEffect(() => {
     if (mode) {
       enableScope('compose');

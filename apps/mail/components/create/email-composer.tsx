@@ -100,7 +100,7 @@ export function EmailComposer({
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
   const [draftId, setDraftId] = useQueryState('draftId');
-  const { data: draft } = useDraft(draftId ?? null);
+  // const { data: draft } = useDraft(draftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
 
@@ -223,7 +223,6 @@ export function EmailComposer({
   const ccEmails = watch('cc');
   const bccEmails = watch('bcc');
   const subjectInput = watch('subject');
-  const messageContent = watch('message');
   const attachments = watch('attachments');
 
   const handleAttachment = (files: File[]) => {
@@ -308,12 +307,11 @@ export function EmailComposer({
     }
   };
 
-  const handleGenerateReply = async () => {};
-
   const saveDraft = async () => {
     const values = getValues();
 
     if (!hasUnsavedChanges) return;
+    console.log('DRAFT HTML', editor.getHTML());
     const messageText = editor.getHTML();
     console.log(values, messageText);
     if (!values.to.length || !values.subject.length || !messageText.length) return;
@@ -660,7 +658,7 @@ export function EmailComposer({
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
                 onClick={handleSend}
                 disabled={
-                  isLoading || !toEmails.length || !messageContent.trim() || !subjectInput.trim()
+                  isLoading || !toEmails.length || !editor.getHTML().trim() || !subjectInput.trim()
                 }
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
