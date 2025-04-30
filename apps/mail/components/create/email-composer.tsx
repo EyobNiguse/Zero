@@ -112,8 +112,22 @@ export function EmailComposer({
 
   useEffect(() => {
     if (draft) {
-      if (draft.to) form.setValue('to', draft.to);
-      if (draft.content) form.setValue('message', draft.content);
+      if (draft.to)
+        form.setValue(
+          'to',
+          draft.to.map((email) => email.replace(/[<>]/g, '')),
+        );
+      if (draft.content) {
+        editor.commands.setContent({
+          type: 'doc',
+          content: draft.content.split(/\r?\n/).map((line) => {
+            return {
+              type: 'paragraph',
+              content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
+            };
+          }),
+        });
+      }
       if (draft.subject) form.setValue('subject', draft.subject);
     }
   }, [draft]);
@@ -252,6 +266,7 @@ export function EmailComposer({
     initialValue: initialMessage,
     isReadOnly: isLoading,
     onLengthChange: (length) => {
+      setHasUnsavedChanges(true);
       setMessageLength(length);
     },
     onModEnter: () => {
@@ -316,21 +331,23 @@ export function EmailComposer({
 
   const handleGenerateReply = async () => {};
 
-  const saveDraft = useCallback(async () => {
-    console.log('trying to save email');
-    if (!hasUnsavedChanges) return;
-    if (!toEmails.length || !subjectInput || !messageContent) return;
+  const saveDraft = async () => {
     const values = getValues();
+
+    if (!hasUnsavedChanges) return;
+    const messageText = editor.getText();
+    console.log(values, messageText);
+    if (!values.to.length || !values.subject.length || !messageText.length) return;
 
     try {
       setIsLoading(true);
       const draftData = {
-        to: values?.to?.join(', '),
-        cc: values?.cc?.join(', '),
-        bcc: values?.bcc?.join(', '),
-        subject: values?.subject,
-        message: values?.message,
-        attachments: values?.attachments,
+        to: values.to.join(', '),
+        cc: values.cc?.join(', '),
+        bcc: values.bcc?.join(', '),
+        subject: values.subject,
+        message: messageText,
+        attachments: values.attachments,
         id: draftId,
       };
 
@@ -339,21 +356,20 @@ export function EmailComposer({
       if (response?.id && response.id !== draftId) {
         setDraftId(response.id);
       }
-
-      setHasUnsavedChanges(false);
-      // toast.success(`Draft saved successfully: ${response.id}`);
     } catch (error) {
       console.error('Error saving draft:', error);
       toast.error('Failed to save draft');
     } finally {
       setIsLoading(false);
+      setHasUnsavedChanges(false);
     }
-  }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
+  };
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
 
     const autoSaveTimer = setTimeout(() => {
+      console.log('timeout set');
       saveDraft();
     }, 3000);
 

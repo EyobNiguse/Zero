@@ -30,6 +30,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { clearBulkSelectionAtom } from '../mail/use-mail';
 import { Label as UILabel } from '@/components/ui/label';
 import { type MessageKey } from '@/config/navigation';
+import { Command, SettingsIcon } from 'lucide-react';
 import { type NavItem } from '@/config/navigation';
 import { createLabel } from '@/hooks/use-labels';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { GoldenTicketModal } from '../golden';
 import { useStats } from '@/hooks/use-stats';
-import { Command, SettingsIcon } from 'lucide-react';
+import { CurvedArrow } from '../icons/icons';
 import { useTranslations } from 'next-intl';
 import { useRef, useCallback } from 'react';
 import { BASE_URL } from '@/lib/constants';
@@ -51,7 +52,6 @@ import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Link from 'next/link';
-import { CurvedArrow } from '../icons/icons';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -95,7 +95,7 @@ export function NavMain({ items }: NavMainProps) {
 
   const formColor = form.watch('color');
 
-  const { labels } = useLabels();
+  const { labels, mutate } = useLabels();
   const { state } = useSidebar();
 
   // Check if these are bottom navigation items by looking at the first section's title
@@ -216,6 +216,9 @@ export function NavMain({ items }: NavMainProps) {
         loading: 'Creating label...',
         success: 'Label created successfully',
         error: 'Failed to create label',
+        finally: () => {
+          mutate();
+        },
       });
     } catch (error) {
       console.error('Error creating label:', error);
@@ -287,12 +290,16 @@ export function NavMain({ items }: NavMainProps) {
                       <DialogTitle>Create New Label</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onKeyDown={(e) => {
-                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                          e.preventDefault();
-                          form.handleSubmit(onSubmit)();
-                        }
-                      }}>
+                      <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-4"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                            e.preventDefault();
+                            form.handleSubmit(onSubmit)();
+                          }
+                        }}
+                      >
                         <div className="space-y-4 py-4">
                           <div className="space-y-2">
                             <FormField
@@ -315,27 +322,54 @@ export function NavMain({ items }: NavMainProps) {
                               <div className="grid grid-cols-7 gap-4">
                                 {[
                                   // Row 1 - Grayscale
-                                  '#000000', '#434343', '#666666', '#999999', '#cccccc', '#ffffff',
+                                  '#000000',
+                                  '#434343',
+                                  '#666666',
+                                  '#999999',
+                                  '#cccccc',
+                                  '#ffffff',
                                   // Row 2 - Warm colors
-                                  '#fb4c2f', '#ffad47', '#fad165', '#ff7537', '#cc3a21', '#8a1c0a',
+                                  '#fb4c2f',
+                                  '#ffad47',
+                                  '#fad165',
+                                  '#ff7537',
+                                  '#cc3a21',
+                                  '#8a1c0a',
                                   // Row 3 - Cool colors
-                                  '#16a766', '#43d692', '#4a86e8', '#285bac', '#3c78d8', '#0d3472',
+                                  '#16a766',
+                                  '#43d692',
+                                  '#4a86e8',
+                                  '#285bac',
+                                  '#3c78d8',
+                                  '#0d3472',
                                   // Row 4 - Purple tones
-                                  '#a479e2', '#b99aff', '#653e9b', '#3d188e', '#f691b3', '#994a64',
+                                  '#a479e2',
+                                  '#b99aff',
+                                  '#653e9b',
+                                  '#3d188e',
+                                  '#f691b3',
+                                  '#994a64',
                                   // Row 5 - Pastels
-                                  '#f6c5be', '#ffe6c7', '#c6f3de', '#c9daf8',
+                                  '#f6c5be',
+                                  '#ffe6c7',
+                                  '#c6f3de',
+                                  '#c9daf8',
                                 ].map((color) => (
                                   <button
                                     key={color}
                                     type="button"
                                     className={`h-10 w-10 rounded-[4px] border-[0.5px] border-white/10 ${
-                                      formColor?.backgroundColor === color ? 'ring-2 ring-blue-500' : ''
+                                      formColor?.backgroundColor === color
+                                        ? 'ring-2 ring-blue-500'
+                                        : ''
                                     }`}
                                     style={{ backgroundColor: color }}
-                                    onClick={() => form.setValue('color', {
-                                      backgroundColor: color,
-                                      textColor: '#ffffff'
-                                    })}
+                                    onClick={() =>
+                                      form.setValue('color', {
+                                        backgroundColor: color,
+                                        textColor: '#ffffff',
+                                      })
+                                    }
                                   />
                                 ))}
                               </div>
@@ -353,7 +387,7 @@ export function NavMain({ items }: NavMainProps) {
                           </Button>
                           <Button className="h-8" type="submit">
                             Create Label
-                            <div className="flex h-5 items-center justify-center gap- rounded-sm bg-white/10 px-1 dark:bg-black/10">
+                            <div className="gap- flex h-5 items-center justify-center rounded-sm bg-white/10 px-1 dark:bg-black/10">
                               <Command className="h-2 w-2 text-white dark:text-[#929292]" />
                               <CurvedArrow className="mt-1.5 h-3 w-3 fill-white dark:fill-[#929292]" />
                             </div>
