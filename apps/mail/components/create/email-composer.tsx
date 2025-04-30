@@ -1,6 +1,5 @@
 import {
   CurvedArrow,
-  Lightning,
   MediumStack,
   ShortStack,
   LongStack,
@@ -8,9 +7,8 @@ import {
   X,
   Sparkles,
 } from '../icons/icons';
+import { Loader, Command, Paperclip, Plus, Check, X as XIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, Paperclip, Plus, Check, X as XIcon } from 'lucide-react';
-import { useFloating, offset, flip, shift } from '@floating-ui/react-dom';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,6 +93,7 @@ export function EmailComposer({
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
+  const [aiIsLoading, setAiIsLoading] = useState(false);
 
   useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
@@ -254,11 +253,9 @@ export function EmailComposer({
 
   const handleAiGenerate = async () => {
     try {
-      console.log('test');
       setIsLoading(true);
+      setAiIsLoading(true);
       const values = getValues();
-
-      console.log('editor.getText()', editor.getText());
 
       const result = await aiCompose({
         prompt: editor.getText(),
@@ -275,6 +272,7 @@ export function EmailComposer({
       toast.error('Failed to generate email');
     } finally {
       setIsLoading(false);
+      setAiIsLoading(false);
     }
   };
 
@@ -688,14 +686,22 @@ export function EmailComposer({
               <button
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
                 onClick={async () => {
+                  if (!toEmails.length || !subjectInput.trim()) {
+                    toast.error('Please enter a recipient and subject');
+                    return;
+                  }
                   setAiGeneratedMessage(null);
-                  await handleAiGenerate(); // TODO: Set conversation here for replies
+                  await handleAiGenerate();
                 }}
-                disabled={isLoading || !toEmails.length || !subjectInput.trim()}
+                disabled={isLoading || aiIsLoading}
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
-                    <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+                    {aiIsLoading ? (
+                      <Loader className="h-3.5 w-3.5 animate-spin fill-black dark:fill-white" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+                    )}
                   </div>
                   <div className="text-center text-sm leading-none text-black dark:text-white">
                     Generate
