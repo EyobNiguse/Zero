@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Danger,
   Sheet,
+  Plane2,
 } from '@/components/icons/icons';
 import { SettingsGearIcon } from '@/components/icons/animated/settings-gear';
 import { ArrowLeftIcon } from '@/components/icons/animated/arrow-left';
@@ -73,7 +74,7 @@ export const navigationConfig: Record<string, NavConfig> = {
             id: 'sent',
             title: 'navigation.sidebar.sent',
             url: '/mail/sent',
-            icon: PaperPlane,
+            icon: Plane2,
           },
         ],
       },
