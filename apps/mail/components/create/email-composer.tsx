@@ -110,28 +110,6 @@ export function EmailComposer({
     }
   }, [isComposeOpen]);
 
-  // useEffect(() => {
-  //   if (draft) {
-  //     if (draft.to)
-  //       form.setValue(
-  //         'to',
-  //         draft.to.map((email) => email.replace(/[<>]/g, '')),
-  //       );
-  //     if (draft.content) {
-  //       editor.commands.setContent({
-  //         type: 'doc',
-  //         content: draft.content.split(/\r?\n/).map((line) => {
-  //           return {
-  //             type: 'paragraph',
-  //             content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
-  //           };
-  //         }),
-  //       });
-  //     }
-  //     if (draft.subject) form.setValue('subject', draft.subject);
-  //   }
-  // }, [draft]);
-
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
