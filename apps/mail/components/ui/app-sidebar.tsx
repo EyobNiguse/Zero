@@ -76,8 +76,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {...props}
         className={`flex select-none flex-col items-center ${state === 'collapsed' ? '' : ''}`}
       >
-        <div className={`relative z-20 flex w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2'}`}>
-          <SidebarHeader className="flex flex-col gap-2 pt-[18px]">
+        <div
+          className={`relative z-20 flex w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2'}`}
+        >
+          <SidebarHeader className="mt-[10px] flex flex-col gap-2">
             <NavUser />
             <AnimatePresence mode="wait">
               {showComposeButton && (
@@ -108,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarContent>
         </div>
 
-        <div className="mt-auto flex w-full flex-col px-2">
+        <div className={`mt-auto flex w-full flex-col ${state !== 'collapsed' ? 'px-2' : ''}`}>
           <div className="mx-2">
             {!session || isPending ? null : !session?.hasUsedTicket ? <GoldenTicketModal /> : null}
           </div>
@@ -130,13 +132,15 @@ function ComposeButton() {
   const [dialogOpen, setDialogOpen] = useQueryState('isComposeOpen');
   const [, setDraftId] = useQueryState('draftId');
   const [, setTo] = useQueryState('to');
+  const [, setActiveReplyId] = useQueryState('activeReplyId');
+  const [, setMode] = useQueryState('mode');
 
   const handleOpenChange = (open: boolean) => {
     setDialogOpen(open ? 'true' : null);
-    if (!open) {
-      setDraftId(null);
-      setTo(null);
-    }
+    setDraftId(null);
+    setTo(null);
+    setActiveReplyId(null);
+    setMode(null);
   };
   return (
     <Dialog open={!!dialogOpen} onOpenChange={handleOpenChange}>
@@ -156,7 +160,7 @@ function ComposeButton() {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="h-screen w-screen max-w-none border-none bg-[#FAFAFA] dark:bg-[#141414] p-0 shadow-none">
+      <DialogContent className="h-screen w-screen max-w-none border-none bg-[#FAFAFA] p-0 shadow-none dark:bg-[#141414]">
         <CreateEmail />
       </DialogContent>
     </Dialog>

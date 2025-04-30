@@ -1,8 +1,8 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useParams } from 'next/navigation';
-import Image from 'next/image';
 import { useTheme } from 'next-themes';
+import Image from 'next/image';
 
 import {
   ChevronLeft,
@@ -156,6 +156,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const [mode, setMode] = useQueryState('mode');
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
+  const [, setDraftId] = useQueryState('draftId');
   const { resolvedTheme } = useTheme();
 
   const {
@@ -230,6 +231,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     setThreadId(null);
     setMode(null);
     setActiveReplyId(null);
+    setDraftId(null);
   }, [setThreadId, setMode]);
 
   const moveThreadTo = useCallback(
@@ -250,7 +252,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
             ? t('common.actions.movedToSpam')
             : destination === 'bin'
               ? t('common.actions.movedToBin')
-              : t('common.actions.archived')
+              : t('common.actions.archived'),
       );
       toast.promise(promise, {
         error: t('common.actions.failedToMove'),
@@ -320,12 +322,12 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     <div
       className={cn(
         'flex flex-col',
-        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100vh-19px)]',
+        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-19px)] rounded-xl',
       )}
     >
       <div
         className={cn(
-          'bg-panelLight dark:bg-panelDark relative flex flex-col overflow-hidden transition-all duration-300',
+          'bg-panelLight dark:bg-panelDark relative flex flex-col overflow-hidden rounded-xl transition-all duration-300',
           isMobile ? 'h-full' : 'h-full',
           !isMobile && !isFullscreen && 'rounded-r-lg',
           isFullscreen ? 'fixed inset-0 z-50' : '',
@@ -335,15 +337,17 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
         {!id ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <Image 
-                src={resolvedTheme === 'dark' ? "/empty-state.svg" : "/empty-state-light.svg"} 
-                alt="Empty Thread" 
-                width={200} 
-                height={200} 
+              <Image
+                src={resolvedTheme === 'dark' ? '/empty-state.svg' : '/empty-state-light.svg'}
+                alt="Empty Thread"
+                width={200}
+                height={200}
               />
               <div className="mt-5">
                 <p className="text-lg">It's empty here</p>
-                <p className="text-md text-[#6D6D6D] dark:text-white/50">Choose an email to view details</p>
+                <p className="text-md text-[#6D6D6D] dark:text-white/50">
+                  Choose an email to view details
+                </p>
               </div>
             </div>
           </div>
@@ -357,22 +361,79 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           </div>
         ) : (
           <>
-            <div className="flex flex-shrink-0 items-center border-b border-[#E7E7E7] dark:border-[#252525] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px] ">
+            <div
+              className={cn(
+                'flex flex-shrink-0 items-center border-b border-[#E7E7E7] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px] dark:border-[#252525]',
+                isMobile && 'bg-panelLight dark:bg-panelDark sticky top-0 z-10 mt-2',
+              )}
+            >
               <div className="flex flex-1 items-center gap-2">
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleClose}
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md hover:bg-white md:hidden dark:hover:bg-[#313131]"
+                      >
+                        <X className="fill-iconLight dark:fill-iconDark h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                      {t('common.actions.close')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <ThreadActionButton
                   icon={X}
                   label={t('common.actions.close')}
                   onClick={handleClose}
+                  className="hidden md:flex"
                 />
                 {/* <ThreadSubject subject={emailData.latest?.subject} /> */}
                 <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}
-                <div>
+                <div className="flex items-center gap-1">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handlePrevious}
+                          className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md hover:bg-white md:hidden dark:hover:bg-[#313131]"
+                        >
+                          <ChevronLeft className="fill-iconLight dark:fill-iconDark h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                        Previous email
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <ThreadActionButton
                     icon={ChevronLeft}
                     label="Previous email"
                     onClick={handlePrevious}
+                    className="hidden md:flex"
                   />
-                  <ThreadActionButton icon={ChevronRight} label="Next email" onClick={handleNext} />
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handleNext}
+                          className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md hover:bg-white md:hidden dark:hover:bg-[#313131]"
+                        >
+                          <ChevronRight className="fill-iconLight dark:fill-iconDark h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                        Next email
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <ThreadActionButton
+                    icon={ChevronRight}
+                    label="Next email"
+                    onClick={handleNext}
+                    className="hidden md:flex"
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -421,7 +482,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => moveThreadTo('bin')}
-                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5]  dark:border-[#6E2532] dark:bg-[#411D23] bg-[#FDE4E9]"
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
                       >
                         <Trash className="fill-[#F43F5E]" />
                       </button>
@@ -448,14 +509,14 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                         </div>
                       </DropdownMenuItem>
                     )} */}
-                    <DropdownMenuItem onClick={() => setIsFullscreen(!isFullscreen)}>
+                    {/* <DropdownMenuItem onClick={() => setIsFullscreen(!isFullscreen)}>
                       <Expand className="fill-iconLight dark:fill-iconDark mr-2" />
                       <span>
                         {isFullscreen
                           ? t('common.threadDisplay.exitFullscreen')
                           : t('common.threadDisplay.enterFullscreen')}
                       </span>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
 
                     {isInSpam || isInArchive || isInBin ? (
                       <DropdownMenuItem onClick={() => moveThreadTo('inbox')}>
@@ -474,8 +535,11 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 </DropdownMenu>
               </div>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col">
-              <ScrollArea className="h-full flex-1" type="auto">
+            <div className={cn('flex min-h-0 flex-1 flex-col', isMobile && 'h-full')}>
+              <ScrollArea
+                className={cn('flex-1', isMobile ? 'h-[calc(100%-1px)]' : 'h-full')}
+                type="auto"
+              >
                 <div className="pb-4">
                   {(emailData.messages || []).map((message, index) => (
                     <div

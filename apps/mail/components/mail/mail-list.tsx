@@ -719,7 +719,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const { data: session } = useSession();
   const t = useTranslations();
   const router = useRouter();
-  const [threadId, setThreadId] = useQueryState('threadId');
+  const [, setThreadId] = useQueryState('threadId');
+  const [, setDraftId] = useQueryState('draftId');
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
   const { enableScope, disableScope } = useHotkeysContext();
@@ -849,6 +850,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
       // Update URL param without navigation
       void setThreadId(messageThreadId);
+      void setDraftId(null);
       void setActiveReplyId(null);
     },
     [mail],

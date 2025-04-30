@@ -277,14 +277,14 @@ export default function HomeContent() {
           onValueChange={handleTabChange}
           className="flex w-full flex-col items-center gap-0"
         >
-          <div className="tabs-container relative hidden w-full max-w-[40rem] justify-center md:flex md:max-w-max">
+          {/* <div className="tabs-container relative hidden w-full max-w-[40rem] justify-center md:flex md:max-w-max">
             <TabsList className="relative h-fit w-full rounded-none bg-transparent pb-0 md:w-auto">
               <div className="bg-border absolute -top-4 left-0 h-[calc(100%+16px)] w-px" />
               <div className="bg-border absolute -top-4 right-0 h-[calc(100%+16px)] w-px" />
-              {/* Glow */}
+         
               <CustomTabGlow glowStyle={glowStyle} />
 
-              {/* Tab Triggers */}
+              
               {tabs.map((tab, index) => (
                 <TabsTrigger
                   key={tab.value}
@@ -298,7 +298,7 @@ export default function HomeContent() {
                 </TabsTrigger>
               ))}
             </TabsList>
-          </div>
+          </div> */}
           <div className="relative flex w-full justify-center md:border-t">
             <div className="container relative md:border-x xl:max-w-7xl">
               <PixelatedLeft

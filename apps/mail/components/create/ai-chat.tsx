@@ -42,9 +42,10 @@ interface Message {
 interface AIChatProps {
   editor: any;
   onMessagesChange?: (messages: Message[]) => void;
+  onReset?: () => void;
 }
 
-export function AIChat({ editor, onMessagesChange }: AIChatProps) {
+export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
   const [value, setValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -77,6 +78,24 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       onMessagesChange(messages);
     }
   }, [messages, onMessagesChange, scrollToBottom]);
+
+  // Add reset function
+  const resetChat = useCallback(() => {
+    setMessages([]);
+    setValue('');
+    setIsLoading(false);
+    setShowVoiceChat(false);
+    setExpandedResults(new Set());
+    if (onReset) {
+      onReset();
+    }
+  }, [onReset]);
+
+  useEffect(() => {
+    if (onReset) {
+      onReset();
+    }
+  }, [onReset]);
 
   const handleSendMessage = async () => {
     if (!value.trim() || isLoading) return;

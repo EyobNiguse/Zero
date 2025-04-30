@@ -3,7 +3,7 @@
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
-import { useState, useEffect, useContext, createContext } from 'react';
+import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { useEditor } from '@/components/providers/editor-provider';
 import { MessageSquare, PanelLeftOpen, Plus } from 'lucide-react';
 import { X } from '@/components/icons/icons';
@@ -64,6 +64,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { open, setOpen } = useAISidebar();
   const { editor } = useEditor();
   const [hasMessages, setHasMessages] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
 
   useHotkeys('Meta+0', () => {
     setOpen(!open);
@@ -72,6 +73,11 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   useHotkeys('Control+0', () => {
     setOpen(!open);
   });
+
+  const handleNewChat = useCallback(() => {
+    setResetKey(prev => prev + 1);
+    setHasMessages(false);
+  }, []);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -112,7 +118,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
-                            onClick={() => {}}
+                            onClick={handleNewChat}
                             variant="ghost"
                             className="md:h-fit md:px-2"
                           >
@@ -189,6 +195,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                     <AIChat
                       editor={editor}
                       onMessagesChange={(messages) => setHasMessages(messages.length > 0)}
+                      key={resetKey}
                     />
                   </div>
                 </div>

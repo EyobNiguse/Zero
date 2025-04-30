@@ -7,24 +7,32 @@ import {
   X,
   Sparkles,
 } from '../icons/icons';
-import { Loader, Command, Paperclip, Plus, Check, X as XIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import useComposeEditor from '@/hooks/use-compose-editor';
+import { Loader, Check, X as XIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { useState, useEffect, useRef } from 'react';
 import { aiCompose } from '@/actions/ai-composer';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
+import { createDraft } from '@/actions/drafts';
 import { Input } from '@/components/ui/input';
+import { useDraft } from '@/hooks/use-drafts';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
+import { ISendEmail } from '@/types';
 import { useQueryState } from 'nuqs';
+import { JSONContent } from 'novel';
 import pluralize from 'pluralize';
+import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import Editor from './editor';
 import { z } from 'zod';
 
 interface EmailComposerProps {
@@ -92,6 +100,8 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
+  const [draftId, setDraftId] = useQueryState('draftId');
+  // const { data: draft } = useDraft(draftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
 
@@ -192,7 +202,6 @@ export function EmailComposer({
   const ccEmails = watch('cc');
   const bccEmails = watch('bcc');
   const subjectInput = watch('subject');
-  const messageContent = watch('message');
   const attachments = watch('attachments');
 
   const handleAttachment = (files: File[]) => {
@@ -214,6 +223,7 @@ export function EmailComposer({
     initialValue: initialMessage,
     isReadOnly: isLoading,
     onLengthChange: (length) => {
+      setHasUnsavedChanges(true);
       setMessageLength(length);
     },
     onModEnter: () => {
@@ -275,6 +285,52 @@ export function EmailComposer({
       setAiIsLoading(false);
     }
   };
+
+  const saveDraft = async () => {
+    const values = getValues();
+
+    if (!hasUnsavedChanges) return;
+    console.log('DRAFT HTML', editor.getHTML());
+    const messageText = editor.getHTML();
+    console.log(values, messageText);
+    if (!values.to.length || !values.subject.length || !messageText.length) return;
+
+    try {
+      setIsLoading(true);
+      const draftData = {
+        to: values.to.join(', '),
+        cc: values.cc?.join(', '),
+        bcc: values.bcc?.join(', '),
+        subject: values.subject,
+        message: messageText,
+        attachments: values.attachments,
+        id: draftId,
+      };
+
+      const response = await createDraft(draftData);
+
+      if (response?.id && response.id !== draftId) {
+        setDraftId(response.id);
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft');
+    } finally {
+      setIsLoading(false);
+      setHasUnsavedChanges(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      console.log('timeout set');
+      saveDraft();
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [hasUnsavedChanges, saveDraft]);
 
   return (
     <div
@@ -581,12 +637,13 @@ export function EmailComposer({
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
                 onClick={handleSend}
                 disabled={
-                  isLoading || !toEmails.length || !messageContent.trim() || !subjectInput.trim()
+                  isLoading || !toEmails.length || !editor.getHTML().trim() || !subjectInput.trim()
                 }
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="text-center text-sm leading-none text-white dark:text-black">
-                    {'Send email'}
+                    <span className="hidden md:block">Send email</span>
+                    <span className="block md:hidden">Send</span>
                   </div>
                 </div>
                 <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
@@ -600,7 +657,7 @@ export function EmailComposer({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Plus className="h-3 w-3 fill-[#9A9A9A]" />
-                <span className="px-0.5 text-sm">Add files</span>
+                <span className="hidden px-0.5 text-sm md:block">Add files</span>
               </button>
 
               <Input
@@ -709,24 +766,44 @@ export function EmailComposer({
                 </div>
               </button>
             </div>
-            <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
-              <Smile className="h-3 w-3 fill-[#9A9A9A]" />
-              <span className="px-0.5 text-sm">Casual</span>
-            </button>
-            <button className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10">
-              {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
-              {messageLength >= 50 && messageLength < 200 && (
-                <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
-              )}
-              {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
-              <span className="px-0.5 text-sm">
-                {messageLength < 50
-                  ? 'short-length'
-                  : messageLength < 200
-                    ? 'medium-length'
-                    : 'long-length'}
-              </span>
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  disabled
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                >
+                  <Smile className="h-3 w-3 fill-[#9A9A9A]" />
+                  <span className="px-0.5 text-sm">Casual</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon...</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  disabled
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                >
+                  {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                  {messageLength >= 50 && messageLength < 200 && (
+                    <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
+                  )}
+                  {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                  <span className="px-0.5 text-sm">
+                    {messageLength < 50
+                      ? 'short-length'
+                      : messageLength < 200
+                        ? 'medium-length'
+                        : 'long-length'}
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon...</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>

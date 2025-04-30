@@ -31,11 +31,13 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import AttachmentsAccordion from './attachments-accordion';
 import { cn, getEmailLogo, formatDate } from '@/lib/utils';
+import { useThreadLabels } from '@/hooks/use-labels';
 import { Sender, type ParsedMessage } from '@/types';
 import AttachmentDialog from './attachment-dialog';
 import { useSummary } from '@/hooks/use-summary';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useSession } from '@/lib/auth-client';
+import { RenderLabels } from './render-labels';
 import ReplyCompose from './reply-composer';
 import { Separator } from '../ui/separator';
 import { useParams } from 'next/navigation';
@@ -287,6 +289,10 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
   const t = useTranslations();
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
   const { data: session } = useSession();
+  const { labels: threadLabels } = useThreadLabels(
+    // @ts-expect-error shutup
+    emailData.tags ? emailData.tags.map((l) => l.id) : [],
+  );
 
   useEffect(() => {
     if (!demo) {
@@ -422,17 +428,22 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
         <div className={cn('px-4', index === 0 && 'border-b py-4')}>
           {index === 0 && (
             <>
-              <p className="font-medium text-black dark:text-white">
-                {emailData.subject}{' '}
-                <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
-                  {totalEmails && `[${totalEmails}]`}
+              <span className="inline-flex items-center gap-2 font-medium text-black dark:text-white">
+                <span>
+                  {emailData.subject}{' '}
+                  <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
+                    {totalEmails && totalEmails > 1 && `[${totalEmails}]`}
+                  </span>
                 </span>
-              </p>
-              <div className="mt-2 flex items-center gap-4">
                 {emailData?.tags ? (
                   <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []} />
                 ) : null}
-                <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
+              </span>
+              <div className="mt-2 flex items-center gap-4">
+                <RenderLabels labels={threadLabels} />
+                {threadLabels.length ? (
+                  <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
+                ) : null}
                 <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
                   {(() => {
                     if (people.length <= 2) {

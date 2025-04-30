@@ -10,6 +10,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  bulkArchive,
+  bulkDeleteThread,
+  bulkStar,
+  getMail,
+  markAsImportant,
+  markAsRead,
+} from '@/actions/mail';
+import {
   Archive2,
   Bell,
   Eye,
@@ -21,13 +29,6 @@ import {
   User,
   X,
 } from '../icons/icons';
-import {
-  bulkArchive,
-  bulkDeleteThread,
-  getMail,
-  markAsImportant,
-  markAsRead,
-} from '@/actions/mail';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
@@ -394,12 +395,12 @@ export function MailLayout() {
                 if (!isOpen) handleClose();
               }}
             >
-              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100vh-4rem)] overflow-hidden p-0">
+              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-3rem)] p-0 mx-1">
                 <DrawerHeader className="sr-only">
                   <DrawerTitle>Email Details</DrawerTitle>
                 </DrawerHeader>
-                <div className="flex h-full flex-col overflow-hidden">
-                  <div className="flex-1 overflow-hidden">
+                <div className="flex h-full flex-col">
+                  <div className="h-full overflow-y-auto">
                     {threadId ? (
                       <ThreadDisplay onClose={handleClose} isMobile={true} id={threadId} />
                     ) : null}
@@ -523,7 +524,17 @@ function BulkSelectActions() {
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80">
+          <button
+            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
+            onClick={() => {
+              if (mail.bulkSelected.length === 0) return;
+              toast.promise(bulkStar({ ids: mail.bulkSelected }).then(onMoveSuccess), {
+                loading: 'Marking as starred...',
+                success: 'All done! marked as starred',
+                error: 'Something went wrong!',
+              });
+            }}
+          >
             <div className="relative overflow-visible">
               <Star2 className="fill-[#9D9D9D] stroke-[#9D9D9D] dark:stroke-[#9D9D9D]" />
             </div>
