@@ -53,7 +53,7 @@ export function MailListHotkeys() {
     } else {
       toast.info(t('common.mail.noEmailsToSelect'));
     }
-  }, [items, mail.bulkSelected, setMail, t]);
+  }, [items, mail]);
 
   const markAsRead = useCallback(() => {
     if (hoveredEmailId.current) {
@@ -111,7 +111,7 @@ export function MailListHotkeys() {
       },
       error: t('common.mail.failedToMarkAsUnread'),
     });
-  }, [mail.bulkSelected, mutate, mutateStats, t]);
+  }, [mail]);
 
   const archiveEmail = useCallback(async () => {
     if (hoveredEmailId.current) {
@@ -140,7 +140,7 @@ export function MailListHotkeys() {
       },
       error: t('common.mail.failedToArchive'),
     });
-  }, [items, mutate, t]);
+  }, [mail]);
 
   // const muteThread = useCallback(async () => {
   //   if (hoveredEmailId.current) {

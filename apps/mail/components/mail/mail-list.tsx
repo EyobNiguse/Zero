@@ -889,11 +889,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           getSelectMode() === 'range' && 'select-none',
         )}
         onMouseEnter={() => {
-          console.log('[MailList] Mouse Enter - Enabling scope: mail-list');
           enableScope('mail-list');
         }}
         onMouseLeave={() => {
-          console.log('[MailList] Mouse Leave - Disabling scope: mail-list');
           disableScope('mail-list');
         }}
       >

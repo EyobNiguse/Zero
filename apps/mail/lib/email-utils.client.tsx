@@ -7,6 +7,7 @@ import { track } from '@vercel/analytics';
 
 export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessage }) => {
   try {
+    console.log('-'.repeat(10), emailData.listUnsubscribe);
     if (emailData.listUnsubscribe) {
       const listUnsubscribeAction = getListUnsubscribeAction({
         listUnsubscribe: emailData.listUnsubscribe,
@@ -16,6 +17,7 @@ export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessag
         track('Unsubscribe', {
           domain: emailData.sender.email.split('@')?.[1] ?? 'unknown',
         });
+
         switch (listUnsubscribeAction.type) {
           case 'get':
             window.open(listUnsubscribeAction.url, '_blank');

@@ -432,7 +432,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                 <span>
                   {emailData.subject}{' '}
                   <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
-                    {totalEmails && `[${totalEmails}]`}
+                    {totalEmails && totalEmails > 1 && `[${totalEmails}]`}
                   </span>
                 </span>
                 {emailData?.tags ? (
@@ -441,7 +441,9 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
               </span>
               <div className="mt-2 flex items-center gap-4">
                 <RenderLabels labels={threadLabels} />
-                <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
+                {threadLabels.length ? (
+                  <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
+                ) : null}
                 <div className="flex items-center gap-2 text-sm text-[#6D6D6D] dark:text-[#8C8C8C]">
                   {(() => {
                     if (people.length <= 2) {

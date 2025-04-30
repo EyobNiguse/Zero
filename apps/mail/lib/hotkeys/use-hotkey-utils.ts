@@ -53,7 +53,10 @@ export const useShortcutCache = (userId?: string) => {
   };
 };
 
-const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+const isMac =
+  typeof window !== 'undefined' &&
+  (/macintosh|mac os x/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
 export const formatKeys = (keys: string[] | undefined): string => {
   if (!keys || !keys.length) return '';
@@ -192,7 +195,17 @@ export function useShortcuts(
   useHotkeys(
     shortcutString,
     (event: KeyboardEvent, hotkeysEvent) => {
-      const pressedKeys = hotkeysEvent.keys?.join('+') || '';
+      const getModifierString = (e: typeof hotkeysEvent) => {
+        const modifiers = [];
+        if (e.meta) modifiers.push('meta');
+        if (e.ctrl) modifiers.push('control');
+        if (e.alt) modifiers.push('alt');
+        if (e.shift) modifiers.push('shift');
+        return modifiers.length > 0 ? modifiers.join('+') + '+' : '';
+      };
+
+      const pressedKeys = getModifierString(hotkeysEvent) + (hotkeysEvent.keys?.join('+') || '');
+
       const matchingEntry = Object.entries(shortcutMap).find(
         ([_, shortcut]) => formatKeys(shortcut.keys) === pressedKeys,
       );
