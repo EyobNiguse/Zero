@@ -46,7 +46,7 @@ const threadDisplayShortcuts: Shortcut[] = [
     scope: 'thread-display',
   },
   {
-    keys: ['d'],
+    keys: ['meta', 'backspace'],
     action: 'delete',
     type: 'single',
     description: 'Delete email',

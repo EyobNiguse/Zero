@@ -394,13 +394,13 @@ export function ThreadContextMenu({
       ),
       action: handleFavorites,
     },
-    {
-      id: 'mute',
-      label: t('common.mail.muteThread'),
-      icon: <BellOff className="mr-2.5 h-4 w-4" />,
-      action: noopAction,
-      disabled: true, // TODO: Mute thread functionality to be implemented
-    },
+    // {
+    //   id: 'mute',
+    //   label: t('common.mail.muteThread'),
+    //   icon: <BellOff className="mr-2.5 h-4 w-4" />,
+    //   action: noopAction,
+    //   disabled: true, // TODO: Mute thread functionality to be implemented
+    // },
   ];
 
   const renderAction = (action: EmailAction) => {
