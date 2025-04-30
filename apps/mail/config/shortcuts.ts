@@ -56,13 +56,13 @@ const globalShortcuts: Shortcut[] = [
   //   description: 'Show keyboard shortcuts',
   //   scope: 'global',
   // },
-  {
-    keys: ['z'],
-    action: 'undoLastAction',
-    type: 'single',
-    description: 'Undo last action',
-    scope: 'global',
-  },
+  // {
+  //   keys: ['z'],
+  //   action: 'undoLastAction',
+  //   type: 'single',
+  //   description: 'Undo last action',
+  //   scope: 'global',
+  // },
   {
     keys: ['c'],
     action: 'newEmail',
@@ -158,14 +158,14 @@ const mailListShortcuts: Shortcut[] = [
   //   description: 'Delete email',
   //   scope: 'mail-list',
   // },
-  {
-    keys: ['mod', 'a'],
-    action: 'selectAll',
-    type: 'combination',
-    description: 'Select all emails',
-    scope: 'mail-list',
-    // preventDefault: true,
-  },
+  // {
+  //   keys: ['mod', 'a'],
+  //   action: 'selectAll',
+  //   type: 'combination',
+  //   description: 'Select all emails',
+  //   scope: 'mail-list',
+  //   preventDefault: true,
+  // },
 ];
 
 const composeShortcuts: Shortcut[] = [

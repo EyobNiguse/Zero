@@ -37,28 +37,23 @@ export function MailListHotkeys() {
     };
   }, []);
 
-  const selectAll = useCallback(
-    (e: KeyboardEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('selectAll');
-      if (mail.bulkSelected.length > 0) {
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: [],
-        }));
-      } else if (items.length > 0) {
-        const allIds = items.map((item) => item.id);
-        setMail((prev) => ({
-          ...prev,
-          bulkSelected: allIds,
-        }));
-      } else {
-        toast.info(t('common.mail.noEmailsToSelect'));
-      }
-    },
-    [items, mail.bulkSelected, setMail, t],
-  );
+  const selectAll = useCallback(() => {
+    console.log('selectAll');
+    if (mail.bulkSelected.length > 0) {
+      setMail((prev) => ({
+        ...prev,
+        bulkSelected: [],
+      }));
+    } else if (items.length > 0) {
+      const allIds = items.map((item) => item.id);
+      setMail((prev) => ({
+        ...prev,
+        bulkSelected: allIds,
+      }));
+    } else {
+      toast.info(t('common.mail.noEmailsToSelect'));
+    }
+  }, [items, mail.bulkSelected, setMail, t]);
 
   const markAsRead = useCallback(() => {
     if (hoveredEmailId.current) {
