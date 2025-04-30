@@ -13,7 +13,8 @@ import {
   Tabs,
   Users,
   ArrowLeft,
-  Danger
+  Danger,
+  Sheet,
 } from '@/components/icons/icons';
 import { SettingsGearIcon } from '@/components/icons/animated/settings-gear';
 import { ArrowLeftIcon } from '@/components/icons/animated/arrow-left';
@@ -161,7 +162,7 @@ export const navigationConfig: Record<string, NavConfig> = {
           {
             title: 'navigation.settings.labels',
             url: '/settings/labels',
-            icon: SparklesIcon,
+            icon: Sheet,
           },
           {
             title: 'navigation.settings.signatures',
@@ -173,7 +174,7 @@ export const navigationConfig: Record<string, NavConfig> = {
             title: 'navigation.settings.shortcuts',
             url: '/settings/shortcuts',
             icon: Tabs,
-            disabled: true
+            disabled: true,
           },
           // {
           //   title: 'navigation.settings.signatures',
