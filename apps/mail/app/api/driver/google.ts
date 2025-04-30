@@ -62,7 +62,7 @@ const parseDraft = (draft: gmail_v1.Schema$Draft) => {
 
   if (payload) {
     if (payload.parts) {
-      const textPart = payload.parts.find((part) => part.mimeType === 'text/plain');
+      const textPart = payload.parts.find((part) => part.mimeType === 'text/html');
       if (textPart?.body?.data) {
         content = fromBinary(textPart.body.data);
       }
@@ -70,6 +70,8 @@ const parseDraft = (draft: gmail_v1.Schema$Draft) => {
       content = fromBinary(payload.body.data);
     }
   }
+
+  // TODO: Hook up CC and BCC from the draft so it can populate the composer on open.
 
   return {
     id: draft.id || '',

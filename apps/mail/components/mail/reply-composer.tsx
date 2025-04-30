@@ -182,6 +182,19 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
         className="w-full !max-w-none border pb-1 dark:bg-[#141414]"
         onSendEmail={handleSendEmail}
         onClose={() => setMode(null)}
+        threadContent={emailData.messages.map((message) => {
+          return {
+            body: message.decodedBody ?? '',
+            from: message.sender.name ?? message.sender.email,
+            to: message.to.reduce<string[]>((to, recipient) => {
+              if (recipient.name) {
+                to.push(recipient.name);
+              }
+
+              return to;
+            }, []),
+          };
+        })}
       />
     </div>
   );
