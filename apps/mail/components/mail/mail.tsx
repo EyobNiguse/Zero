@@ -364,7 +364,7 @@ export function MailLayout() {
               <div
                 className={cn(
                   `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : 'bg-[#F59E0D]'}`,
-                  'relative bottom-0.5 z-[5] h-0.5 w-full transition-opacity',
+                  'relative bottom-0.5 z-0 z-[5] h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
               />
