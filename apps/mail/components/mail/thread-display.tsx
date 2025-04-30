@@ -359,23 +359,75 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
           <>
             <div className={cn(
               "flex flex-shrink-0 items-center border-b border-[#E7E7E7] dark:border-[#252525] px-1 pb-1 md:px-3 md:pb-[11px] md:pt-[12px]",
-              isMobile && "sticky top-0 z-10 bg-panelLight dark:bg-panelDark "
+              isMobile && "sticky top-0 z-10 bg-panelLight dark:bg-panelDark mt-2"
             )}>
               <div className="flex flex-1 items-center gap-2">
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleClose}
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md hover:bg-white dark:hover:bg-[#313131] md:hidden"
+                      >
+                        <X className="fill-iconLight dark:fill-iconDark h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                      {t('common.actions.close')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <ThreadActionButton
                   icon={X}
                   label={t('common.actions.close')}
                   onClick={handleClose}
+                  className="hidden md:flex"
                 />
                 {/* <ThreadSubject subject={emailData.latest?.subject} /> */}
                 <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}
-                <div>
+                <div className="flex items-center gap-1">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handlePrevious}
+                          className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md hover:bg-white dark:hover:bg-[#313131] md:hidden"
+                        >
+                          <ChevronLeft className="fill-iconLight dark:fill-iconDark h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                        Previous email
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <ThreadActionButton
                     icon={ChevronLeft}
                     label="Previous email"
                     onClick={handlePrevious}
+                    className="hidden md:flex"
                   />
-                  <ThreadActionButton icon={ChevronRight} label="Next email" onClick={handleNext} />
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handleNext}
+                          className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md hover:bg-white dark:hover:bg-[#313131] md:hidden"
+                        >
+                          <ChevronRight className="fill-iconLight dark:fill-iconDark h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                        Next email
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <ThreadActionButton
+                    icon={ChevronRight}
+                    label="Next email"
+                    onClick={handleNext}
+                    className="hidden md:flex"
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-2">
