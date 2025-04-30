@@ -9,21 +9,21 @@ export type Shortcut = {
   preventDefault?: boolean;
 };
 
-export const keyboardShortcuts: Shortcut[] = [
-  {
-    keys: ['c'],
-    action: 'newEmail',
-    type: 'single',
-    description: 'Compose new email',
-    scope: 'global',
-  },
-  {
-    keys: ['mod', 'Enter'],
-    action: 'sendEmail',
-    type: 'combination',
-    description: 'Send email',
-    scope: 'compose',
-  },
+const threadDisplayShortcuts: Shortcut[] = [
+  // {
+  //   keys: ['i'],
+  //   action: 'viewEmailDetails',
+  //   type: 'single',
+  //   description: 'View email details',
+  //   scope: 'thread-display',
+  // },
+  // {
+  //   keys: ['mod', 'p'],
+  //   action: 'printEmail',
+  //   type: 'combination',
+  //   description: 'Print email',
+  //   scope: 'thread-display',
+  // },
   {
     keys: ['r'],
     action: 'reply',
@@ -44,6 +44,39 @@ export const keyboardShortcuts: Shortcut[] = [
     type: 'single',
     description: 'Forward email',
     scope: 'thread-display',
+  },
+  {
+    keys: ['d'],
+    action: 'delete',
+    type: 'single',
+    description: 'Delete email',
+    scope: 'thread-display',
+  },
+];
+
+const globalShortcuts: Shortcut[] = [
+  // { keys: ['/'], action: 'search', type: 'single', description: 'Search', scope: 'global' },
+  // {
+  //   keys: ['?'],
+  //   action: 'helpWithShortcuts',
+  //   type: 'single',
+  //   description: 'Show keyboard shortcuts',
+  //   scope: 'global',
+  // },
+  // {
+  //   keys: ['z'],
+  //   action: 'undoLastAction',
+  //   type: 'single',
+  //   description: 'Undo last action',
+  //   scope: 'global',
+  // },
+  {
+    keys: ['c'],
+    action: 'newEmail',
+    type: 'single',
+    description: 'Compose new email',
+    scope: 'global',
+    preventDefault: true,
   },
   {
     keys: ['g', 'd'],
@@ -67,13 +100,22 @@ export const keyboardShortcuts: Shortcut[] = [
     scope: 'global',
   },
   {
-    keys: ['#'],
-    action: 'delete',
+    keys: ['mod', 'k'],
+    action: 'commandPalette',
+    type: 'combination',
+    description: 'Open command palette',
+    scope: 'global',
+  },
+];
+
+const mailListShortcuts: Shortcut[] = [
+  {
+    keys: ['r'],
+    action: 'markAsRead',
     type: 'single',
-    description: 'Delete email',
+    description: 'Mark as read',
     scope: 'mail-list',
   },
-  { keys: ['/'], action: 'search', type: 'single', description: 'Search', scope: 'global' },
   {
     keys: ['u'],
     action: 'markAsUnread',
@@ -89,67 +131,64 @@ export const keyboardShortcuts: Shortcut[] = [
     scope: 'mail-list',
   },
   {
-    keys: ['mod', 'p'],
-    action: 'printEmail',
-    type: 'combination',
-    description: 'Print email',
-    scope: 'thread-display',
-  },
-  {
     keys: ['e'],
     action: 'archiveEmail',
     type: 'single',
     description: 'Archive email',
     scope: 'mail-list',
   },
+  // {
+  //   keys: ['!'],
+  //   action: 'markAsSpam',
+  //   type: 'single',
+  //   description: 'Mark as spam',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: ['v'],
+  //   action: 'moveToFolder',
+  //   type: 'single',
+  //   description: 'Move to folder',
+  //   scope: 'mail-list',
+  // },
+
+  // {
+  //   keys: ['o'],
+  //   action: 'expandEmailView',
+  //   type: 'single',
+  //   description: 'Expand email view',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: ['#'],
+  //   action: 'delete',
+  //   type: 'single',
+  //   description: 'Delete email',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: ['mod', 'a'],
+  //   action: 'selectAll',
+  //   type: 'combination',
+  //   description: 'Select all emails',
+  //   scope: 'mail-list',
+  //   preventDefault: true,
+  // },
+];
+
+const composeShortcuts: Shortcut[] = [
   {
-    keys: ['!'],
-    action: 'markAsSpam',
-    type: 'single',
-    description: 'Mark as spam',
-    scope: 'mail-list',
-  },
-  {
-    keys: ['v'],
-    action: 'moveToFolder',
-    type: 'single',
-    description: 'Move to folder',
-    scope: 'mail-list',
-  },
-  {
-    keys: ['z'],
-    action: 'undoLastAction',
-    type: 'single',
-    description: 'Undo last action',
-    scope: 'global',
-  },
-  {
-    keys: ['i'],
-    action: 'viewEmailDetails',
-    type: 'single',
-    description: 'View email details',
-    scope: 'thread-display',
-  },
-  {
-    keys: ['o'],
-    action: 'expandEmailView',
-    type: 'single',
-    description: 'Expand email view',
-    scope: 'mail-list',
-  },
-  {
-    keys: ['?'],
-    action: 'helpWithShortcuts',
-    type: 'single',
-    description: 'Show keyboard shortcuts',
-    scope: 'global',
-  },
-  {
-    keys: ['mod', 'a'],
-    action: 'selectAll',
+    keys: ['mod', 'Enter'],
+    action: 'sendEmail',
     type: 'combination',
-    description: 'Select all emails',
-    scope: 'mail-list',
-    preventDefault: true,
+    description: 'Send email',
+    scope: 'compose',
   },
+];
+
+export const keyboardShortcuts: Shortcut[] = [
+  ...threadDisplayShortcuts,
+  ...globalShortcuts,
+  ...mailListShortcuts,
+  ...composeShortcuts,
 ];

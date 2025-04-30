@@ -174,7 +174,6 @@ export const navigationConfig: Record<string, NavConfig> = {
             title: 'navigation.settings.shortcuts',
             url: '/settings/shortcuts',
             icon: Tabs,
-            disabled: true,
           },
           // {
           //   title: 'navigation.settings.signatures',
