@@ -27,7 +27,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
   const t = useTranslations();
   const [draftId] = useQueryState('draftId');
-  const { data: draft } = useDraft(draftId ?? null);
+  const { data: draft, isLoading: isDraftLoading } = useDraft(draftId ?? null);
 
   // Find the specific message to reply to
   const replyToMessage =
@@ -180,6 +180,10 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   }, [mode, enableScope, disableScope]);
 
   if (!mode || !emailData) return null;
+
+  if (draftId && isDraftLoading) {
+    return null;
+  }
 
   return (
     <div className="w-full rounded-xl bg-white dark:bg-[#141414]">
