@@ -227,7 +227,7 @@ const Thread = memo(
               ? t('common.actions.movedToSpam')
               : destination === 'bin'
                 ? t('common.actions.movedToBin')
-                : t('common.actions.archived')
+                : t('common.actions.archived'),
         );
         toast.promise(promise, {
           error: t('common.actions.failedToMove'),
@@ -887,11 +887,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           getSelectMode() === 'range' && 'select-none',
         )}
         onMouseEnter={() => {
-          console.log('[MailList] Mouse Enter - Enabling scope: mail-list');
           enableScope('mail-list');
         }}
         onMouseLeave={() => {
-          console.log('[MailList] Mouse Leave - Disabling scope: mail-list');
           disableScope('mail-list');
         }}
       >
