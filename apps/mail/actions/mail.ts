@@ -159,3 +159,36 @@ export const bulkArchive = async ({ ids }: { ids: string[] }) => {
     throw error;
   }
 };
+
+export const bulkStar = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: ['STARRED'], removeLabels: [] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as starred:', error);
+    throw error;
+  }
+};
+
+export const bulkUnstar = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: [], removeLabels: ['STARRED'] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as unstarred:', error);
+    throw error;
+  }
+};
+
+export const muteThread = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: ['MUTE'], removeLabels: [] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as muted:', error);
+    throw error;
+  }
+};
