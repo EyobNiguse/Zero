@@ -604,15 +604,21 @@ const Thread = memo(
                           'text-md flex items-baseline gap-1 group-hover:opacity-100',
                         )}
                       >
-                        <span className={cn('max-w-[18ch] truncate text-sm')}>
-                          {highlightText(
-                            cleanNameDisplay(latestMessage.sender.name) || '',
-                            searchValue.highlight,
-                          )}
-                        </span>{' '}
-                        <span className="flex items-center space-x-2">
-                          <RenderLabels labels={threadLabels} />
-                        </span>
+                        {isFolderSent ? (
+                          <span>{highlightText(latestMessage.subject, searchValue.highlight)}</span>
+                        ) : (
+                          <span className={cn('max-w-[18ch] truncate text-sm')}>
+                            {highlightText(
+                              cleanNameDisplay(latestMessage.sender.name) || '',
+                              searchValue.highlight,
+                            )}
+                          </span>
+                        )}{' '}
+                        {!isFolderSent ? (
+                          <span className="flex items-center space-x-2">
+                            <RenderLabels labels={threadLabels} />
+                          </span>
+                        ) : null}
                       </span>
                       {getThreadData.totalReplies > 1 ? (
                         <Tooltip>
@@ -639,13 +645,23 @@ const Thread = memo(
                     ) : null}
                   </div>
                   <div className="flex justify-between">
-                    <p
-                      className={cn(
-                        'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[25ch]',
-                      )}
-                    >
-                      {highlightText(latestMessage.subject, searchValue.highlight)}
-                    </p>
+                    {isFolderSent ? (
+                      <p
+                        className={cn(
+                          'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[25ch]',
+                        )}
+                      >
+                        {latestMessage.to.map((e) => e.email).join(', ')}
+                      </p>
+                    ) : (
+                      <p
+                        className={cn(
+                          'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[25ch]',
+                        )}
+                      >
+                        {highlightText(latestMessage.subject, searchValue.highlight)}
+                      </p>
+                    )}
                     {labels ? <MailLabels labels={labels} /> : null}
                   </div>
                   {emailContent && (
