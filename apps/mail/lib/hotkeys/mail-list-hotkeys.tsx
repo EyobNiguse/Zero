@@ -142,41 +142,41 @@ export function MailListHotkeys() {
     });
   }, [items, mutate, t]);
 
-  const muteThread = useCallback(async () => {
-    if (hoveredEmailId.current) {
-      toast.promise(muteThreadAction({ ids: [hoveredEmailId.current] }), {
-        loading: t('common.actions.loading'),
-        success: async () => {
-          await Promise.all([mutate(), mutateStats()]);
-          return t('common.mail.muted');
-        },
-        error: t('common.mail.failedToMute'),
-      });
-      return;
-    }
+  // const muteThread = useCallback(async () => {
+  //   if (hoveredEmailId.current) {
+  //     toast.promise(muteThreadAction({ ids: [hoveredEmailId.current] }), {
+  //       loading: t('common.actions.loading'),
+  //       success: async () => {
+  //         await Promise.all([mutate(), mutateStats()]);
+  //         return t('common.mail.muted');
+  //       },
+  //       error: t('common.mail.failedToMute'),
+  //     });
+  //     return;
+  //   }
 
-    const idsToMark = mail.bulkSelected;
-    if (idsToMark.length === 0) {
-      toast.info(t('common.mail.noEmailsToSelect'));
-      return;
-    }
+  //   const idsToMark = mail.bulkSelected;
+  //   if (idsToMark.length === 0) {
+  //     toast.info(t('common.mail.noEmailsToSelect'));
+  //     return;
+  //   }
 
-    toast.promise(muteThreadAction({ ids: idsToMark }), {
-      loading: t('common.actions.loading'),
-      success: async () => {
-        await Promise.all([mutate(), mutateStats()]);
-        return t('common.mail.muted');
-      },
-      error: t('common.mail.failedToMute'),
-    });
-  }, [items, mutate, t]);
+  //   toast.promise(muteThreadAction({ ids: idsToMark }), {
+  //     loading: t('common.actions.loading'),
+  //     success: async () => {
+  //       await Promise.all([mutate(), mutateStats()]);
+  //       return t('common.mail.muted');
+  //     },
+  //     error: t('common.mail.failedToMute'),
+  //   });
+  // }, [items, mutate, t]);
 
   const handlers = {
     markAsRead,
     markAsUnread,
     selectAll,
     archiveEmail,
-    muteThread,
+    // muteThread,
   };
 
   const mailListShortcuts = keyboardShortcuts.filter((shortcut) => shortcut.scope === scope);
