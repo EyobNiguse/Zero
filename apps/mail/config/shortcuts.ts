@@ -24,27 +24,34 @@ const threadDisplayShortcuts: Shortcut[] = [
   //   description: 'Print email',
   //   scope: 'thread-display',
   // },
-  // {
-  //   keys: ['r'],
-  //   action: 'reply',
-  //   type: 'single',
-  //   description: 'Reply to email',
-  //   scope: 'thread-display',
-  // },
-  // {
-  //   keys: ['a'],
-  //   action: 'replyAll',
-  //   type: 'single',
-  //   description: 'Reply all',
-  //   scope: 'thread-display',
-  // },
-  // {
-  //   keys: ['f'],
-  //   action: 'forward',
-  //   type: 'single',
-  //   description: 'Forward email',
-  //   scope: 'thread-display',
-  // },
+  {
+    keys: ['r'],
+    action: 'reply',
+    type: 'single',
+    description: 'Reply to email',
+    scope: 'thread-display',
+  },
+  {
+    keys: ['a'],
+    action: 'replyAll',
+    type: 'single',
+    description: 'Reply all',
+    scope: 'thread-display',
+  },
+  {
+    keys: ['f'],
+    action: 'forward',
+    type: 'single',
+    description: 'Forward email',
+    scope: 'thread-display',
+  },
+  {
+    keys: ['d'],
+    action: 'delete',
+    type: 'single',
+    description: 'Delete email',
+    scope: 'thread-display',
+  },
 ];
 
 const globalShortcuts: Shortcut[] = [
