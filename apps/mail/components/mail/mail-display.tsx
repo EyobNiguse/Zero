@@ -428,7 +428,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
         <div className={cn('px-4', index === 0 && 'border-b py-4')}>
           {index === 0 && (
             <>
-              <p className="inline-flex items-center gap-2 font-medium text-black dark:text-white">
+              <span className="inline-flex items-center gap-2 font-medium text-black dark:text-white">
                 <span>
                   {emailData.subject}{' '}
                   <span className="text-[#6D6D6D] dark:text-[#8C8C8C]">
@@ -438,7 +438,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                 {emailData?.tags ? (
                   <MailDisplayLabels labels={emailData?.tags.map((t) => t.name) || []} />
                 ) : null}
-              </p>
+              </span>
               <div className="mt-2 flex items-center gap-4">
                 <RenderLabels labels={threadLabels} />
                 <div className="bg-iconLight dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full" />
