@@ -224,7 +224,7 @@ export default function LabelsPage() {
                               backgroundColor: label.color?.backgroundColor,
                             }}
                           >
-                            <span className="dark:text-whitemix-blend-difference text-black">
+                            <span className="dark:text-whitemix-blend-difference darK:text-black">
                               {label.name}
                             </span>
                           </Badge>
