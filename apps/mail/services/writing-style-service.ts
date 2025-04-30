@@ -17,42 +17,142 @@ const TAKE_TOP_K = 12;
 // numbers—sample count, current mean, and cumulative squared deviation (M₂). Therefore, each new value
 // can be processed the moment it arrives, with no need to store earlier data, while maintaining high
 // numerical accuracy.
-const MEAN_METRIC_KEYS = [
-  'avgSentenceLen', // average number of words in one sentence
-  'avgParagraphLen', // average number of words in one paragraph
-  'listUsageRatio', // fraction of lines that use bullets or numbers
-  'passiveVoiceRatio', // fraction of sentences written in passive voice
-  'sentimentScore', // overall feeling from −1 negative to 1 positive
-  'politenessScore', // how often polite words like please appear
-  'confidenceScore', // how strongly the writer sounds sure of themself
-  'urgencyScore', // how urgent or time-sensitive the wording is
-  'empathyScore', // how much care or concern is shown for others
-  'formalityScore', // how formal versus casual the language is
-  'hedgingRatio', // share of softeners like maybe or might per sentence
-  'intensifierRatio', // share of strong words like very or extremely per sentence
-  'readabilityFlesch', // flesch reading ease score higher means simpler to read (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests)
-  'lexicalDiversity', // unique words divided by total words
-  'jargonRatio', // fraction of technical or buzzword terms
-  'exclamationFreq', // exclamation marks per 100 words
-  'slangRatio', // fraction of slang words like vibe or wanna
-  'contractionRatio', // fraction of words that use apostrophe contractions
-  'lowercaseSentenceStartRatio', // fraction of sentences that begin with a lowercase letter
-  'emojiDensity', // emoji characters per 100 words in the body
-  'casualPunctuationRatio', // share of informal punctuation like "!!" or "?!"
-  'capConsistencyScore', // fraction of sentences that start with a capital letter
-  'phaticPhraseRatio', // share of small-talk phrases like "hope you are well"
+export const MEAN_METRIC_KEYS = [
+  'averageSentenceLength', // average number of words per sentence
+  'averageLinesPerParagraph', // average number of lines per paragraph
+  'averageWordLength', // average number of characters per token
+  'typeTokenRatio', // lexical-diversity ratio (unique/total)
+  'movingAverageTtr', // MTLD lexical-diversity metric
+  'hapaxProportion', // share of words that appear exactly once
+  'shannonEntropy', // entropy of unigram distribution
+  'lexicalDensity', // content words divided by total words
+  'contractionRate', // apostrophe contractions per 1 000 tokens
+  'subordinationRatio', // subordinate clauses ÷ total clauses
+  'passiveVoiceRate', // passive sentences per 1 000 tokens
+  'modalVerbRate', // modals like “could” per 1 000 tokens
+  'parseTreeDepthMean', // mean depth of constituency parse trees
+  'commasPerSentence', // commas per sentence
+  'exclamationPerThousandWords', // “!” per 1 000 tokens
+  'questionMarkRate', // “?” per 1 000 tokens
+  'ellipsisRate', // “…” per 1 000 tokens
+  'parenthesesRate', // parentheses per 1 000 tokens
+  'emojiRate', // emoji per 1 000 tokens
+  'sentimentPolarity', // −1 negative … 1 positive
+  'sentimentSubjectivity', // 0 objective … 1 subjective
+  'formalityScore', // 0 casual … 100 formal
+  'hedgeRate', // hedges per 1 000 tokens
+  'certaintyRate', // certainty markers per 1 000 tokens
+  'fleschReadingEase', // Flesch reading-ease score
+  'gunningFogIndex', // Gunning-Fog readability index
+  'smogIndex', // SMOG readability index
+  'averageForwardReferences', // forward references per sentence
+  'cohesionIndex', // semantic cohesion 0–1
+  'firstPersonSingularRate', // “I/me/my” per 1 000 tokens
+  'firstPersonPluralRate', // “we/our/us” per 1 000 tokens
+  'secondPersonRate', // “you/your” per 1 000 tokens
+  'selfReferenceRatio', // first-person pronouns ÷ total pronouns
+  'empathyPhraseRate', // empathic phrases per 1 000 tokens
+  'humorMarkerRate', // humour markers per 1 000 tokens
+  'markupBoldRate', // **bold** markers per 1 000 tokens
+  'markupItalicRate', // *italic* markers per 1 000 tokens
+  'hyperlinkRate', // hyperlinks per 1 000 tokens
+  'codeBlockRate', // fenced code blocks per 1 000 tokens
+  'rhetoricalQuestionRate', // rhetorical “?” per 1 000 tokens
+  'analogyRate', // analogies per 1 000 tokens
+  'imperativeSentenceRate', // imperatives per 1 000 tokens
+  'expletiveOpeningRate', // openings like “there is” per 1 000 tokens
+  'parallelismRate', // parallel syntactic patterns per 1 000 tokens
 ] as const;
 
-const SUM_METRIC_KEYS = [
-  'questionCount', // total question marks in the body
-  'ctaCount', // number of direct requests for action
-  'emojiCount', // total emoji characters in the body
-  'honorificPresence', // 1 if titles like "mr" or "dr" appear otherwise 0
-  'greetingTotal', // total number of greetings
-  'signOffTotal', // total number of sign offs
+export const SUM_METRIC_KEYS = [
+  'tokenTotal', // total tokens in the email body
+  'charTotal', // total characters in the body
+  'paragraphs', // number of paragraph blocks
+  'bulletListPresent', // 1 if any bullet/numbered list present, else 0
+  'greetingPresent', // 1 if greeting line present, else 0
+  'signOffPresent', // 1 if sign-off line present, else 0
 ] as const;
 
-const TOP_COUNTS_KEYS = ['greeting', 'signOff'] as const;
+export const TOP_COUNTS_KEYS = [
+  'greetingForm', // most-used greeting phrase → frequency map
+  'signOffForm', // most-used sign-off phrase → frequency map
+] as const;
+
+const schema = z.object({
+  /* greeting & sign-off */
+  greetingForm: z.string(), // empty string if absent
+  signOffForm: z.string(),
+  greetingPresent: z.number().int().min(0).max(1),
+  signOffPresent: z.number().int().min(0).max(1),
+
+  /* simple totals & flags */
+  tokenTotal: z.number().int().nonnegative(),
+  charTotal: z.number().int().nonnegative(),
+  paragraphs: z.number().int().nonnegative(),
+  bulletListPresent: z.number().int().min(0).max(1),
+
+  /* structural averages */
+  averageSentenceLength: z.number().nonnegative(),
+  averageLinesPerParagraph: z.number().nonnegative(),
+  averageWordLength: z.number().nonnegative(),
+
+  /* vocabulary & diversity */
+  typeTokenRatio: z.number().min(0).max(1),
+  movingAverageTtr: z.number().min(0),
+  hapaxProportion: z.number().min(0).max(1),
+  shannonEntropy: z.number().min(0),
+  lexicalDensity: z.number().min(0).max(1),
+  contractionRate: z.number().min(0), // per-1000-token rate
+
+  /* syntax & grammar */
+  subordinationRatio: z.number().min(0).max(1),
+  passiveVoiceRate: z.number().min(0),
+  modalVerbRate: z.number().min(0),
+  parseTreeDepthMean: z.number().min(0),
+
+  /* punctuation & symbols */
+  commasPerSentence: z.number().min(0),
+  exclamationPerThousandWords: z.number().min(0),
+  questionMarkRate: z.number().min(0),
+  ellipsisRate: z.number().min(0),
+  parenthesesRate: z.number().min(0),
+  emojiRate: z.number().min(0),
+
+  /* tone */
+  sentimentPolarity: z.number().min(-1).max(1),
+  sentimentSubjectivity: z.number().min(0).max(1),
+  formalityScore: z.number().min(0).max(100),
+  hedgeRate: z.number().min(0),
+  certaintyRate: z.number().min(0),
+
+  /* readability & flow */
+  fleschReadingEase: z.number(),
+  gunningFogIndex: z.number(),
+  smogIndex: z.number(),
+  averageForwardReferences: z.number().min(0),
+  cohesionIndex: z.number().min(0).max(1),
+
+  /* persona markers */
+  firstPersonSingularRate: z.number().min(0),
+  firstPersonPluralRate: z.number().min(0),
+  secondPersonRate: z.number().min(0),
+  selfReferenceRatio: z.number().min(0).max(1),
+  empathyPhraseRate: z.number().min(0),
+  humorMarkerRate: z.number().min(0),
+
+  /* formatting habits */
+  markupBoldRate: z.number().min(0),
+  markupItalicRate: z.number().min(0),
+  hyperlinkRate: z.number().min(0),
+  codeBlockRate: z.number().min(0),
+
+  /* rhetorical devices */
+  rhetoricalQuestionRate: z.number().min(0),
+  analogyRate: z.number().min(0),
+  imperativeSentenceRate: z.number().min(0),
+  expletiveOpeningRate: z.number().min(0),
+  parallelismRate: z.number().min(0),
+});
 
 export const getWritingStyleMatrixForConnectionId = async (connectionId: string) => {
   return await db.query.writingStyleMatrix.findFirst({
@@ -210,51 +310,6 @@ const extractStyleMatrix = async (emailBody: string) => {
     throw new Error('Invalid body provided.');
   }
 
-  const schema = z.object({
-    // greeting and sign-off may be absent
-    greeting: z.string().nullable(),
-    signOff: z.string().nullable(),
-
-    // structural
-    avgSentenceLen: z.number(),
-    avgParagraphLen: z.number(),
-    listUsageRatio: z.number().min(0).max(1),
-
-    // tone
-    sentimentScore: z.number().min(-1).max(1),
-    politenessScore: z.number().min(0).max(1),
-    confidenceScore: z.number().min(0).max(1),
-    urgencyScore: z.number().min(0).max(1),
-    empathyScore: z.number().min(0).max(1),
-    formalityScore: z.number().min(0).max(1),
-
-    // style ratios
-    passiveVoiceRatio: z.number().min(0).max(1),
-    hedgingRatio: z.number().min(0).max(1),
-    intensifierRatio: z.number().min(0).max(1),
-
-    // readability and vocabulary
-    readabilityFlesch: z.number(),
-    lexicalDiversity: z.number().min(0).max(1),
-    jargonRatio: z.number().min(0).max(1),
-
-    // engagement cues
-    questionCount: z.number().int().nonnegative(),
-    ctaCount: z.number().int().nonnegative(),
-    emojiCount: z.number().int().nonnegative(),
-    exclamationFreq: z.number(),
-
-    // casual-vs-formal extensions
-    slangRatio: z.number().min(0).max(1),
-    contractionRatio: z.number().min(0).max(1),
-    lowercaseSentenceStartRatio: z.number().min(0).max(1),
-    emojiDensity: z.number().min(0),
-    casualPunctuationRatio: z.number().min(0).max(1),
-    capConsistencyScore: z.number().min(0).max(1),
-    honorificPresence: z.number().int().min(0).max(1),
-    phaticPhraseRatio: z.number().min(0).max(1),
-  });
-
   const { object: result } = await generateObject({
     model: google('gemini-2.0-flash'),
     schema,
@@ -281,30 +336,8 @@ const extractStyleMatrix = async (emailBody: string) => {
     },
   });
 
-  // const prompt = ChatPromptTemplate.fromMessages([
-  //   ['system', StyleMatrixExtractorPrompt()],
-  //   ['human', '{input}'],
-  // ]);
-  // const llm = new ChatGroq({
-  //   model: 'gemma2-9b-it',
-  //   temperature: 0,
-  //   maxTokens: 600,
-  //   maxRetries: 5,
-  // }).bind({
-  //   response_format: {
-  //     type: 'json_object',
-  //   },
-  // });
-  //
-  // const parser = new JsonOutputParser<z.infer<typeof schema>>();
-  // const chain = prompt.pipe(llm).pipe(parser);
-  //
-  // const result = await chain.invoke({
-  //   input: emailBody.trim(),
-  // });
-
-  const greeting = result.greeting?.trim().toLowerCase();
-  const signOff = result.signOff?.trim().toLowerCase();
+  const greeting = result.greetingForm?.trim().toLowerCase();
+  const signOff = result.signOffForm?.trim().toLowerCase();
   return {
     ...result,
     greeting: greeting ?? null,
@@ -316,145 +349,172 @@ const extractStyleMatrix = async (emailBody: string) => {
 
 const StyleMatrixExtractorPrompt = () => `
 <system_prompt>
-    <role>
-        You are StyleMetricExtractor, a tool that distills writing-style metrics from a single email.
-    </role>
+  <role>
+    You are <b>StyleMetricExtractor</b>, a deterministic tool that distills
+    writing-style metrics from a single email.
+  </role>
 
-    <instructions>
-        <goal>
-            Treat the entire incoming message as one email body, extract every metric below, and reply with a minified JSON object whose keys appear in the exact order shown.
-        </goal>
+  <instructions>
+    <goal>
+      Treat the entire incoming message as one email body, extract every metric
+      listed below, and reply with a minified JSON object whose keys appear in
+      the exact order shown.
+    </goal>
 
-        <tasks>
-            <item>Identify and calculate each metric.</item>
-            <item>Supply neutral defaults when a metric is absent (string → "", float → 0, int → 0).</item>
-            <item>Return only the JSON, with no commentary, extra keys, or whitespace outside the object.</item>
-            <!-- new -->
-            <item>Ensure all 33 metrics appear exactly once, in order, using correct JSON types (strings quoted, numbers bare). Do not output NaN, null, or omit any key.</item>
-            <item>Guarantee the output parses as valid JSON in any standard JSON parser.</item>
-        </tasks>
+    <tasks>
+      <item>Identify and calculate each metric.</item>
+      <item>Supply neutral defaults when a metric is absent (string → "", float → 0, int → 0).</item>
+      <item>Return only the JSON — no commentary, no extra keys, no whitespace outside the object.</item>
+      <item>Ensure all <b>52 metrics</b> appear exactly once, in order, using correct JSON types
+            (strings quoted, numbers bare). Do not output NaN, null, or omit any key.</item>
+      <item>Guarantee the output parses as valid JSON in every standard parser.
+            The braces <code>{ }</code> must be the first and last characters.</item>
+    </tasks>
 
-        <metrics>
-            <!-- core markers -->
-            <metric key="greeting"                        type="string" />
-            <metric key="signOff"                         type="string" />
-            <metric key="greetingTotal"                   type="int"    />
-            <metric key="signOffTotal"                    type="int"    />
+    <!-- ─────────────────────────────────────────────────────── -->
+    <!--                     METRIC ORDER                       -->
+    <!-- ─────────────────────────────────────────────────────── -->
+    <metrics>
+      <!-- greeting / sign-off (strings + flags) -->
+      <metric key="greetingForm"                type="string"/>
+      <metric key="signOffForm"                 type="string"/>
+      <metric key="greetingPresent"             type="int"/>
+      <metric key="signOffPresent"              type="int"/>
 
-            <!-- structure and layout -->
-            <metric key="avgSentenceLen"                  type="float"  />
-            <metric key="avgParagraphLen"                 type="float"  />
-            <metric key="listUsageRatio"                  type="float"  />
+      <!-- simple totals & flags -->
+      <metric key="tokenTotal"                  type="int"/>
+      <metric key="charTotal"                   type="int"/>
+      <metric key="paragraphs"                  type="int"/>
+      <metric key="bulletListPresent"           type="int"/>
 
-            <!-- tone sliders -->
-            <metric key="sentimentScore"                  type="float"  />
-            <metric key="politenessScore"                 type="float"  />
-            <metric key="confidenceScore"                 type="float"  />
-            <metric key="urgencyScore"                    type="float"  />
-            <metric key="empathyScore"                    type="float"  />
-            <metric key="formalityScore"                  type="float"  />
+      <!-- structural averages -->
+      <metric key="averageSentenceLength"       type="float"/>
+      <metric key="averageLinesPerParagraph"    type="float"/>
+      <metric key="averageWordLength"           type="float"/>
 
-            <!-- style ratios -->
-            <metric key="passiveVoiceRatio"               type="float"  />
-            <metric key="hedgingRatio"                    type="float"  />
-            <metric key="intensifierRatio"                type="float"  />
-            <metric key="slangRatio"                      type="float"  />
-            <metric key="contractionRatio"                type="float"  />
-            <metric key="lowercaseSentenceStartRatio"     type="float"  />
-            <metric key="casualPunctuationRatio"          type="float"  />
-            <metric key="capConsistencyScore"             type="float"  />
+      <!-- vocabulary & diversity -->
+      <metric key="typeTokenRatio"              type="float"/>
+      <metric key="movingAverageTtr"            type="float"/>
+      <metric key="hapaxProportion"             type="float"/>
+      <metric key="shannonEntropy"              type="float"/>
+      <metric key="lexicalDensity"              type="float"/>
+      <metric key="contractionRate"             type="float"/>
 
-            <!-- readability and vocabulary -->
-            <metric key="readabilityFlesch"               type="float"  />
-            <metric key="lexicalDiversity"                type="float"  />
-            <metric key="jargonRatio"                     type="float"  />
+      <!-- syntax & grammar -->
+      <metric key="subordinationRatio"          type="float"/>
+      <metric key="passiveVoiceRate"            type="float"/>
+      <metric key="modalVerbRate"               type="float"/>
+      <metric key="parseTreeDepthMean"          type="float"/>
 
-            <!-- engagement cues -->
-            <metric key="questionCount"                   type="int"    />
-            <metric key="ctaCount"                        type="int"    />
-            <metric key="emojiCount"                      type="int"    />
-            <metric key="emojiDensity"                    type="float"  <metric key="exclamationFreq"                 type="float"  />
+      <!-- punctuation & symbols -->
+      <metric key="commasPerSentence"           type="float"/>
+      <metric key="exclamationPerThousandWords" type="float"/>
+      <metric key="questionMarkRate"            type="float"/>
+      <metric key="ellipsisRate"                type="float"/>
+      <metric key="parenthesesRate"             type="float"/>
+      <metric key="emojiRate"                   type="float"/>
 
-            <!-- subject line specifics -->
-            <metric key="subjectEmojiCount"               type="int"    />
-            <metric key="subjectInformalityScore"         type="float"  />
+      <!-- tone -->
+      <metric key="sentimentPolarity"           type="float"/>
+      <metric key="sentimentSubjectivity"       type="float"/>
+      <metric key="formalityScore"              type="float"/>
+      <metric key="hedgeRate"                   type="float"/>
+      <metric key="certaintyRate"               type="float"/>
 
-            <!-- other markers -->
-            <metric key="honorificPresence"               type="int"    />
-            <metric key="phaticPhraseRatio"               type="float"  />
-        </metrics>
+      <!-- readability & flow -->
+      <metric key="fleschReadingEase"           type="float"/>
+      <metric key="gunningFogIndex"             type="float"/>
+      <metric key="smogIndex"                   type="float"/>
+      <metric key="averageForwardReferences"    type="float"/>
+      <metric key="cohesionIndex"               type="float"/>
 
-        <extraction_guidelines>
-            <!-- string metrics -->
-            <item>greeting: the salutation, make sure to not include names.</item>
-            <item>signOff: last word or phrase before the signature block or end of text. Remove any names or personal titles. Lower-case the result.</item>
-            <!-- greeting/sign-off presence flags -->
-            <item>greetingTotal: 1 if greeting is not empty, else 0.</item>
-            <item>signOffTotal: 1 if signOff is not empty, else 0.</item>
+      <!-- persona markers -->
+      <metric key="firstPersonSingularRate"     type="float"/>
+      <metric key="firstPersonPluralRate"       type="float"/>
+      <metric key="secondPersonRate"            type="float"/>
+      <metric key="selfReferenceRatio"          type="float"/>
+      <metric key="empathyPhraseRate"           type="float"/>
+      <metric key="humorMarkerRate"             type="float"/>
 
-            <!-- structure -->
-            <item>avgSentenceLen: number of words per sentence (split on . ! ?).</item>
-            <item>avgParagraphLen: number of words per paragraph (split on two or more line breaks).</item>
-            <item>listUsageRatio: bulleted or numbered lines divided by paragraphs, clamp 0-1.</item>
+      <!-- formatting habits -->
+      <metric key="markupBoldRate"              type="float"/>
+      <metric key="markupItalicRate"            type="float"/>
+      <metric key="hyperlinkRate"               type="float"/>
+      <metric key="codeBlockRate"               type="float"/>
 
-            <!-- tone -->
-            <item>sentimentScore: scale −1 very negative to 1 very positive.</item>
-            <item>politenessScore: 0 blunt to 1 very polite (please, thank you, modal verbs).</item>
-            <item>confidenceScore: 0 uncertain to 1 very confident (few hedges, decisive verbs).</item>
-            <item>urgencyScore: 0 relaxed to 1 urgent (words like urgent, asap, high exclamationFreq).</item>
-            <item>empathyScore: 0 detached to 1 empathetic (apologies, supportive phrases).</item>
-            <item>formalityScore: 0 casual to 1 formal (contractions lower score, honorifics raise score).</item>
+      <!-- rhetorical devices -->
+      <metric key="rhetoricalQuestionRate"      type="float"/>
+      <metric key="analogyRate"                 type="float"/>
+      <metric key="imperativeSentenceRate"      type="float"/>
+      <metric key="expletiveOpeningRate"        type="float"/>
+      <metric key="parallelismRate"             type="float"/>
+    </metrics>
 
-            <!-- style ratios -->
-            <item>passiveVoiceRatio: passive sentences divided by total sentences, clamp 0-1.</item>
-            <item>hedgingRatio: hedging words (might, maybe, could) per sentence, clamp 0-1.</item>
-            <item>intensifierRatio: intensifiers (very, extremely) per sentence, clamp 0-1.</item>
-            <item>slangRatio: slang tokens divided by total tokens.</item>
-            <item>contractionRatio: apostrophe contractions divided by total verbs.</item>
-            <item>lowercaseSentenceStartRatio: sentences beginning with lowercase divided by total sentences.</item>
-            <item>casualPunctuationRatio: informal punctuation (!!, ?!, …) divided by all punctuation.</item>
-            <item>capConsistencyScore: sentences starting with a capital divided by total sentences.</item>
+    <!-- ───────────────────────────── -->
+    <!--  extraction helper hints      -->
+    <!-- ───────────────────────────── -->
+    <extraction_guidelines>
+      <!-- string fields -->
+      <item>greetingForm: first-line salutation up to first comma or emoji; strip names & honorifics; lower-case.</item>
+      <item>signOffForm: last line before signature or EOF; lower-case; strip names; keep trailing comma if present.</item>
 
-            <!-- readability and vocabulary -->
-            <item>readabilityFlesch: Flesch reading-ease score, higher is easier to read.</item>
-            <item>lexicalDiversity: unique word count divided by total words.</item>
-            <item>jargonRatio: occurrences of technical or buzzwords divided by total words.</item>
+      <!-- presence flags -->
+      <item>greetingPresent / signOffPresent: 1 if respective form ≠ "", else 0.</item>
 
-            <!-- engagement cues -->
-            <item>questionCount: count of ?.</item>
-            <item>ctaCount: phrases that request action (let me know, please confirm).</item>
-            <item>emojiCount: Unicode emoji characters in the body.</item>
-            <item>emojiDensity: emoji characters per 100 words in the body.</item>
-            <item>exclamationFreq: ! per 100 words.</item>
+      <!-- bullets & lists -->
+      <item>bulletListPresent: 1 if a line starts with •, –, *, or numeral+“.”.</item>
 
-            <!-- subject line -->
-            <item>subjectEmojiCount: emoji characters in the subject line.</item>
-            <item>subjectInformalityScore: composite of lowercase, emoji presence, and slang in subject scaled 0-1.</item>
+      <!-- emoji & slang -->
+      <item>emojiRate = (emoji ÷ tokens) × 1000. Count only Unicode emoji.</item>
+      <item>slang tokens include: vibe, slaps, fam, tbh, legit, lol, omg, hype, flex.</item>
 
-            <!-- other markers -->
-            <item>honorificPresence: 1 if titles like mr, ms, dr appear, else 0.</item>
-            <item>phaticPhraseRatio: social pleasantries (hope you are well) divided by total sentences.</item>
-        </extraction_guidelines>
+      <!-- punctuation rules -->
+      <item>casual punctuation (!!, ?!, ?!!, …) counts toward exclamation or ellipsis metrics respectively.</item>
 
-        <output_format>
-            <example_input>
+      <!-- readability / sentiment clamps -->
+      <item>Clamp fleschReadingEase to 0–100; sentimentPolarity to −1...1; subjectivity to 0...1.</item>
+    </extraction_guidelines>
+
+    <!-- ───────────────────────────── -->
+    <!--          examples             -->
+    <!-- ───────────────────────────── -->
+    <output_format>
+      <example_input>
 hey jordan 👋
 
-hope your week’s chill! the new rollout is basically cooked and i wanna make sure it slaps for your crew. got like 15 min thurs or fri to hop on a call? drop a time that works and i’ll toss it on the cal.
+hope your week’s chill! the rollout is pretty much cooked and i wanna be sure it slaps for your crew. got 15 min thurs or fri to hop on a call? drop a time and i’ll toss it on the cal.
 
 catch ya soon,
 dak
-            </example_input>
+      </example_input>
 
-            <example_output>
-{{"greeting":"hey","signOff":"catch ya soon","greetingTotal":1,"signOffTotal":1,"avgSentenceLen":16,"avgParagraphLen":33,"listUsageRatio":0,"sentimentScore":0.4,"politenessScore":0.6,"confidenceScore":0.8,"urgencyScore":0.5,"empathyScore":0.4,"formalityScore":0.2,"passiveVoiceRatio":0,"hedgingRatio":0.03,"intensifierRatio":0.06,"slangRatio":0.11,"contractionRatio":0.08,"lowercaseSentenceStartRatio":1,"casualPunctuationRatio":0.2,"capConsistencyScore":0,"readabilityFlesch":75,"lexicalDiversity":0.57,"jargonRatio":0,"questionCount":1,"ctaCount":1,"emojiCount":1,"emojiDensity":2,"exclamationFreq":0,"subjectEmojiCount":1,"subjectInformalityScore":0.9,"honorificPresence":0,"phaticPhraseRatio":0.17}}
-            </example_output>
-        </output_format>
+      <example_output>
+{"greetingForm":"hey","signOffForm":"catch ya soon","greetingPresent":1,"signOffPresent":1,"tokenTotal":63,"charTotal":335,"paragraphs":2,"bulletListPresent":0,"averageSentenceLength":15.75,"averageLinesPerParagraph":3,"averageWordLength":4.24,"typeTokenRatio":0.60,"movingAverageTtr":78.1,"hapaxProportion":0.49,"shannonEntropy":4.66,"lexicalDensity":0.59,"contractionRate":15.87,"subordinationRatio":0.19,"passiveVoiceRate":0,"modalVerbRate":15.87,"parseTreeDepthMean":2.3,"commasPerSentence":0.25,"exclamationPerThousandWords":0,"questionMarkRate":15.87,"ellipsisRate":0,"parenthesesRate":0,"emojiRate":15.87,"sentimentPolarity":0.45,"sentimentSubjectivity":0.55,"formalityScore":28,"hedgeRate":5.08,"certaintyRate":2.54,"fleschReadingEase":75,"gunningFogIndex":7.9,"smogIndex":8.1,"averageForwardReferences":0.2,"cohesionIndex":0.72,"firstPersonSingularRate":31.7,"firstPersonPluralRate":0,"secondPersonRate":15.87,"selfReferenceRatio":0.47,"empathyPhraseRate":3.17,"humorMarkerRate":15.87,"markupBoldRate":0,"markupItalicRate":0,"hyperlinkRate":0,"codeBlockRate":0,"rhetoricalQuestionRate":7.93,"analogyRate":0,"imperativeSentenceRate":15.87,"expletiveOpeningRate":0,"parallelismRate":0}
+      </example_output>
 
-        <strict_guidelines>
-            <rule>Any deviation from the required JSON output counts as non-compliance.</rule>
-            <rule>The output must be valid JSON and include all 33 keys in the exact order specified.</rule>
-        </strict_guidelines>
-    </instructions>
+      <!-- micro-example: no emoji, formal HTML list -->
+      <example_input>
+Dear team,
+
+Please find below the Q1 deliverables:
+
+• platform architecture draft<br>
+• security review checklist<br>
+• UI prototype link
+
+Regards,
+Dak
+      </example_input>
+
+      <example_output>
+{"greetingForm":"dear team","signOffForm":"regards,","greetingPresent":1,"signOffPresent":1,"tokenTotal":39,"charTotal":233,"paragraphs":3,"bulletListPresent":1,"averageSentenceLength":11.00,"averageLinesPerParagraph":1,"averageWordLength":4.49,"typeTokenRatio":0.69,"movingAverageTtr":72,"hapaxProportion":0.49,"shannonEntropy":4.53,"lexicalDensity":0.65,"contractionRate":0,"subordinationRatio":0.14,"passiveVoiceRate":7.69,"modalVerbRate":7.69,"parseTreeDepthMean":2.8,"commasPerSentence":1.0,"exclamationPerThousandWords":0,"questionMarkRate":0,"ellipsisRate":0,"parenthesesRate":0,"emojiRate":0,"sentimentPolarity":0.1,"sentimentSubjectivity":0.3,"formalityScore":82,"hedgeRate":0,"certaintyRate":15.38,"fleschReadingEase":64,"gunningFogIndex":11,"smogIndex":10,"averageForwardReferences":0.3,"cohesionIndex":0.79,"firstPersonSingularRate":0,"firstPersonPluralRate":10.26,"secondPersonRate":0,"selfReferenceRatio":0.0,"empathyPhraseRate":0,"humorMarkerRate":0,"markupBoldRate":0,"markupItalicRate":0,"hyperlinkRate":2.56,"codeBlockRate":0,"rhetoricalQuestionRate":0,"analogyRate":0,"imperativeSentenceRate":25.64,"expletiveOpeningRate":0,"parallelismRate":1.28}
+      </example_output>
+    </output_format>
+
+    <strict_guidelines>
+      <rule>Any deviation from the required JSON output counts as non-compliance.</rule>
+      <rule>The output must be valid JSON and include all 52 keys in the exact order specified.</rule>
+    </strict_guidelines>
+  </instructions>
 </system_prompt>
 `;

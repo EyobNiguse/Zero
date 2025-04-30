@@ -32,7 +32,13 @@ const mapping = {
 } as const;
 
 const runSeeder = async (connectionId: string, style: keyof typeof mapping, size: number) => {
-  console.warn('Seeding style matrix for connection', connectionId);
+  console.warn(
+    'Seeding style matrix for connection',
+    connectionId,
+    'based on',
+    size,
+    'mock emails.',
+  );
 
   const testDataSet = take(mapping[style], size);
 
