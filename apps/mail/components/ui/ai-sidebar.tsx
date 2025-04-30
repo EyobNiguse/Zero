@@ -5,7 +5,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { useState, useEffect, useContext, createContext } from 'react';
 import { useEditor } from '@/components/providers/editor-provider';
-import { X, MessageSquare, PanelLeftOpen } from 'lucide-react';
+import { MessageSquare, PanelLeftOpen, Plus } from 'lucide-react';
+import { X } from '@/components/icons/icons';
 import { AIChat } from '@/components/create/ai-chat';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -90,16 +91,39 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
-                  {/* <div className="sticky top-0 z-10 flex items-center justify-end bg-panelLight dark:bg-panelDark">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="md:h-fit md:p-2 w-8" onClick={() => setOpen(false)}>
-                          <PanelLeftOpen size={18} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Close</TooltipContent>
-                    </Tooltip>
-                  </div> */}
+                  <div className="flex items-center justify-between relative  px-2.5 border-b border-[#E7E7E7] dark:border-[#252525] pt-[21px] pb-[10px]">
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => setOpen(false)}
+                            variant="ghost"
+                            className="md:h-fit md:px-2"
+                          >
+                            <X className="dark:fill-iconDark fill-iconLight" />
+                            <span className="sr-only">Close chat</span>
+                          </Button>
+                        </TooltipTrigger>
+                        {/* <TooltipContent>{label}</TooltipContent> */}
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => {}}
+                            variant="ghost"
+                            className="md:h-fit md:px-2"
+                          >
+                            <Plus className="dark:text-iconDark text-iconLight" />
+                            <span className="sr-only">New chat</span>
+                          </Button>
+                        </TooltipTrigger>
+                        {/* <TooltipContent>{label}</TooltipContent> */}
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <div className="b relative flex-1 overflow-hidden">
                     {!hasMessages && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
