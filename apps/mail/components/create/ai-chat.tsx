@@ -284,55 +284,18 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
     <div className="flex h-full flex-col">
       {/* Messages container */}
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
-        <div className="min-h-full space-y-4">
+        <div className="min-h-full space-y-4 px-4 py-4">
           {messages.map((message, index) => (
             <div
               key={message.id}
               className={cn(
-                'flex flex-col gap-2 rounded-lg',
-                message.role === 'user' ? 'border-border border bg-[] p-4' : '',
+                'flex flex-col gap-2 rounded-xl shadow w-fit max-w-[80%] text-sm',
+                message.role === 'user' 
+                  ? 'bg-[#f0f0f0] dark:bg-[#313131] p-2 ml-auto overflow-wrap-anywhere break-words' // User messages aligned to right
+                  : 'bg-[#f0f0f0] dark:bg-[#313131] p-3 mr-auto overflow-wrap-anywhere break-words' // Assistant messages aligned to left
               )}
             >
-              <div className="flex items-center gap-2">
-                {message.role === 'user' ? (
-                  <>
-                    <Avatar className="size-6 rounded-lg">
-                      <AvatarImage
-                        className="rounded-lg"
-                        src={
-                          (activeAccount?.picture ?? undefined) ||
-                          (session?.user.image ?? undefined)
-                        }
-                        alt={activeAccount?.name || session?.user.name || 'User'}
-                      />
-                      <AvatarFallback className="rounded-lg text-xs">
-                        {(activeAccount?.name || session?.user.name || 'User')
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">
-                      {activeAccount?.name || session?.user.name || 'You'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Avatar className="size-5">
-                      <AvatarImage src="/white-icon.svg" alt="Zero" />
-                      <AvatarFallback className="rounded-lg text-xs">Zero</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">Zero</span>
-                  </>
-                )}
-                <span className="text-muted-foreground text-sm">
-                  {formatTimestamp(message.timestamp)}
-                </span>
-              </div>
-
-              <div className="prose dark:prose-invert">{message.content}</div>
+              <div className="prose dark:prose-invert text-sm font-medium overflow-wrap-anywhere break-words">{message.content}</div>
 
               {message.type === 'search' &&
                 message.searchContent &&
@@ -429,7 +392,7 @@ export function AIChat({ editor, onMessagesChange }: AIChatProps) {
       </div>
 
       {/* Fixed input at bottom */}
-      <div className="mb-[17px] ml-1.5 flex-shrink-0">
+      <div className="mb-[7px] px-1.5 flex-shrink-0">
         <div className="bg-offsetLight border-border/50 relative rounded-2xl border dark:bg-[#141414]">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
