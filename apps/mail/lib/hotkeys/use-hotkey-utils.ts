@@ -1,5 +1,6 @@
 'use client';
 
+// TODO: Implement shortcuts syncing and caching
 import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useCallback, useMemo } from 'react';
@@ -9,46 +10,46 @@ import { updateShortcuts } from '@/actions/shortcuts';
 import axios from 'axios';
 
 export const useShortcutCache = (userId?: string) => {
-  const { data: shortcuts, mutate } = useSWR<Shortcut[]>(
-    userId ? `/hotkeys/${userId}` : null,
-    () => axios.get('/api/v1/shortcuts').then((res) => res.data),
-    {
-      dedupingInterval: 24 * 60 * 60 * 1000,
-    },
-  );
+  // const { data: shortcuts, mutate } = useSWR<Shortcut[]>(
+  //   userId ? `/hotkeys/${userId}` : null,
+  //   () => axios.get('/api/v1/shortcuts').then((res) => res.data),
+  //   {
+  //     dedupingInterval: 24 * 60 * 60 * 1000,
+  //   },
+  // );
 
-  const updateShortcut = useCallback(
-    async (shortcut: Shortcut) => {
-      const currentShortcuts = shortcuts || [];
-      const index = currentShortcuts.findIndex((s) => s.action === shortcut.action);
+  // const updateShortcut = useCallback(
+  //   async (shortcut: Shortcut) => {
+  //     const currentShortcuts = shortcuts;
+  //     const index = currentShortcuts?.findIndex((s) => s.action === shortcut.action);
 
-      let newShortcuts: Shortcut[];
-      if (index >= 0) {
-        newShortcuts = [
-          ...currentShortcuts.slice(0, index),
-          shortcut,
-          ...currentShortcuts.slice(index + 1),
-        ];
-      } else {
-        newShortcuts = [...currentShortcuts, shortcut];
-      }
+  //     let newShortcuts: Shortcut[];
+  //     if (index >= 0) {
+  //       newShortcuts = [
+  //         ...currentShortcuts?.slice(0, index),
+  //         shortcut,
+  //         ...currentShortcuts?.slice(index + 1),
+  //       ];
+  //     } else {
+  //       newShortcuts = [...currentShortcuts, shortcut];
+  //     }
 
-      try {
-        // Update server using server action
-        await updateShortcuts(newShortcuts);
-        // Update cache only after successful server update
-        await mutate(newShortcuts, false);
-      } catch (error) {
-        console.error('Error updating shortcuts:', error);
-        throw error;
-      }
-    },
-    [shortcuts, mutate],
-  );
+  //     try {
+  //       // Update server using server action
+  //       await updateShortcuts(newShortcuts);
+  //       // Update cache only after successful server update
+  //       await mutate(newShortcuts, false);
+  //     } catch (error) {
+  //       console.error('Error updating shortcuts:', error);
+  //       throw error;
+  //     }
+  //   },
+  //   [shortcuts, mutate],
+  // );
 
   return {
-    shortcuts: shortcuts || keyboardShortcuts,
-    updateShortcut,
+    shortcuts: keyboardShortcuts,
+    // updateShortcut,
   };
 };
 
@@ -129,16 +130,16 @@ export function useShortcut(
   callback: () => void,
   options: Partial<HotkeyOptions> = {},
 ) {
-  const { updateShortcut } = useShortcutCache();
+  // const { updateShortcut } = useShortcutCache();
   const { scope, preventDefault, ...restOptions } = {
     ...defaultHotkeyOptions,
     ...options,
     ...shortcut,
   };
 
-  useCallback(() => {
-    updateShortcut(shortcut);
-  }, [shortcut, updateShortcut])();
+  // useCallback(() => {
+  //   updateShortcut(shortcut);
+  // }, [shortcut, updateShortcut])();
 
   const handleKey = useCallback(
     (event: KeyboardEvent) => {

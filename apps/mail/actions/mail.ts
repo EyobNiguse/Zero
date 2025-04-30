@@ -159,3 +159,14 @@ export const bulkArchive = async ({ ids }: { ids: string[] }) => {
     throw error;
   }
 };
+
+export const muteThread = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: ['MUTE'], removeLabels: [] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as muted:', error);
+    throw error;
+  }
+};
