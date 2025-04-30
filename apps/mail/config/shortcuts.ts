@@ -76,6 +76,7 @@ const globalShortcuts: Shortcut[] = [
     type: 'single',
     description: 'Compose new email',
     scope: 'global',
+    preventDefault: true,
   },
   {
     keys: ['g', 'd'],
