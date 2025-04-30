@@ -10,21 +10,22 @@ import {
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { generateAIEmailBody } from '@/actions/ai';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
+import { createDraft } from '@/actions/drafts';
 import { Input } from '@/components/ui/input';
 import { useDraft } from '@/hooks/use-drafts';
 import { useForm } from 'react-hook-form';
-import { useMemo, useState } from 'react';
 import { ISendEmail } from '@/types';
 import { useQueryState } from 'nuqs';
 import { JSONContent } from 'novel';
+import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import * as React from 'react';
 import Editor from './editor';
 import { z } from 'zod';
 
@@ -86,23 +87,23 @@ export function EmailComposer({
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [messageLength, setMessageLength] = useState(0);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const toInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const [mode] = useQueryState('mode');
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [draftId] = useQueryState('draftId');
+  const [draftId, setDraftId] = useQueryState('draftId');
   const { data: draft } = useDraft(draftId ?? null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
       toInputRef.current.focus();
     }
   }, [isComposeOpen]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (draft) {
       if (draft.to) form.setValue('to', draft.to);
       // TODO: Fix this
@@ -123,7 +124,7 @@ export function EmailComposer({
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Don't populate from threadId if we're in compose mode
     if (isComposeOpen === 'true') return;
 
@@ -233,12 +234,12 @@ export function EmailComposer({
   });
 
   // Add state for editor content
-  const [editorContent, setEditorContent] = React.useState<JSONContent>(
+  const [editorContent, setEditorContent] = useState<JSONContent>(
     createJsonContentFromText(messageContent || ''),
   );
 
   // Update editorContent when messageContent changes
-  React.useEffect(() => {
+  useEffect(() => {
     setEditorContent(createJsonContentFromText(messageContent || ''));
   }, [messageContent]);
 
@@ -304,6 +305,50 @@ export function EmailComposer({
   };
 
   const handleGenerateReply = async () => {};
+
+  const saveDraft = useCallback(async () => {
+    console.log('trying to save email');
+    if (!hasUnsavedChanges) return;
+    if (!toEmails.length || !subjectInput || !messageContent) return;
+    const values = getValues();
+
+    try {
+      setIsLoading(true);
+      const draftData = {
+        to: values?.to?.join(', '),
+        cc: values?.cc?.join(', '),
+        bcc: values?.bcc?.join(', '),
+        subject: values?.subject,
+        message: values?.message,
+        attachments: values?.attachments,
+        id: draftId,
+      };
+
+      const response = await createDraft(draftData);
+
+      if (response?.id && response.id !== draftId) {
+        setDraftId(response.id);
+      }
+
+      setHasUnsavedChanges(false);
+      // toast.success(`Draft saved successfully: ${response.id}`);
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toEmails, subjectInput, messageContent, attachments, draftId, hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      saveDraft();
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [hasUnsavedChanges, saveDraft]);
 
   return (
     <div
