@@ -3,20 +3,24 @@
 import { keyboardShortcuts } from '@/config/shortcuts';
 import { useShortcuts } from './use-hotkey-utils';
 import { useRouter } from 'next/navigation';
+import { useQueryState } from 'nuqs';
 
 export function GlobalHotkeys() {
+  const [composeOpen, setComposeOpen] = useQueryState('isComposeOpen');
   const router = useRouter();
   const scope = 'global';
+
+  console.log('i am loaded');
 
   const handlers = {
     goToDrafts: () => router.push('/mail/draft'),
     inbox: () => router.push('/mail/inbox'),
     sentMail: () => router.push('/mail/sent'),
     search: () => {
-      // TODO: Implement search - kinda tricky :/
-      console.log('search');
+      console.log('well well well');
+      document.getElementsByName('q')[0]?.focus();
     },
-    newEmail: () => router.push('isComposeOpen=true'),
+    newEmail: () => setComposeOpen('true'),
   };
 
   const globalShortcuts = keyboardShortcuts.filter((shortcut) => shortcut.scope === scope);
