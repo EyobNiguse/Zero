@@ -6,6 +6,7 @@ import { useHotkeysContext } from 'react-hotkeys-hook';
 import { constructReplyBody } from '@/lib/utils';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
+import { useDraft } from '@/hooks/use-drafts';
 import { useTranslations } from 'next-intl';
 import { sendEmail } from '@/actions/send';
 import { useQueryState } from 'nuqs';
@@ -25,6 +26,8 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   const { enableScope, disableScope } = useHotkeysContext();
   const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
   const t = useTranslations();
+  const [draftId] = useQueryState('draftId');
+  const { data: draft } = useDraft(draftId ?? null);
 
   // Find the specific message to reply to
   const replyToMessage =
@@ -182,6 +185,9 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
         className="w-full !max-w-none border pb-1 dark:bg-[#141414]"
         onSendEmail={handleSendEmail}
         onClose={() => setMode(null)}
+        initialMessage={draft?.content}
+        initialTo={draft?.to}
+        initialSubject={draft?.subject}
         threadContent={emailData.messages.map((message) => {
           return {
             body: message.decodedBody ?? '',

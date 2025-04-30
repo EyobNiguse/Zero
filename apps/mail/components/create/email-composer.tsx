@@ -110,27 +110,27 @@ export function EmailComposer({
     }
   }, [isComposeOpen]);
 
-  useEffect(() => {
-    if (draft) {
-      if (draft.to)
-        form.setValue(
-          'to',
-          draft.to.map((email) => email.replace(/[<>]/g, '')),
-        );
-      if (draft.content) {
-        editor.commands.setContent({
-          type: 'doc',
-          content: draft.content.split(/\r?\n/).map((line) => {
-            return {
-              type: 'paragraph',
-              content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
-            };
-          }),
-        });
-      }
-      if (draft.subject) form.setValue('subject', draft.subject);
-    }
-  }, [draft]);
+  // useEffect(() => {
+  //   if (draft) {
+  //     if (draft.to)
+  //       form.setValue(
+  //         'to',
+  //         draft.to.map((email) => email.replace(/[<>]/g, '')),
+  //       );
+  //     if (draft.content) {
+  //       editor.commands.setContent({
+  //         type: 'doc',
+  //         content: draft.content.split(/\r?\n/).map((line) => {
+  //           return {
+  //             type: 'paragraph',
+  //             content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
+  //           };
+  //         }),
+  //       });
+  //     }
+  //     if (draft.subject) form.setValue('subject', draft.subject);
+  //   }
+  // }, [draft]);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -241,27 +241,6 @@ export function EmailComposer({
     setHasUnsavedChanges(true);
   };
 
-  // Helper function to create JSONContent from text
-  const createJsonContentFromText = (text: string): JSONContent => ({
-    type: 'doc',
-    content: [
-      {
-        type: 'paragraph',
-        content: [{ type: 'text', text }],
-      },
-    ],
-  });
-
-  // Add state for editor content
-  const [editorContent, setEditorContent] = useState<JSONContent>(
-    createJsonContentFromText(messageContent || ''),
-  );
-
-  // Update editorContent when messageContent changes
-  useEffect(() => {
-    setEditorContent(createJsonContentFromText(messageContent || ''));
-  }, [messageContent]);
-
   const editor = useComposeEditor({
     initialValue: initialMessage,
     isReadOnly: isLoading,
@@ -335,7 +314,7 @@ export function EmailComposer({
     const values = getValues();
 
     if (!hasUnsavedChanges) return;
-    const messageText = editor.getText();
+    const messageText = editor.getHTML();
     console.log(values, messageText);
     if (!values.to.length || !values.subject.length || !messageText.length) return;
 
