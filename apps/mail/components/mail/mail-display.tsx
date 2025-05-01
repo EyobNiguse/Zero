@@ -257,9 +257,11 @@ const AiSummary = () => {
           {isLoading ? <TextShimmer>Summary is loading...</TextShimmer> : 'Summary'}
         </p>
 
-        <ChevronDown
-          className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? 'rotate-180' : ''}`}
-        />
+        {!isLoading && (
+          <ChevronDown
+            className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? 'rotate-180' : ''}`}
+          />
+        )}
       </div>
       {showSummary && (
         <div className="mt-2 text-sm text-black dark:text-white">
