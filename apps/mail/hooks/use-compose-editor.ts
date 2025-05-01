@@ -1,13 +1,12 @@
-import type { JSONContent } from 'novel';
 import { useEditor, type KeyboardShortcutCommand, Extension, generateJSON } from '@tiptap/react';
-import { defaultExtensions } from '@/components/create/extensions';
-import { Markdown } from 'tiptap-markdown';
-import { cn } from '@/lib/utils';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { AutoComplete } from '@/components/create/editor-autocomplete';
-import { TextSelection } from 'prosemirror-state';
+import { defaultExtensions } from '@/components/create/extensions';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { TextSelection } from 'prosemirror-state';
+import { Markdown } from 'tiptap-markdown';
 import { isObjectType } from 'remeda';
+import { cn } from '@/lib/utils';
 
 const PreventNavigateOnDragOver = (handleFiles: (files: File[]) => void | Promise<void>) => {
   return Extension.create({
@@ -20,34 +19,34 @@ const PreventNavigateOnDragOver = (handleFiles: (files: File[]) => void | Promis
             handleDOMEvents: {
               dragover: (_view, event) => {
                 if (event.dataTransfer?.types?.includes('Files')) {
-                  event.preventDefault()
+                  event.preventDefault();
 
-                  return true
+                  return true;
                 }
 
-                return false
+                return false;
               },
               drop: (_view, event) => {
-                const fileList = event.dataTransfer?.files
+                const fileList = event.dataTransfer?.files;
                 if (fileList && fileList.length) {
-                  event.preventDefault()
-                  event.stopPropagation()
+                  event.preventDefault();
+                  event.stopPropagation();
 
-                  const files = Array.from(fileList)
-                  void handleFiles(files)
+                  const files = Array.from(fileList);
+                  void handleFiles(files);
 
-                  return true
+                  return true;
                 }
 
-                return false
-              }
-            }
-          }
-        })
-      ]
-    }
-  })
-}
+                return false;
+              },
+            },
+          },
+        }),
+      ];
+    },
+  });
+};
 
 const CustomModEnter = (onModEnter: KeyboardShortcutCommand) => {
   return Extension.create({
@@ -55,25 +54,25 @@ const CustomModEnter = (onModEnter: KeyboardShortcutCommand) => {
     addKeyboardShortcuts: () => {
       return {
         'Mod-Enter': (props) => {
-          return onModEnter(props)
+          return onModEnter(props);
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 const CustomModTab = (onTab: KeyboardShortcutCommand) => {
   return Extension.create({
     name: 'handleTab',
     addKeyboardShortcuts: () => {
       return {
-        'Tab': (props) => {
-          return onTab(props)
+        Tab: (props) => {
+          return onTab(props);
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 const MouseDownSelection = Extension.create({
   name: 'mouseDownSelection',
@@ -98,27 +97,27 @@ const MouseDownSelection = Extension.create({
                 view.focus();
               }
 
-              return false
-            }
-          }
-        }
-      })
-    ]
-  }
-})
+              return false;
+            },
+          },
+        },
+      }),
+    ];
+  },
+});
 
 const AutoCompleteExtension = ({
   sender,
   myInfo,
 }: {
   sender?: {
-    name?: string
-    email?: string
-  }
+    name?: string;
+    email?: string;
+  };
   myInfo?: {
-    name?: string
-    email?: string
-  }
+    name?: string;
+    email?: string;
+  };
 } = {}) => {
   return AutoComplete.configure({
     suggestions: {
@@ -131,14 +130,7 @@ const AutoCompleteExtension = ({
         'Good afternoon,',
         'Good evening,',
       ],
-      closers: [
-        'Best regards,',
-        'Kind regards,',
-        'Sincerely,',
-        'Thanks,',
-        'Thank you,',
-        'Cheers,',
-      ],
+      closers: ['Best regards,', 'Kind regards,', 'Sincerely,', 'Thanks,', 'Thank you,', 'Cheers,'],
       custom: [
         'I hope this email finds you well.',
         'I look forward to hearing from you.',
@@ -147,8 +139,8 @@ const AutoCompleteExtension = ({
     },
     sender,
     myInfo,
-  })
-}
+  });
+};
 
 const useComposeEditor = ({
   initialValue,
@@ -166,29 +158,29 @@ const useComposeEditor = ({
   myInfo,
   sender,
 }: {
-  initialValue?: Record<string, unknown> | string | null
-  isReadOnly?: boolean
-  placeholder?: string
+  initialValue?: Record<string, unknown> | string | null;
+  isReadOnly?: boolean;
+  placeholder?: string;
   // Events
-  onChange?: (content: Record<string, unknown>) => void | Promise<void>
-  onAttachmentsChange?: (attachments: File[]) => void | Promise<void>
-  onLengthChange?: (length: number) => void | Promise<void>
-  onBlur?: NonNullable<Parameters<typeof useEditor>[0]>['onBlur']
-  onFocus?: NonNullable<Parameters<typeof useEditor>[0]>['onFocus']
-  onKeydown?: (event: KeyboardEvent) => void | Promise<void>
-  onMousedown?: (event: MouseEvent) => void | Promise<void>
+  onChange?: (content: Record<string, unknown>) => void | Promise<void>;
+  onAttachmentsChange?: (attachments: File[]) => void | Promise<void>;
+  onLengthChange?: (length: number) => void | Promise<void>;
+  onBlur?: NonNullable<Parameters<typeof useEditor>[0]>['onBlur'];
+  onFocus?: NonNullable<Parameters<typeof useEditor>[0]>['onFocus'];
+  onKeydown?: (event: KeyboardEvent) => void | Promise<void>;
+  onMousedown?: (event: MouseEvent) => void | Promise<void>;
   // Keyboard Shortcuts
-  onModEnter?: KeyboardShortcutCommand
-  onTab?: KeyboardShortcutCommand
+  onModEnter?: KeyboardShortcutCommand;
+  onTab?: KeyboardShortcutCommand;
   // State Information
   myInfo?: {
     name?: string;
     email?: string;
-  }
+  };
   sender?: {
     name?: string;
     email?: string;
-  }
+  };
 }) => {
   const extensions = [
     ...defaultExtensions,
@@ -197,52 +189,56 @@ const useComposeEditor = ({
       myInfo,
       sender,
     }),
-    ...onModEnter ? [
-      CustomModEnter((props) => {
-        return onModEnter(props)
-      })
-    ] : [],
-    ...onTab ? [
-      CustomModTab((props) => {
-        return onTab(props)
-      })
-    ] : [],
-    ...isReadOnly ? [] : [
-      MouseDownSelection,
-    ],
+    ...(onModEnter
+      ? [
+          CustomModEnter((props) => {
+            return onModEnter(props);
+          }),
+        ]
+      : []),
+    ...(onTab
+      ? [
+          CustomModTab((props) => {
+            return onTab(props);
+          }),
+        ]
+      : []),
+    ...(isReadOnly ? [] : [MouseDownSelection]),
     Placeholder.configure({
       placeholder,
     }),
-    ...onAttachmentsChange ? [
-      PreventNavigateOnDragOver((files) => {
-        onAttachmentsChange(files)
-      }),
-    ] : [],
-  ]
+    ...(onAttachmentsChange
+      ? [
+          PreventNavigateOnDragOver((files) => {
+            onAttachmentsChange(files);
+          }),
+        ]
+      : []),
+  ];
 
   return useEditor({
     editable: !isReadOnly,
     onCreate: ({ editor }) => {
       if (onLengthChange) {
-        const content = editor.getText()
-        void onLengthChange(content.length)
+        const content = editor.getText();
+        void onLengthChange(content.length);
       }
     },
     onUpdate: ({ editor }) => {
       if (onChange) {
-        void onChange(editor.getJSON())
+        void onChange(editor.getJSON());
       }
 
       if (onLengthChange) {
-        const content = editor.getText()
-        void onLengthChange(content.length)
+        const content = editor.getText();
+        void onLengthChange(content.length);
       }
     },
-    content: initialValue ?
-      isObjectType(initialValue) ?
-        initialValue :
-        generateJSON(initialValue, extensions) :
-        undefined,
+    content: initialValue
+      ? isObjectType(initialValue)
+        ? initialValue
+        : generateJSON(initialValue, extensions)
+      : undefined,
     immediatelyRender: true,
     shouldRerenderOnTransaction: false,
     extensions,
@@ -258,21 +254,21 @@ const useComposeEditor = ({
       handleDOMEvents: {
         mousedown: (_, event) => {
           if (onMousedown && !isReadOnly) {
-            void onMousedown(event)
+            void onMousedown(event);
           }
 
-          return false
+          return false;
         },
         keydown: (_, event) => {
           if (onKeydown && !isReadOnly) {
-            void onKeydown(event)
+            void onKeydown(event);
           }
 
-          return false
+          return false;
         },
-      }
-    }
-  })
-}
+      },
+    },
+  });
+};
 
-export default useComposeEditor
+export default useComposeEditor;
