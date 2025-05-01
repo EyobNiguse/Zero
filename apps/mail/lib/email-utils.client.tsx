@@ -1,5 +1,6 @@
 'use client';
 
+import { Html, Head, Body, Container, Section, Column, Row, render } from '@react-email/components';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import type { ParsedMessage } from '@/types';
 import { sendEmail } from '@/actions/send';
@@ -81,8 +82,6 @@ export const highlightText = (text: string, highlight: string) => {
     );
   });
 };
-
-import { Html, Head, Body, Container, Section, Column, Row, render } from '@react-email/components';
 
 interface EmailTemplateProps {
   content: string;
@@ -197,13 +196,10 @@ const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) =>
             margin: 0,
           }}
         >
-          <Section style={{ width: '100%', background: 'transparent', padding: 0, margin: 0 }}>
-            <Row style={{ background: 'transparent', padding: 0, margin: 0 }}>
-              <Column style={{ background: 'transparent', padding: 0, margin: 0 }}>
-                <div
-                  style={{ background: 'transparent', fontSize: '16px', lineHeight: '1.5' }}
-                  dangerouslySetInnerHTML={{ __html: content }}
-                />
+          <Section style={{ width: '100%', background: 'transparent' }}>
+            <Row style={{ background: 'transparent' }}>
+              <Column style={{ background: 'transparent' }}>
+                <div dangerouslySetInnerHTML={{ __html: content }} />
               </Column>
             </Row>
           </Section>
