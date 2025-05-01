@@ -64,6 +64,24 @@ const resources = [
   },
 ];
 
+const aboutLinks = [
+  {
+    title: 'About',
+    href: '/about',
+    description: 'Learn more about Zero and our mission.',
+  },
+  {
+    title: 'Privacy',
+    href: '/privacy',
+    description: 'Read our privacy policy and data handling practices.',
+  },
+  {
+    title: 'Terms of Service',
+    href: '/terms',
+    description: 'Review our terms of service and usage guidelines.',
+  },
+];
+
 const betaSignupSchema = z.object({
   email: z.string().email().min(9),
 });
@@ -123,15 +141,17 @@ export default function HomeContent() {
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
                 <NavigationMenuItem>
-                  <NavigationMenuLink href="/about" className={navigationMenuTriggerStyle()}>
-                    About
-                  </NavigationMenuLink>
+                  <NavigationMenuTrigger>Company</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-1 lg:w-[600px]">
+                      {aboutLinks.map((link) => (
+                        <ListItem key={link.title} title={link.title} href={link.href}>
+                          {link.description}
+                        </ListItem>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
                 </NavigationMenuItem>
-                {/* <NavigationMenuItem>
-                  <NavigationMenuLink href="/pricing" className={navigationMenuTriggerStyle()}>
-                    Pricing
-                  </NavigationMenuLink>
-                </NavigationMenuItem> */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -182,21 +202,18 @@ export default function HomeContent() {
                 <Button className="w-full">Sign in</Button>
               </Link>
             </SheetHeader>
-            <div className="mt-8 flex flex-col space-y-4">
-              <Link href="/about" className="font-medium">
-                About
-              </Link>
-
+            <div className="mt-8 flex flex-col space-y-3">
+              <div className="space-y-3">
+                <h4 className="text-muted-foreground text-sm font-medium">Company</h4>
+                {aboutLinks.map((link) => (
+                  <Link key={link.title} href={link.href} className="block font-medium">
+                    {link.title}
+                  </Link>
+                ))}
+              </div>
               <Link target="_blank" href="https://cal.com/team/0" className="font-medium">
                 Contact Us
               </Link>
-
-              {/* <Link href="#" className="font-medium">
-                Solutions
-              </Link> */}
-              {/* <Link href="#" className="font-medium">
-                Resource
-              </Link> */}
             </div>
             <Separator className="mt-8" />
             <div className="mt-8 flex flex-row items-center justify-center gap-4">

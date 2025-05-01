@@ -1,19 +1,29 @@
 'use client';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './dialog';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { BookDashedIcon, GitBranchPlus, MessageSquare, PanelLeftOpen, Plus } from 'lucide-react';
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { useEditor } from '@/components/providers/editor-provider';
-import { MessageSquare, PanelLeftOpen, Plus } from 'lucide-react';
 import { AIChat } from '@/components/create/ai-chat';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { usePathname } from 'next/navigation';
-import { X } from '@/components/icons/icons';
+import { Paper, X } from '@/components/icons/icons';
+import prompt from '@/app/api/chat/prompt';
 import { getCookie } from '@/lib/utils';
+import { Textarea } from './textarea';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import Link from 'next/link';
 
 interface AISidebarProps {
   className?: string;
@@ -122,6 +132,40 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                       </Tooltip>
                     </TooltipProvider>
 
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" className="md:h-fit md:px-2 [&>svg]:size-3">
+                          <Paper className="dark:fill-iconDark fill-iconLight h-3.5 w-3.5" />
+                          <span>Prompts</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent
+                        showOverlay={true}
+                        className="dark:bg-panelDark bg-panelLight max-w-2xl rounded-2xl p-4"
+                      >
+                        <DialogHeader>
+                          <DialogTitle>AI System Prompts</DialogTitle>
+                          <DialogDescription>
+                            We believe in Open Source, so we're open sourcing our AI system prompts.
+                            Soon you will be able to customize them to your liking. For now, here
+                            are the default prompts:
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
+                          <span>Zero Chat / System Prompt</span>
+                          <Link
+                            href={'https://github.com/Mail-0/Zero.git'}
+                            target="_blank"
+                            className="flex items-center gap-1 underline"
+                          >
+                            <span>Contribute</span>
+                            <GitBranchPlus className="h-4 w-4" />
+                          </Link>
+                        </div>
+                        <Textarea className="min-h-60" readOnly value={prompt} />
+                      </DialogContent>
+                    </Dialog>
+
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -139,11 +183,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                     </TooltipProvider>
                   </div>
                   <div className="b relative flex-1 overflow-hidden">
-                    <AIChat
-                      editor={editor}
-                      onMessagesChange={(messages) => setHasMessages(messages.length > 0)}
-                      key={resetKey}
-                    />
+                    <AIChat key={resetKey} />
                   </div>
                 </div>
               </div>
