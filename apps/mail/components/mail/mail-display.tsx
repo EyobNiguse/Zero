@@ -263,7 +263,7 @@ const AiSummary = () => {
       </div>
       {showSummary && (
         <div className="mt-2 text-sm text-black dark:text-white">
-          {isLoading ? <TextShimmer>AI summary is loading...</TextShimmer> : summary?.short || ''}
+          {isLoading ? "" : summary?.short || ''}
         </div>
       )}
     </div>
