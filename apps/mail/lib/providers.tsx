@@ -15,16 +15,16 @@ export function Providers({ children, ...props }: React.ComponentProps<typeof Ne
   const theme = settings?.colorTheme || 'system';
 
   return (
-    <AISidebarProvider>
-      <JotaiProvider>
-        <NuqsAdapter>
+    <NuqsAdapter>
+      <AISidebarProvider>
+        <JotaiProvider>
           <NextThemesProvider {...props} defaultTheme={theme}>
             <SidebarProvider>
               <PostHogProvider>{children}</PostHogProvider>
             </SidebarProvider>
           </NextThemesProvider>
-        </NuqsAdapter>
-      </JotaiProvider>
-    </AISidebarProvider>
+        </JotaiProvider>
+      </AISidebarProvider>
+    </NuqsAdapter>
   );
 }

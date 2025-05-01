@@ -1,15 +1,17 @@
 'use client';
 
-import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus, Command } from 'lucide-react';
+import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus, Command, ArrowDownCircle } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { CurvedArrow } from '../icons/icons';
 import { AITextarea } from './ai-textarea';
 import { useChat } from '@ai-sdk/react';
+import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import VoiceChat from './voice';
@@ -45,6 +47,29 @@ interface AIChatProps {
   onReset?: () => void;
 }
 
+const renderThread = (thread: { id: string; title: string; snippet: string }) => {
+  const [, setThreadId] = useQueryState('threadId');
+  const { data: getThread } = useThread(thread.id);
+  return getThread ? (
+    <div
+      onClick={() => setThreadId(thread.id)}
+      key={thread.id}
+      className="bg-subtleBlack cursor-pointer rounded-md border p-2 hover:bg-black"
+    >
+      <p>{getThread.latest?.subject}</p>
+    </div>
+  ) : null;
+};
+
+const RenderThreads = ({
+  threads,
+}: {
+  threads: { id: string; title: string; snippet: string }[];
+}) => {
+  const [, setThreadId] = useQueryState('threadId');
+  return threads.map(renderThread);
+};
+
 export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
   const [value, setValue] = useState('');
   const [showVoiceChat, setShowVoiceChat] = useState(false);
@@ -59,7 +84,7 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
   const { data: session } = useSession();
   const { data: connections } = useConnections();
 
-  const { messages, input, setInput, append, handleSubmit, status } = useChat({
+  const { messages, input, setInput, error, handleSubmit, status } = useChat({
     api: '/api/chat',
     maxSteps: 5,
   });
@@ -274,9 +299,35 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                     : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-3 dark:bg-[#313131]', // Assistant messages aligned to left
                 )}
               >
-                <div className="prose dark:prose-invert overflow-wrap-anywhere break-words text-sm font-medium">
+                {/* <div className="prose dark:prose-invert overflow-wrap-anywhere break-words text-sm font-medium">
                   {message.content}
-                </div>
+                </div> */}
+
+                {message.parts.map((part) => {
+                  if (part.type === 'text') {
+                    return <p>{part.text}</p>;
+                  }
+                  if (part.type === 'reasoning') {
+                    return <p>Reasoning: {part.reasoning}</p>;
+                  }
+                  if (part.type === 'tool-invocation') {
+                    return (
+                      'result' in part.toolInvocation &&
+                      ('threads' in part.toolInvocation.result ? (
+                        <RenderThreads threads={part.toolInvocation.result.threads} />
+                      ) : (
+                        <p>No threads found</p>
+                      ))
+                    );
+                  }
+                  if (part.type === 'source') {
+                    return <p>Source: {part.source.title}</p>;
+                  }
+                  //   if (part.type === 'step-start') {
+                  //     return <ArrowDownCircle className="mx-auto h-4 w-4" />;
+                  //   }
+                  //   return <p>{part.type}</p>;
+                })}
 
                 {/* {message.type === 'search' &&
                 message.searchContent &&
@@ -362,6 +413,7 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
           {/* Invisible element to scroll to */}
           <div ref={messagesEndRef} />
 
+          {JSON.stringify(error)}
           {/* Loading indicator */}
           {status === 'submitted' && (
             <div className="flex flex-col gap-2 rounded-lg">
