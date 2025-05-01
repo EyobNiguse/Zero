@@ -14,9 +14,13 @@ export const GetSummary = async (threadId: string) => {
       return null;
     }
 
-    const response = await axios.get(process.env.BRAIN_URL + `/brain/thread/summary/${threadId}`);
+    const response = await axios.get(process.env.BRAIN_URL + `/brain/thread/summary/${threadId}`, {
+      headers: {
+        // 'Authorization': `Bearer ${}`
+      },
+    });
 
-    return response.data.content ?? null;
+    return response.data ?? null;
   } catch (error) {
     console.error('Error getting summary:', error);
     return null;
