@@ -2,17 +2,20 @@
 
 import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus, Command, ArrowDownCircle } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
+import { Markdown } from '@react-email/components';
 import { Button } from '@/components/ui/button';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
+import { cn, getEmailLogo } from '@/lib/utils';
 import { CurvedArrow } from '../icons/icons';
 import { AITextarea } from './ai-textarea';
 import { useChat } from '@ai-sdk/react';
+import { format } from 'date-fns-tz';
 import { useQueryState } from 'nuqs';
-import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import VoiceChat from './voice';
 import { nanoid } from 'nanoid';
@@ -50,13 +53,49 @@ interface AIChatProps {
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
   const { data: getThread } = useThread(thread.id);
-  return getThread ? (
+  return getThread?.latest ? (
     <div
       onClick={() => setThreadId(thread.id)}
       key={thread.id}
-      className="bg-subtleBlack cursor-pointer rounded-md border p-2 hover:bg-black"
+      className="dark:bg-subtleBlack bg-subtleWhite hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer rounded-lg border p-2"
     >
-      <p>{getThread.latest?.subject}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage
+              className="rounded-full"
+              src={getEmailLogo(getThread.latest?.sender?.email)}
+            />
+            <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
+              {getThread.latest?.sender?.name
+                ?.split(' ')
+                .map((n) => n[0])
+                ?.join('')
+                .toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <p className="text-sm font-medium text-black dark:text-white">
+            {getThread.latest?.sender?.name}
+          </p>
+        </div>
+        <div>
+          {getThread.latest.receivedOn ? (
+            <p
+              className={cn(
+                'text-nowrap text-xs font-normal text-[#6D6D6D] opacity-70 transition-opacity group-hover:opacity-100 dark:text-[#8C8C8C]',
+              )}
+            >
+              {format(getThread.latest.receivedOn, 'dd/MM/yy hh:mm a')}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="mb-1 ml-0.5 mt-2 flex items-center gap-2">
+        <p className="overflow-wrap opacity-50">{getThread.latest?.subject}</p>
+      </div>
+      {/* <p className="text-xs font-normal text-[#6D6D6D] opacity-70 transition-opacity group-hover:opacity-100 dark:text-[#8C8C8C]">
+        {getThread.latest?.title}
+      </p> */}
     </div>
   ) : null;
 };
@@ -67,7 +106,7 @@ const RenderThreads = ({
   threads: { id: string; title: string; snippet: string }[];
 }) => {
   const [, setThreadId] = useQueryState('threadId');
-  return threads.map(renderThread);
+  return <div className="flex flex-col gap-2">{threads.map(renderThread)}</div>;
 };
 
 export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
@@ -293,7 +332,7 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
               <div
                 key={`${message.id}-${index}`}
                 className={cn(
-                  'flex w-fit max-w-[80%] flex-col gap-2 rounded-xl text-sm shadow',
+                  'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
                   message.role === 'user'
                     ? 'overflow-wrap-anywhere ml-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]' // User messages aligned to right
                     : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-3 dark:bg-[#313131]', // Assistant messages aligned to left
@@ -305,24 +344,19 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
 
                 {message.parts.map((part) => {
                   if (part.type === 'text') {
-                    return <p>{part.text}</p>;
-                  }
-                  if (part.type === 'reasoning') {
-                    return <p>Reasoning: {part.reasoning}</p>;
+                    return <Markdown>{part.text}</Markdown>;
                   }
                   if (part.type === 'tool-invocation') {
                     return (
                       'result' in part.toolInvocation &&
                       ('threads' in part.toolInvocation.result ? (
                         <RenderThreads threads={part.toolInvocation.result.threads} />
-                      ) : (
-                        <p>No threads found</p>
-                      ))
+                      ) : null)
                     );
                   }
-                  if (part.type === 'source') {
-                    return <p>Source: {part.source.title}</p>;
-                  }
+                  //   if (part.type === 'source') {
+                  //     return <p>Source: {part.source.title}</p>;
+                  //   }
                   //   if (part.type === 'step-start') {
                   //     return <ArrowDownCircle className="mx-auto h-4 w-4" />;
                   //   }
