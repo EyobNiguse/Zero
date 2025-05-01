@@ -41,10 +41,10 @@ export function ThreadDisplayHotkeys() {
     delete: () => {
       if (!openThreadId) return;
       if (params.folder === 'bin') {
-        deleteThread(thread?.latest?.id ?? openThreadId);
+        deleteThread(openThreadId);
       } else {
         moveTo({
-          threadIds: [thread?.latest?.id ?? openThreadId],
+          threadIds: [openThreadId],
           currentFolder: params.folder,
           destination: 'bin',
         });
