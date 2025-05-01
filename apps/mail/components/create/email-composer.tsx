@@ -306,7 +306,9 @@ export function EmailComposer({
       const response = await createDraft(draftData);
 
       if (response?.id && response.id !== draftId) {
-        setDraftId(response.id);
+        await setDraftId(response.id, {
+          shallow: true,
+        });
       }
     } catch (error) {
       console.error('Error saving draft:', error);
