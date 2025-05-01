@@ -64,6 +64,24 @@ const resources = [
   },
 ];
 
+const aboutLinks = [
+  {
+    title: 'About',
+    href: '/about',
+    description: 'Learn more about Zero and our mission.',
+  },
+  {
+    title: 'Privacy',
+    href: '/privacy',
+    description: 'Read our privacy policy and data handling practices.',
+  },
+  {
+    title: 'Terms of Service',
+    href: '/terms',
+    description: 'Review our terms of service and usage guidelines.',
+  },
+];
+
 const betaSignupSchema = z.object({
   email: z.string().email().min(9),
 });
@@ -123,15 +141,21 @@ export default function HomeContent() {
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
                 <NavigationMenuItem>
-                  <NavigationMenuLink href="/about" className={navigationMenuTriggerStyle()}>
-                    About
-                  </NavigationMenuLink>
+                  <NavigationMenuTrigger>Company</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-1 lg:w-[600px]">
+                      {aboutLinks.map((link) => (
+                        <ListItem
+                          key={link.title}
+                          title={link.title}
+                          href={link.href}
+                        >
+                          {link.description}
+                        </ListItem>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
                 </NavigationMenuItem>
-                {/* <NavigationMenuItem>
-                  <NavigationMenuLink href="/pricing" className={navigationMenuTriggerStyle()}>
-                    Pricing
-                  </NavigationMenuLink>
-                </NavigationMenuItem> */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
                   <NavigationMenuContent>
