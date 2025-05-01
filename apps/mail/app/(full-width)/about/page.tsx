@@ -11,13 +11,13 @@ export default function AboutPage() {
   const router = useRouter();
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-auto bg-[#111111]">
+    <div className="relative flex min-h-screen w-full flex-col overflow-auto bg-white dark:bg-[#111111]">
       <div className="relative z-10 flex flex-grow flex-col">
         <div className="absolute left-4 top-4 md:left-8 md:top-8">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-white hover:text-white/80"
+            className="gap-2 text-gray-600 hover:text-gray-900 dark:text-white dark:hover:text-white/80"
             onClick={() => router.push('/')}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -26,10 +26,10 @@ export default function AboutPage() {
         </div>
 
         <div className="container mx-auto max-w-4xl px-4 py-16">
-          <Card className="overflow-hidden rounded-xl border-none bg-transparent">
+          <Card className="overflow-hidden rounded-xl border-none bg-gray-50/80 dark:bg-transparent">
             <CardHeader className="space-y-4 px-8 py-8">
               <div className="space-y-2 text-center">
-                <CardTitle className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                <CardTitle className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white md:text-4xl">
                   About Us
                 </CardTitle>
               </div>
@@ -38,10 +38,10 @@ export default function AboutPage() {
             <div className="space-y-8 p-8">
               {sections.map((section) => (
                 <div key={section.title} className="p-6">
-                  <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">
+                  <h2 className="mb-4 text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
                     {section.title}
                   </h2>
-                  <div className="prose prose-sm prose-a:text-blue-400 prose-a:no-underline hover:prose-a:text-blue-300 max-w-none text-white/80">
+                  <div className="prose prose-sm prose-a:text-blue-600 hover:prose-a:text-blue-800 dark:prose-a:text-blue-400 dark:hover:prose-a:text-blue-300 max-w-none text-gray-600 dark:text-white/80">
                     {section.content}
                   </div>
                 </div>

@@ -693,45 +693,99 @@ export function EmailComposer({
               />
 
               {attachments && attachments.length > 0 && (
-                <Popover>
+                <Popover modal={true}>
                   <PopoverTrigger asChild>
-                    <button className="flex items-center gap-1 rounded-md border bg-white/5 px-2 py-1 text-sm transition-colors hover:bg-white/10">
-                      <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
-                      <span>{pluralize('file', attachments.length, true)}</span>
+                    <button
+                      className="flex items-center gap-1.5 rounded-md border border-[#E7E7E7] bg-white/5 px-2 py-1 text-sm hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-[#2B2B2B]"
+                      aria-label={`View ${attachments.length} attached ${pluralize('file', attachments.length)}`}
+                    >
+                      <Paperclip className="h-3.5 w-3.5 text-[#9A9A9A]" />
+                      <span className="font-medium">{attachments.length}</span>
                     </button>
                   </PopoverTrigger>
 
                   <PopoverContent
-                    className="z-[100] w-80 p-3 dark:bg-[#202020]"
+                    className="z-[100] w-[340px] rounded-lg p-0 shadow-lg dark:bg-[#202020]"
                     align="start"
-                    sideOffset={5}
+                    sideOffset={6}
                   >
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-black dark:text-white/90">
-                        Attachments
-                      </h4>
-                      <div className="max-h-[200px] space-y-2 overflow-y-auto">
-                        {attachments.map((file, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between gap-2 rounded-md bg-black/5 p-2 dark:bg-white/5"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <p className="text-sm text-black dark:text-white/90">{file.name}</p>
-                                <p className="text-xs text-[#9A9A9A] dark:text-white/90">
-                                  {formatFileSize(file.size)}
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => removeAttachment(index)}
-                              className="relative z-[101] rounded-sm p-1 transition-colors hover:bg-white/10"
+                    <div className="flex flex-col">
+                      <div className="border-b border-[#E7E7E7] p-3 dark:border-[#2B2B2B]">
+                        <h4 className="text-sm font-semibold text-black dark:text-white/90">
+                          Attachments
+                        </h4>
+                        <p className="text-xs text-[#6D6D6D] dark:text-[#9B9B9B]">
+                          {pluralize('file', attachments.length, true)}
+                        </p>
+                      </div>
+                      <div className="max-h-[250px] flex-1 space-y-0.5 overflow-y-auto p-1.5 
+                                     [&::-webkit-scrollbar]:hidden
+                                     [scrollbar-width:none]
+                                     [-ms-overflow-style:none]">
+                        {attachments.map((file: File, index: number) => {
+                          const nameParts = file.name.split('.');
+                          const extension = nameParts.length > 1 ? nameParts.pop() : undefined;
+                          const nameWithoutExt = nameParts.join('.');
+                          const maxNameLength = 22;
+                          const truncatedName = nameWithoutExt.length > maxNameLength
+                            ? `${nameWithoutExt.slice(0, maxNameLength)}…`
+                            : nameWithoutExt;
+
+                          return (
+                            <div
+                              key={file.name + index}
+                              className="group flex items-center justify-between gap-3 rounded-md px-1.5 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
                             >
-                              <X className="h-4 w-4 fill-[#9A9A9A]" />
-                            </button>
-                          </div>
-                        ))}
+                              <div className="flex min-w-0 flex-1 items-center gap-3">
+                                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#F0F0F0] dark:bg-[#2C2C2C]">
+                                  {file.type.startsWith('image/') ? (
+                                    <img
+                                      src={URL.createObjectURL(file)}
+                                      alt=""
+                                      className="h-full w-full rounded object-cover"
+                                      aria-hidden="true"
+                                    />
+                                  ) : (
+                                    <span className="text-sm" aria-hidden="true">
+                                      {file.type.includes('pdf') ? '📄' : 
+                                       file.type.includes('excel') || file.type.includes('spreadsheetml') ? '📊' : 
+                                       file.type.includes('word') || file.type.includes('wordprocessingml') ? '📝' : '📎'}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex min-w-0 flex-1 flex-col">
+                                  <p 
+                                    className="flex items-baseline text-sm text-black dark:text-white/90"
+                                    title={file.name}
+                                  >
+                                    <span className="truncate">{truncatedName}</span>
+                                    {extension && <span className="ml-0.5 flex-shrink-0 text-[10px] text-[#8C8C8C] dark:text-[#9A9A9A]">.{extension}</span>}
+                                  </p>
+                                  <p className="text-xs text-[#6D6D6D] dark:text-[#9B9B9B]">
+                                    {formatFileSize(file.size)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                  e.preventDefault(); 
+                                  e.stopPropagation(); 
+                                  const updatedAttachments = attachments.filter((_, i) => i !== index);
+                                  setValue('attachments', updatedAttachments, { shouldDirty: true });
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="ml-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full 
+                                         bg-transparent hover:bg-black/5 
+                                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label={`Remove ${file.name}`}
+                              >
+                                <XIcon className="h-3.5 w-3.5 text-[#6D6D6D] hover:text-black dark:text-[#9B9B9B] dark:hover:text-white" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </PopoverContent>
