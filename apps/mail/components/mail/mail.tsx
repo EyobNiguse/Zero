@@ -377,11 +377,11 @@ export function MailLayout() {
 
           {isDesktop && (
             <ResizablePanel
-              className="bg-panelLight dark:bg-panelDark mr-1 w-fit border-[#E7E7E7] shadow-sm lg:flex md:rounded-2xl lg:border lg:shadow-sm dark:border-[#252525]"
+              className={`bg-panelLight dark:bg-panelDark ${threadId ? 'mr-1.5' : 'lg:mr-1.5'} w-fit border-[#E7E7E7] border shadow-sm lg:flex rounded-2xl  lg:shadow-sm dark:border-[#252525]`}
               defaultSize={30}
               minSize={30}
             >
-              <div className="relative  h-[calc(100vh-(12px+14px))] flex-1">
+              <div className="relative h-[calc(100vh-(10px))] lg:h-[calc(100vh-(12px+14px))] flex-1">
                 <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
               </div>
             </ResizablePanel>
