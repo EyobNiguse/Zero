@@ -573,7 +573,7 @@ export const Categories = () => {
       icon: (
         <ScanEye
           className={cn(
-            'fill-[#6D6D6D] dark:fill-[#989898]',
+            'h-4 w-4 fill-[#6D6D6D] dark:fill-[#989898]',
             category === 'Unread' && 'fill-white dark:fill-white',
           )}
         />
