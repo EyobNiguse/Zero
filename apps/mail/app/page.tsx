@@ -3,11 +3,11 @@ import { getSession } from '@/lib/auth-client';
 import { redirect } from 'next/navigation';
 
 export default async function Home() {
-  const session = await getSession();
+  //   const session = await getSession();
 
-  if (session) {
-    redirect('/mail/inbox');
-  }
+  //   if (session.data) {
+  //     redirect('/mail/inbox');
+  //   }
 
   return <HomeContent />;
 }
