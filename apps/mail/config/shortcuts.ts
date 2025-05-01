@@ -137,6 +137,13 @@ const mailListShortcuts: Shortcut[] = [
     description: 'Archive email',
     scope: 'mail-list',
   },
+  {
+    keys: ['escape'],
+    action: 'exitSelectionMode',
+    type: 'single',
+    description: 'Exit selection mode',
+    scope: 'mail-list',
+  },
   // {
   //   keys: ['!'],
   //   action: 'markAsSpam',

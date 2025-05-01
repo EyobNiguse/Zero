@@ -142,6 +142,13 @@ export function MailListHotkeys() {
     });
   }, [mail]);
 
+  const exitSelectionMode = useCallback(() => {
+    setMail((prev) => ({
+      ...prev,
+      bulkSelected: [],
+    }));
+  }, []);
+
   // const muteThread = useCallback(async () => {
   //   if (hoveredEmailId.current) {
   //     toast.promise(muteThreadAction({ ids: [hoveredEmailId.current] }), {
@@ -176,6 +183,7 @@ export function MailListHotkeys() {
     markAsUnread,
     selectAll,
     archiveEmail,
+    exitSelectionMode,
     // muteThread,
   };
 
