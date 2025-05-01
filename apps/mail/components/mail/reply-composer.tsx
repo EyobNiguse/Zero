@@ -209,6 +209,14 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
 
               return to;
             }, []),
+            cc: message.cc?.reduce<string[]>((cc, recipient) => {
+              if (recipient.name) {
+                cc.push(recipient.name);
+              }
+
+              return cc;
+            }, []),
+            subject: message.subject,
           };
         })}
       />

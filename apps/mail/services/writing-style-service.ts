@@ -154,8 +154,15 @@ const schema = z.object({
   parallelismRate: z.number().min(0),
 });
 
-export const getWritingStyleMatrixForConnectionId = async (connectionId: string) => {
-  return await db.query.writingStyleMatrix.findFirst({
+export const getWritingStyleMatrixForConnectionId = async (
+  connectionId: string,
+  {
+    backupContent,
+  }: {
+    backupContent?: string;
+  } = {},
+) => {
+  const matrix = await db.query.writingStyleMatrix.findFirst({
     where: (table, ops) => {
       return ops.eq(table.connectionId, connectionId);
     },
@@ -164,6 +171,22 @@ export const getWritingStyleMatrixForConnectionId = async (connectionId: string)
       style: true,
     },
   });
+
+  if (!matrix && backupContent) {
+    if (!backupContent.trim()) {
+      return null;
+    }
+
+    const newMatrix = await extractStyleMatrix(backupContent);
+
+    return {
+      connectionId,
+      numMessages: 1,
+      style: initializeStyleMatrixFromEmail(newMatrix),
+    };
+  }
+
+  return matrix;
 };
 
 export const updateWritingStyleMatrix = async (connectionId: string, emailBody: string) => {
