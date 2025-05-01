@@ -25,6 +25,7 @@ import {
 } from '../ui/dialog';
 import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Briefcase, Star, StickyNote, Users, Lock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
@@ -379,20 +380,28 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
 
   const renderPerson = useCallback(
     (person: Sender) => (
-      <div
-        key={person.email}
-        className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white p-1 pr-2 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
-      >
-        <Avatar className="h-5 w-5">
-          <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
-          <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold dark:bg-[#373737]">
-            {getFirstLetterCharacter(person.name)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
-          {person.name || person.email}
-        </div>
-      </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <div
+            key={person.email}
+            className="inline-flex items-center justify-start gap-1.5 overflow-hidden rounded-full border border-[#DBDBDB] bg-white p-1 pr-2 dark:border-[#2B2B2B] dark:bg-[#1A1A1A]"
+          >
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={getEmailLogo(person.email)} className="rounded-full" />
+              <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold dark:bg-[#373737]">
+                {getFirstLetterCharacter(person.name || person.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="justify-start text-sm font-medium leading-none text-[#1A1A1A] dark:text-white">
+              {person.name || person.email}
+            </div>
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="text-sm">
+          <p>Email: {person.email}</p>
+          <p>Name: {person.name || 'Unknown'}</p>
+        </PopoverContent>
+      </Popover>
     ),
     [],
   );
@@ -459,9 +468,18 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                         <>
                           {renderPerson(firstPerson)}
                           {renderPerson(secondPerson)}
-                          <span className="text-sm">
-                            +{people.length - 2} {people.length - 2 === 1 ? 'other' : 'others'}
-                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-sm">
+                                +{people.length - 2} {people.length - 2 === 1 ? 'other' : 'others'}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="flex flex-col gap-1">
+                              {people.slice(2).map((person, index) => (
+                                <div key={index}>{renderPerson(person)}</div>
+                              ))}
+                            </TooltipContent>
+                          </Tooltip>
                         </>
                       );
                     }
