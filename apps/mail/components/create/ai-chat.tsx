@@ -239,12 +239,6 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
 
   const generateId = () => nanoid();
 
-  const handleThreadClick = (threadId: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('threadId', threadId);
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
   const toggleExpandResults = (messageId: string) => {
     setExpandedResults((prev) => {
       const newSet = new Set(prev);
@@ -307,7 +301,7 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                 <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
                   <div className="flex gap-4 px-4">
                     <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                      Schedule meeting with Sarah
+                      Find meeting with Sarah
                     </p>
                     <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
                       What did alex say about the design

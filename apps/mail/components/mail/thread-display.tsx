@@ -368,7 +368,7 @@ export function ThreadDisplay() {
               </div>
             </div>
             {!isSidebarOpen && (
-              <div className="fixed bottom-4 right-4">
+              <div className="fixed bottom-4 right-4 hidden md:block">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -621,7 +621,7 @@ export function ThreadDisplay() {
                 </div>
               </ScrollArea>
               {!isSidebarOpen && (
-                <div className="fixed bottom-4 right-4">
+                <div className="fixed bottom-4 right-4 hidden md:block">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
