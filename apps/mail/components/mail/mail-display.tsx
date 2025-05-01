@@ -253,9 +253,13 @@ const AiSummary = () => {
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex cursor-pointer items-center" onClick={handleToggle}>
-        <p className="text-sm font-medium text-[#929292]">
-          {isLoading ? <TextShimmer>Summary is loading...</TextShimmer> : 'Summary'}
-        </p>
+        {isLoading ? (
+          <TextShimmer className="text-sm font-medium text-[#929292]">
+            Summary is loading...
+          </TextShimmer>
+        ) : (
+          <p className="text-sm font-medium text-[#929292]">Summary</p>
+        )}
 
         {!isLoading && (
           <ChevronDown
@@ -265,7 +269,7 @@ const AiSummary = () => {
       </div>
       {showSummary && (
         <div className="mt-2 text-sm text-black dark:text-white">
-          {isLoading ? "" : summary?.short || ''}
+          {isLoading ? '' : summary?.short || ''}
         </div>
       )}
     </div>
