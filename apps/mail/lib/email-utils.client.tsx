@@ -13,10 +13,6 @@ export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessag
         listUnsubscribePost: emailData.listUnsubscribePost,
       });
       if (listUnsubscribeAction) {
-        track('Unsubscribe', {
-          domain: emailData.sender.email.split('@')?.[1] ?? 'unknown',
-        });
-
         switch (listUnsubscribeAction.type) {
           case 'get':
             window.open(listUnsubscribeAction.url, '_blank');
@@ -48,12 +44,14 @@ export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessag
                   name: listUnsubscribeAction.emailAddress,
                 },
               ],
-              subject: listUnsubscribeAction.subject,
+              subject: listUnsubscribeAction.subject ?? 'Unsubscribe Request',
               message: 'Zero sent this email to unsubscribe from this mailing list.',
-              attachments: [],
             });
             return true;
         }
+        track('Unsubscribe', {
+          domain: emailData.sender.email.split('@')?.[1] ?? 'unknown',
+        });
       }
     }
   } catch (error) {

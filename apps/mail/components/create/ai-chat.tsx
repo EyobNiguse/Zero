@@ -6,6 +6,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
 import { Markdown } from '@react-email/components';
+import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { cn, getEmailLogo } from '@/lib/utils';
@@ -40,12 +41,6 @@ interface Message {
       from: string;
     }>;
   };
-}
-
-interface AIChatProps {
-  editor: any;
-  onMessagesChange?: (messages: Message[]) => void;
-  onReset?: () => void;
 }
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
@@ -102,26 +97,16 @@ const RenderThreads = ({
   return <div className="flex flex-col gap-2">{threads.map(renderThread)}</div>;
 };
 
-export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
-  const [value, setValue] = useState('');
+export function AIChat() {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
-  const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
-  const [searchValue, setSearchValue] = useSearchValue();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const { data: connections } = useConnections();
 
   const { messages, input, setInput, error, handleSubmit, status } = useChat({
     api: '/api/chat',
     maxSteps: 5,
   });
 
-  // Scroll to bottom function
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -134,134 +119,10 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
     // if (onMessagesChange) {
     //   onMessagesChange(messages);
     // }
-  }, [messages, onMessagesChange, scrollToBottom]);
-
-  useEffect(() => {
-    if (onReset) {
-      onReset();
-    }
-  }, [onReset]);
-
-  //   const handleSendMessage = async () => {
-  //     if (!value.trim() || isLoading) return;
-
-  //     const userMessage: Message = {
-  //       id: generateId(),
-  //       role: 'user',
-  //       content: value.trim(),
-  //       timestamp: new Date(),
-  //     };
-
-  //     setMessages((prev) => [...prev, userMessage]);
-  //     setValue('');
-  //     setIsLoading(true);
-
-  //     try {
-  //       if (!response.ok) {
-  //         throw new Error('Failed to get response');
-  //       }
-
-  //       const data = await response.json();
-
-  //       // Update the search value
-  //       setSearchValue({
-  //         value: data.searchQuery,
-  //         highlight: value.trim(),
-  //         isLoading: false,
-  //         isAISearching: false,
-  //         folder: searchValue.folder,
-  //       });
-
-  //       // Add assistant message with search results
-  //       const assistantMessage: Message = {
-  //         id: generateId(),
-  //         role: 'assistant',
-  //         content: data.content,
-  //         timestamp: new Date(),
-  //         type: 'search',
-  //         searchContent: {
-  //           searchDisplay: data.searchDisplay,
-  //           results: data.results,
-  //         },
-  //       };
-
-  //       setMessages((prev) => [...prev, assistantMessage]);
-  //     } catch (error) {
-  //       console.error('Error:', error);
-  //       toast.error('Failed to generate response. Please try again.');
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  const handleAcceptSuggestion = (emailContent: { subject?: string; content: string }) => {
-    if (!editor) {
-      toast.error('Editor not found');
-      return;
-    }
-
-    try {
-      // Format the content to preserve line breaks
-      const formattedContent = emailContent.content
-        .split('\n')
-        .map((line) => `<p>${line}</p>`)
-        .join('');
-
-      // Set the content in the editor
-      editor.commands.setContent(formattedContent);
-
-      // Find the create-email component and update its content
-      const createEmailElement = document.querySelector('[data-create-email]');
-      if (createEmailElement) {
-        const handler = (createEmailElement as any).onContentGenerated;
-        if (handler && typeof handler === 'function') {
-          handler({ content: emailContent.content, subject: emailContent.subject });
-        }
-      }
-
-      toast.success('Email content applied successfully');
-    } catch (error) {
-      console.error('Error applying suggestion:', error);
-      toast.error('Failed to apply email content');
-    }
-  };
-
-  const handleRejectSuggestion = (messageId: string) => {
-    toast.info('Email suggestion rejected');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const generateId = () => nanoid();
-
-  const toggleExpandResults = (messageId: string) => {
-    setExpandedResults((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(messageId)) {
-        newSet.delete(messageId);
-      } else {
-        newSet.add(messageId);
-      }
-      return newSet;
-    });
-  };
-
-  const sanitizeSnippet = (snippet: string) => {
-    return snippet
-      .replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&');
-  };
+  }, [messages, messagesEndRef]);
 
   return (
     <div className="flex h-full flex-col">
-      {/* Messages container */}
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {!messages.length ? (
@@ -325,10 +186,6 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                     : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]', // Assistant messages aligned to left
                 )}
               >
-                {/* <div className="prose dark:prose-invert overflow-wrap-anywhere break-words text-sm font-medium">
-                  {message.content}
-                </div> */}
-
                 {message.parts.map((part) => {
                   if (part.type === 'text') {
                     return <Markdown>{part.text}</Markdown>;
@@ -341,107 +198,23 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                       ) : null)
                     );
                   }
-                  //   if (part.type === 'source') {
-                  //     return <p>Source: {part.source.title}</p>;
-                  //   }
-                  //   if (part.type === 'step-start') {
-                  //     return <ArrowDownCircle className="mx-auto h-4 w-4" />;
-                  //   }
-                  //   return <p>{part.type}</p>;
                 })}
-
-                {/* {message.type === 'search' &&
-                message.searchContent &&
-                message.searchContent.results.length > 0 && (
-                  <div className="bg-muted space-y-4 rounded-lg px-4 pt-3">
-                    {(expandedResults.has(message.id)
-                      ? message.searchContent.results
-                      : message.searchContent.results.slice(0, 5)
-                    ).map((result: any, i: number) => (
-                      <div key={i} className="border-t pt-4 first:border-t-0 first:pt-0">
-                        <div className="font-medium">
-                          <p className="max-w-sm truncate text-sm">
-                            {result.subject.toLowerCase().includes('meeting') ? (
-                              <span className="text-blue-500">📅 {result.subject}</span>
-                            ) : (
-                              result.subject || 'No subject'
-                            )}
-                          </p>
-                          <span className="text-muted-foreground text-sm">
-                            from {result.from || 'Unknown sender'}
-                          </span>
-                        </div>
-                        <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">
-                          {sanitizeSnippet(result.snippet)}
-                        </div>
-                        <div className="text-muted-foreground mt-1 text-sm">
-                          <button
-                            onClick={() => handleThreadClick(result.id)}
-                            className="cursor-pointer border-none bg-transparent p-0 text-blue-500 hover:underline"
-                          >
-                            Open email
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {message.searchContent.results.length > 5 && (
-                      <Button
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-foreground w-full"
-                        onClick={() => toggleExpandResults(message.id)}
-                      >
-                        {expandedResults.has(message.id)
-                          ? `Show less (${message.searchContent.results.length - 5} fewer results)`
-                          : `Show more (${message.searchContent.results.length - 5} more results)`}
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-              {message.type === 'email' && message.emailContent && (
-                <div className="bg-background mt-4 rounded border p-4 font-mono text-sm">
-                  {message.emailContent.subject && (
-                    <div className="mb-2 text-blue-500">
-                      Subject: {message.emailContent.subject}
-                    </div>
-                  )}
-                  <div className="whitespace-pre-wrap">{message.emailContent.content}</div>
-                  <div className="mt-4 flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 border-green-500/20 hover:bg-green-500/10 hover:text-green-500"
-                      onClick={() => handleAcceptSuggestion(message.emailContent!)}
-                    >
-                      <CheckIcon className="mr-1 h-4 w-4" />
-                      Accept
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-destructive/20 hover:bg-destructive/10 hover:text-destructive h-8"
-                      onClick={() => handleRejectSuggestion(message.id)}
-                    >
-                      <XIcon className="mr-1 h-4 w-4" />
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              )} */}
               </div>
             ))
           )}
-          {/* Invisible element to scroll to */}
           <div ref={messagesEndRef} />
 
-          {JSON.stringify(error)}
-          {/* Loading indicator */}
           {status === 'submitted' && (
             <div className="flex flex-col gap-2 rounded-lg">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">zero is thinking...</span>
+                <TextShimmer className="text-muted-foreground text-sm">
+                  zero is thinking...
+                </TextShimmer>
               </div>
             </div>
+          )}
+          {(status === 'error' || !!error) && (
+            <div className="text-red-500">Error, please try again later</div>
           )}
         </div>
       </div>
@@ -469,7 +242,7 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                   form="ai-chat-form"
                   type="submit"
                   className="border-border/50 inline-flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border bg-white pl-1.5 pr-1 dark:bg-[#262626]"
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || status !== 'ready'}
                 >
                   <div className="flex items-center justify-center gap-2.5 pl-0.5">
                     <div className="justify-start text-center text-sm leading-none text-black dark:text-white">

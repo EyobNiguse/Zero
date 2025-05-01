@@ -286,7 +286,7 @@ function BulkSelectActions() {
     setIsLoading(true);
     toast.promise(
       Promise.all(
-        mail.bulkSelected.map(async (bulkSelected) => {
+        mail.bulkSelected.filter(Boolean).map(async (bulkSelected) => {
           await new Promise((resolve) => setTimeout(resolve, 499));
           const emailData = await getMail({ id: bulkSelected });
           if (emailData) {
