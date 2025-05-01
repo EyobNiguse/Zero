@@ -17,11 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
 import { Command, Menu } from 'lucide-react';
 import { Separator } from '../ui/separator';
-import { useRouter } from 'next/navigation';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
 import { useTheme } from 'next-themes';
@@ -75,14 +73,6 @@ export default function HomeContent() {
   const [glowStyle, setGlowStyle] = useState({ left: 0, width: 0 });
   const [open, setOpen] = useState(false);
   const { setTheme } = useTheme();
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (session) {
-      router.push('/mail');
-    }
-  }, [session]);
 
   useEffect(() => {
     setTheme('dark');
