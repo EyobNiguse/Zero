@@ -216,6 +216,7 @@ export const bottomNavItems = [
         title: 'navigation.sidebar.feedback',
         url: 'https://feedback.0.email',
         icon: MessageSquare,
+        target: '_blank',
       },
       {
         id: 'settings',
