@@ -28,7 +28,7 @@ const CommandDialog = ({ children, ...props }: DialogProps) => {
     <Dialog {...props}>
       <DialogTitle className="sr-only">Command</DialogTitle>
       <DialogDescription className="sr-only">Command</DialogDescription>
-      <DialogContent showOverlay={true} className="overflow-hidden p-0 sm:max-w-lg border rounded-xl w-full [&>button:last-child]:hidden bg-[#1A1A1A]">
+      <DialogContent showOverlay={true} className="overflow-hidden p-0 sm:max-w-lg border rounded-xl w-full [&>button:last-child]:hidden bg-white dark:bg-[#1A1A1A]">
         <Command className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-3 [&_[cmdk-item]]:py-2">
           {children}
         </Command>
