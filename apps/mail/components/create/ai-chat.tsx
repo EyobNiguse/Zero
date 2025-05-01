@@ -456,7 +456,6 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                     </div>
                   </div>
                   <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1 dark:bg-white/10">
-                    <Command className="h-3.5 w-3.5 text-black dark:text-[#929292]" />
                     <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
                   </div>
                 </button>

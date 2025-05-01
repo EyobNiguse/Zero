@@ -118,7 +118,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                             <span className="sr-only">Close chat</span>
                           </Button>
                         </TooltipTrigger>
-                        {/* <TooltipContent>{label}</TooltipContent> */}
+                        <TooltipContent>Close chat</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
 
@@ -134,7 +134,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                             <span className="sr-only">New chat</span>
                           </Button>
                         </TooltipTrigger>
-                        {/* <TooltipContent>{label}</TooltipContent> */}
+                        <TooltipContent>New chat</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
