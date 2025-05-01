@@ -4,9 +4,6 @@ import { IGetThreadResponse } from '@/app/api/driver/types';
 import { ParsedMessage } from '@/types';
 
 export const getMail = async ({ id }: { id: string }): Promise<IGetThreadResponse | null> => {
-  if (!id) {
-    throw new Error('Missing required fields');
-  }
   try {
     const driver = await getActiveDriver();
     const mailData = await driver.get(id);
