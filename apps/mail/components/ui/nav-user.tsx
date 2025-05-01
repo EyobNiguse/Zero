@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { DisableBrain, EnableBrain } from '@/actions/brain';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
@@ -33,7 +34,6 @@ import { putConnection } from '@/actions/connections';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
 import { dexieStorageProvider } from '@/lib/idb';
-import { EnableBrain } from '@/actions/brain';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
@@ -76,6 +76,12 @@ export function NavUser() {
     // This takes too long, not waiting
     const enabled = await EnableBrain({});
     if (enabled) toast.success('Brain enabled successfully');
+  }, []);
+
+  const handleDisableBrain = useCallback(async () => {
+    // This takes too long, not waiting
+    const enabled = await DisableBrain({});
+    if (enabled) toast.success('Brain disabled');
   }, []);
 
   const activeAccount = useMemo(() => {
@@ -394,6 +400,14 @@ export function NavUser() {
                       <div className="flex items-center gap-2">
                         <BrainIcon size={16} className="opacity-60" />
                         <p className="text-[13px] opacity-60">Enable Brain Activity</p>
+                      </div>
+                    </DropdownMenuItem>
+                  ) : null}
+                  {brainState?.enabled ? (
+                    <DropdownMenuItem onClick={handleDisableBrain}>
+                      <div className="flex items-center gap-2">
+                        <BrainIcon size={16} className="opacity-60" />
+                        <p className="text-[13px] opacity-60">Disable Brain Activity</p>
                       </div>
                     </DropdownMenuItem>
                   ) : null}

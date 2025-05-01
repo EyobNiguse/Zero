@@ -36,7 +36,6 @@ const useDelete = () => {
               ...mail,
               bulkSelected: [],
             });
-            deleteFromQueue(id);
             setIsLoading(false);
             await Promise.all([refetchThreads(), refetchStats()]);
           },
