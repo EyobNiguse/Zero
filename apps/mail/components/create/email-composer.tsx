@@ -96,7 +96,7 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [draftId, setDraftId] = useQueryState('draftId');
+  const [draftId] = useQueryState('draftId');
   // const { data: draft } = useDraft(draftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
@@ -282,6 +282,24 @@ export function EmailComposer({
     }
   };
 
+  // It needs to be done this way so that react doesn't catch on to the state change
+  // and we can still refresh to get the latest draft for the reply.
+  const setDraftIdQueryParam = (draftId: string | null) => {
+    const url = new URL(window.location.href);
+
+    // mutate only one key
+    draftId == null ? url.searchParams.delete('draftId') : url.searchParams.set('draftId', draftId);
+
+    // keep Next’s internal state intact and update its mirrors
+    const nextState = {
+      ...window.history.state, // preserves __NA / _N etc.
+      as: url.pathname + url.search,
+      url: url.pathname + url.search,
+    };
+
+    window.history.replaceState(nextState, '', url);
+  };
+
   const saveDraft = async () => {
     const values = getValues();
 
@@ -306,9 +324,7 @@ export function EmailComposer({
       const response = await createDraft(draftData);
 
       if (response?.id && response.id !== draftId) {
-        await setDraftId(response.id, {
-          shallow: true,
-        });
+        setDraftIdQueryParam(response.id);
       }
     } catch (error) {
       console.error('Error saving draft:', error);
