@@ -6,6 +6,7 @@ import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants'
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { useEditor } from '@/components/providers/editor-provider';
 import { MessageSquare, PanelLeftOpen, Plus } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { X } from '@/components/icons/icons';
 import { AIChat } from '@/components/create/ai-chat';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { editor } = useEditor();
   const [hasMessages, setHasMessages] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const pathname = usePathname();
 
   useHotkeys('Meta+0', () => {
     setOpen(!open);
@@ -78,6 +80,12 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
     setResetKey(prev => prev + 1);
     setHasMessages(false);
   }, []);
+
+  // Only show on /mail pages
+  const isMailPage = pathname?.startsWith('/mail');
+  if (!isMailPage) {
+    return <>{children}</>;
+  }
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -93,11 +101,11 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
               defaultSize={25}
               minSize={20}
               maxSize={45}
-              className="bg-panelLight dark:bg-panelDark ml- mr-1.5 mt-1 h-[calc(98vh+9px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+              className="bg-panelLight dark:bg-panelDark ml- mr-1.5 mt-1 h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
-                  <div className="flex items-center justify-between relative  px-2.5 border-b border-[#E7E7E7] dark:border-[#252525] pt-[21px] pb-[10px]">
+                  <div className="flex items-center justify-between relative  px-2.5 border-b border-[#E7E7E7] dark:border-[#252525] pt-[17.6px] pb-[10px]">
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
