@@ -40,7 +40,7 @@ export const AddConnectionDialog = ({
         )}
       </DialogTrigger>
       <DialogContent
-        className="w-full max-w-sm rounded-xl border bg-white p-6 sm:max-w-xl dark:bg-[#1A1A1A]"
+        className="w-full max-w-sm rounded-xl border bg-white p-6 sm:max-w-md dark:bg-[#1A1A1A]"
         showOverlay={true}
       >
         <DialogHeader>
@@ -50,7 +50,7 @@ export const AddConnectionDialog = ({
           </DialogDescription>
         </DialogHeader>
         <motion.div
-          className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3"
+          className="mt-4 grid grid-cols-2 gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
