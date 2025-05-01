@@ -26,7 +26,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   const { enableScope, disableScope } = useHotkeysContext();
   const { aliases, isLoading: isLoadingAliases } = useEmailAliases();
   const t = useTranslations();
-  const [draftId] = useQueryState('draftId');
+  const [draftId, setDraftId] = useQueryState('draftId');
   const { data: draft, isLoading: isDraftLoading } = useDraft(draftId ?? null);
 
   // Find the specific message to reply to
@@ -182,6 +182,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   if (!mode || !emailData) return null;
 
   if (draftId && isDraftLoading) {
+    // wait for the draft if requesting one
     return null;
   }
 
@@ -190,7 +191,10 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
       <EmailComposer
         className="w-full !max-w-none border pb-1 dark:bg-[#141414]"
         onSendEmail={handleSendEmail}
-        onClose={() => setMode(null)}
+        onClose={async () => {
+          await setMode(null);
+          await setDraftId(null);
+        }}
         initialMessage={draft?.content}
         initialTo={draft?.to}
         initialSubject={draft?.subject}
