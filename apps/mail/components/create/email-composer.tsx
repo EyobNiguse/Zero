@@ -8,13 +8,12 @@ import {
   Sparkles,
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { useCallback, useMemo, useRef, useState } from 'react';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { Loader, Check, X as XIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Command, Paperclip, Plus } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { aiCompose } from '@/actions/ai-composer';
@@ -22,17 +21,14 @@ import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { createDraft } from '@/actions/drafts';
 import { Input } from '@/components/ui/input';
-import { useDraft } from '@/hooks/use-drafts';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
-import { ISendEmail } from '@/types';
+import { useRef, useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { JSONContent } from 'novel';
 import pluralize from 'pluralize';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import Editor from './editor';
 import { z } from 'zod';
 
 interface EmailComposerProps {
