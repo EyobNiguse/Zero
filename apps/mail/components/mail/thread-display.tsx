@@ -1,6 +1,6 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 
@@ -33,7 +33,9 @@ import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useThread, useThreads } from '@/hooks/use-threads';
+import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { markAsRead, markAsUnread } from '@/actions/mail';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -51,8 +53,6 @@ import { ParsedMessage } from '@/types';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
-import { useAISidebar } from '@/components/ui/ai-sidebar';
-import { useHotkeysContext } from 'react-hotkeys-hook';
 
 interface ThreadDisplayProps {
   threadParam?: any;

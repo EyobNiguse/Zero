@@ -15,6 +15,7 @@
       "loading": "Loading...",
       "featureNotImplemented": "This feature is not implemented yet",
       "moving": "Moving...",
+      "moved": "Moved",
       "movedToInbox": "Moved to inbox",
       "movingToInbox": "Moving to inbox...",
       "movedToSpam": "Moved to spam",
