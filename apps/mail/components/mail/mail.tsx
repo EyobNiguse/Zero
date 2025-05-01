@@ -14,6 +14,7 @@ import {
   X,
   MessageSquare,
   Trash,
+  ArrowCircle,
 } from '../icons/icons';
 import {
   Dialog,
@@ -47,6 +48,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
@@ -71,7 +73,7 @@ export function MailLayout() {
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
-  const { toggleOpen: toggleAISidebar } = useAISidebar();
+  const { data: brainState } = useBrainState();
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -198,18 +200,16 @@ export function MailLayout() {
                       </div>
                     ) : null}
                   </div>
-                  {/* <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => {
-                      // Trigger a refresh of the mail list
-                      const event = new CustomEvent('refreshMailList');
-                      window.dispatchEvent(event);
-                    }}
-                  >
-                    <ArrowCircle className="dark:fill-iconDark fill-iconLight" />
-                  </Button> */}
+                  {brainState?.enabled ? (
+                    <Button
+                      variant="outline"
+                      size={'sm'}
+                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
+                    >
+                      <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                      Auto Labeling
+                    </Button>
+                  ) : null}
                 </div>
               </div>
               <div className="p-2 px-[22px]">
