@@ -44,7 +44,9 @@ export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessag
                   name: listUnsubscribeAction.emailAddress,
                 },
               ],
-              subject: listUnsubscribeAction.subject ?? 'Unsubscribe Request',
+              subject: listUnsubscribeAction.subject.trim().length
+                ? listUnsubscribeAction.subject
+                : 'Unsubscribe Request',
               message: 'Zero sent this email to unsubscribe from this mailing list.',
             });
             return true;
