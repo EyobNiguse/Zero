@@ -57,7 +57,7 @@ interface ActivityData {
 }
 
 const excludedUsernames = ['bot1', 'dependabot', 'github-actions', 'zerodotemail', 'autofix-ci[bot]'];
-const coreTeamMembers = ['nizzyabi', 'ahmetskilinc', 'ripgrim', 'needlexo', 'praashh', 'mrgsub'];
+const coreTeamMembers = ['nizzyabi', 'ahmetskilinc', 'ripgrim', 'needlexo', 'dakdevs', 'mrgsub'];
 const REPOSITORY = 'Mail-0/Zero';
 
 const specialRoles: Record<string, { role: string; position: number; x?: string; website?: string }> = {
@@ -79,20 +79,21 @@ const specialRoles: Record<string, { role: string; position: number; x?: string;
   },
   needlexo: {
     role: 'Software Engineer',
-    position: 4,
+    position: 5,
     x: 'needleXO',
     website: 'https://needle.rip',
   },
+  dakdevs: {
+    role: 'Software Engineer',
+    position: 4,
+    x: 'dakdevs',
+    website: 'https://www.dak.dev/',
+  },
   ripgrim: {
     role: 'Maintainer',
-    position: 5,
+    position: 6,
     x: 'fuckgrimlabs',
     website: 'https://ripgrim.com',
-  },
-  praashh: {
-    role: 'Maintainer',
-    position: 6,
-    x: '10Xpraash',
   },
 };
 
