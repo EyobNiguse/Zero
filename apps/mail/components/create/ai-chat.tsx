@@ -1,13 +1,11 @@
 'use client';
 
-import { ArrowUpIcon, Mic, CheckIcon, XIcon, Plus, Command, ArrowDownCircle } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
 import { Markdown } from '@react-email/components';
-import { Button } from '@/components/ui/button';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { cn, getEmailLogo } from '@/lib/utils';
@@ -67,11 +65,7 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
               src={getEmailLogo(getThread.latest?.sender?.email)}
             />
             <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
-              {getThread.latest?.sender?.name
-                ?.split(' ')
-                .map((n) => n[0])
-                ?.join('')
-                .toUpperCase()}
+              {getThread.latest?.sender?.name?.[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <p className="text-sm font-medium text-black dark:text-white">
@@ -105,7 +99,6 @@ const RenderThreads = ({
 }: {
   threads: { id: string; title: string; snippet: string }[];
 }) => {
-  const [, setThreadId] = useQueryState('threadId');
   return <div className="flex flex-col gap-2">{threads.map(renderThread)}</div>;
 };
 
@@ -246,12 +239,6 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
 
   const generateId = () => nanoid();
 
-  const handleThreadClick = (threadId: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('threadId', threadId);
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
   const toggleExpandResults = (messageId: string) => {
     setExpandedResults((prev) => {
       const newSet = new Set(prev);
@@ -314,7 +301,7 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                 <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
                   <div className="flex gap-4 px-4">
                     <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                      Schedule meeting with Sarah
+                      Find meeting with Sarah
                     </p>
                     <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
                       What did alex say about the design
@@ -334,8 +321,8 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                 className={cn(
                   'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
                   message.role === 'user'
-                    ? 'overflow-wrap-anywhere ml-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]' // User messages aligned to right
-                    : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-3 dark:bg-[#313131]', // Assistant messages aligned to left
+                    ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]' // User messages aligned to right
+                    : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]', // Assistant messages aligned to left
                 )}
               >
                 {/* <div className="prose dark:prose-invert overflow-wrap-anywhere break-words text-sm font-medium">

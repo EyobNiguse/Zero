@@ -94,7 +94,7 @@ export function CreateEmail({
           </DialogClose>
         </div>
         <EmailComposer
-          className="mb-12 rounded-2xl border"
+          className="mb-12 rounded-2xl border relative z-50"
           onSendEmail={handleSendEmail}
           initialMessage={draft?.content}
           initialTo={draft?.to?.map((e) => e.replace(/[<>]/g, ''))}
