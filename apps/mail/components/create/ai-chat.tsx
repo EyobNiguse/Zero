@@ -43,12 +43,6 @@ interface Message {
   };
 }
 
-interface AIChatProps {
-  editor: any;
-  onMessagesChange?: (messages: Message[]) => void;
-  onReset?: () => void;
-}
-
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
   const { data: getThread } = useThread(thread.id);
@@ -219,7 +213,9 @@ export function AIChat() {
               </div>
             </div>
           )}
-          {status === 'error' && <div className="text-red-500">Error, please try again later</div>}
+          {(status === 'error' || !!error) && (
+            <div className="text-red-500">Error, please try again later</div>
+          )}
         </div>
       </div>
 
