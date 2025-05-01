@@ -290,7 +290,7 @@ export function EmailComposer({
     // mutate only one key
     draftId == null ? url.searchParams.delete('draftId') : url.searchParams.set('draftId', draftId);
 
-    // keep Next’s internal state intact and update its mirrors
+    // keep Next's internal state intact and update its mirrors
     const nextState = {
       ...window.history.state, // preserves __NA / _N etc.
       as: url.pathname + url.search,
@@ -687,36 +687,38 @@ export function EmailComposer({
                 multiple
                 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                 ref={fileInputRef}
+                style={{ zIndex: 100 }}
               />
 
               {attachments && attachments.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
+                    <button className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10 transition-colors border">
                       <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
                       <span>{pluralize('file', attachments.length, true)}</span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 bg-[#202020] p-3" align="start">
+                  
+                  <PopoverContent className="w-80 dark:bg-[#202020] p-3 z-[100]" align="start" sideOffset={5}>
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-white/90">Attachments</h4>
+                      <h4 className="text-sm font-medium text-black dark:text-white/90">Attachments</h4>
                       <div className="max-h-[200px] space-y-2 overflow-y-auto">
                         {attachments.map((file, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between gap-2 rounded-md bg-white/5 p-2"
+                            className="flex items-center justify-between gap-2 rounded-md bg-black/5 dark:bg-white/5 p-2"
                           >
                             <div className="flex items-center gap-2">
                               <div>
-                                <p className="text-sm text-white/90">{file.name}</p>
-                                <p className="text-xs text-[#9A9A9A]">
+                                <p className="text-sm text-black dark:text-white/90">{file.name}</p>
+                                <p className="text-xs text-[#9A9A9A] dark:text-white/90">
                                   {(file.size / (1024 * 1024)).toFixed(2)} MB
                                 </p>
                               </div>
                             </div>
                             <button
                               onClick={() => removeAttachment(index)}
-                              className="rounded-sm p-1 hover:bg-white/10"
+                              className="rounded-sm p-1 hover:bg-white/10 transition-colors relative z-[101]"
                             >
                               <X className="h-4 w-4 fill-[#9A9A9A]" />
                             </button>
