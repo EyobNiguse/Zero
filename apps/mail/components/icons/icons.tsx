@@ -1271,7 +1271,14 @@ export const Plane2 = ({ className }: { className?: string }) => (
 );
 
 export const Pencil2 = ({ className }: { className?: string }) => (
-  <svg width="22" height="22" viewBox="-4 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+  <svg
+    width="22"
+    height="22"
+    viewBox="-4 0 26 26"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
     <path
       d="M20.7312 1.26884C19.706 0.243718 18.044 0.243718 17.0189 1.26884L15.8617 2.426L19.574 6.13831L20.7312 4.98116C21.7563 3.95603 21.7563 2.29397 20.7312 1.26884Z"
       fill="var(--icon-color)"
@@ -1281,6 +1288,37 @@ export const Pencil2 = ({ className }: { className?: string }) => (
       d="M18.5134 7.19897L14.801 3.48666L2.65021 15.6375C2.03342 16.2543 1.58003 17.015 1.33101 17.851L0.531232 20.5359C0.452612 20.7998 0.524959 21.0856 0.719688 21.2803C0.914418 21.4751 1.2002 21.5474 1.46413 21.4688L4.14902 20.669C4.98499 20.42 5.74574 19.9666 6.36253 19.3498L18.5134 7.19897Z"
       fill="var(--icon-color)"
       fillOpacity="0.5"
+    />
+  </svg>
+);
+
+export const ArrowRight = ({ className }: { className?: string }) => (
+  <svg
+    width="13"
+    height="10"
+    viewBox="0 0 13 10"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M1.16669 5H11.8334M11.8334 5L7.83335 1M11.8334 5L7.83335 9"
+      stroke="white"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const OpenMail = ({ className }: { className?: string }) => (
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path
+      d="M18.5 21.5C20.1569 21.5 21.5 20.1568 21.5 18.5V10.3262L14.6212 14.3481L18.1056 16.2243C18.4703 16.4206 18.6067 16.8755 18.4104 17.2402C18.214 17.6049 17.7591 17.7413 17.3944 17.545L11.7112 14.4847C11.2672 14.2457 10.7328 14.2457 10.2889 14.4847L4.60558 17.545C4.24087 17.7413 3.78603 17.6049 3.58965 17.2402C3.39327 16.8755 3.52972 16.4206 3.89442 16.2243L7.37878 14.3481L0.5 10.3262V18.5C0.5 20.1568 1.84315 21.5 3.5 21.5L18.5 21.5Z"
+     
+    />
+    <path
+      d="M0.5 8.58861V7.84388C0.5 6.74023 1.10597 5.72571 2.0777 5.20247L9.5777 1.16401C10.4656 0.685891 11.5344 0.685891 12.4223 1.16401L19.9223 5.20247C20.894 5.72571 21.5 6.74024 21.5 7.84388V8.58861L13.0742 13.515L12.4223 13.164C11.5344 12.6859 10.4656 12.6859 9.5777 13.164L8.92585 13.515L0.5 8.58861Z"
     />
   </svg>
 );

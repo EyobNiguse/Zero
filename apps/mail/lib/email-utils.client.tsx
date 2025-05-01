@@ -7,7 +7,6 @@ import { track } from '@vercel/analytics';
 
 export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessage }) => {
   try {
-    console.log('-'.repeat(10), emailData.listUnsubscribe);
     if (emailData.listUnsubscribe) {
       const listUnsubscribeAction = getListUnsubscribeAction({
         listUnsubscribe: emailData.listUnsubscribe,
@@ -123,16 +122,42 @@ const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) =>
         />
         <style>
           {`
+            @font-face {
+              font-family: 'Geist';
+              src: url('/fonts/geist/Geist-Regular.ttf') format('truetype');
+              font-weight: 400;
+              font-style: normal;
+            }
+            @font-face {
+              font-family: 'Geist';
+              src: url('/fonts/geist/Geist-Medium.ttf') format('truetype');
+              font-weight: 500;
+              font-style: normal;
+            }
+            @font-face {
+              font-family: 'Geist';
+              src: url('/fonts/geist/Geist-SemiBold.ttf') format('truetype');
+              font-weight: 600;
+              font-style: normal;
+            }
+            @font-face {
+              font-family: 'Geist';
+              src: url('/fonts/geist/Geist-Bold.ttf') format('truetype');
+              font-weight: 700;
+              font-style: normal;
+            }
             @media (prefers-color-scheme: dark) {
               body, table, td, div, p {
                 background: transparent !important;
                 background-color: #1A1A1A !important;
                 font-size: 16px !important;
+                font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
               }
               * {
                 background: transparent !important;
                 background-color: #1A1A1A !important;
                 font-size: 16px !important;
+                font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
               }
             }
             @media (prefers-color-scheme: light) {
@@ -140,11 +165,13 @@ const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) =>
                 background: transparent !important;
                 background-color: white !important;
                 font-size: 16px !important;
+                font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
               }
               * {
                 background: transparent !important;
                 background-color: white !important;
                 font-size: 16px !important;
+                font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
               }
             }
           `}

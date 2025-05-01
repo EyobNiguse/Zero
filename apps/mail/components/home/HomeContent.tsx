@@ -15,11 +15,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowRight, CurvedArrow } from '../icons/icons';
 import { Command, Menu, MoveRight } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CurvedArrow } from '../icons/icons';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
 import { useTheme } from 'next-themes';
@@ -249,14 +249,15 @@ export default function HomeContent() {
       </div>
 
       <section className="mt-32 flex flex-col items-center px-4 md:mt-40">
-        <div className="border-input/50 mb-6 inline-flex items-center gap-4 rounded-full border bg-[#2a2a2a] px-4 py-1 pr-1.5">
+        <div className="border-input/50 mb-6 inline-flex items-center gap-4 rounded-full border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-1 pr-1.5">
           <span className="text-sm">See what's new from 0.email</span>
           <Link
-            href="/#"
-            className="text-foreground ml-2 flex items-center gap-1 rounded-full bg-gradient-to-b from-neutral-600 to-neutral-700 px-3 py-1 text-sm"
+            href="https://x.com/zerodotemail"
+            target="_blank"
+            className="text-foreground flex items-center gap-1 rounded-full bg-gradient-to-b from-neutral-600 to-neutral-700 px-3 py-1 text-sm"
           >
             <span>Learn More</span>
-            <MoveRight className="!size-4" />
+            <ArrowRight className="ml-1" />
           </Link>
         </div>
         <h1 className="text-center text-4xl font-medium md:text-6xl">
@@ -268,7 +269,9 @@ export default function HomeContent() {
           Zero is an AI native email client that manages your inbox, so you don't have to.
         </p>
 
-        <Button className="h-8">Get Started</Button>
+        
+          <Button className="h-8"><Link href="/login">Get Started</Link></Button>
+     
       </section>
       <section className="relative mt-10 hidden flex-col justify-center md:flex">
         <div className="bg-border absolute left-1/2 top-0 h-px w-full -translate-x-1/2 md:container xl:max-w-7xl" />

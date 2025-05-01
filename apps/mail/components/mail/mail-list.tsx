@@ -38,6 +38,7 @@ import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useMail, type Config } from '@/components/mail/use-mail';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
+import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -855,6 +856,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     [mail, setMail, getSelectMode],
   );
 
+  const [, setFocusedIndex] = useAtom(focusedIndexAtom);
+
   const handleMailClick = useCallback(
     (message: ParsedMessage) => () => {
       if (getSelectMode() !== 'single') {
@@ -863,13 +866,15 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       handleMouseEnter(message.id);
 
       const messageThreadId = message.threadId ?? message.id;
+      const clickedIndex = items.findIndex((item) => item.id === messageThreadId);
+      setFocusedIndex(clickedIndex);
 
       // Update URL param without navigation
       void setThreadId(messageThreadId);
       void setDraftId(null);
       void setActiveReplyId(null);
     },
-    [mail],
+    [mail, items, setFocusedIndex],
   );
 
   const isFiltering = searchValue.value.trim().length > 0;

@@ -74,12 +74,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Sidebar
         collapsible="icon"
         {...props}
-        className={`flex select-none flex-col items-center ${state === 'collapsed' ? '' : ''}`}
+        className={`flex select-none flex-col items-center h-screen top-2.5 ${state === 'collapsed' ? '' : ''}`}
       >
         <div
-          className={`relative z-20 flex w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2'}`}
+          className={`relative z-20 flex  w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2 '}`}
         >
-          <SidebarHeader className="mt-[10px] flex flex-col gap-2">
+          <SidebarHeader className=" flex flex-col gap-2">
             <NavUser />
             <AnimatePresence mode="wait">
               {showComposeButton && (
@@ -111,8 +111,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
 
         <div className={`mt-auto flex w-full flex-col ${state !== 'collapsed' ? 'px-2' : ''}`}>
-          <div className="mx-2">
-            {!session || isPending ? null : !session?.hasUsedTicket ? <GoldenTicketModal /> : null}
+          <div className="mx-2 relative top-2.5">
+          <GoldenTicketModal />
           </div>
           <SidebarContent className="py-0 pt-0">
             <NavMain items={bottomNavItems} />

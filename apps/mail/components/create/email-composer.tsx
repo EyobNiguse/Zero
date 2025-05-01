@@ -8,13 +8,12 @@ import {
   Sparkles,
 } from '../icons/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, MinusCircle, Paperclip, Plus, PlusCircle } from 'lucide-react';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { useCallback, useMemo, useRef, useState } from 'react';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { Loader, Check, X as XIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Command, Paperclip, Plus } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { aiCompose } from '@/actions/ai-composer';
@@ -22,17 +21,14 @@ import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { createDraft } from '@/actions/drafts';
 import { Input } from '@/components/ui/input';
-import { useDraft } from '@/hooks/use-drafts';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
-import { ISendEmail } from '@/types';
+import { useRef, useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { JSONContent } from 'novel';
 import pluralize from 'pluralize';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import Editor from './editor';
 import { z } from 'zod';
 
 interface EmailComposerProps {
@@ -100,7 +96,7 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [draftId, setDraftId] = useQueryState('draftId');
+  const [draftId] = useQueryState('draftId');
   // const { data: draft } = useDraft(draftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
@@ -286,6 +282,24 @@ export function EmailComposer({
     }
   };
 
+  // It needs to be done this way so that react doesn't catch on to the state change
+  // and we can still refresh to get the latest draft for the reply.
+  const setDraftIdQueryParam = (draftId: string | null) => {
+    const url = new URL(window.location.href);
+
+    // mutate only one key
+    draftId == null ? url.searchParams.delete('draftId') : url.searchParams.set('draftId', draftId);
+
+    // keep Next’s internal state intact and update its mirrors
+    const nextState = {
+      ...window.history.state, // preserves __NA / _N etc.
+      as: url.pathname + url.search,
+      url: url.pathname + url.search,
+    };
+
+    window.history.replaceState(nextState, '', url);
+  };
+
   const saveDraft = async () => {
     const values = getValues();
 
@@ -310,7 +324,7 @@ export function EmailComposer({
       const response = await createDraft(draftData);
 
       if (response?.id && response.id !== draftId) {
-        setDraftId(response.id);
+        setDraftIdQueryParam(response.id);
       }
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -678,7 +692,7 @@ export function EmailComposer({
               {attachments && attachments.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
+                    <button className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
                       <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
                       <span>{pluralize('file', attachments.length, true)}</span>
                     </button>
@@ -791,13 +805,6 @@ export function EmailComposer({
                     <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
                   )}
                   {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
-                  <span className="px-0.5 text-sm">
-                    {messageLength < 50
-                      ? 'short-length'
-                      : messageLength < 200
-                        ? 'medium-length'
-                        : 'long-length'}
-                  </span>
                 </button>
               </TooltipTrigger>
               <TooltipContent>

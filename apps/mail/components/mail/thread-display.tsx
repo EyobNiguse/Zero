@@ -1,6 +1,6 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 
@@ -25,13 +25,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { CircleAlertIcon, Inbox, ShieldAlertIcon, StopCircleIcon } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
+import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
+import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { MailDisplaySkeleton } from './mail-skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
@@ -44,10 +48,11 @@ import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
 import { ParsedMessage } from '@/types';
-import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+import { useAISidebar } from '@/components/ui/ai-sidebar';
+import { useHotkeysContext } from 'react-hotkeys-hook';
 
 interface ThreadDisplayProps {
   threadParam?: any;
@@ -143,7 +148,12 @@ function ThreadActionButton({
   );
 }
 
-export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
+export function ThreadDisplay() {
+  const isMobile = useIsMobile();
+  const { toggleOpen: toggleAISidebar, open: isSidebarOpen } = useAISidebar();
+  const params = useParams<{ folder: string }>();
+  const folder = params?.folder ?? 'inbox';
+  const [id, setThreadId] = useQueryState('threadId');
   const { data: emailData, isLoading, mutate: mutateThread } = useThread(id ?? null);
   const { mutate: mutateThreads } = useThreads();
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -151,40 +161,39 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
   const [isStarred, setIsStarred] = useState(false);
   const t = useTranslations();
   const { mutate: mutateStats } = useStats();
-  const { folder } = useParams<{ folder: string }>();
-  const [threadId, setThreadId] = useQueryState('threadId');
   const [mode, setMode] = useQueryState('mode');
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
   const [, setDraftId] = useQueryState('draftId');
   const { resolvedTheme } = useTheme();
+  const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
 
   const {
     data: { threads: items = [] },
   } = useThreads();
 
   const handlePrevious = useCallback(() => {
-    if (!id || !items.length) return;
-    const currentIndex = items.findIndex((item) => item.id === id);
-    if (currentIndex > 0) {
-      const prevThread = items[currentIndex - 1];
+    if (!id || !items.length || focusedIndex === null) return;
+    if (focusedIndex > 0) {
+      const prevThread = items[focusedIndex - 1];
       if (prevThread) {
         setThreadId(prevThread.id);
+        setFocusedIndex(focusedIndex - 1);
       }
     }
-  }, [items, id, setThreadId]);
+  }, [items, id, focusedIndex, setThreadId, setFocusedIndex]);
 
   const handleNext = useCallback(() => {
-    if (!id || !items.length) return setThreadId(null);
-    const currentIndex = items.findIndex((item) => item.id === id);
-    if (currentIndex < items.length - 1) {
-      const nextThread = items[currentIndex + 1];
+    if (!id || !items.length || focusedIndex === null) return setThreadId(null);
+    if (focusedIndex < items.length - 1) {
+      const nextThread = items[focusedIndex + 1];
       if (nextThread) {
         setThreadId(nextThread.id);
         setActiveReplyId(null);
+        setFocusedIndex(focusedIndex + 1);
       }
     }
-  }, [items, id, setThreadId]);
+  }, [items, id, focusedIndex, setThreadId, setActiveReplyId, setFocusedIndex]);
 
   // Check if thread contains any images (excluding sender avatars)
   const hasImages = useMemo(() => {
@@ -224,6 +233,14 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
     }
   }, [emailData, id]);
 
+  const handleUnsubscribeProcess = () => {
+    if (!emailData?.latest) return;
+    toast.promise(handleUnsubscribe({ emailData: emailData.latest }), {
+      success: 'Unsubscribed successfully!',
+      error: 'Failed to unsubscribe',
+    });
+  };
+
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
   const isInBin = folder === FOLDERS.BIN;
@@ -236,13 +253,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
 
   const moveThreadTo = useCallback(
     async (destination: ThreadDestination) => {
-      if (!threadId) return;
+      if (!id) return;
       const promise = moveThreadsTo({
-        threadIds: [threadId],
+        threadIds: [id],
         currentFolder: folder,
         destination,
       });
-      setBackgroundQueue({ type: 'add', threadId: `thread:${threadId}` });
+      setBackgroundQueue({ type: 'add', threadId: `thread:${id}` });
       handleNext();
 
       toast.success(
@@ -262,12 +279,12 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
         },
       });
     },
-    [threadId, folder, t],
+    [id, folder, t],
   );
 
   // Add handleToggleStar function
   const handleToggleStar = useCallback(async () => {
-    if (!emailData || !threadId) return;
+    if (!emailData || !id) return;
 
     const newStarredState = !isStarred;
     setIsStarred(newStarredState);
@@ -277,7 +294,7 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
       toast.success(t('common.actions.removedFromFavorites'));
     }
     mutateThreads();
-  }, [emailData, threadId, isStarred, mutateThreads, t]);
+  }, [emailData, id, isStarred, mutateThreads, t]);
 
   // Set initial star state based on email data
   useEffect(() => {
@@ -350,6 +367,35 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                 </p>
               </div>
             </div>
+            {!isSidebarOpen && (
+              <div className="fixed bottom-4 right-4">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="h-10 w-10 rounded-md p-0"
+                      onClick={toggleAISidebar}
+                    >
+                      <Image
+                        src="/black-icon.svg"
+                        alt="AI Assistant"
+                        width={20}
+                        height={20}
+                        className="block dark:hidden"
+                      />
+                      <Image
+                        src="/white-icon.svg"
+                        alt="AI Assistant"
+                        width={20}
+                        height={20}
+                        className="hidden dark:block"
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Toggle AI Assistant</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
           </div>
         ) : !emailData || isLoading ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -529,6 +575,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                           <ArchiveX className="fill-iconLight dark:fill-iconDark mr-2" />
                           <span>{t('common.threadDisplay.moveToSpam')}</span>
                         </DropdownMenuItem>
+                        {emailData.latest?.listUnsubscribe ||
+                        emailData.latest?.listUnsubscribePost ? (
+                          <DropdownMenuItem onClick={handleUnsubscribeProcess}>
+                            <ShieldAlertIcon className="fill-iconLight dark:fill-iconDark mr-2" />
+                            <span>Unsubscribe</span>
+                          </DropdownMenuItem>
+                        ) : null}
                       </>
                     )}
                   </DropdownMenuContent>
@@ -567,6 +620,35 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                   ))}
                 </div>
               </ScrollArea>
+              {!isSidebarOpen && (
+                <div className="fixed bottom-4 right-4">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="h-10 w-10 rounded-md p-0"
+                        onClick={toggleAISidebar}
+                      >
+                        <Image
+                          src="/black-icon.svg"
+                          alt="AI Assistant"
+                          width={20}
+                          height={20}
+                          className="block dark:hidden"
+                        />
+                        <Image
+                          src="/white-icon.svg"
+                          alt="AI Assistant"
+                          width={20}
+                          height={20}
+                          className="hidden dark:block"
+                        />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Toggle AI Assistant</TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
             </div>
           </>
         )}
