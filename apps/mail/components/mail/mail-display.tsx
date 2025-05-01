@@ -237,13 +237,9 @@ const cleanNameDisplay = (name?: string) => {
   return name.trim();
 };
 
-const AiSummary = ({
-  onClick,
-  e,
-}: {
-  onClick?: (e: React.MouseEvent) => void;
-  e?: React.MouseEvent;
-}) => {
+const AiSummary = () => {
+  const [threadId] = useQueryState('threadId');
+  const { data: summary } = useSummary(threadId ?? null);
   const [showSummary, setShowSummary] = useState(true);
 
   const handleToggle = (e: React.MouseEvent) => {
@@ -256,6 +252,7 @@ const AiSummary = ({
       className="mt-5 max-w-3xl rounded-xl border border-[#8B5CF6] bg-white p-3 dark:bg-[#252525]"
       onClick={(e) => e.stopPropagation()} // Prevent clicks from collapsing email
     >
+      {JSON.stringify({ summary })}
       <div className="flex cursor-pointer items-center" onClick={handleToggle}>
         <p className="text-sm font-medium text-[#929292]">AI Summary</p>
         <ChevronDown
@@ -380,7 +377,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
 
   const renderPerson = useCallback(
     (person: Sender) => (
-      <Popover>
+      <Popover key={person.email}>
         <PopoverTrigger asChild>
           <div
             key={person.email}
@@ -488,7 +485,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   })()}
                 </div>
               </div>
-              {/* <AiSummary /> */}
+              <AiSummary />
             </>
           )}
         </div>
