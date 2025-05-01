@@ -10,16 +10,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  bulkArchive,
-  bulkDeleteThread,
-  bulkStar,
-  getMail,
-  markAsImportant,
-  markAsRead,
-} from '@/actions/mail';
-import {
   Archive2,
   Bell,
+  CurvedArrow,
   Eye,
   Important,
   Lightning,
@@ -29,6 +22,14 @@ import {
   User,
   X,
 } from '../icons/icons';
+import {
+  bulkArchive,
+  bulkDeleteThread,
+  bulkStar,
+  getMail,
+  markAsImportant,
+  markAsRead,
+} from '@/actions/mail';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
@@ -40,13 +41,13 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowRightIcon, Loader2 } from 'lucide-react';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
+import { Command, Loader2 } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
@@ -291,9 +292,12 @@ function BulkSelectActions() {
               });
           }
         }),
-      ).then(() => {
+      ).then(async () => {
         setIsUnsub(false);
         setIsLoading(false);
+        await mutateThreads();
+        await mutateStats();
+        setMail({ ...mail, bulkSelected: [] });
       }),
       {
         loading: 'Unsubscribing...',
@@ -401,7 +405,7 @@ function BulkSelectActions() {
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <button className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border border-amber-400 bg-amber-500 px-2 text-sm text-amber-100 transition-all duration-300 ease-out hover:bg-amber-500/80 hover:bg-amber-600 dark:border-amber-700">
+              <button className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80">
                 <div className="relative overflow-visible">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -425,7 +429,16 @@ function BulkSelectActions() {
           <TooltipContent>{t('common.mail.unSubscribeFromAll')}</TooltipContent>
         </Tooltip>
 
-        <DialogContent>
+        <DialogContent
+          showOverlay
+          className="bg-panelLight dark:bg-panelDark max-w-lg rounded-xl border p-4"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              handleMassUnsubscribe();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Mass Unsubscribe</DialogTitle>
             <DialogDescription>
@@ -433,15 +446,21 @@ function BulkSelectActions() {
               action is required to unsubscribe from certain threads, you will be notified.
             </DialogDescription>
           </DialogHeader>
-          <p className={'text-muted-foreground text-sm text-red-500'}>Errors: {errorQty}</p>
+
           <DialogFooter>
-            <Button disabled={isLoading} onClick={handleMassUnsubscribe}>
-              {!isLoading && <span>Begin</span>}{' '}
-              {isLoading ? (
-                <Loader2 className={'animate-spin'} />
-              ) : (
-                <ArrowRightIcon className="h-4 w-4" />
-              )}
+            <Button variant="outline" className="mt-3 h-8" onClick={() => setIsUnsub(false)}>
+              <span>Cancel</span>{' '}
+            </Button>
+            <Button
+              className="mt-3 h-8 [&_svg]:size-3.5"
+              disabled={isLoading}
+              onClick={handleMassUnsubscribe}
+            >
+              {<span>Unsubscribe</span>}{' '}
+              <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
+                <Command className="h-2 w-3 text-white dark:text-[#929292]" />
+                <CurvedArrow className="mt-1.5 h-5 w-3.5 fill-white dark:fill-[#929292]" />
+              </div>
             </Button>
           </DialogFooter>
         </DialogContent>

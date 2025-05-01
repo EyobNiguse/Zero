@@ -74,10 +74,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Sidebar
         collapsible="icon"
         {...props}
-        className={`flex select-none flex-col items-center h-screen ${state === 'collapsed' ? '' : ''}`}
+        className={`flex select-none flex-col items-center h-screen top-2.5 ${state === 'collapsed' ? '' : ''}`}
       >
         <div
-          className={`relative z-20 flex w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2 top-2.5'}`}
+          className={`relative z-20 flex  w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2 '}`}
         >
           <SidebarHeader className=" flex flex-col gap-2">
             <NavUser />

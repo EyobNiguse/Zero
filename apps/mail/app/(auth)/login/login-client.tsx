@@ -150,28 +150,11 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
   });
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-between">
-      <div className="absolute left-4 top-4 z-10">
-        <Link href="/">
-          <Image
-            src="/white-icon.svg"
-            alt="Zero"
-            width={40}
-            height={40}
-            className="cursor-pointer hidden dark:block"
-          />
-          <Image
-            src="/black-icon.svg"
-            alt="Zero"
-            width={40}
-            height={40}
-            className="cursor-pointer block dark:hidden"
-          />
-        </Link>
-      </div>
+    <div className="flex min-h-screen w-full flex-col items-center justify-between bg-[#111111]">
+      
 
       <div className="animate-in slide-in-from-bottom-4 mx-auto flex max-w-[600px] flex-grow items-center justify-center space-y-8 px-4 duration-500 sm:px-12 md:px-0">
-        <div className="w-full space-y-8">
+        <div className="w-full space-y-4">
           <p className="text-center text-4xl font-bold md:text-5xl">Login to Zero</p>
 
           {shouldShowDetailedConfig && (
