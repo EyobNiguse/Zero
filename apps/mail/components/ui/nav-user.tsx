@@ -31,6 +31,7 @@ import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
 import { putConnection } from '@/actions/connections';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useBrainState } from '@/hooks/use-summary';
 import { dexieStorageProvider } from '@/lib/idb';
 import { EnableBrain } from '@/actions/brain';
 import { useRouter } from 'next/navigation';
@@ -100,6 +101,8 @@ export function NavUser() {
       },
     );
   };
+
+  const { data: brainState } = useBrainState();
 
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -266,14 +269,6 @@ export function NavUser() {
                       Terms
                     </a>
                   </div>
-                  <DropdownMenuSeparator className="mt-1" />
-                  <p className="text-muted-foreground px-2 py-1 text-[11px] font-medium">Debug</p>
-                  <DropdownMenuItem onClick={handleClearCache}>
-                    <div className="flex items-center gap-2">
-                      <HelpCircle size={16} className="opacity-60" />
-                      <p className="text-[13px] opacity-60">Clear Local Cache</p>
-                    </div>
-                  </DropdownMenuItem>
                 </>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -394,12 +389,14 @@ export function NavUser() {
                       <p className="text-[13px] opacity-60">Clear Local Cache</p>
                     </div>
                   </DropdownMenuItem>
-                  {/* <DropdownMenuItem onClick={handleEnableBrain}>
-                    <div className="flex items-center gap-2">
-                      <BrainIcon size={16} className="opacity-60" />
-                      <p className="text-[13px] opacity-60">Enable Brain Activity</p>
-                    </div>
-                  </DropdownMenuItem> */}
+                  {!brainState?.enabled ? (
+                    <DropdownMenuItem onClick={handleEnableBrain}>
+                      <div className="flex items-center gap-2">
+                        <BrainIcon size={16} className="opacity-60" />
+                        <p className="text-[13px] opacity-60">Enable Brain Activity</p>
+                      </div>
+                    </DropdownMenuItem>
+                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

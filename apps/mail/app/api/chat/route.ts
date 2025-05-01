@@ -103,7 +103,7 @@ export async function POST(req: Request) {
             console.error('Error creating label:', error);
             throw new Error('Failed to create label');
           }
-          return { created: 'label.id' };
+          return { success: true };
         },
       },
       addLabelsToThreads: {
