@@ -46,7 +46,8 @@
       "cancel": "Cancel",
       "save": "Save",
       "remove": "Remove",
-      "settings": "Settings"
+      "settings": "Settings",
+      "exitSelectionModeEsc": "Click or press ESC to exit selection mode"
     },
     "themes": {
       "dark": "Dark",
@@ -430,7 +431,8 @@
           "releaseKeys": "Release keys",
           "selectAll": "Select All",
           "commandPalette": "Command Palette",
-          "markAsRead": "Mark as Read"
+          "markAsRead": "Mark as Read",
+          "exitSelectionMode": "Exit Selection Mode"
         }
       },
       "labels": {

@@ -49,7 +49,7 @@ const threadDisplayShortcuts: Shortcut[] = [
     keys: ['meta', 'backspace'],
     action: 'delete',
     type: 'single',
-    description: 'Delete email',
+    description: 'Move to Bin',
     scope: 'thread-display',
   },
 ];
@@ -123,18 +123,25 @@ const mailListShortcuts: Shortcut[] = [
     description: 'Mark as unread',
     scope: 'mail-list',
   },
-  {
-    keys: ['m'],
-    action: 'muteThread',
-    type: 'single',
-    description: 'Mute thread',
-    scope: 'mail-list',
-  },
+  // {
+  //   keys: ['m'],
+  //   action: 'muteThread',
+  //   type: 'single',
+  //   description: 'Mute thread',
+  //   scope: 'mail-list',
+  // },
   {
     keys: ['e'],
     action: 'archiveEmail',
     type: 'single',
     description: 'Archive email',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['escape'],
+    action: 'exitSelectionMode',
+    type: 'single',
+    description: 'Exit selection mode',
     scope: 'mail-list',
   },
   // {

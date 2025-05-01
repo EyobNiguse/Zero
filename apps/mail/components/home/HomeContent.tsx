@@ -12,14 +12,15 @@ import {
 } from '@/components/ui/navigation-menu';
 import { PixelatedBackground, PixelatedLeft, PixelatedRight } from '@/components/home/pixelated-bg';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ArrowRight, CurvedArrow, Discord, GitHub, LinkedIn, Twitter } from '../icons/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, CurvedArrow } from '../icons/icons';
 import { Command, Menu, MoveRight } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Separator } from '../ui/separator';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
 import { useTheme } from 'next-themes';
@@ -151,6 +152,13 @@ export default function HomeContent() {
     }
   };
 
+  const IconComponent = {
+    github: GitHub,
+    twitter: Twitter,
+    discord: Discord,
+    linkedin: LinkedIn,
+  };
+
   return (
     <main className="relative flex max-h-screen flex-1 flex-col overflow-hidden">
       <PixelatedBackground
@@ -171,11 +179,11 @@ export default function HomeContent() {
                     About
                   </NavigationMenuLink>
                 </NavigationMenuItem>
-                <NavigationMenuItem>
+                {/* <NavigationMenuItem>
                   <NavigationMenuLink href="/pricing" className={navigationMenuTriggerStyle()}>
                     Pricing
                   </NavigationMenuLink>
-                </NavigationMenuItem>
+                </NavigationMenuItem> */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -218,31 +226,44 @@ export default function HomeContent() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[300px] bg-[#111111] sm:w-[400px]">
-            <SheetHeader>
+            <SheetHeader className="flex flex-row items-center justify-between">
               <SheetTitle>
                 <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
               </SheetTitle>
+              <Link href="/login">
+                <Button className="w-full">Sign in</Button>
+              </Link>
             </SheetHeader>
-            <div className="mt-4 flex flex-col space-y-4">
-              <Link href="/about" className="text-sm font-medium">
+            <div className="mt-8 flex flex-col space-y-4">
+              <Link href="/about" className="font-medium">
                 About
               </Link>
-              <Link href="#" className="text-sm font-medium">
+
+              <Link href="https://cal.com/team/0" className="font-medium">
+                Contact Us
+              </Link>
+
+              {/* <Link href="#" className="font-medium">
                 Solutions
-              </Link>
-              <Link href="#" className="text-sm font-medium">
+              </Link> */}
+              {/* <Link href="#" className="font-medium">
                 Resource
-              </Link>
-              <div className="pt-4">
-                <Link href="/login">
-                  <Button variant="outline" className="w-full">
-                    Sign in
-                  </Button>
-                </Link>
-              </div>
-              <Link href="https://cal.com/team/0">
-                <Button className="w-full">Contact Us</Button>
-              </Link>
+              </Link> */}
+            </div>
+            <Separator className="mt-8" />
+            <div className="mt-8 flex flex-row items-center justify-center gap-4">
+              {resources.map((resource) => {
+                const Icon = IconComponent[resource.platform];
+                return (
+                  <Link
+                    key={resource.title}
+                    href={resource.href}
+                    className="flex items-center gap-2 font-medium"
+                  >
+                    {resource.platform && <Icon className="h-5 w-5" />}
+                  </Link>
+                );
+              })}
             </div>
           </SheetContent>
         </Sheet>
@@ -269,9 +290,9 @@ export default function HomeContent() {
           Zero is an AI native email client that manages your inbox, so you don't have to.
         </p>
 
-        
-          <Button className="h-8"><Link href="/login">Get Started</Link></Button>
-     
+        <Button className="h-8">
+          <Link href="/login">Get Started</Link>
+        </Button>
       </section>
       <section className="relative mt-10 hidden flex-col justify-center md:flex">
         <div className="bg-border absolute left-1/2 top-0 h-px w-full -translate-x-1/2 md:container xl:max-w-7xl" />
@@ -284,10 +305,10 @@ export default function HomeContent() {
             <TabsList className="relative h-fit w-full rounded-none bg-transparent pb-0 md:w-auto">
               <div className="bg-border absolute -top-4 left-0 h-[calc(100%+16px)] w-px" />
               <div className="bg-border absolute -top-4 right-0 h-[calc(100%+16px)] w-px" />
-         
+
               <CustomTabGlow glowStyle={glowStyle} />
 
-              
+
               {tabs.map((tab, index) => (
                 <TabsTrigger
                   key={tab.value}
