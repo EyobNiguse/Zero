@@ -193,9 +193,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
         onSendEmail={handleSendEmail}
         onClose={async () => {
           await setMode(null);
-          await setDraftId(null, {
-            shallow: true,
-          });
+          await setDraftId(null);
         }}
         initialMessage={draft?.content}
         initialTo={draft?.to}
