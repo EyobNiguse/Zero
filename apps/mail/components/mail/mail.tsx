@@ -21,6 +21,7 @@ import {
   Tag,
   User,
   X,
+  MessageSquare,
 } from '../icons/icons';
 import {
   bulkArchive,
@@ -56,9 +57,11 @@ import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+import { useAISidebar } from '@/components/ui/ai-sidebar';
 
 export function MailLayout() {
-  const { folder } = useParams<{ folder: string }>();
+  const params = useParams<{ folder: string }>();
+  const folder = params?.folder ?? 'inbox';
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
   const [isMobile, setIsMobile] = useState(false);
@@ -67,6 +70,7 @@ export function MailLayout() {
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
+  const { toggleOpen: toggleAISidebar } = useAISidebar();
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -191,9 +195,8 @@ export function MailLayout() {
                       </div>
                     ) : (
                       <>
-                        {/* <Button variant="ghost" className={cn('md:h-fit md:px-2')}>
-                    <Filter className="dark:fill-iconDark fill-iconLight" />
-                    </Button> */}
+                        <div className="flex items-center gap-2">
+                        </div>
                       </>
                     )}
                   </div>
@@ -275,6 +278,11 @@ function BulkSelectActions() {
   const [errorQty, setErrorQty] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isUnsub, setIsUnsub] = useState(false);
+  const [mail, setMail] = useMail();
+  const params = useParams<{ folder: string }>();
+  const folder = params?.folder ?? 'inbox';
+  const { mutate: mutateThreads } = useThreads();
+  const { mutate: mutateStats } = useStats();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
@@ -306,10 +314,6 @@ function BulkSelectActions() {
       },
     );
   };
-  const [mail, setMail] = useMail();
-  const { folder } = useParams<{ folder: string }>();
-  const { mutate: mutateThreads } = useThreads();
-  const { mutate: mutateStats } = useStats();
 
   const onMoveSuccess = useCallback(async () => {
     await mutateThreads();
@@ -605,7 +609,8 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const [mail, setMail] = useMail();
   const [searchValue, setSearchValue] = useSearchValue();
   const categories = Categories();
-  const { folder } = useParams<{ folder: string }>();
+  const params = useParams<{ folder: string }>();
+  const folder = params?.folder ?? 'inbox';
   const [category, setCategory] = useQueryState('category', {
     defaultValue: 'Important',
   });
