@@ -755,7 +755,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="min-h-0 overflow-hidden">
-            <div className="h-fit w-full p-0 px-4">
+            <div className="h-fit w-full p-0">
               {emailData?.decodedBody ? (
                 <MailIframe html={emailData?.decodedBody} senderEmail={emailData.sender.email} />
               ) : (
