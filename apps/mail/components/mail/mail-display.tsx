@@ -631,7 +631,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                         {formatDate(emailData?.receivedOn)}
                       </time>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 pb-2">
                       <p className="text-sm font-medium text-[#6D6D6D] dark:text-[#8C8C8C]">
                         To:{' '}
                         {(() => {
@@ -761,7 +761,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                 </div>
               )}
               {emailData?.attachments && emailData?.attachments.length > 0 ? (
-                <div className="mb-4 flex items-center gap-2 pt-4">
+                <div className="mb-4 flex items-center gap-2 pt-4 px-4">
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button
@@ -803,7 +803,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   ))}
                 </div>
               ) : null}
-              <div className="mb-2 mt-2 flex gap-2">
+              <div className="mb-2 mt-2 flex gap-2 px-4">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
