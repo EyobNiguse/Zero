@@ -9,16 +9,17 @@ import {
   DialogTrigger,
 } from './dialog';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { BookDashedIcon, GitBranchPlus, MessageSquare, PanelLeftOpen, Plus } from 'lucide-react';
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
+import { StyledEmailAssistantSystemPrompt } from '@/actions/ai-composer-prompt';
+import { ResizablePanelGroup, ResizablePanel } from '@/components/ui/resizable';
 import { useEditor } from '@/components/providers/editor-provider';
 import { AIChat } from '@/components/create/ai-chat';
+import { X, Paper } from '@/components/icons/icons';
+import { GitBranchPlus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { usePathname } from 'next/navigation';
-import { Paper, X } from '@/components/icons/icons';
 import prompt from '@/app/api/chat/prompt';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
@@ -163,6 +164,22 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                           </Link>
                         </div>
                         <Textarea className="min-h-60" readOnly value={prompt} />
+                        <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
+                          <span>Zero Compose / System Prompt</span>
+                          <Link
+                            href={'https://github.com/Mail-0/Zero.git'}
+                            target="_blank"
+                            className="flex items-center gap-1 underline"
+                          >
+                            <span>Contribute</span>
+                            <GitBranchPlus className="h-4 w-4" />
+                          </Link>
+                        </div>
+                        <Textarea
+                          className="min-h-60"
+                          readOnly
+                          value={StyledEmailAssistantSystemPrompt().trim()}
+                        />
                       </DialogContent>
                     </Dialog>
 

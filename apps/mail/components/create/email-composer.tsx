@@ -36,6 +36,8 @@ interface EmailComposerProps {
     from: string;
     to: string[];
     body: string;
+    cc?: string[];
+    subject: string;
   }[];
   initialTo?: string[];
   initialCc?: string[];
