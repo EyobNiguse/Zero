@@ -809,7 +809,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   ))}
                 </div>
               ) : null}
-              <div className="mb-2 mt-2 flex gap-2">
+              <div className="mb-2 mt-2 flex gap-2 px-4">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
