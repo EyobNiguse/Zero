@@ -1,58 +1,49 @@
-import { generateCompletions } from '@/lib/groq';
+import { getActiveConnection } from '@/actions/utils';
+import { ToolInvocation, streamText } from 'ai';
+import { type IConfig } from '../driver/types';
 import { NextResponse } from 'next/server';
+import { createDriver } from '../driver';
+import { openai } from '@ai-sdk/openai';
+import { listThreads } from './tools';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  toolInvocations?: ToolInvocation[];
+}
 
 export async function POST(req: Request) {
-  try {
-    const { messages, context } = await req.json();
-
-    const lastMessage = messages[messages.length - 1].content;
-
-    let systemPrompt =
-      'You are a helpful AI assistant. Provide clear, concise, and accurate responses.';
-
-    // If this is an email request, modify the system prompt
-    if (context?.isEmailRequest) {
-      systemPrompt = `You are an email writing assistant. Generate professional, well-structured emails.
-When generating an email, always follow this format:
-1. Keep the tone professional but friendly
-2. Be concise and clear
-3. Include a clear subject line
-4. Structure the email with a greeting, body, and closing
-5. Use appropriate formatting
-
-Output format:
-{
-  "emailContent": "The full email content",
-  "subject": "A clear subject line",
-  "content": "A brief message explaining the generated email"
-}`;
-    }
-
-    const { completion } = await generateCompletions({
-      model: 'llama3-8b-8192',
-      systemPrompt,
-      prompt: context?.isEmailRequest
-        ? `Generate a professional email for the following request: ${lastMessage}`
-        : lastMessage,
-      temperature: 0.7,
-      max_tokens: 500,
-      userName: 'User',
-    });
-
-    // If this was an email request, try to parse the JSON response
-    if (context?.isEmailRequest) {
-      try {
-        const emailData = JSON.parse(completion);
-        return NextResponse.json(emailData);
-      } catch (error) {
-        // If parsing fails, return the completion as regular content
-        return NextResponse.json({ content: completion });
-      }
-    }
-
-    return NextResponse.json({ content: completion });
-  } catch (error) {
-    console.error('Chat API Error:', error);
-    return NextResponse.json({ error: 'Failed to generate response' }, { status: 400 });
+  const connection = await getActiveConnection();
+  if (!connection) throw new Error('No active connection found');
+  const { messages }: { messages: Message[] } = await req.json();
+  if (!connection?.accessToken || !connection?.refreshToken) {
+    console.error('Unauthorized: No valid connection found');
+    return NextResponse.json({}, { status: 401 });
   }
+  const driver = await createDriver(connection.providerId, {
+    auth: {
+      access_token: connection.accessToken,
+      refresh_token: connection.refreshToken,
+      email: connection.email,
+    },
+  });
+
+  const result = streamText({
+    model: openai('gpt-4o'),
+    system: `
+        You are a helpful assistant.
+        You are able to list email threads. Use the listThreads tool to do so.
+        Parameters:
+        - folder: the folder to list threads from
+        - query: the search query
+        - maxResults: the maximum number of results
+        - labelIds: the label IDs to filter by
+    `,
+    messages,
+    tools: {
+      listThreads: listThreads(driver),
+    },
+  });
+
+  return result.toDataStreamResponse();
 }

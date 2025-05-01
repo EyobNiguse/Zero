@@ -2,15 +2,15 @@
 
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
+import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { useEditor } from '@/components/providers/editor-provider';
 import { MessageSquare, PanelLeftOpen, Plus } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { X } from '@/components/icons/icons';
 import { AIChat } from '@/components/create/ai-chat';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { usePathname } from 'next/navigation';
+import { X } from '@/components/icons/icons';
 import { getCookie } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -77,7 +77,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   });
 
   const handleNewChat = useCallback(() => {
-    setResetKey(prev => prev + 1);
+    setResetKey((prev) => prev + 1);
     setHasMessages(false);
   }, []);
 
@@ -105,7 +105,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
-                  <div className="flex items-center justify-between relative  px-2.5 border-b border-[#E7E7E7] dark:border-[#252525] pt-[17.6px] pb-[10px]">
+                  <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[17.6px] dark:border-[#252525]">
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -139,67 +139,6 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                     </TooltipProvider>
                   </div>
                   <div className="b relative flex-1 overflow-hidden">
-                    {!hasMessages && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div className="relative mb-4 h-[44px] w-[44px]">
-                          <Image
-                            src="/black-icon.svg"
-                            alt="Zero Logo"
-                            fill
-                            className="dark:hidden"
-                          />
-                          <Image
-                            src="/white-icon.svg"
-                            alt="Zero Logo"
-                            fill
-                            className="hidden dark:block"
-                          />
-                        </div>
-                        <p className="mb-1 mt-2 hidden text-sm text-black md:block dark:text-white font-medium">
-                          Ask anything about your emails
-                        </p>
-                        <p className="text-sm text-[#8C8C8C] dark:text-[#929292] mb-3">
-                          Ask to do or show anything using natural language
-                        </p>
-
-                        <div className="mt-6 flex w-full flex-col items-center gap-2">
-                          {/* First row */}
-                          <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
-                            <div className="flex gap-4 px-4">
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                                Find invoice from Stripe
-                              </p>
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                                Reply to Nick
-                              </p>
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                                Show recent design feedback
-                              </p>
-                            </div>
-                            {/* Left mask */}
-                            <div className="pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r from-panelLight to-transparent dark:from-panelDark"></div>
-                            {/* Right mask */}
-                            <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l from-panelLight to-transparent dark:from-panelDark"></div>
-                          </div>
-
-                          {/* Second row */}
-                          <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
-                            <div className="flex gap-4 px-4">
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                                Schedule meeting with Sarah
-                              </p>
-                              <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                                What did alex say about the design
-                              </p>
-                            </div>
-                            {/* Left mask */}
-                            <div className="pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r from-panelLight to-transparent dark:from-panelDark"></div>
-                            {/* Right mask */}
-                            <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l from-panelLight to-transparent dark:from-panelDark"></div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                     <AIChat
                       editor={editor}
                       onMessagesChange={(messages) => setHasMessages(messages.length > 0)}

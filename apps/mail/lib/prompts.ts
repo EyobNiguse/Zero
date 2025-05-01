@@ -1,6 +1,3 @@
-import type { WritingStyleMatrix } from '@/services/writing-style-service';
-import { PromptTemplate } from '@langchain/core/prompts';
-
 // apps/mail/lib/prompts.ts
 
 // ==================================
