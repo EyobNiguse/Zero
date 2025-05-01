@@ -5,8 +5,10 @@ import {
   type WritingStyleMatrix,
 } from '@/services/writing-style-service';
 import { StyledEmailAssistantSystemPrompt } from '@/actions/ai-composer-prompt';
+import type { Message } from '@microsoft/microsoft-graph-types';
 import { stripHtml } from 'string-strip-html';
 import { google } from '@ai-sdk/google';
+import { openai } from '@ai-sdk/openai';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { generateText } from 'ai';
@@ -56,46 +58,30 @@ export const aiCompose = async ({
     } as const;
   });
 
-  console.log([
-    {
-      role: 'system',
-      content: systemPrompt,
-    },
-    {
-      role: 'user',
-      content: "I'm going to give you the current email thread replies one by one.",
-    },
-    {
-      role: 'assistant',
-      content: 'Got it. Please proceed with the thread replies.',
-    },
-    ...threadUserMessages,
-    {
-      role: 'user',
-      content: 'Now, I will give you the prompt to write the email.',
-    },
-    {
-      role: 'user',
-      content: userPrompt,
-    },
-  ]);
-
   const { text } = await generateText({
-    model: google('gemini-2.0-flash'),
+    model: openai('gpt-4o-mini'),
     messages: [
       {
         role: 'system',
         content: systemPrompt,
       },
-      {
-        role: 'user',
-        content: "I'm going to give you the current email thread replies one by one.",
-      },
-      {
-        role: 'assistant',
-        content: 'Got it. Please proceed with the thread replies.',
-      },
-      ...threadUserMessages,
+      ...(threadMessages.length > 0
+        ? [
+            {
+              role: 'user',
+              content: "I'm going to give you the current email thread replies one by one.",
+            } as const,
+            {
+              role: 'assistant',
+              content: 'Got it. Please proceed with the thread replies.',
+            } as const,
+            ...threadUserMessages,
+            {
+              role: 'user',
+              content: 'Now, I will give you the prompt to write the email.',
+            } as const,
+          ]
+        : []),
       {
         role: 'user',
         content: 'Now, I will give you the prompt to write the email.',

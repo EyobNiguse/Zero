@@ -894,7 +894,14 @@ const ContentPreview = ({
     >
       {content.split('\n').map((line, i) => {
         return (
-          <TextEffect per="char" preset="blur" as="div" className="whitespace-pre-wrap" key={i}>
+          <TextEffect
+            per="char"
+            preset="blur"
+            as="div"
+            className="whitespace-pre-wrap"
+            speedReveal={3}
+            key={i}
+          >
             {line}
           </TextEffect>
         );
