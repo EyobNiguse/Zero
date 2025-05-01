@@ -7,7 +7,6 @@ import { track } from '@vercel/analytics';
 
 export const handleUnsubscribe = async ({ emailData }: { emailData: ParsedMessage }) => {
   try {
-    console.log('-'.repeat(10), emailData.listUnsubscribe);
     if (emailData.listUnsubscribe) {
       const listUnsubscribeAction = getListUnsubscribeAction({
         listUnsubscribe: emailData.listUnsubscribe,

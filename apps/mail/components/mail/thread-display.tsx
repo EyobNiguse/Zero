@@ -25,10 +25,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { CircleAlertIcon, Inbox, ShieldAlertIcon, StopCircleIcon } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
+import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { markAsRead, markAsUnread } from '@/actions/mail';
 import { MailDisplaySkeleton } from './mail-skeleton';
@@ -44,7 +46,6 @@ import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
 import { ParsedMessage } from '@/types';
-import { Inbox } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
@@ -223,6 +224,14 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
         .then(() => Promise.allSettled([mutateThread(), mutateStats()]));
     }
   }, [emailData, id]);
+
+  const handleUnsubscribeProcess = () => {
+    if (!emailData?.latest) return;
+    toast.promise(handleUnsubscribe({ emailData: emailData.latest }), {
+      success: 'Unsubscribed successfully!',
+      error: 'Failed to unsubscribe',
+    });
+  };
 
   const isInArchive = folder === FOLDERS.ARCHIVE;
   const isInSpam = folder === FOLDERS.SPAM;
@@ -529,6 +538,13 @@ export function ThreadDisplay({ isMobile, id }: ThreadDisplayProps) {
                           <ArchiveX className="fill-iconLight dark:fill-iconDark mr-2" />
                           <span>{t('common.threadDisplay.moveToSpam')}</span>
                         </DropdownMenuItem>
+                        {emailData.latest?.listUnsubscribe ||
+                        emailData.latest?.listUnsubscribePost ? (
+                          <DropdownMenuItem onClick={handleUnsubscribeProcess}>
+                            <ShieldAlertIcon className="fill-iconLight dark:fill-iconDark mr-2" />
+                            <span>Unsubscribe</span>
+                          </DropdownMenuItem>
+                        ) : null}
                       </>
                     )}
                   </DropdownMenuContent>

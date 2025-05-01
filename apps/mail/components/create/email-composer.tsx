@@ -791,13 +791,6 @@ export function EmailComposer({
                     <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
                   )}
                   {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
-                  <span className="px-0.5 text-sm">
-                    {messageLength < 50
-                      ? 'short-length'
-                      : messageLength < 200
-                        ? 'medium-length'
-                        : 'long-length'}
-                  </span>
                 </button>
               </TooltipTrigger>
               <TooltipContent>
