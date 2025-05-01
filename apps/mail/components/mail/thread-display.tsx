@@ -483,6 +483,7 @@ export function ThreadDisplay() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <NotesPanel threadId={id} />
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -546,15 +547,6 @@ export function ThreadDisplay() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-white dark:bg-[#313131]">
-                    {/* {threadId && (
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                        <StickyNote className="mr-2 h-4 w-4" />
-                        <span>{t('common.notes.title')}</span>
-                        <div className="absolute right-0 top-0" onClick={(e) => e.stopPropagation()}>
-                          <NotesPanel threadId={threadId} />
-                        </div>
-                      </DropdownMenuItem>
-                    )} */}
                     {/* <DropdownMenuItem onClick={() => setIsFullscreen(!isFullscreen)}>
                       <Expand className="fill-iconLight dark:fill-iconDark mr-2" />
                       <span>
