@@ -394,12 +394,12 @@ export function NavUser() {
                       <p className="text-[13px] opacity-60">Clear Local Cache</p>
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleEnableBrain}>
+                  {/* <DropdownMenuItem onClick={handleEnableBrain}>
                     <div className="flex items-center gap-2">
                       <BrainIcon size={16} className="opacity-60" />
                       <p className="text-[13px] opacity-60">Enable Brain Activity</p>
                     </div>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

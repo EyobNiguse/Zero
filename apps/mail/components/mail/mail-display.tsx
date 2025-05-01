@@ -247,9 +247,12 @@ const AiSummary = () => {
     setShowSummary(!showSummary);
   };
 
+  if (isLoading) return null;
+  if (!summary?.short.length) return null;
+
   return (
     <div
-      className="mt-5 max-w-3xl rounded-xl border border-[#8B5CF6] bg-white p-3 dark:bg-[#252525]"
+      className="mt-2 max-w-3xl rounded-xl border border-[#8B5CF6] bg-white px-4 py-2 dark:bg-[#252525]"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex cursor-pointer items-center" onClick={handleToggle}>
@@ -268,9 +271,9 @@ const AiSummary = () => {
         )}
       </div>
       {showSummary && (
-        <div className="mt-2 text-sm text-black dark:text-white">
-          {isLoading ? '' : summary?.short || ''}
-        </div>
+        <TextShimmer className="mt-2 text-sm text-black dark:text-white">
+          {summary?.short}
+        </TextShimmer>
       )}
     </div>
   );

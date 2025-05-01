@@ -11,6 +11,7 @@ import { Providers } from '@/lib/providers';
 import { headers } from 'next/headers';
 import type { Viewport } from 'next';
 import { cn } from '@/lib/utils';
+import Script from 'next/script';
 import './globals.css';
 
 const geistSans = Geist({
@@ -47,6 +48,7 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <head>
         {/* <script src="https://unpkg.com/react-scan/dist/auto.global.js" /> */}
+        <Script src="https://unpkg.com/web-streams-polyfill/dist/polyfill.js" />
         <meta name="x-user-country" content={(await headers()).get('x-user-country') || ''} />
         <meta
           name="x-user-eu-region"
