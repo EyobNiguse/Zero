@@ -239,30 +239,35 @@ const cleanNameDisplay = (name?: string) => {
 
 const AiSummary = () => {
   const [threadId] = useQueryState('threadId');
-  const { data: summary } = useSummary(threadId ?? null);
+  const { data: summary, isLoading } = useSummary(threadId ?? null);
   const [showSummary, setShowSummary] = useState(false);
 
   const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event from bubbling up
+    e.stopPropagation();
     setShowSummary(!showSummary);
   };
 
-  return summary ? (
+  return (
     <div
       className="mt-5 max-w-3xl rounded-xl border border-[#8B5CF6] bg-white p-3 dark:bg-[#252525]"
-      onClick={(e) => e.stopPropagation()} // Prevent clicks from collapsing email
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="flex cursor-pointer items-center" onClick={handleToggle}>
-        <p className="text-sm font-medium text-[#929292]">AI Summary</p>
+        <p className="text-sm font-medium text-[#929292]">
+          {isLoading ? <TextShimmer>Summary is loading...</TextShimmer> : 'Summary'}
+        </p>
+
         <ChevronDown
-          className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? '' : 'rotate-180'}`}
+          className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? 'rotate-180' : ''}`}
         />
       </div>
-      {showSummary && summary && (
-        <div className="mt-2 text-sm text-black dark:text-white">{summary.short}</div>
+      {showSummary && (
+        <div className="mt-2 text-sm text-black dark:text-white">
+          {isLoading ? <TextShimmer>AI summary is loading...</TextShimmer> : summary?.short || ''}
+        </div>
       )}
     </div>
-  ) : null;
+  );
 };
 
 const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
