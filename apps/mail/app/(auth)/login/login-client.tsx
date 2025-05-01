@@ -1,5 +1,6 @@
 'use client';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEffect, type ReactNode, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type EnvVarInfo } from '@/lib/auth-providers';
@@ -9,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface EnvVarStatus {
   name: string;
@@ -152,11 +152,9 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-between bg-[#111111]">
-      
-
       <div className="animate-in slide-in-from-bottom-4 mx-auto flex max-w-[600px] flex-grow items-center justify-center space-y-8 px-4 duration-500 sm:px-12 md:px-0">
         <div className="w-full space-y-4">
-          <p className="text-center text-4xl font-bold md:text-5xl text-white">Login to Zero</p>
+          <p className="text-center text-4xl font-bold text-white md:text-5xl">Login to Zero</p>
 
           {shouldShowDetailedConfig && (
             <div className="rounded-lg border border-black/10 bg-black/5 p-5 dark:border-white/10 dark:bg-white/5">
@@ -340,6 +338,7 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
           )}
         </div>
       </div>
+      <Link href={'/'}>Return home</Link>
 
       <footer className="w-full px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-center gap-6">

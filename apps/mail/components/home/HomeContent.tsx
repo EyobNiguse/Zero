@@ -15,12 +15,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ArrowRight, CurvedArrow, Discord, GitHub, LinkedIn, Twitter } from '../icons/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Command, Menu, MoveRight } from 'lucide-react';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useSession } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
+import { Command, Menu } from 'lucide-react';
 import { Separator } from '../ui/separator';
+import { useRouter } from 'next/navigation';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
 import { useTheme } from 'next-themes';
@@ -72,35 +73,20 @@ const betaSignupSchema = z.object({
 export default function HomeContent() {
   const tabRefs = useRef<HTMLButtonElement[]>([]);
   const [glowStyle, setGlowStyle] = useState({ left: 0, width: 0 });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [signupCount, setSignupCount] = useState<number>(0);
   const [open, setOpen] = useState(false);
   const { setTheme } = useTheme();
+  const { data: session } = useSession();
+  const router = useRouter();
 
-  const form = useForm<z.infer<typeof betaSignupSchema>>({
-    resolver: zodResolver(betaSignupSchema),
-    defaultValues: {
-      email: '',
-    },
-  });
+  useEffect(() => {
+    if (session) {
+      router.push('/mail');
+    }
+  }, [session]);
 
   useEffect(() => {
     setTheme('dark');
   }, [setTheme]);
-
-  useEffect(() => {
-    const fetchSignupCount = async () => {
-      try {
-        const response = await axios.get('/api/auth/early-access/count');
-        setSignupCount(response.data.count);
-      } catch (error) {
-        console.error('Failed to fetch signup count:', error);
-      }
-    };
-
-    fetchSignupCount();
-  }, []);
 
   const handleTabChange = useCallback((value: string) => {
     const index = tabs.findIndex((tab) => tab.value === value);
@@ -123,35 +109,6 @@ export default function HomeContent() {
     }
   }, [handleTabChange]);
 
-  const onSubmit = async (values: z.infer<typeof betaSignupSchema>) => {
-    setIsSubmitting(true);
-    try {
-      const response = await axios.post('/api/auth/early-access', {
-        email: values.email,
-      });
-
-      form.reset();
-      setShowSuccess(true);
-      toast.success("You're on the list! We'll notify you when we launch!");
-
-      // Increment the signup count if it was a new signup
-      if (response.status === 201 && signupCount !== null) {
-        setSignupCount(signupCount + 1);
-      }
-    } catch (error) {
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Check for Command+Enter (Mac) or Ctrl+Enter (Windows/Linux)
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      form.handleSubmit(onSubmit)();
-    }
-  };
-
   const IconComponent = {
     github: GitHub,
     twitter: Twitter,
@@ -169,8 +126,9 @@ export default function HomeContent() {
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
         <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
           <div className="flex items-center gap-6">
-            <Link href="/" className="cursor-pointer">
+            <Link href="/" className="relative cursor-pointer">
               <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
+              <span className="absolute right-0 text-[10px]">beta</span>
             </Link>
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
@@ -210,7 +168,7 @@ export default function HomeContent() {
                 Sign in
               </Button>
             </Link>
-            <Link href="https://cal.com/team/0">
+            <Link target="_blank" href="https://cal.com/team/0">
               <Button className="h-8 font-medium">Contact Us</Button>
             </Link>
           </div>
@@ -239,7 +197,7 @@ export default function HomeContent() {
                 About
               </Link>
 
-              <Link href="https://cal.com/team/0" className="font-medium">
+              <Link target="_blank" href="https://cal.com/team/0" className="font-medium">
                 Contact Us
               </Link>
 
