@@ -90,12 +90,20 @@ export async function POST(req: Request) {
           backgroundColor: z.string().optional().describe('Background color for the label'),
           textColor: z.string().optional().describe('Text color for the label'),
         }),
-        execute: async ({ name, backgroundColor = '#e3e3e3', textColor = '#666666' }) => {
-          const label = await driver.createLabel({
-            name,
-            color: { backgroundColor: '#FFFFFF', textColor: '#000000' },
-          });
-          return { created: label.id };
+        execute: async ({ name, backgroundColor = '#f691b3', textColor = '#434343' }) => {
+          try {
+            console.log({ backgroundColor, textColor });
+
+            const label = await driver.createLabel({
+              name,
+              color: { backgroundColor, textColor },
+            });
+            console.log('label', label);
+          } catch (error) {
+            console.error('Error creating label:', error);
+            throw new Error('Failed to create label');
+          }
+          return { created: 'label.id' };
         },
       },
       addLabelsToThreads: {
