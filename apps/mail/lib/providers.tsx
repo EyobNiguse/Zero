@@ -17,7 +17,7 @@ export function Providers({ children, ...props }: React.ComponentProps<typeof Ne
   const theme = settings?.colorTheme || 'system';
 
   return (
-    // <AISidebarProvider>
+     <AISidebarProvider>
     <JotaiProvider>
       <NuqsAdapter>
         <NextThemesProvider {...props} defaultTheme={theme}>
@@ -27,6 +27,6 @@ export function Providers({ children, ...props }: React.ComponentProps<typeof Ne
         </NextThemesProvider>
       </NuqsAdapter>
     </JotaiProvider>
-    // </AISidebarProvider>
+     </AISidebarProvider>
   );
 }

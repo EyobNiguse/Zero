@@ -259,7 +259,7 @@ const AiSummary = () => {
         />
       </div>
       {showSummary && summary && (
-        <div className="mt-2 text-sm text-black dark:text-white">{summary}</div>
+        <div className="mt-2 text-sm text-black dark:text-white">{summary.short}</div>
       )}
     </div>
   ) : null;
