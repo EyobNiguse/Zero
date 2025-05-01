@@ -34,6 +34,7 @@ import AttachmentsAccordion from './attachments-accordion';
 import { cn, getEmailLogo, formatDate } from '@/lib/utils';
 import { useThreadLabels } from '@/hooks/use-labels';
 import { Sender, type ParsedMessage } from '@/types';
+import { Markdown } from '@react-email/components';
 import AttachmentDialog from './attachment-dialog';
 import { useSummary } from '@/hooks/use-summary';
 import { TextShimmer } from '../ui/text-shimmer';
@@ -264,11 +265,7 @@ const AiSummary = () => {
           />
         )}
       </div>
-      {showSummary && (
-        <TextShimmer className="mt-2 text-sm text-black dark:text-white">
-          {summary?.short}
-        </TextShimmer>
-      )}
+      {showSummary && <Markdown>{summary?.short || ''}</Markdown>}
     </div>
   );
 };
