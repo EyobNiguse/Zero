@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Trash,
   ArrowCircle,
+  ScanEye,
 } from '../icons/icons';
 import {
   Dialog,
@@ -52,11 +53,11 @@ import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
 import { Button } from '@/components/ui/button';
-import { Command, Loader2 } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
+import { Command } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
@@ -222,7 +223,7 @@ export function MailLayout() {
               </div>
               <div
                 className={cn(
-                  `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : 'bg-[#F59E0D]'}`,
+                  `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : category[0] === 'Unread' ? 'bg-[#006FFE]' : 'bg-[#F59E0D]'}`,
                   'relative bottom-0.5 z-[5] h-0.5 w-full transition-opacity',
                   isValidating ? 'opacity-100' : 'opacity-0',
                 )}
@@ -565,6 +566,19 @@ export const Categories = () => {
         />
       ),
     },
+    {
+      id: 'Unread',
+      name: 'Unread',
+      searchValue: 'is:unread',
+      icon: (
+        <ScanEye
+          className={cn(
+            'fill-[#6D6D6D] dark:fill-[#989898]',
+            category === 'Unread' && 'fill-white dark:fill-white',
+          )}
+        />
+      ),
+    },
   ];
 };
 
@@ -584,6 +598,8 @@ function getCategoryColor(categoryId: string): string {
       return 'bg-[#39ae4a]';
     case 'updates':
       return 'bg-[#8B5CF6]';
+    case 'unread':
+      return 'bg-[#006FFE]';
     default:
       return 'bg-base-primary-500';
   }
