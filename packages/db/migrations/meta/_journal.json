@@ -169,6 +169,13 @@
       "when": 1746049703463,
       "tag": "0023_narrow_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1746136173178,
+      "tag": "0024_familiar_wiccan",
+      "breakpoints": true
     }
   ]
 }
