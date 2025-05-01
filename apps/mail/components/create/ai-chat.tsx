@@ -18,11 +18,6 @@ import VoiceChat from './voice';
 import { nanoid } from 'nanoid';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useTranslations } from 'next-intl';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatDate, getEmailLogo } from '@/lib/utils';
-import { highlightText } from '@/lib/email-utils.client';
 
 interface Message {
   id: string;
@@ -52,84 +47,18 @@ interface AIChatProps {
   onReset?: () => void;
 }
 
-// Helper function to clean name display
-const cleanNameDisplay = (name?: string) => {
-  if (!name) return '';
-  const match = name.match(/^[^a-zA-Z0-9.]*(.*?)[^a-zA-Z0-9.]*$/);
-  return match ? match[1] : name;
-};
-
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
-  const { data: getThread, isLoading } = useThread(thread.id);
-  const [isHovered, setIsHovered] = useState(false);
-  const [searchValue] = useSearchValue();
-  const t = useTranslations();
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
-  if (isLoading || !getThread?.latest) return null;
-
-  const latestMessage = getThread.latest;
-  const cleanName = latestMessage.sender?.name?.trim().replace(/^['"]|['"]$/g, '') || '';
-
-  return (
+  const { data: getThread } = useThread(thread.id);
+  return getThread ? (
     <div
       onClick={() => setThreadId(thread.id)}
       key={thread.id}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="group relative mx-[8px] my-1 hover:bg-offsetLight hover:bg-primary/5"
+      className="bg-subtleBlack cursor-pointer rounded-md border p-2 hover:bg-black"
     >
-      <div
-        className={cn(
-          'hover:bg-offsetLight hover:bg-primary/5 flex cursor-pointer flex-col items-start overflow-clip rounded-[10px] border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-        )}
-      >
-        <div className="flex w-full items-center justify-between gap-4">
-          <Avatar className="h-8 w-8">
-            <AvatarImage
-              className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
-              src={getEmailLogo(latestMessage.sender.email)}
-            />
-            <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full">
-              {cleanName[0]?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex w-full justify-between">
-            <div className="w-full">
-              <div className="flex w-full flex-row items-center justify-between">
-                <div className="flex flex-row items-center gap-[4px]">
-                  <span className="text-md flex items-baseline gap-1 font-medium group-hover:opacity-100">
-                    <span className="max-w-[18ch] truncate text-sm">
-                      {highlightText(cleanNameDisplay(latestMessage.sender.name) || '', searchValue.highlight)}
-                    </span>
-                  </span>
-                </div>
-                {latestMessage.receivedOn ? (
-                  <p className="text-nowrap text-xs font-normal text-[#6D6D6D] opacity-70 transition-opacity group-hover:opacity-100 dark:text-[#8C8C8C]">
-                    {formatDate(latestMessage.receivedOn.split('.')[0] || '')}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex justify-between">
-                <p className="mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[25ch]">
-                  {highlightText(latestMessage.subject, searchValue.highlight)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <p>{getThread.latest?.subject}</p>
     </div>
-  );
+  ) : null;
 };
 
 const RenderThreads = ({
@@ -170,6 +99,9 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
   // Auto scroll when messages change
   useEffect(() => {
     scrollToBottom();
+    // if (onMessagesChange) {
+    //   onMessagesChange(messages);
+    // }
   }, [messages, onMessagesChange, scrollToBottom]);
 
   useEffect(() => {
@@ -177,6 +109,58 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
       onReset();
     }
   }, [onReset]);
+
+  //   const handleSendMessage = async () => {
+  //     if (!value.trim() || isLoading) return;
+
+  //     const userMessage: Message = {
+  //       id: generateId(),
+  //       role: 'user',
+  //       content: value.trim(),
+  //       timestamp: new Date(),
+  //     };
+
+  //     setMessages((prev) => [...prev, userMessage]);
+  //     setValue('');
+  //     setIsLoading(true);
+
+  //     try {
+  //       if (!response.ok) {
+  //         throw new Error('Failed to get response');
+  //       }
+
+  //       const data = await response.json();
+
+  //       // Update the search value
+  //       setSearchValue({
+  //         value: data.searchQuery,
+  //         highlight: value.trim(),
+  //         isLoading: false,
+  //         isAISearching: false,
+  //         folder: searchValue.folder,
+  //       });
+
+  //       // Add assistant message with search results
+  //       const assistantMessage: Message = {
+  //         id: generateId(),
+  //         role: 'assistant',
+  //         content: data.content,
+  //         timestamp: new Date(),
+  //         type: 'search',
+  //         searchContent: {
+  //           searchDisplay: data.searchDisplay,
+  //           results: data.results,
+  //         },
+  //       };
+
+  //       setMessages((prev) => [...prev, assistantMessage]);
+  //     } catch (error) {
+  //       console.error('Error:', error);
+  //       toast.error('Failed to generate response. Please try again.');
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
   const handleAcceptSuggestion = (emailContent: { subject?: string; content: string }) => {
     if (!editor) {
@@ -217,11 +201,37 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      handleSubmit(e);
+      handleSubmit();
     }
   };
 
   const generateId = () => nanoid();
+
+  const handleThreadClick = (threadId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('threadId', threadId);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const toggleExpandResults = (messageId: string) => {
+    setExpandedResults((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const sanitizeSnippet = (snippet: string) => {
+    return snippet
+      .replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -289,6 +299,10 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                     : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-3 dark:bg-[#313131]', // Assistant messages aligned to left
                 )}
               >
+                {/* <div className="prose dark:prose-invert overflow-wrap-anywhere break-words text-sm font-medium">
+                  {message.content}
+                </div> */}
+
                 {message.parts.map((part) => {
                   if (part.type === 'text') {
                     return <p>{part.text}</p>;
@@ -309,7 +323,90 @@ export function AIChat({ editor, onMessagesChange, onReset }: AIChatProps) {
                   if (part.type === 'source') {
                     return <p>Source: {part.source.title}</p>;
                   }
+                  //   if (part.type === 'step-start') {
+                  //     return <ArrowDownCircle className="mx-auto h-4 w-4" />;
+                  //   }
+                  //   return <p>{part.type}</p>;
                 })}
+
+                {/* {message.type === 'search' &&
+                message.searchContent &&
+                message.searchContent.results.length > 0 && (
+                  <div className="bg-muted space-y-4 rounded-lg px-4 pt-3">
+                    {(expandedResults.has(message.id)
+                      ? message.searchContent.results
+                      : message.searchContent.results.slice(0, 5)
+                    ).map((result: any, i: number) => (
+                      <div key={i} className="border-t pt-4 first:border-t-0 first:pt-0">
+                        <div className="font-medium">
+                          <p className="max-w-sm truncate text-sm">
+                            {result.subject.toLowerCase().includes('meeting') ? (
+                              <span className="text-blue-500">📅 {result.subject}</span>
+                            ) : (
+                              result.subject || 'No subject'
+                            )}
+                          </p>
+                          <span className="text-muted-foreground text-sm">
+                            from {result.from || 'Unknown sender'}
+                          </span>
+                        </div>
+                        <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                          {sanitizeSnippet(result.snippet)}
+                        </div>
+                        <div className="text-muted-foreground mt-1 text-sm">
+                          <button
+                            onClick={() => handleThreadClick(result.id)}
+                            className="cursor-pointer border-none bg-transparent p-0 text-blue-500 hover:underline"
+                          >
+                            Open email
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {message.searchContent.results.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-foreground w-full"
+                        onClick={() => toggleExpandResults(message.id)}
+                      >
+                        {expandedResults.has(message.id)
+                          ? `Show less (${message.searchContent.results.length - 5} fewer results)`
+                          : `Show more (${message.searchContent.results.length - 5} more results)`}
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+              {message.type === 'email' && message.emailContent && (
+                <div className="bg-background mt-4 rounded border p-4 font-mono text-sm">
+                  {message.emailContent.subject && (
+                    <div className="mb-2 text-blue-500">
+                      Subject: {message.emailContent.subject}
+                    </div>
+                  )}
+                  <div className="whitespace-pre-wrap">{message.emailContent.content}</div>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-green-500/20 hover:bg-green-500/10 hover:text-green-500"
+                      onClick={() => handleAcceptSuggestion(message.emailContent!)}
+                    >
+                      <CheckIcon className="mr-1 h-4 w-4" />
+                      Accept
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-destructive/20 hover:bg-destructive/10 hover:text-destructive h-8"
+                      onClick={() => handleRejectSuggestion(message.id)}
+                    >
+                      <XIcon className="mr-1 h-4 w-4" />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              )} */}
               </div>
             ))
           )}
