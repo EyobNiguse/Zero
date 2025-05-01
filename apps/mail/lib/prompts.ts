@@ -7,16 +7,17 @@
 
 // --- add this helper at the top of the file ---
 const escapeXml = (s: string) =>
-    s.replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 
 // --- update the existing prompt function ---
 export const EmailAssistantSystemPrompt = (userName: string = 'the user'): string => {
-    const safeName = escapeXml(userName);
-    return `
+  const safeName = escapeXml(userName);
+  return `
 <system_prompt>
     <role>You are an AI Assistant specialized in generating professional email *body* content based on user requests.</role>
 
@@ -64,7 +65,7 @@ export const EmailAssistantSystemPrompt = (userName: string = 'the user'): strin
 
 </system_prompt>
 `;
-}
+};
 
 // ==================================
 // Subject Generation Prompt
@@ -108,8 +109,8 @@ export const SubjectGenerationSystemPrompt = `
 // Email Reply Generation Prompt
 // ==================================
 export const EmailReplySystemPrompt = (userName: string = 'the user'): string => {
-    const safeName = escapeXml(userName);
-    return `
+  const safeName = escapeXml(userName);
+  return `
 <system_prompt>
     <role>You are an AI assistant helping ${safeName} write professional and concise email replies.</role>
     
@@ -139,4 +140,4 @@ export const EmailReplySystemPrompt = (userName: string = 'the user'): string =>
     <sign_off_name>${safeName}</sign_off_name> 
 </system_prompt>
 `;
-}
+};

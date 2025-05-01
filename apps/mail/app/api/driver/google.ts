@@ -1,12 +1,12 @@
 import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
 import { deleteActiveConnection, FatalErrors } from '@/actions/utils';
+import { sanitizeTipTapHtml } from '@/lib/sanitize-tip-tap-html';
 import { IOutgoingMessage, type ParsedMessage } from '@/types';
 import { type IConfig, type MailManager } from './types';
 import { type gmail_v1, google } from 'googleapis';
-import { filterSuggestions } from '@/lib/filter';
-import { GMAIL_COLORS } from '@/lib/constants';
 import { cleanSearchValue } from '@/lib/utils';
 import { createMimeMessage } from 'mimetext';
+import { toByteArray } from 'base64-js';
 import * as he from 'he';
 
 class StandardizedError extends Error {
@@ -29,14 +29,8 @@ function fromBase64Url(str: string) {
 }
 
 function fromBinary(str: string) {
-  return decodeURIComponent(
-    atob(str.replace(/-/g, '+').replace(/_/g, '/'))
-      .split('')
-      .map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      })
-      .join(''),
-  );
+  const bytes = toByteArray(str.replace(/-/g, '+').replace(/_/g, '/'));
+  return new TextDecoder().decode(bytes);
 }
 
 const findHtmlBody = (parts: any[]): string => {
@@ -52,15 +46,7 @@ const findHtmlBody = (parts: any[]): string => {
   return '';
 };
 
-interface ParsedDraft {
-  id: string;
-  to?: string[];
-  subject?: string;
-  content?: string;
-  rawMessage?: gmail_v1.Schema$Message;
-}
-
-const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
+const parseDraft = (draft: gmail_v1.Schema$Draft) => {
   if (!draft.message) return null;
 
   const headers = draft.message.payload?.headers || [];
@@ -77,7 +63,7 @@ const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
 
   if (payload) {
     if (payload.parts) {
-      const textPart = payload.parts.find((part) => part.mimeType === 'text/plain');
+      const textPart = payload.parts.find((part) => part.mimeType === 'text/html');
       if (textPart?.body?.data) {
         content = fromBinary(textPart.body.data);
       }
@@ -85,6 +71,8 @@ const parseDraft = (draft: gmail_v1.Schema$Draft): ParsedDraft | null => {
       content = fromBinary(payload.body.data);
     }
   }
+
+  // TODO: Hook up CC and BCC from the draft so it can populate the composer on open.
 
   return {
     id: draft.id || '',
@@ -268,7 +256,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       threadId: threadId || '',
       title: snippet ? he.decode(snippet).trim() : 'ERROR',
       tls: wasSentWithTLS(receivedHeaders) || !!hasTLSReport,
-      tags: labelIds || [],
+      tags: labelIds?.map((l) => ({ id: l, name: l })) || [],
       listUnsubscribe,
       listUnsubscribePost,
       replyTo,
@@ -386,7 +374,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
     msg.addMessage({
       contentType: 'text/html',
-      data: message.trim(),
+      data: await sanitizeTipTapHtml(message.trim()),
     });
 
     if (headers) {
@@ -559,6 +547,12 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
     },
     getScope,
+    getIdType: (id: string) => {
+      if (id.startsWith('r')) {
+        return 'draft';
+      }
+      return 'thread';
+    },
     getUserInfo: (tokens: IConfig['auth']) => {
       return withErrorHandler(
         'getUserInfo',
@@ -666,9 +660,17 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
               format: 'full',
               quotaUser: config.auth?.email,
             });
+
             if (!res.data.messages)
-              return { messages: [], latest: undefined, hasUnread: false, totalReplies: 0 };
+              return {
+                messages: [],
+                latest: undefined,
+                hasUnread: false,
+                totalReplies: 0,
+                labels: [],
+              };
             let hasUnread = false;
+            const labels = new Set<string>();
             const messages: ParsedMessage[] = await Promise.all(
               res.data.messages.map(async (message) => {
                 const bodyData =
@@ -677,7 +679,18 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
                   message.payload?.parts?.[0]?.body?.data ||
                   '';
 
-                const decodedBody = bodyData ? fromBinary(bodyData) : '';
+                const decodedBody = bodyData
+                  ? he
+                      .decode(fromBinary(bodyData))
+                      .replace(/<[^>]*>/g, '')
+                      .trim() === fromBinary(bodyData).trim()
+                    ? he.decode(fromBinary(bodyData).replace(/\n/g, '<br>'))
+                    : he.decode(fromBinary(bodyData))
+                  : '';
+
+                if (id === '196784c9e42c15cb') {
+                  console.log('decodedBody', bodyData);
+                }
 
                 let processedBody = decodedBody;
                 if (message.payload?.parts) {
@@ -720,6 +733,14 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
                 }
 
                 const parsedData = parse(message);
+                if (parsedData.tags) {
+                  parsedData.tags.forEach((tag) => {
+                    if (tag.id) {
+                      if (labels.has(tag.id)) return;
+                      labels.add(tag.id);
+                    }
+                  });
+                }
 
                 const attachments = await Promise.all(
                   message.payload?.parts
@@ -781,7 +802,13 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
                 return fullEmailData;
               }),
             );
-            return { messages, latest: messages[0], hasUnread, totalReplies: messages.length };
+            return {
+              labels: Array.from(labels).map((id) => ({ id, name: id })),
+              messages,
+              latest: messages[messages.length - 1],
+              hasUnread,
+              totalReplies: messages.length,
+            };
           });
         },
         { id, email: config.auth?.email },
@@ -932,7 +959,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             return dateB - dateA;
           });
 
-          return { ...res.data, drafts: sortedDrafts } as any;
+          return { ...res.data, threads: sortedDrafts };
         },
         { q, maxResults, pageToken },
       );
@@ -941,7 +968,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       return withErrorHandler(
         'createDraft',
         async () => {
-          const message = data.message.replace(/<br>/g, '</p><p>');
+          const message = await sanitizeTipTapHtml(data.message);
           const msg = createMimeMessage();
           msg.setSender('me');
           msg.setTo(data.to);
@@ -1004,7 +1031,18 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       const res = await gmail.users.labels.list({
         userId: 'me',
       });
-      return res.data.labels;
+      // wtf google, null values for EVERYTHING?
+      return (
+        res.data.labels?.map((label) => ({
+          id: label.id ?? '',
+          name: label.name ?? '',
+          type: label.type ?? '',
+          color: {
+            backgroundColor: label.color?.backgroundColor ?? '',
+            textColor: label.color?.textColor ?? '',
+          },
+        })) ?? []
+      );
     },
     getLabel: async (labelId: string) => {
       const res = await gmail.users.labels.get({

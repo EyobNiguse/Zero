@@ -4,10 +4,11 @@ export const defaultUserSettings = {
   language: 'en',
   timezone: 'UTC',
   dynamicContent: false,
-  externalImages: true,
+  externalImages: false,
   customPrompt: '',
   trustedSenders: [],
   isOnboarded: false,
+  colorTheme: 'system',
 } satisfies UserSettings;
 
 export const userSettingsSchema = z.object({
@@ -18,6 +19,7 @@ export const userSettingsSchema = z.object({
   customPrompt: z.string(),
   isOnboarded: z.boolean().optional(),
   trustedSenders: z.string().array().optional(),
+  colorTheme: z.enum(['light', 'dark', 'system']).default('system'),
 });
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;

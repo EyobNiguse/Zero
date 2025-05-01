@@ -4,9 +4,6 @@ import { IGetThreadResponse } from '@/app/api/driver/types';
 import { ParsedMessage } from '@/types';
 
 export const getMail = async ({ id }: { id: string }): Promise<IGetThreadResponse | null> => {
-  if (!id) {
-    throw new Error('Missing required fields');
-  }
   try {
     const driver = await getActiveDriver();
     const mailData = await driver.get(id);
@@ -35,6 +32,17 @@ export const markAsUnread = async ({ ids }: { ids: string[] }) => {
     return { success: true };
   } catch (error) {
     console.error('Error marking message as unread:', error);
+    throw error;
+  }
+};
+
+export const markAsImportant = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: ['IMPORTANT'], removeLabels: [] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as important:', error);
     throw error;
   }
 };
@@ -91,7 +99,7 @@ export const toggleStar = async ({ ids }: { ids: string[] }) => {
       if (result.status === 'fulfilled' && result.value && result.value.messages.length > 0) {
         processedThreads++;
         const isThreadStarred = result.value.messages.some((message: ParsedMessage) =>
-          message.tags?.find((tag) => tag.startsWith('STARRED')),
+          message.tags?.some((tag) => tag.name.toLowerCase().startsWith('starred')),
         );
         if (isThreadStarred) {
           anyStarred = true;
@@ -123,6 +131,61 @@ export const deleteThread = async ({ id }: { id: string }) => {
   } catch (error) {
     if (FatalErrors.includes((error as Error).message)) await deleteActiveConnection();
     console.error('Error deleting thread:', error);
+    throw error;
+  }
+};
+
+export const bulkDeleteThread = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: ['TRASH'], removeLabels: [] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as important:', error);
+    throw error;
+  }
+};
+
+export const bulkArchive = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: [], removeLabels: ['INBOX'] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as archived:', error);
+    throw error;
+  }
+};
+
+export const bulkStar = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: ['STARRED'], removeLabels: [] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as starred:', error);
+    throw error;
+  }
+};
+
+export const bulkUnstar = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: [], removeLabels: ['STARRED'] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as unstarred:', error);
+    throw error;
+  }
+};
+
+export const muteThread = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+    await driver.modifyLabels(ids, { addLabels: ['MUTE'], removeLabels: [] });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking message as muted:', error);
     throw error;
   }
 };

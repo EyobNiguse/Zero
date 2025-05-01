@@ -1,302 +1,261 @@
 'use client';
 
-import {
-  ImageIcon,
-  FileUp,
-  Figma,
-  MonitorIcon,
-  CircleUserRound,
-  ArrowUpIcon,
-  Paperclip,
-  PlusIcon,
-  Mic,
-} from 'lucide-react';
-import { useEffect, useRef, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useSearchValue } from '@/hooks/use-search-value';
+import { useConnections } from '@/hooks/use-connections';
+import { useRef, useCallback, useEffect } from 'react';
+import { Markdown } from '@react-email/components';
+import { TextShimmer } from '../ui/text-shimmer';
+import { useThread } from '@/hooks/use-threads';
+import { useSession } from '@/lib/auth-client';
+import { cn, getEmailLogo } from '@/lib/utils';
+import { CurvedArrow } from '../icons/icons';
 import { AITextarea } from './ai-textarea';
-import { cn } from '@/lib/utils';
+import { useChat } from '@ai-sdk/react';
+import { format } from 'date-fns-tz';
+import { useQueryState } from 'nuqs';
 import { useState } from 'react';
+import VoiceChat from './voice';
+import { nanoid } from 'nanoid';
+import Image from 'next/image';
 import { toast } from 'sonner';
 
-interface UseAutoResizeTextareaProps {
-  minHeight: number;
-  maxHeight?: number;
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  type?: 'email' | 'search';
+  emailContent?: {
+    subject?: string;
+    content: string;
+  };
+  searchContent?: {
+    searchDisplay: string;
+    results: Array<{
+      id: string;
+      snippet: string;
+      historyId: string;
+      subject: string;
+      from: string;
+    }>;
+  };
 }
 
-function useAutoResizeTextarea({ minHeight, maxHeight }: UseAutoResizeTextareaProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+const renderThread = (thread: { id: string; title: string; snippet: string }) => {
+  const [, setThreadId] = useQueryState('threadId');
+  const { data: getThread } = useThread(thread.id);
+  return getThread?.latest ? (
+    <div
+      onClick={() => setThreadId(thread.id)}
+      key={thread.id}
+      className="dark:bg-subtleBlack bg-subtleWhite hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer rounded-lg border p-2"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage
+              className="rounded-full"
+              src={getEmailLogo(getThread.latest?.sender?.email)}
+            />
+            <AvatarFallback className="rounded-full bg-[#FFFFFF] font-bold text-[#9F9F9F] dark:bg-[#373737]">
+              {getThread.latest?.sender?.name?.[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <p className="text-sm font-medium text-black dark:text-white">
+            {getThread.latest?.sender?.name}
+          </p>
+        </div>
+        <div>
+          {getThread.latest.receivedOn ? (
+            <p
+              className={cn(
+                'text-nowrap text-xs font-normal text-[#6D6D6D] opacity-70 transition-opacity group-hover:opacity-100 dark:text-[#8C8C8C]',
+              )}
+            >
+              {format(getThread.latest.receivedOn, 'dd/MM/yy hh:mm a')}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="mb-1 ml-0.5 mt-2 flex items-center gap-2">
+        <p className="overflow-wrap opacity-50">{getThread.latest?.subject}</p>
+      </div>
+      {/* <p className="text-xs font-normal text-[#6D6D6D] opacity-70 transition-opacity group-hover:opacity-100 dark:text-[#8C8C8C]">
+        {getThread.latest?.title}
+      </p> */}
+    </div>
+  ) : null;
+};
 
-  const adjustHeight = useCallback(
-    (reset?: boolean) => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-
-      if (reset) {
-        textarea.style.height = `${minHeight}px`;
-        return;
-      }
-
-      // Temporarily shrink to get the right scrollHeight
-      textarea.style.height = `${minHeight}px`;
-
-      // Calculate new height
-      const newHeight = Math.max(
-        minHeight,
-        Math.min(textarea.scrollHeight, maxHeight ?? Number.POSITIVE_INFINITY),
-      );
-
-      textarea.style.height = `${newHeight}px`;
-    },
-    [minHeight, maxHeight],
-  );
-
-  useEffect(() => {
-    // Set initial height
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = `${minHeight}px`;
-    }
-  }, [minHeight]);
-
-  // Adjust height on window resize
-  useEffect(() => {
-    const handleResize = () => adjustHeight();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [adjustHeight]);
-
-  return { textareaRef, adjustHeight };
-}
+const RenderThreads = ({
+  threads,
+}: {
+  threads: { id: string; title: string; snippet: string }[];
+}) => {
+  return <div className="flex flex-col gap-2">{threads.map(renderThread)}</div>;
+};
 
 export function AIChat() {
-  const [value, setValue] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioData, setAudioData] = useState<number[]>(Array(30).fill(0));
-  const [isListening, setIsListening] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationFrameRef = useRef<number | undefined>(undefined);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const { textareaRef, adjustHeight } = useAutoResizeTextarea({
-    minHeight: 60,
-    maxHeight: 200,
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const { messages, input, setInput, error, handleSubmit, status } = useChat({
+    api: '/api/chat',
+    maxSteps: 5,
   });
 
-  const updateAudioData = useCallback(() => {
-    if (!analyserRef.current) return;
-
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-    analyserRef.current.getByteFrequencyData(dataArray);
-
-    // Convert the audio data to wave heights (values between 0 and 1)
-    // Using frequency data for better visualization
-    const normalizedData = Array.from(dataArray)
-      .slice(0, 30)
-      .map((value) => value / 255);
-
-    setAudioData(normalizedData);
-    animationFrameRef.current = requestAnimationFrame(updateAudioData);
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (value.trim()) {
-        setValue('');
-        adjustHeight(true);
-      }
-    }
-  };
-
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      // Handle file upload here
-      console.log('Selected files:', files);
-      // You can implement file upload logic here
-    }
-  };
-
-  const handleMicClick = async () => {
-    try {
-      if (!isRecording) {
-        // Start recording
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaStreamRef.current = stream;
-
-        // Set up audio context for visualization
-        audioContextRef.current = new AudioContext();
-        analyserRef.current = audioContextRef.current.createAnalyser();
-        const source = audioContextRef.current.createMediaStreamSource(stream);
-        source.connect(analyserRef.current);
-        analyserRef.current.fftSize = 256;
-
-        // Start visualization
-        updateAudioData();
-        setIsRecording(true);
-        setIsListening(true);
-
-        // Set up speech recognition
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          recognitionRef.current = new SpeechRecognition();
-          recognitionRef.current.continuous = true;
-          recognitionRef.current.interimResults = true;
-
-          recognitionRef.current.onresult = (event) => {
-            const transcript = Array.from(event.results)
-              .map((result) => result[0]?.transcript || '')
-              .join('');
-
-            setValue((prev) => {
-              // Only update if we have new content
-              if (transcript && transcript !== prev) {
-                return transcript;
-              }
-              return prev;
-            });
-
-            // Adjust textarea height when text changes
-            adjustHeight();
-          };
-
-          recognitionRef.current.onend = () => {
-            // Restart if we're still recording
-            if (isRecording && recognitionRef.current) {
-              recognitionRef.current.start();
-            }
-          };
-
-          recognitionRef.current.start();
-        } else {
-          toast.error('Your browser does not support speech recognition.');
-        }
-      } else {
-        // Stop recording
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-          mediaStreamRef.current = null;
-        }
-
-        if (audioContextRef.current) {
-          audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
-
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = undefined;
-        }
-
-        if (recognitionRef.current) {
-          recognitionRef.current.stop();
-          recognitionRef.current = null;
-        }
-
-        setIsRecording(false);
-        setIsListening(false);
-        setAudioData(Array(30).fill(0));
-      }
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-    }
-  };
-
+  // Auto scroll when messages change
   useEffect(() => {
-    return () => {
-      // Clean up resources when component unmounts
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, []);
+    scrollToBottom();
+    // if (onMessagesChange) {
+    //   onMessagesChange(messages);
+    // }
+  }, [messages, messagesEndRef]);
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col items-center space-y-8 py-1">
-      <div className="w-full">
-        <div className="relative rounded-xl border dark:border-neutral-800 dark:bg-neutral-900">
-          <div className="overflow-y-auto px-2">
-            {isRecording ? (
-              <div className="flex h-[64px] min-h-[60px] w-full flex-col items-center justify-center px-4">
-                <div className="mt-4 flex items-center justify-center gap-1">
-                  {audioData.map((height, index) => (
-                    <div
-                      key={index}
-                      className="bg-muted-foreground w-1.5 rounded-full transition-all duration-75"
-                      style={{
-                        height: `${Math.max(4, height * 40)}px`,
-                        transform: `scaleY(${Math.max(0.1, height)})`,
-                      }}
-                    />
-                  ))}
+    <div className="flex h-full flex-col">
+      <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
+        <div className="min-h-full space-y-4 px-4 py-4">
+          {!messages.length ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="relative mb-4 h-[44px] w-[44px]">
+                <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
+                <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
+              </div>
+              <p className="mb-1 mt-2 hidden text-sm font-medium text-black md:block dark:text-white">
+                Ask anything about your emails
+              </p>
+              <p className="mb-3 text-sm text-[#8C8C8C] dark:text-[#929292]">
+                Ask to do or show anything using natural language
+              </p>
+
+              <div className="mt-6 flex w-full flex-col items-center gap-2">
+                {/* First row */}
+                <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
+                  <div className="flex gap-4 px-4">
+                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
+                      Find invoice from Stripe
+                    </p>
+                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
+                      Reply to Nick
+                    </p>
+                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
+                      Show recent design feedback
+                    </p>
+                  </div>
+                  {/* Left mask */}
+                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+                  {/* Right mask */}
+                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
+                </div>
+
+                {/* Second row */}
+                <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
+                  <div className="flex gap-4 px-4">
+                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
+                      Find meeting with Sarah
+                    </p>
+                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
+                      What did alex say about the design
+                    </p>
+                  </div>
+                  {/* Left mask */}
+                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+                  {/* Right mask */}
+                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
                 </div>
               </div>
-            ) : (
-              <AITextarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => {
-                  setValue(e.target.value);
-                  adjustHeight();
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask Zero a question..."
-                className="text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground min-h-[60px] w-full resize-none border-none bg-transparent px-4 py-3 text-sm placeholder:text-sm focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white"
-                style={{
-                  overflow: 'hidden',
-                }}
-              />
-            )}
-          </div>
+            </div>
+          ) : (
+            messages.map((message, index) => (
+              <div
+                key={`${message.id}-${index}`}
+                className={cn(
+                  'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
+                  message.role === 'user'
+                    ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]' // User messages aligned to right
+                    : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]', // Assistant messages aligned to left
+                )}
+              >
+                {message.parts.map((part) => {
+                  if (part.type === 'text') {
+                    return <Markdown>{part.text}</Markdown>;
+                  }
+                  if (part.type === 'tool-invocation') {
+                    return (
+                      'result' in part.toolInvocation &&
+                      ('threads' in part.toolInvocation.result ? (
+                        <RenderThreads threads={part.toolInvocation.result.threads} />
+                      ) : null)
+                    );
+                  }
+                })}
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
 
-          <div className="flex items-center justify-between p-3">
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                multiple
-              />
+          {status === 'submitted' && (
+            <div className="flex flex-col gap-2 rounded-lg">
               <div className="flex items-center gap-2">
-                <Button variant="outline" className="w-9" onClick={handleFileClick}>
-                  <Paperclip className="h-4 w-4" />
-                </Button>
+                <TextShimmer className="text-muted-foreground text-sm">
+                  zero is thinking...
+                </TextShimmer>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  className={cn('w-9', isRecording && 'bg-red-500 text-white hover:bg-red-600')}
-                  onClick={handleMicClick}
+            </div>
+          )}
+          {(status === 'error' || !!error) && (
+            <div className="text-red-500">Error, please try again later</div>
+          )}
+        </div>
+      </div>
+
+      {/* Fixed input at bottom */}
+      <div className="mb-[7px] flex-shrink-0 px-1.5">
+        <div className="bg-offsetLight border-border/50 relative rounded-2xl border dark:bg-[#141414]">
+          {showVoiceChat ? (
+            <VoiceChat onClose={() => setShowVoiceChat(false)} />
+          ) : (
+            <div className="flex flex-col p-2">
+              <div className="mb-2 w-full">
+                <form id="ai-chat-form" onSubmit={handleSubmit}>
+                  <AITextarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ask AI to do anything..."
+                    className="placeholder:text-muted-foreground h-[44px] w-full resize-none rounded-[5px] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </form>
+              </div>
+              <div className="flex items-center justify-between">
+                <div></div>
+                <button
+                  form="ai-chat-form"
+                  type="submit"
+                  className="border-border/50 inline-flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border bg-white pl-1.5 pr-1 dark:bg-[#262626]"
+                  disabled={!input.trim() || status !== 'ready'}
                 >
-                  <Mic className="h-4 w-4" />
-                </Button>
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                    <div className="justify-start text-center text-sm leading-none text-black dark:text-white">
+                      Send{' '}
+                    </div>
+                  </div>
+                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1 dark:bg-white/10">
+                    <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
+                  </div>
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="default" className="w-9" disabled={!value.trim()}>
-                <ArrowUpIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

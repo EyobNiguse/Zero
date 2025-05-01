@@ -1,11 +1,13 @@
 'use client';
+import { backgroundQueueAtom, isThreadInBackgroundQueueAtom } from '@/store/backgroundQueue';
 import { useParams, useSearchParams } from 'next/navigation';
 import { IGetThreadResponse } from '@/app/api/driver/types';
 import type { InitialThread, ParsedMessage } from '@/types';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useSession } from '@/lib/auth-client';
 import { defaultPageSize } from '@/lib/utils';
-import { Label } from '@/hooks/use-labels';
+import { useAtom, useAtomValue } from 'jotai';
+import { useDebounce } from './use-debounce';
 import useSWRInfinite from 'swr/infinite';
 import useSWR, { preload } from 'swr';
 import { useQueryState } from 'nuqs';
@@ -27,30 +29,6 @@ type FetchEmailsTuple = [
   pageToken?: string,
 ];
 
-// TODO: improve the filters
-const fetchEmails = async ([
-  _,
-  folder,
-  q,
-  max,
-  labelIds,
-  pageToken,
-]: FetchEmailsTuple): Promise<RawResponse> => {
-  try {
-    const searchParams = new URLSearchParams({
-      folder,
-      q,
-      max: max?.toString() ?? defaultPageSize.toString(),
-      pageToken: pageToken ?? '',
-    } as Record<string, string>);
-    const response = await axios.get<RawResponse>(`/api/driver?${searchParams.toString()}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching emails:', error);
-    throw error;
-  }
-};
-
 const fetchThread = async (args: any[]) => {
   const [_, id] = args;
   try {
@@ -63,7 +41,7 @@ const fetchThread = async (args: any[]) => {
 };
 
 // Based on gmail
-interface RawResponse {
+export interface RawResponse {
   nextPageToken: string | undefined;
   threads: InitialThread[];
   resultSizeEstimate: number;
@@ -82,8 +60,18 @@ export const useThreads = () => {
   const { folder } = useParams<{ folder: string }>();
   const [searchValue] = useSearchValue();
   const { data: session } = useSession();
+  const [backgroundQueue] = useAtom(backgroundQueueAtom);
+  const isInQueue = useAtomValue(isThreadInBackgroundQueueAtom);
 
-  const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(
+  const {
+    data,
+    error,
+    size,
+    setSize,
+    isLoading,
+    isValidating,
+    mutate: originalMutate,
+  } = useSWRInfinite(
     (_, previousPageData) => {
       if (!session?.user.id || !session.connectionId) return null;
       return getKey(previousPageData, [
@@ -111,17 +99,22 @@ export const useThreads = () => {
       return res.data;
     },
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
+      revalidateOnFocus: true,
+      revalidateIfStale: true,
       revalidateOnMount: true,
-      refreshInterval: 30000 * 2,
     },
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
   const threads = useMemo(
-    () => (data ? data.flatMap((e) => e.threads).filter(Boolean) : []),
-    [data, session],
+    () =>
+      data
+        ? data
+            .flatMap((e) => e.threads)
+            .filter(Boolean)
+            .filter((e) => !isInQueue(`thread:${e.id}`))
+        : [],
+    [data, session, backgroundQueue, isInQueue],
   );
   const isEmpty = useMemo(() => threads.length === 0, [threads]);
   const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextPageToken);
@@ -129,6 +122,8 @@ export const useThreads = () => {
     if (isLoading || isValidating) return;
     await setSize(size + 1);
   };
+
+  const debouncedMutate = useDebounce(originalMutate, 3000);
 
   return {
     data: {
@@ -140,39 +135,9 @@ export const useThreads = () => {
     error,
     loadMore,
     isReachingEnd,
-    mutate,
+    mutate: debouncedMutate,
   };
 };
-
-export function useThreadLabels(ids: string[]) {
-  const key = ids.length > 0 ? `/api/v1/thread-labels?ids=${ids.join(',')}` : null;
-
-  return useSWR<Label[]>(
-    key,
-    async (url) => {
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch thread labels');
-        }
-
-        return response.json();
-      } catch (error) {
-        toast.error('Failed to fetch thread labels');
-        throw error;
-      }
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 5000,
-    },
-  );
-}
 
 export const useThread = (threadId: string | null) => {
   const { data: session } = useSession();
@@ -184,7 +149,23 @@ export const useThread = (threadId: string | null) => {
     () => axios.get<IGetThreadResponse>(`/api/driver/${id}`).then((res) => res.data),
   );
 
-  const hasUnread = useMemo(() => data?.messages.some((e) => e.unread), [data]);
+  const isGroupThread = useMemo(() => {
+    if (!data?.latest?.id) return false;
+    const totalRecipients = [
+      ...(data.latest.to || []),
+      ...(data.latest.cc || []),
+      ...(data.latest.bcc || []),
+    ].length;
+    return totalRecipients > 1;
+  }, [data]);
 
-  return { data, isLoading, error, hasUnread, mutate };
+  return {
+    data,
+    isLoading,
+    labels: data?.labels,
+    error,
+    isGroupThread,
+    hasUnread: data?.hasUnread,
+    mutate,
+  };
 };

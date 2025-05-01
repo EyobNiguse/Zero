@@ -1,18 +1,30 @@
 import { type IOutgoingMessage, type InitialThread, type ParsedMessage } from '@/types';
+import { Label } from '@/hooks/use-labels';
 
 export interface IGetThreadResponse {
   messages: ParsedMessage[];
   latest: ParsedMessage | undefined;
   hasUnread: boolean;
   totalReplies: number;
+  labels: { id: string; name: string }[];
+}
+
+export interface ParsedDraft {
+  id: string;
+  to?: string[];
+  subject?: string;
+  content?: string;
+  // todo: add <T>
+  rawMessage?: any;
 }
 
 export interface MailManager {
+  getIdType: (id: string) => 'thread' | 'draft';
   get(id: string): Promise<IGetThreadResponse>;
   create(data: IOutgoingMessage): Promise<any>;
   sendDraft(id: string, data: IOutgoingMessage): Promise<any>;
   createDraft(data: any): Promise<any>;
-  getDraft: (id: string) => Promise<any>;
+  getDraft: (id: string) => Promise<ParsedDraft>;
   listDrafts: (q?: string, maxResults?: number, pageToken?: string) => Promise<any>;
   delete(id: string): Promise<any>;
   list<T>(
@@ -37,7 +49,7 @@ export interface MailManager {
     options: { addLabels: string[]; removeLabels: string[] },
   ): Promise<void>;
   getAttachment(messageId: string, attachmentId: string): Promise<string | undefined>;
-  getUserLabels(): Promise<any>;
+  getUserLabels(): Promise<Label[]>;
   getLabel: (labelId: string) => Promise<any>;
   createLabel(label: {
     name: string;

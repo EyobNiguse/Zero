@@ -1,8 +1,10 @@
 'use server';
 
+import { updateWritingStyleMatrix } from '@/services/writing-style-service';
 import { createDriver } from '@/app/api/driver';
 import { getActiveConnection } from './utils';
-import { Sender } from '@/types';
+import { ISendEmail } from '@/types';
+import { after } from 'next/server';
 
 export async function sendEmail({
   to,
@@ -15,20 +17,11 @@ export async function sendEmail({
   threadId,
   fromEmail,
   draftId,
-}: {
-  to: Sender[];
-  subject: string;
-  message: string;
-  attachments: File[];
-  headers?: Record<string, string>;
-  cc?: Sender[];
-  bcc?: Sender[];
-  threadId?: string;
-  fromEmail?: string;
-  draftId?: string;
-}) {
+}: ISendEmail & { draftId?: string }) {
   if (!to || !subject || !message) {
-    throw new Error('Missing required fields');
+    throw new Error(
+      `Missing required fields, ${to ? '' : 'to'} ${subject ? '' : 'subject'} ${message ? '' : 'message'}`,
+    );
   }
 
   const connection = await getActiveConnection();
@@ -49,7 +42,7 @@ export async function sendEmail({
     subject,
     to,
     message,
-    attachments,
+    attachments: attachments || [],
     headers: additionalHeaders,
     cc,
     bcc,
@@ -62,6 +55,16 @@ export async function sendEmail({
   } else {
     await driver.create(emailData);
   }
+
+  after(async () => {
+    try {
+      console.warn('Saving writing style matrix...');
+      await updateWritingStyleMatrix(connection.id, message);
+      console.warn('Saved writing style matrix.');
+    } catch (error) {
+      console.error('Failed to save writing style matrix', error);
+    }
+  });
 
   return { success: true };
 }
