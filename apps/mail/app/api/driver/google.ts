@@ -972,8 +972,10 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           const msg = createMimeMessage();
           msg.setSender('me');
           msg.setTo(data.to.split(', ').map((recipient: string) => ({ addr: recipient })));
-          msg.setCc(data.cc?.split(', ').map((recipient: string) => ({ addr: recipient })));
-          msg.setBcc(data.bcc?.split(', ').map((recipient: string) => ({ addr: recipient })));
+          if (data.cc)
+            msg.setCc(data.cc?.split(', ').map((recipient: string) => ({ addr: recipient })));
+          if (data.bcc)
+            msg.setBcc(data.bcc?.split(', ').map((recipient: string) => ({ addr: recipient })));
 
           msg.setSubject(data.subject);
           msg.addMessage({
