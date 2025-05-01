@@ -53,157 +53,8 @@ import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
-import items from './demo.json';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
-
-export function DemoMailLayout() {
-  const [mail, setMail] = useState({
-    selected: 'demo',
-    bulkSelected: [],
-  });
-  const [selectedMail, setSelectedMail] = useState<any>(null);
-  const isMobile = false;
-  const isValidating = false;
-  const isLoading = false;
-  const isDesktop = true;
-  const [threadIdParam] = useQueryState('threadId');
-  const [activeCategory, setActiveCategory] = useState('Primary');
-  const [filteredItems, setFilteredItems] = useState(items);
-
-  const handleSelectMail = useCallback((message: any) => {
-    setSelectedMail(message);
-    setMail((prev) => ({ ...prev, selected: message.id }));
-  }, []);
-
-  useEffect(() => {
-    if (activeCategory === 'All Mail') {
-      setFilteredItems(items);
-    } else {
-      const categoryMap = {
-        Primary: 'important',
-        Personal: 'personal',
-        Updates: 'updates',
-        Promotions: 'promotions',
-      };
-
-      const filterTag = categoryMap[activeCategory as keyof typeof categoryMap];
-      const filtered = items.filter(
-        (item) => item.tags && item.tags.find((e) => e.name === filterTag),
-      );
-      setFilteredItems(filtered);
-    }
-  }, [activeCategory]);
-
-  useEffect(() => {
-    if (filteredItems.length > 0 && !selectedMail) {
-      handleSelectMail(filteredItems[0]);
-    }
-  }, [filteredItems, selectedMail, handleSelectMail]);
-
-  return (
-    <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit flex">
-        <ResizablePanelGroup
-          direction="horizontal"
-          autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-1.5 overflow-hidden"
-        >
-          <ResizablePanel
-            className={cn(
-              'border-none !bg-transparent',
-              mail?.selected ? 'md:hidden lg:block' : '', // Hide on md, but show again on lg and up
-            )}
-            defaultSize={isMobile ? 100 : 25}
-            minSize={isMobile ? 100 : 25}
-          >
-            <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-[5px] md:border md:shadow-sm">
-              <div
-                className={cn(
-                  'compose-loading h-0.5 w-full transition-opacity',
-                  isValidating ? 'opacity-50' : 'opacity-0',
-                )}
-              />
-              <div
-                className={cn(
-                  'sticky top-0 z-[5] flex items-center justify-between gap-1.5 p-2 transition-colors',
-                )}
-              >
-                <SidebarToggle className="h-fit px-2" />
-
-                <div>
-                  <MailCategoryTabs
-                    iconsOnly={true}
-                    onCategoryChange={(category) => {
-                      setActiveCategory(category);
-                    }}
-                    initialCategory={activeCategory}
-                  />
-                </div>
-              </div>
-
-              <div className="h-[calc(100dvh-56px)] max-h-[800px] overflow-hidden pt-0 md:h-[calc(100dvh-(8px+8px+14px+44px))]">
-                {isLoading ? (
-                  <div className="flex flex-col">
-                    {[...Array(8)].map((_, i) => (
-                      <div key={i} className="flex flex-col px-4 py-3">
-                        <div className="flex w-full items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="h-4 w-24" />
-                          </div>
-                          <Skeleton className="h-3 w-12" />
-                        </div>
-                        <Skeleton className="mt-2 h-3 w-32" />
-                        <Skeleton className="mt-2 h-3 w-full" />
-                        <div className="mt-2 flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-md" />
-                          <Skeleton className="h-4 w-16 rounded-md" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <MailListDemo items={filteredItems} onSelectMail={handleSelectMail} />
-                )}
-              </div>
-            </div>
-          </ResizablePanel>
-
-          {isDesktop && mail.selected && (
-            <>
-              <div className="opacity-0" />
-              <ResizablePanel
-                className="bg-offsetLight dark:bg-offsetDark shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm"
-                defaultSize={75}
-                minSize={25}
-              >
-                <div className="relative hidden h-[calc(100dvh-(12px+14px))] max-h-[800px] flex-1 md:block">
-                  <ThreadDemo messages={selectedMail ? [selectedMail] : []} />
-                </div>
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-
-        {/* Mobile Drawer */}
-        {isMobile && (
-          <Drawer open={!!threadIdParam}>
-            <DrawerContent className="bg-offsetLight dark:bg-offsetDark h-[calc(100dvh-3rem)] overflow-hidden p-0">
-              <DrawerHeader className="sr-only">
-                <DrawerTitle>Email Details</DrawerTitle>
-              </DrawerHeader>
-              <div className="flex h-full flex-col overflow-hidden">
-                <div className="flex-1 overflow-hidden">
-                  <ThreadDisplay isMobile={true} messages={selectedMail ? [selectedMail] : []} />
-                </div>
-              </div>
-            </DrawerContent>
-          </Drawer>
-        )}
-      </div>
-    </TooltipProvider>
-  );
-}
 
 export function MailLayout() {
   const { folder } = useParams<{ folder: string }>();
@@ -297,14 +148,19 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit relative z-[5] mt-1 flex p-0">
+      <div className="rounded-inherit relative z-[5] flex p-0 md:mt-1">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
           className="rounded-inherit gap-1 overflow-hidden"
         >
-          <div className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}>
-            <div className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-0.5rem)] w-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex md:max-w-[415px] md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
+          <div
+            className={cn(
+              'w-full border-none !bg-transparent lg:w-fit',
+              threadId ? 'md:hidden lg:block' : '',
+            )}
+          >
+            <div className="bg-panelLight dark:bg-panelDark h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex md:h-[calc(100dvh-0.5rem)] md:rounded-2xl md:border md:shadow-sm lg:w-screen lg:max-w-[415px] dark:border-[#252525]">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -377,12 +233,12 @@ export function MailLayout() {
 
           {isDesktop && (
             <ResizablePanel
-              className="bg-panelLight dark:bg-panelDark mr-1 hidden w-fit border-[#E7E7E7] shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+              className={`bg-panelLight dark:bg-panelDark ${threadId ? 'mr-1.5' : 'lg:mr-1.5'} w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
               defaultSize={30}
               minSize={30}
             >
-              <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
-                <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
+              <div className="relative h-[calc(100vh-(10px))] flex-1 lg:h-[calc(100vh-(12px+14px))]">
+                <ThreadDisplay />
               </div>
             </ResizablePanel>
           )}
@@ -395,15 +251,13 @@ export function MailLayout() {
                 if (!isOpen) handleClose();
               }}
             >
-              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-3rem)] p-0 mx-1">
+              <DrawerContent className="bg-panelLight dark:bg-panelDark mx-1 h-[calc(100dvh-3rem)] p-0">
                 <DrawerHeader className="sr-only">
                   <DrawerTitle>Email Details</DrawerTitle>
                 </DrawerHeader>
                 <div className="flex h-full flex-col">
                   <div className="h-full overflow-y-auto">
-                    {threadId ? (
-                      <ThreadDisplay onClose={handleClose} isMobile={true} id={threadId} />
-                    ) : null}
+                    {threadId ? <ThreadDisplay /> : null}
                   </div>
                 </div>
               </DrawerContent>
@@ -730,7 +584,7 @@ function getCategoryColor(categoryId: string): string {
 
 function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const [mail, setMail] = useMail();
-  const [, setSearchValue] = useSearchValue();
+  const [searchValue, setSearchValue] = useSearchValue();
   const categories = Categories();
   const { folder } = useParams<{ folder: string }>();
   const [category, setCategory] = useQueryState('category', {
@@ -758,7 +612,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
           setCategory(cat.id);
           setSearchValue({
             value: cat.searchValue || '',
-            highlight: '',
+            highlight: searchValue.highlight,
             folder: '',
           });
         }}

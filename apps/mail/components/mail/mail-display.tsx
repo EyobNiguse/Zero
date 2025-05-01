@@ -237,21 +237,17 @@ const cleanNameDisplay = (name?: string) => {
   return name.trim();
 };
 
-const AiSummary = ({
-  onClick,
-  e,
-}: {
-  onClick?: (e: React.MouseEvent) => void;
-  e?: React.MouseEvent;
-}) => {
-  const [showSummary, setShowSummary] = useState(true);
+const AiSummary = () => {
+  const [threadId] = useQueryState('threadId');
+  const { data: summary } = useSummary(threadId ?? null);
+  const [showSummary, setShowSummary] = useState(false);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event from bubbling up
     setShowSummary(!showSummary);
   };
 
-  return (
+  return summary ? (
     <div
       className="mt-5 max-w-3xl rounded-xl border border-[#8B5CF6] bg-white p-3 dark:bg-[#252525]"
       onClick={(e) => e.stopPropagation()} // Prevent clicks from collapsing email
@@ -262,14 +258,11 @@ const AiSummary = ({
           className={`ml-1 h-2.5 w-2.5 fill-[#929292] transition-transform ${showSummary ? '' : 'rotate-180'}`}
         />
       </div>
-      {showSummary && (
-        <div className="mt-2 text-sm text-black dark:text-white">
-          Design review of new email client features. Team discussed command center improvements and
-          category system. General positive feedback, with suggestions for quick actions placement.
-        </div>
+      {showSummary && summary && (
+        <div className="mt-2 text-sm text-black dark:text-white">{summary}</div>
       )}
     </div>
-  );
+  ) : null;
 };
 
 const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
@@ -380,7 +373,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
 
   const renderPerson = useCallback(
     (person: Sender) => (
-      <Popover>
+      <Popover key={person.email}>
         <PopoverTrigger asChild>
           <div
             key={person.email}
@@ -488,7 +481,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   })()}
                 </div>
               </div>
-              {/* <AiSummary /> */}
+              <AiSummary />
             </>
           )}
         </div>
