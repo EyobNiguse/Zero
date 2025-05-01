@@ -297,14 +297,14 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit relative z-[5] mt-1 flex p-0">
+      <div className="rounded-inherit relative z-[5] md:mt-1 flex p-0">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
           className="rounded-inherit gap-1 overflow-hidden"
         >
-          <div className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}>
-            <div className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-0.5rem)] w-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex md:max-w-[415px] md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
+          <div className={cn('border-none w-full lg:w-fit !bg-transparent', threadId ? 'md:hidden lg:block' : '')}>
+            <div className="bg-panelLight dark:bg-panelDark h-screen md:h-[calc(100dvh-0.5rem)] lg:w-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex lg:max-w-[415px] md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -377,11 +377,11 @@ export function MailLayout() {
 
           {isDesktop && (
             <ResizablePanel
-              className="bg-panelLight dark:bg-panelDark mr-1 hidden w-fit border-[#E7E7E7] shadow-sm md:flex md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+              className="bg-panelLight dark:bg-panelDark mr-1 w-fit border-[#E7E7E7] shadow-sm lg:flex md:rounded-2xl lg:border lg:shadow-sm dark:border-[#252525]"
               defaultSize={30}
               minSize={30}
             >
-              <div className="relative hidden h-[calc(100vh-(12px+14px))] flex-1 md:block">
+              <div className="relative  h-[calc(100vh-(12px+14px))] flex-1">
                 <ThreadDisplay onClose={handleClose} id={threadId ?? undefined} />
               </div>
             </ResizablePanel>
