@@ -678,7 +678,7 @@ export function EmailComposer({
               {attachments && attachments.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="ml-2 flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
+                    <button className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
                       <Paperclip className="h-3 w-3 text-[#9A9A9A]" />
                       <span>{pluralize('file', attachments.length, true)}</span>
                     </button>

@@ -395,7 +395,7 @@ export function MailLayout() {
                 if (!isOpen) handleClose();
               }}
             >
-              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-3rem)] p-0 mx-1">
+              <DrawerContent className="bg-panelLight dark:bg-panelDark mx-1 h-[calc(100dvh-3rem)] p-0">
                 <DrawerHeader className="sr-only">
                   <DrawerTitle>Email Details</DrawerTitle>
                 </DrawerHeader>
@@ -730,7 +730,7 @@ function getCategoryColor(categoryId: string): string {
 
 function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const [mail, setMail] = useMail();
-  const [, setSearchValue] = useSearchValue();
+  const [searchValue, setSearchValue] = useSearchValue();
   const categories = Categories();
   const { folder } = useParams<{ folder: string }>();
   const [category, setCategory] = useQueryState('category', {
@@ -758,7 +758,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
           setCategory(cat.id);
           setSearchValue({
             value: cat.searchValue || '',
-            highlight: '',
+            highlight: searchValue.highlight,
             folder: '',
           });
         }}
