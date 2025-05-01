@@ -34,6 +34,7 @@ import AttachmentsAccordion from './attachments-accordion';
 import { cn, getEmailLogo, formatDate } from '@/lib/utils';
 import { useThreadLabels } from '@/hooks/use-labels';
 import { Sender, type ParsedMessage } from '@/types';
+import { Markdown } from '@react-email/components';
 import AttachmentDialog from './attachment-dialog';
 import { useSummary } from '@/hooks/use-summary';
 import { TextShimmer } from '../ui/text-shimmer';
@@ -256,13 +257,7 @@ const AiSummary = () => {
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex cursor-pointer items-center" onClick={handleToggle}>
-        {isLoading ? (
-          <TextShimmer className="text-sm font-medium text-[#929292]">
-            Summary is loading...
-          </TextShimmer>
-        ) : (
-          <p className="text-sm font-medium text-[#929292]">Summary</p>
-        )}
+        <TextShimmer className="text-xs font-medium text-[#929292]">Summary</TextShimmer>
 
         {!isLoading && (
           <ChevronDown
@@ -270,11 +265,7 @@ const AiSummary = () => {
           />
         )}
       </div>
-      {showSummary && (
-        <TextShimmer className="mt-2 text-sm text-black dark:text-white">
-          {summary?.short}
-        </TextShimmer>
-      )}
+      {showSummary && <Markdown>{summary?.short || ''}</Markdown>}
     </div>
   );
 };
@@ -812,7 +803,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   ))}
                 </div>
               ) : null}
-              <div className="mb-2 mt-2 flex gap-2 px-4">
+              <div className="mb-2 mt-2 flex gap-2">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
