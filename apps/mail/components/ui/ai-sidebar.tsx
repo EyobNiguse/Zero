@@ -18,7 +18,7 @@ import { AIChat } from '@/components/create/ai-chat';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { usePathname } from 'next/navigation';
-import { X } from '@/components/icons/icons';
+import { Paper, X } from '@/components/icons/icons';
 import prompt from '@/app/api/chat/prompt';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
@@ -134,8 +134,8 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
 
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" className="md:h-fit md:px-2">
-                          <BookDashedIcon />
+                        <Button variant="ghost" className="md:h-fit md:px-2 [&>svg]:size-3">
+                          <Paper className="dark:fill-iconDark fill-iconLight h-3.5 w-3.5" />
                           <span>Prompts</span>
                         </Button>
                       </DialogTrigger>
