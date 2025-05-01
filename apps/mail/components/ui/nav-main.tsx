@@ -90,7 +90,7 @@ export function NavMain({ items }: NavMainProps) {
     defaultValues: {
       name: '',
       color: { backgroundColor: '', textColor: '#ffffff' },
-    }
+    },
   });
 
   const formColor = form.watch('color');
@@ -138,16 +138,16 @@ export function NavMain({ items }: NavMainProps) {
       // }
 
       // Handle back button with redirect protection
-      if (item.isBackButton) {
-        if (currentFrom) {
-          const decodedFrom = decodeURIComponent(currentFrom);
-          if (isValidInternalUrl(decodedFrom)) {
-            return decodedFrom;
-          }
-        }
-        // Fall back to safe default if URL is missing or invalid
-        return '/mail';
-      }
+      // if (item.isBackButton) {
+      //   if (currentFrom) {
+      //     const decodedFrom = decodeURIComponent(currentFrom);
+      //     if (isValidInternalUrl(decodedFrom)) {
+      //       return decodedFrom;
+      //     }
+      //   }
+      //   // Fall back to safe default if URL is missing or invalid
+      //   return '/mail';
+      // }
 
       // Handle settings pages navigation
       if (item.isSettingsPage && currentFrom) {
@@ -214,7 +214,7 @@ export function NavMain({ items }: NavMainProps) {
     if (!data.color?.backgroundColor) {
       form.setError('color', {
         type: 'required',
-        message: 'Please select a color'
+        message: 'Please select a color',
       });
       return;
     }
@@ -503,7 +503,12 @@ function NavItem(item: NavItemProps & { href: string }) {
   );
 
   if (item.isBackButton) {
-    return <Link {...linkProps}>{buttonContent}</Link>;
+    return (
+      // TODO: Fix back link to go back a step not to /mail/inbox
+      <Link {...linkProps} href="/mail/inbox">
+        {buttonContent}
+      </Link>
+    );
   }
 
   return (
