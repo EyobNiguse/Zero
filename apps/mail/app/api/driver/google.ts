@@ -971,14 +971,9 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           const message = await sanitizeTipTapHtml(data.message);
           const msg = createMimeMessage();
           msg.setSender('me');
-          data.to.split(', ').forEach((recipient: string) => msg.setTo({ addr: recipient }));
-
-          if (data.cc) {
-            data.cc.split(', ').forEach((recipient: string) => msg.setCc({ addr: recipient }));
-          }
-          if (data.bcc) {
-            data.bcc.split(', ').forEach((recipient: string) => msg.setBcc({ addr: recipient }));
-          }
+          msg.setTo(data.to.split(', ').map((recipient: string) => ({ addr: recipient })));
+          msg.setCc(data.cc?.split(', ').map((recipient: string) => ({ addr: recipient })));
+          msg.setBcc(data.bcc?.split(', ').map((recipient: string) => ({ addr: recipient })));
 
           msg.setSubject(data.subject);
           msg.addMessage({
