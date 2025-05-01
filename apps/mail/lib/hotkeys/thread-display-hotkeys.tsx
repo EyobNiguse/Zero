@@ -1,11 +1,12 @@
 'use client';
 
-import { useThread, useThreads } from '@/hooks/use-threads';
 import { keyboardShortcuts } from '@/config/shortcuts';
+import useMoveTo from '@/hooks/driver/use-move-to';
+import useDelete from '@/hooks/driver/use-delete';
 import { useShortcuts } from './use-hotkey-utils';
-import { deleteThread } from '@/actions/mail';
+import { useThread } from '@/hooks/use-threads';
+import { useParams } from 'next/navigation';
 import { useQueryState } from 'nuqs';
-import { toast } from 'sonner';
 
 const closeView = (event: KeyboardEvent) => {
   event.preventDefault();
@@ -17,6 +18,11 @@ export function ThreadDisplayHotkeys() {
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
   const [openThreadId] = useQueryState('threadId');
   const { data: thread } = useThread(openThreadId);
+  const params = useParams<{
+    folder: string;
+  }>();
+  const { mutate: deleteThread } = useDelete();
+  const { mutate: moveTo } = useMoveTo();
 
   const handlers = {
     closeView: () => closeView(new KeyboardEvent('keydown', { key: 'Escape' })),
@@ -34,11 +40,15 @@ export function ThreadDisplayHotkeys() {
     },
     delete: () => {
       if (!openThreadId) return;
-      toast.promise(deleteThread({ id: thread?.latest?.id ?? openThreadId }), {
-        loading: 'Deleting email...',
-        success: 'Email deleted',
-        error: 'Failed to delete email',
-      });
+      if (params.folder === 'bin') {
+        deleteThread(thread?.latest?.id ?? openThreadId);
+      } else {
+        moveTo({
+          threadIds: [thread?.latest?.id ?? openThreadId],
+          currentFolder: params.folder,
+          destination: 'bin',
+        });
+      }
     },
   };
 
