@@ -116,7 +116,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarContent>
         </div>
 
-        <div className={`mt-auto flex w-full flex-col ${state !== 'collapsed' ? 'px-2' : ''}`}>
+        <div
+          className={`mt-auto flex w-full flex-col ${state !== 'collapsed' ? 'px-0 md:px-2' : ''}`}
+        >
           <SidebarContent className="py-0 pt-0">
             <SidebarGroup className="mb-0 pb-0">
               <SidebarMenu>
