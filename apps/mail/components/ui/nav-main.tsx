@@ -278,14 +278,14 @@ export function NavMain({ items }: NavMainProps) {
         {!pathname.includes('/settings') && !isBottomNav && state !== 'collapsed' && (
           <Collapsible defaultOpen={true} className="group/collapsible">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
-              <div className="mx-2 mb-4 flex w-full items-center justify-between">
+              <div className="mx-2 mb-4 flex items-center justify-between">
                 <span className="text-[13px] text-[#6D6D6D] dark:text-[#898989]">Labels</span>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="mr-2 h-4 w-4 p-0 hover:bg-transparent"
+                      className="mr-1 h-4 w-4 p-0 hover:bg-transparent"
                     >
                       <Plus className="h-3 w-3 text-[#6D6D6D] dark:text-[#898989]" />
                     </Button>
@@ -421,7 +421,7 @@ export function NavMain({ items }: NavMainProps) {
               <div className="mr-0 pr-0">
                 <div
                   className={cn(
-                    'hide-scrollbar mx-2 flex h-full max-h-[15vh] flex-row flex-wrap gap-2 overflow-scroll',
+                    'hide-scrollbar flex h-full flex-grow flex-row flex-wrap gap-2 overflow-scroll',
                   )}
                 >
                   {labels.map((label) => (

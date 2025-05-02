@@ -97,76 +97,74 @@ export const GoldenTicketModal = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <SidebarMenuButton tooltip={'Invite a friend'} className="flex items-center">
+        <SidebarMenuButton tooltip={'Invite a friend'}>
           <Ticket className="relative mr-2.5 h-3 w-3.5" />
           <p className="mt-0.5 truncate text-[13px]">Invite a friend</p>
         </SidebarMenuButton>
       </DialogTrigger>
-      <div className="container mx-auto max-w-[750px]">
-        <DialogContent
-          showOverlay={true}
-          className="bg-panelLight dark:bg-panelDark w-full max-w-[500px] rounded-xl p-5"
+      <DialogContent
+        showOverlay={true}
+        className="bg-panelLight dark:bg-panelDark w-full max-w-[500px] rounded-xl p-5"
+      >
+        <DialogHeader>
+          <DialogTitle className="flex flex-col gap-4">
+            <Image
+              src="/white-icon.svg"
+              alt="Zero"
+              width={32}
+              height={32}
+              className="hidden dark:block"
+            />
+            <Image
+              src="/black-icon.svg"
+              alt="Zero"
+              width={32}
+              height={32}
+              className="block dark:hidden"
+            />
+            <span>Welcome to Zero! 🎉 ✨</span>
+          </DialogTitle>
+          <DialogDescription className="flex flex-col gap-3 py-3">
+            <span>
+              Zero is still in early beta 🚀 and will continue to grow and improve from this point
+              on. If you know a friend who wants to test and try out Zero, send them an invite! 💌
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-2"
+          onKeyDown={handleKeyDown}
         >
-          <DialogHeader>
-            <DialogTitle className="flex flex-col gap-4">
-              <Image
-                src="/white-icon.svg"
-                alt="Zero"
-                width={32}
-                height={32}
-                className="hidden dark:block"
-              />
-              <Image
-                src="/black-icon.svg"
-                alt="Zero"
-                width={32}
-                height={32}
-                className="block dark:hidden"
-              />
-              <span>Welcome to Zero! 🎉 ✨</span>
-            </DialogTitle>
-            <DialogDescription className="flex flex-col gap-3 py-3">
-              <span>
-                Zero is still in early beta 🚀 and will continue to grow and improve from this point
-                on. If you know a friend who wants to test and try out Zero, send them an invite! 💌
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-2"
-            onKeyDown={handleKeyDown}
-          >
-            <Form {...form}>
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <Input
-                      placeholder="nizzy@gmail.com"
-                      {...field}
-                      className="h-8 placeholder:opacity-20"
-                    />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end gap-2 pt-1">
-                <Button onClick={handleMaybeLater} type="button" variant="outline" className="h-7">
-                  Maybe Later
-                </Button>
-                <Button disabled={!email} type="submit" className="h-7">
-                  <span className="mr-">Send invite</span>
-                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
-                    <Command className="h-2 w-2 text-black dark:text-[#929292]" />
-                    <CurvedArrow className="mt-1.5 h-3 w-3 fill-black dark:fill-[#929292]" />
-                  </div>
-                </Button>
-              </div>
-            </Form>
-          </form>
-        </DialogContent>
-      </div>
+          <Form {...form}>
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <Input
+                    placeholder="nizzy@gmail.com"
+                    {...field}
+                    className="h-8 placeholder:opacity-20"
+                  />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end gap-2 pt-1">
+              <Button onClick={handleMaybeLater} type="button" variant="outline" className="h-7">
+                Maybe Later
+              </Button>
+              <Button disabled={!email} type="submit" className="h-7">
+                <span className="mr-">Send invite</span>
+                <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
+                  <Command className="h-2 w-2 text-black dark:text-[#929292]" />
+                  <CurvedArrow className="mt-1.5 h-3 w-3 fill-black dark:fill-[#929292]" />
+                </div>
+              </Button>
+            </div>
+          </Form>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };

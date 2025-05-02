@@ -9,8 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+} from '@/components/ui/sidebar';
 import { SquarePenIcon, type SquarePenIconHandle } from '../icons/animated/square-pen';
-import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
 import { navigationConfig, bottomNavItems } from '@/config/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -74,12 +80,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Sidebar
         collapsible="icon"
         {...props}
-        className={`flex select-none flex-col items-center h-screen top-2.5 ${state === 'collapsed' ? '' : ''}`}
+        className={`top-2.5 flex h-screen select-none flex-col items-center bg-red-500 ${state === 'collapsed' ? '' : ''} pb-2`}
       >
         <div
-          className={`relative z-20 flex  w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2 '}`}
+          className={`relative z-20 flex w-full flex-col ${state === 'collapsed' ? 'px-0' : 'md:px-2'}`}
         >
-          <SidebarHeader className=" flex flex-col gap-2">
+          <SidebarHeader className="flex flex-col gap-2">
             <NavUser />
             <AnimatePresence mode="wait">
               {showComposeButton && (
@@ -111,10 +117,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
 
         <div className={`mt-auto flex w-full flex-col ${state !== 'collapsed' ? 'px-2' : ''}`}>
-          <div className="mx-2 relative top-2.5">
-          <GoldenTicketModal />
-          </div>
           <SidebarContent className="py-0 pt-0">
+            <SidebarGroup className="mb-0 pb-0">
+              <SidebarMenu>
+                <GoldenTicketModal />
+              </SidebarMenu>
+            </SidebarGroup>
+
             <NavMain items={bottomNavItems} />
           </SidebarContent>
         </div>
