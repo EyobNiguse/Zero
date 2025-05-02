@@ -421,7 +421,7 @@ export function NavMain({ items }: NavMainProps) {
               <div className="mr-0 pr-0">
                 <div
                   className={cn(
-                    'hide-scrollbar flex h-full flex-grow flex-row flex-wrap gap-2 overflow-scroll',
+                    'hide-scrollbar flex h-full max-h-[15vh] flex-row flex-wrap gap-2 overflow-scroll sm:max-h-none',
                   )}
                 >
                   {labels.map((label) => (
