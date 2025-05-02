@@ -39,7 +39,10 @@ export const AddConnectionDialog = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl p-6 rounded-xl border bg-white dark:bg-[#1A1A1A]" showOverlay={true}>
+      <DialogContent
+        className="w-full max-w-sm rounded-xl border bg-white p-6 sm:max-w-md dark:bg-[#1A1A1A]"
+        showOverlay={true}
+      >
         <DialogHeader>
           <DialogTitle>{t('pages.settings.connections.connectEmail')}</DialogTitle>
           <DialogDescription>
@@ -86,7 +89,7 @@ export const AddConnectionDialog = ({
           >
             <Button
               variant="outline"
-              className="h-24 flex-col items-center justify-center gap-2 border-dashed"
+              className="h-24 w-full flex-col items-center justify-center gap-2 border-dashed"
             >
               <Plus className="h-12 w-12" />
               <span className="text-xs">{t('pages.settings.connections.moreComingSoon')}</span>
