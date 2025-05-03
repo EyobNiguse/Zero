@@ -176,31 +176,37 @@ export function AIChat() {
               </div>
             </div>
           ) : (
-            messages.map((message, index) => (
-              <div
-                key={`${message.id}-${index}`}
-                className={cn(
-                  'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
-                  message.role === 'user'
-                    ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
-                    : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]'
-                )}
-              >
-                {message.parts.map((part) => {
-                  if (part.type === 'text') {
-                    return <Markdown key={part.text}>{part.text}</Markdown>;
-                  }
-                  if (part.type === 'tool-invocation') {
-                    return (
-                      'result' in part.toolInvocation &&
-                      ('threads' in part.toolInvocation.result ? (
-                        <RenderThreads threads={part.toolInvocation.result.threads} />
-                      ) : null)
-                    );
-                  }
-                })}
-              </div>
-            ))
+            messages.map((message, index) => {
+              // Separate text and tool-invocation parts
+              const textParts = message.parts.filter(part => part.type === 'text');
+              const toolParts = message.parts.filter(part => part.type === 'tool-invocation');
+              return (
+                <div key={`${message.id}-${index}`} className="flex flex-col gap-2">
+                  {/* Chat bubble for text parts */}
+                  {textParts.length > 0 && (
+                    <div
+                      className={cn(
+                        'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
+                        message.role === 'user'
+                          ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
+                          : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]'
+                      )}
+                    >
+                      {textParts.map((part) => (
+                        <Markdown key={part.text}>{part.text}</Markdown>
+                      ))}
+                    </div>
+                  )}
+                  {/* Render threads outside the bubble */}
+                  {toolParts.map((part, idx) => (
+                    'result' in part.toolInvocation &&
+                    'threads' in part.toolInvocation.result ? (
+                      <RenderThreads threads={part.toolInvocation.result.threads} key={idx} />
+                    ) : null
+                  ))}
+                </div>
+              );
+            })
           )}
           <div ref={messagesEndRef} />
 
