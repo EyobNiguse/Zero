@@ -107,6 +107,49 @@ const forceExternalLinks = (html: string): string => {
   return doc.body.innerHTML;
 };
 
+const getProxiedUrl = (url: string) => {
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  
+  const proxyUrl = process.env.NEXT_PUBLIC_IMAGE_PROXY?.trim();
+  if (!proxyUrl) return url;
+  
+  return proxyUrl + encodeURIComponent(url);
+};
+
+const proxyImageUrls = (html: string): string => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  doc.querySelectorAll('img').forEach((img) => {
+    const src = img.getAttribute('src');
+    if (!src) return;
+    
+    const proxiedUrl = getProxiedUrl(src);
+    if (proxiedUrl !== src) {
+      img.setAttribute('data-original-src', src);
+      img.setAttribute('src', proxiedUrl);
+      img.setAttribute('onerror', `this.onerror=null; this.src=this.getAttribute('data-original-src');`);
+    }
+  });
+
+  doc.querySelectorAll('[style*="background-image"]').forEach((element) => {
+    const style = element.getAttribute('style');
+    if (!style) return;
+
+    const newStyle = style.replace(/background-image:\s*url\(['"]?(.*?)['"]?\)/g, (match, url) => {
+      const proxiedUrl = getProxiedUrl(url);
+      if (proxiedUrl !== url) {
+        element.setAttribute('data-original-bg', url);
+        return `background-image: url('${proxiedUrl}')`;
+      }
+      return match;
+    });
+    element.setAttribute('style', newStyle);
+  });
+
+  return doc.body.innerHTML;
+};
+
 const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) => {
   return (
     <Html>
@@ -212,7 +255,11 @@ const EmailTemplate = ({ content, imagesEnabled, nonce }: EmailTemplateProps) =>
 export const template = async (html: string, imagesEnabled: boolean = false) => {
   if (typeof DOMParser === 'undefined') return html;
   const nonce = generateNonce();
-  const processedHtml = forceExternalLinks(html);
+  let processedHtml = forceExternalLinks(html);
+  
+  if (imagesEnabled) {
+    processedHtml = proxyImageUrls(processedHtml);
+  }
 
   const emailHtml = await render(
     <EmailTemplate content={processedHtml} imagesEnabled={imagesEnabled} nonce={nonce} />,

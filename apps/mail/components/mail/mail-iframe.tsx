@@ -18,9 +18,7 @@ export function MailIframe({ html, senderEmail }: { html: string; senderEmail: s
     [data?.settings, senderEmail],
   );
   const [cspViolation, setCspViolation] = useState(false);
-  const [imagesEnabled, setImagesEnabled] = useState<boolean>(
-    data?.settings?.externalImages || true,
-  );
+  const [imagesEnabled, setImagesEnabled] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(0);
   const { resolvedTheme } = useTheme();
