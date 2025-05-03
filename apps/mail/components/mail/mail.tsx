@@ -617,9 +617,11 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
             )}
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom" align={isSelected ? 'center' : idx === 0 ? 'start' : 'end'}>
-          <span>{cat.name}</span>
-        </TooltipContent>
+        {!isSelected && (
+          <TooltipContent side="top" className={`${idx === 0 ? 'ml-4' : ''}`}>
+            <span>{cat.name}</span>
+          </TooltipContent>
+        )}
       </Tooltip>
     );
   };
@@ -654,7 +656,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
 
       <div
         aria-hidden
-        className="absolute inset-0 z-10 overflow-hidden transition-[clip-path] duration-300 ease-in-out"
+        className="absolute inset-0 z-10 overflow-hidden transition-[clip-path] duration-300 ease-in-out pointer-events-none"
         ref={containerRef}
       >
         <div className="flex w-full items-start justify-start gap-2">
@@ -794,7 +796,7 @@ function MailCategoryTabs({
 
       <div
         aria-hidden
-        className="absolute inset-0 z-10 overflow-hidden transition-[clip-path] duration-300 ease-in-out"
+        className="absolute inset-0 z-10 overflow-hidden transition-[clip-path] duration-300 ease-in-out pointer-events-none"
         ref={containerRef}
       >
         <ul className="flex justify-center gap-1.5">
