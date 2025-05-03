@@ -52,7 +52,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
 import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
-import { useDraft } from '@/hooks/use-drafts';
 import { useStats } from '@/hooks/use-stats';
 import { toggleStar } from '@/actions/mail';
 import { useTranslations } from 'next-intl';
@@ -186,30 +185,43 @@ const Thread = memo(
       labels,
       isLoading,
       isGroupThread,
+      mutate: mutateThread,
     } = useThread(demo ? null : message.id);
     const [isHovered, setIsHovered] = useState(false);
-    const [isStarred, setIsStarred] = useState(false);
+    const [optimisticStarred, setOptimisticStarred] = useState<boolean | null>(null);
 
-    // Set initial star state based on email data
-    useEffect(() => {
-      if (getThreadData?.latest?.tags) {
-        setIsStarred(getThreadData.latest.tags.some((tag) => tag.name === 'STARRED'));
-      }
-    }, [getThreadData?.latest?.tags]);
+    const isStarred = useMemo(() => {
+      if (optimisticStarred !== null) return optimisticStarred;
+      if (!getThreadData?.latest?.tags) return false;
+      return getThreadData.latest.tags.some((tag) => tag.name === 'STARRED');
+    }, [getThreadData?.latest?.tags, optimisticStarred]);
 
     const handleToggleStar = useCallback(async () => {
       if (!getThreadData || !message.id) return;
 
       const newStarredState = !isStarred;
-      setIsStarred(newStarredState);
+      setOptimisticStarred(newStarredState);
+      
       if (newStarredState) {
         toast.success(t('common.actions.addedToFavorites'));
       } else {
         toast.success(t('common.actions.removedFromFavorites'));
       }
-      await toggleStar({ ids: [message.id] });
-      mutateThreads();
-    }, [getThreadData, message.id, isStarred, mutateThreads, t]);
+
+      try {
+        await toggleStar({ ids: [message.id] });
+        await Promise.all([mutateThread(), mutateThreads()]);
+      } catch (error) {
+        // Revert optimistic update on error
+        setOptimisticStarred(!newStarredState);
+        toast.error(t('common.actions.failedToStar'));
+      }
+    }, [getThreadData, message.id, isStarred, mutateThread, mutateThreads, t]);
+
+    // Reset optimistic state when thread data changes
+    useEffect(() => {
+      setOptimisticStarred(null);
+    }, [getThreadData?.latest?.tags]);
 
     const moveThreadTo = useCallback(
       async (destination: ThreadDestination) => {
@@ -496,7 +508,13 @@ const Thread = memo(
                       />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                  <TooltipContent 
+                    className={cn(
+                      "mb-1 bg-white dark:bg-[#1A1A1A]",
+                      index === 0 && "mt-1"
+                    )}
+                    side={index === 0 ? "bottom" : "top"}
+                  >
                     {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
                   </TooltipContent>
                 </Tooltip>
@@ -511,7 +529,13 @@ const Thread = memo(
                       <Archive2 className="fill-[#9D9D9D]" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                  <TooltipContent 
+                    className={cn(
+                      "mb-1 bg-white dark:bg-[#1A1A1A]",
+                      index === 0 && "mt-1"
+                    )}
+                    side={index === 0 ? "bottom" : "top"}
+                  >
                     {t('common.threadDisplay.archive')}
                   </TooltipContent>
                 </Tooltip>
@@ -526,7 +550,13 @@ const Thread = memo(
                       <Trash className="fill-[#F43F5E]" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                  <TooltipContent 
+                    className={cn(
+                      "mb-1 bg-white dark:bg-[#1A1A1A]",
+                      index === 0 && "mt-1"
+                    )}
+                    side={index === 0 ? "bottom" : "top"}
+                  >
                     {t('common.actions.Bin')}
                   </TooltipContent>
                 </Tooltip>

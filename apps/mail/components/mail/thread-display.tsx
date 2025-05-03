@@ -158,7 +158,6 @@ export function ThreadDisplay() {
   const { mutate: mutateThreads } = useThreads();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mail, setMail] = useMail();
-  const [isStarred, setIsStarred] = useState(false);
   const t = useTranslations();
   const { mutate: mutateStats } = useStats();
   const [mode, setMode] = useQueryState('mode');
@@ -167,10 +166,17 @@ export function ThreadDisplay() {
   const [, setDraftId] = useQueryState('draftId');
   const { resolvedTheme } = useTheme();
   const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
+  const [optimisticStarred, setOptimisticStarred] = useState<boolean | null>(null);
 
   const {
     data: { threads: items = [] },
   } = useThreads();
+
+  const isStarred = useMemo(() => {
+    if (optimisticStarred !== null) return optimisticStarred;
+    if (!emailData?.latest?.tags) return false;
+    return emailData.latest.tags.some((tag) => tag.name === 'STARRED');
+  }, [emailData?.latest?.tags, optimisticStarred]);
 
   const handlePrevious = useCallback(() => {
     if (!id || !items.length || focusedIndex === null) return;
@@ -287,21 +293,27 @@ export function ThreadDisplay() {
     if (!emailData || !id) return;
 
     const newStarredState = !isStarred;
-    setIsStarred(newStarredState);
+    setOptimisticStarred(newStarredState);
+    
     if (newStarredState) {
       toast.success(t('common.actions.addedToFavorites'));
     } else {
       toast.success(t('common.actions.removedFromFavorites'));
     }
-    mutateThreads();
-  }, [emailData, id, isStarred, mutateThreads, t]);
 
-  // Set initial star state based on email data
-  useEffect(() => {
-    if (emailData?.latest?.tags) {
-      // Check if any tag has the name 'STARRED'
-      setIsStarred(emailData.latest.tags.some((tag) => tag.name === 'STARRED'));
+    try {
+      await toggleStar({ ids: [id] });
+      await Promise.all([mutateThread(), mutateThreads()]);
+    } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticStarred(!newStarredState);
+      toast.error(t('common.actions.failedToStar'));
     }
+  }, [emailData, id, isStarred, mutateThread, mutateThreads, t]);
+
+  // Reset optimistic state when thread data changes
+  useEffect(() => {
+    setOptimisticStarred(null);
   }, [emailData?.latest?.tags]);
 
   useEffect(() => {

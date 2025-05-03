@@ -761,7 +761,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                 </div>
               )}
               {emailData?.attachments && emailData?.attachments.length > 0 ? (
-                <div className="mb-4 flex items-center gap-2 pt-4 px-4">
+                <div className="mb-4 flex flex-wrap items-center gap-2 pt-4 px-4">
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button
@@ -792,10 +792,10 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                         }}
                       >
                         {getFileIcon(attachment.filename)}
-                        <span className="text-black dark:text-white">
+                        <span className="text-black dark:text-white max-w-[15ch] text-sm truncate">
                           {attachment.filename}
                         </span>{' '}
-                        <span className="text-[#6D6D6D] dark:text-[#929292]">
+                        <span className="text-[#6D6D6D] dark:text-[#929292] text-sm whitespace-nowrap">
                           {formatFileSize(attachment.size)}
                         </span>
                       </button>
