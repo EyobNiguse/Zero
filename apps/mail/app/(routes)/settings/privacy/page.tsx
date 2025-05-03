@@ -8,26 +8,26 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { userSettingsSchema } from '@zero/db/user_settings_default';
 import { SettingsCard } from '@/components/settings/settings-card';
-import { useForm } from 'react-hook-form';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { saveUserSettings } from '@/actions/settings';
+// import { saveUserSettings } from '@/actions/settings';
 import { useSettings } from '@/hooks/use-settings';
-import { XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { XIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
 export default function PrivacyPage() {
   const [isSaving, setIsSaving] = useState(false);
   const t = useTranslations();
-  const { settings, mutate } = useSettings();
+  const { data, refetch } = useSettings();
 
   const form = useForm<z.infer<typeof userSettingsSchema>>({
     resolver: zodResolver(userSettingsSchema),
@@ -40,24 +40,24 @@ export default function PrivacyPage() {
   const externalImages = form.watch('externalImages');
 
   useEffect(() => {
-    if (settings) {
-      form.reset(settings);
+    if (data) {
+      form.reset(data.settings);
     }
-  }, [form, settings]);
+  }, [form, data]);
 
   async function onSubmit(values: z.infer<typeof userSettingsSchema>) {
     setIsSaving(true);
     try {
-      await saveUserSettings({
-        ...settings,
-        ...values,
-      });
-      await mutate();
+      //   await saveUserSettings({
+      //     ...settings,
+      //     ...values,
+      //   });
+      //   await mutate();
       toast.success(t('common.settings.saved'));
     } catch (error) {
-      console.error('Failed to save settings:', error);
-      toast.error(t('common.settings.failedToSave'));
-      await mutate();
+      //   console.error('Failed to save settings:', error);
+      //   toast.error(t('common.settings.failedToSave'));
+      //   await mutate();
     } finally {
       setIsSaving(false);
     }
@@ -133,7 +133,9 @@ export default function PrivacyPage() {
                         ))}
                       </ScrollArea>
                     </FormItem>
-                  ) : <></>
+                  ) : (
+                    <></>
+                  )
                 }
               />
             </div>
@@ -142,4 +144,4 @@ export default function PrivacyPage() {
       </SettingsCard>
     </div>
   );
-} 
+}
