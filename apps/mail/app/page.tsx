@@ -1,4 +1,5 @@
 import HomeContent from '@/components/home/HomeContent';
+import Speed from '@/components/home/speed';
 import { getSession } from '@/lib/auth-client';
 import { redirect } from 'next/navigation';
 
@@ -9,5 +10,10 @@ export default async function Home() {
   //     redirect('/mail/inbox');
   //   }
 
-  return <HomeContent />;
+  return (
+    <div>
+    <HomeContent />
+ 
+    </div>
+  )
 }

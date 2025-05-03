@@ -125,7 +125,7 @@ export default function HomeContent() {
   };
 
   return (
-    <main className="relative flex max-h-screen flex-1 flex-col overflow-hidden">
+    <main className="relative flex h-full flex-1 flex-col overflow-x-hidden">
       <PixelatedBackground
         className="absolute -top-32 left-1/2 -z-10 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
         style={{ mixBlendMode: 'screen' }}
@@ -288,7 +288,10 @@ export default function HomeContent() {
               ))}
             </TabsList>
           </div> */}
-          <div className="relative flex w-full justify-center md:border-t">
+          <div
+            className="relative flex w-full justify-center md:border-t"
+            style={{ clipPath: 'inset(0 0 42% 0)' }}
+          >
             <div className="container relative md:border-x xl:max-w-7xl">
               <PixelatedLeft
                 className="absolute left-0 top-0 -z-10 hidden h-full w-auto -translate-x-full opacity-50 md:block"
@@ -308,6 +311,7 @@ export default function HomeContent() {
                     width={1920}
                     height={1080}
                     className="relative -top-2 hidden md:block"
+                    priority
                   />
                 </TabsContent>
               ))}
@@ -315,15 +319,81 @@ export default function HomeContent() {
           </div>
         </Tabs>
       </section>
-      <div className="mx-auto mt-8 w-full max-w-5xl px-4">
-        <div className="border-muted-foreground/30 bg-muted md:animate-move-up relative flex items-center justify-center rounded-xl border p-1 shadow-xl shadow-black/40 backdrop-blur-lg md:hidden md:p-2">
+
+      <div className="relative bottom-96 z-[-2]">
+        <Image
+          src="/pixel.svg"
+          alt="hero"
+          width={1920}
+          height={1080}
+          className="relative opacity-70"
+          
+        />
+        <div className="relative bottom-48">
+          <div className="flex items-center justify-center">
+            <h1 className="text-xl font-light text-white/40">
+              Designed for power users who value time
+            </h1>
+          </div>
+          <div className="mt-8 flex flex-col items-center justify-center">
+            <h1 className="text-6xl font-medium text-white">Speed Is Everything</h1>
+            <h1 className="text-6xl font-medium text-white/40">Reply in seconds</h1>
+          </div>
+          <div className="relative bottom-3 flex items-center justify-center">
+            <Image src="/compose.png" alt="speed" width={550} height={800} />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative bottom-96 bg-[#111111]">
+        <div className="items-center justify-center gap-8 md:flex">
+          <div className="flex flex-col">
+            <Image src="/mail-list.png" alt="speed" width={400} height={800} className='mb-4'/>
+            <div className='gap-4'>
+              <h1 className='text-white text-xl font-medium leading-loose mb-2'>Lightning-Fast Interface</h1>
+              <p className='max-w-sm font-light text-white text-sm'>Email at the speed of thought. Navigate your entire inbox using just your keyboard. Process hundreds of emails in minutes.</p>
+            </div>
+          </div>
+          <div>
+            <Image src="/ai-summary.png" alt="speed" width={400} height={800} className='mb-4'/>
+            <div>
+              <h1 className='text-white text-lg font-medium leading-loose mb-2'>AI-Powered Summaries</h1>
+              <p className='max-w-sm font-light text-white text-sm'>Your personal email copilot. Let our AI draft responses, summarize long threads, and extract action items automatically.</p>
+            </div>
+          </div>
+          <div className=''>
+            <Image src="/search.png" alt="speed" width={400} height={800} className='mb-4'/>
+            <div className=''>
+              <h1 className='text-white text-lg font-medium leading-loose mb-2'>Smart Search</h1>
+              <p className='max-w-sm font-light text-white text-sm'>Your inbox, your rules. Create personalized email processing flows that match exactly how you organize,write, reply, and work.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative bottom-70 z-[-2]">
+       
+        <div className="relative bottom-48 z-1">
+          <div className="flex items-center justify-center">
+            <h1 className="text-xl font-light text-white/40">
+              AI email chat with natural language
+            </h1>
+          </div>
+          <div className="mt-8 flex flex-col items-center justify-center">
+            <h1 className="text-6xl font-medium text-white">Ask away</h1>
+            <h1 className="text-6xl font-medium  text-white/40">Get your answers</h1>
+          </div>
+          <div className="relative bottom-2 flex items-center justify-center">
+            <Image src="/ai-chat.png" alt="speed" width={850} height={800} />
+          </div>
           <Image
-            src="/email-preview.png"
-            alt="hero"
-            width={800}
-            height={600}
-            className="h-full w-full rounded-xl shadow-md shadow-black invert md:rounded-lg dark:invert-0"
-          />
+          src="/pixel.svg"
+          alt="hero"
+          width={1920}
+          height={1080}
+          className="relative opacity-70 rotate-180 bottom-16 z-[-2]"
+          style={{ clipPath: 'inset(45% 0 0 0)' }}
+        />
         </div>
       </div>
     </main>
