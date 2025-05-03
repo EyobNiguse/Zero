@@ -11,8 +11,8 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
-import { StyledEmailAssistantSystemPrompt } from '@/actions/ai-composer-prompt';
 import { ResizablePanelGroup, ResizablePanel } from '@/components/ui/resizable';
+import { StyledEmailAssistantSystemPrompt } from '@/lib/ai-composer-prompts';
 import { useEditor } from '@/components/providers/editor-provider';
 import { AIChat } from '@/components/create/ai-chat';
 import { X, Paper } from '@/components/icons/icons';
@@ -20,7 +20,7 @@ import { GitBranchPlus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { usePathname } from 'next/navigation';
-import prompt from '@/app/api/chat/prompt';
+import { prompt } from '@/lib/chat-prompts';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
 import { cn } from '@/lib/utils';
