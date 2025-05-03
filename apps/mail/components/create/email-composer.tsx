@@ -25,6 +25,7 @@ import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { Input } from '@/components/ui/input';
 import { EditorContent } from '@tiptap/react';
+import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
 import pluralize from 'pluralize';
@@ -100,7 +101,8 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [draftId] = useQueryState('draftId');
+  const [draftId, setDraftId] = useState<string | null>(null);
+
   // const { data: draft } = useDraft(draftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
@@ -314,6 +316,8 @@ export function EmailComposer({
       as: url.pathname + url.search,
       url: url.pathname + url.search,
     };
+
+    setDraftId(draftId);
 
     window.history.replaceState(nextState, '', url);
   };
