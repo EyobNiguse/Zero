@@ -54,7 +54,7 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
       className="hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer"
     >
       
-        <div className="flex cursor-pointer items-center justify-between rounded-lg border p-2 px-4">
+        <div className="flex cursor-pointer items-center justify-between p-2">
           <div className="flex w-full items-center gap-3">
             <Avatar className="h-8 w-8">
               <AvatarImage
@@ -65,8 +65,8 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
                 {getThread.latest?.sender?.name?.[0]?.toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex w-full flex-col">
-              <div className="flex w-full items-center justify-between gap-2">
+            <div className="flex w-full flex-col gap-2">
+              <div className="flex w-full items-center justify-between gap-2 ">
                 <p className="text-sm font-medium text-black dark:text-white">
                   {getThread.latest?.sender?.name}
                 </p>
@@ -76,7 +76,7 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
                     : ''}
                 </span>
               </div>
-              <span className="max-w-[250px] truncate text-xs text-[#8C8C8C] dark:text-[#8C8C8C]">
+              <span className="max-w-[220px] truncate text-xs text-[#8C8C8C] dark:text-[#8C8C8C]">
                 {getThread.latest?.subject}
               </span>
             </div>
