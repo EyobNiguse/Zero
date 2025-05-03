@@ -51,10 +51,10 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
     <div
       onClick={() => setThreadId(thread.id)}
       key={thread.id}
-      className="dark:bg-subtleBlack bg-subtleWhite hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer rounded-lg border p-2"
+      className="hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer rounded-lg border p-2"
     >
       <div className="mb-8 w-full max-w-md px-4">
-        <div className="dark:bg-subtleBlack bg-subtleWhite hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 flex cursor-pointer items-center justify-between rounded-lg border p-2 px-4">
+        <div className="flex cursor-pointer items-center justify-between rounded-lg border p-2 px-4">
           <div className="flex w-full items-center gap-3">
             <Avatar className="h-8 w-8">
               <AvatarImage
@@ -182,10 +182,8 @@ export function AIChat() {
                 className={cn(
                   'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
                   message.role === 'user'
-                    ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words p-2' + 
-                      (message.parts.some(part => part.type === 'tool-invocation') ? '' : ' bg-[#313131] dark:bg-[#f0f0f0]')
-                    : 'overflow-wrap-anywhere mr-auto break-words p-2' + 
-                      (message.parts.some(part => part.type === 'tool-invocation') ? '' : ' bg-[#f0f0f0] dark:bg-[#313131]')
+                    ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
+                    : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]'
                 )}
               >
                 {message.parts.map((part) => {
