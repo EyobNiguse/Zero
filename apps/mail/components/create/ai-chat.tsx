@@ -51,9 +51,9 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
     <div
       onClick={() => setThreadId(thread.id)}
       key={thread.id}
-      className="hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer rounded-lg border p-2"
+      className="hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer"
     >
-      <div className="mb-8 w-full max-w-md px-4">
+      
         <div className="flex cursor-pointer items-center justify-between rounded-lg border p-2 px-4">
           <div className="flex w-full items-center gap-3">
             <Avatar className="h-8 w-8">
@@ -76,13 +76,13 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
                     : ''}
                 </span>
               </div>
-              <span className="max-w-[180px] truncate text-xs text-[#8C8C8C] dark:text-[#8C8C8C]">
+              <span className="max-w-[250px] truncate text-xs text-[#8C8C8C] dark:text-[#8C8C8C]">
                 {getThread.latest?.subject}
               </span>
             </div>
           </div>
         </div>
-      </div>
+ 
     </div>
   ) : null;
 };
