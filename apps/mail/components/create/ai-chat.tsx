@@ -182,7 +182,7 @@ export function AIChat() {
               const toolParts = message.parts.filter(part => part.type === 'tool-invocation');
               return (
                 <div key={`${message.id}-${index}`} className="flex flex-col gap-2">
-                  {/* Chat bubble for text parts */}
+                  {/* Text in chat bubble */}
                   {textParts.length > 0 && (
                     <div
                       className={cn(
@@ -197,7 +197,7 @@ export function AIChat() {
                       ))}
                     </div>
                   )}
-                  {/* Render threads outside the bubble */}
+                  {/* Threads below the bubble */}
                   {toolParts.map((part, idx) => (
                     'result' in part.toolInvocation &&
                     'threads' in part.toolInvocation.result ? (

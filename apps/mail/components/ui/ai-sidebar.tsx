@@ -116,7 +116,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
-                  <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[6.7px] pt-[17.6px] dark:border-[#252525]">
+                  <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-2.5 pt-[17.6px] dark:border-[#252525]">
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
