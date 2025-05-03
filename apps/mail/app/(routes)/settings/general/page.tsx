@@ -133,8 +133,7 @@ export default function GeneralPage() {
 
   useEffect(() => {
     if (settings) {
-      const { externalImages, trustedSenders, ...generalSettings } = settings;
-      form.reset(generalSettings);
+      form.reset(settings);
     }
   }, [form, settings]);
 
