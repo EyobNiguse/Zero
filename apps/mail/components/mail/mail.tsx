@@ -503,13 +503,13 @@ export const Categories = () => {
       id: 'Important',
       name: t('common.mailCategories.important'),
       searchValue: 'is:important',
-      icon: <Lightning className={cn('fill-white dark:fill-white')} />,
+      icon: <Lightning className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Important' && 'fill-white')} />,
     },
     {
       id: 'All Mail',
       name: 'All Mail',
       searchValue: 'is:inbox',
-      icon: <Mail className={cn('fill-white dark:fill-white')} />,
+      icon: <Mail className={cn('fill-[#6D6D6D] dark:fill-white', category === 'All Mail' && 'fill-white')} />,
       colors:
         'border-0 bg-[#006FFE] text-white dark:bg-[#006FFE] dark:text-white dark:hover:bg-[#006FFE]/90',
     },
@@ -517,25 +517,25 @@ export const Categories = () => {
       id: 'Personal',
       name: t('common.mailCategories.personal'),
       searchValue: 'is:personal',
-      icon: <User className={cn('fill-white dark:fill-white')} />,
+      icon: <User className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Personal' && 'fill-white')} />,
     },
     {
       id: 'Updates',
       name: t('common.mailCategories.updates'),
       searchValue: 'is:updates',
-      icon: <Bell className={cn('fill-white dark:fill-white')} />,
+      icon: <Bell className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Updates' && 'fill-white')} />,
     },
     {
       id: 'Promotions',
       name: 'Promotions',
       searchValue: 'is:promotions',
-      icon: <Tag className={cn('fill-white dark:fill-white')} />,
+      icon: <Tag className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Promotions' && 'fill-white')} />,
     },
     {
       id: 'Unread',
       name: 'Unread',
       searchValue: 'is:unread',
-      icon: <ScanEye className={cn('h-4 w-4 fill-white dark:fill-white')} />,
+      icon: <ScanEye className={cn('h-4 w-4 fill-[#6D6D6D] dark:fill-white', category === 'Unread' && 'fill-white')} />,
     },
   ];
 };
