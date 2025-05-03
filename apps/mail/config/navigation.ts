@@ -16,6 +16,7 @@ import {
   Danger,
   Sheet,
   Plane2,
+  LockIcon,
 } from '@/components/icons/icons';
 import { SettingsGearIcon } from '@/components/icons/animated/settings-gear';
 import { ArrowLeftIcon } from '@/components/icons/animated/arrow-left';
@@ -156,6 +157,11 @@ export const navigationConfig: Record<string, NavConfig> = {
             icon: Users,
           },
           {
+            title: 'navigation.settings.privacy',
+            url: '/settings/privacy',
+            icon: LockIcon,
+          },
+         {
             title: 'navigation.settings.appearance',
             url: '/settings/appearance',
             icon: Stars,
