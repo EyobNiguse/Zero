@@ -64,7 +64,7 @@ export function fromBase64Url(str: string) {
   return str.replace(/-/g, '+').replace(/_/g, '/');
 }
 
-function fromBinary(str: string) {
+export function fromBinary(str: string) {
   const bytes = toByteArray(str.replace(/-/g, '+').replace(/_/g, '/'));
   return new TextDecoder().decode(bytes);
 }
