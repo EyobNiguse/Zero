@@ -296,6 +296,14 @@
     },
     "units": {
       "mb": "{amount} MB"
+    },
+    "labels": {
+      "deleteLabel": "Delete Label",
+      "deleteLabelConfirm": "Are you sure you want to delete this label?",
+      "deleteLabelConfirmDescription": "This action cannot be undone.",
+      "deleteLabelConfirmCancel": "Cancel",
+      "deleteLabelConfirmDelete": "Delete",
+      "deleteLabelSuccess": "Label deleted successfully"
     }
   },
   "navigation": {
