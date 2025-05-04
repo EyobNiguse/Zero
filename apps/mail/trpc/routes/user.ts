@@ -8,6 +8,7 @@ export const userRouter = router({
         callbackURL: '/',
       },
       headers: ctx.c.req.raw.headers,
+      request: ctx.c.req.raw,
     });
     return { success, message };
   }),
