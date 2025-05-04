@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { LabelSidebarContextMenu } from '../context/label-sidebar-context';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { clearBulkSelectionAtom } from '../mail/use-mail';
@@ -432,22 +433,24 @@ export function NavMain({ items }: NavMainProps) {
                   )}
                 >
                   {data?.map((label) => (
-                    <div
-                      onClick={handleFilterByLabel(label)}
-                      key={label.id}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <span
-                        className={cn(
-                          'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
-                          searchValue.value.includes(`label:${label.name}`)
-                            ? 'border-accent-foreground'
-                            : 'dark:bg-subtleBlack',
-                        )}
+                    <LabelSidebarContextMenu labelId={label.id}>
+                      <div
+                        onClick={handleFilterByLabel(label)}
+                        key={label.id}
+                        className="flex items-center gap-2 text-sm"
                       >
-                        {label.name}
-                      </span>
-                    </div>
+                        <span
+                          className={cn(
+                            'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
+                            searchValue.value.includes(`label:${label.name}`)
+                              ? 'border-accent-foreground'
+                              : 'dark:bg-subtleBlack',
+                          )}
+                        >
+                          {label.name}
+                        </span>
+                      </div>
+                    </LabelSidebarContextMenu>
                   ))}
                 </div>
               </div>
@@ -497,15 +500,15 @@ function NavItem(item: NavItemProps & { href: string }) {
     >
       {item.icon && <item.icon ref={iconRef} className="mr-2 shrink-0" />}
       <p className="mt-0.5 min-w-0 flex-1 truncate text-[13px]">{t(item.title as MessageKey)}</p>
-      {stats && item.id?.toLowerCase() !== 'sent' && (
+      {stats &&
+        item.id?.toLowerCase() !== 'sent' &&
         stats.some((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase()) && (
           <Badge className="text-muted-foreground ml-auto shrink-0 rounded-full border-none bg-transparent">
             {stats
               .find((stat) => stat.label?.toLowerCase() === item.id?.toLowerCase())
               ?.count?.toLocaleString() || '0'}
           </Badge>
-        )
-      )}
+        )}
     </SidebarMenuButton>
   );
 
