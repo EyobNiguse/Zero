@@ -250,7 +250,7 @@ const AiSummary = () => {
   };
 
   if (isLoading) return null;
-  if (!summary?.short.length) return null;
+  if (!summary?.short?.length) return null;
 
   return (
     <div
