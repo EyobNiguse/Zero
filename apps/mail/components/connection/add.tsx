@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation'
 
 export const AddConnectionDialog = ({
   children,
@@ -24,6 +25,8 @@ export const AddConnectionDialog = ({
   onOpenChange?: (open: boolean) => void;
 }) => {
   const t = useTranslations();
+
+  const pathname = usePathname();
 
   return (
     <Dialog onOpenChange={onOpenChange}>
@@ -70,6 +73,7 @@ export const AddConnectionDialog = ({
                 onClick={async () =>
                   await authClient.linkSocial({
                     provider: provider.providerId,
+                    callbackURL: pathname
                   })
                 }
               >
