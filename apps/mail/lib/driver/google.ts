@@ -124,7 +124,6 @@ export class GoogleMailManager implements MailManager {
     return this.withErrorHandler(
       'getUserInfo',
       async () => {
-        this.auth.setCredentials({ ...tokens, scope: this.getScope() });
         const res = await google
           .people({ version: 'v1', auth: this.auth })
           .people.get({ resourceName: 'people/me', personFields: 'names,photos,emailAddresses' });
