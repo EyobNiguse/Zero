@@ -36,7 +36,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: latest
-          cache: 'bun'
 
       - name: Install dependencies 📦
         run: bun install
