@@ -52,6 +52,7 @@ import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import { Badge } from '../ui/badge';
 import Image from 'next/image';
+import { useBrainState } from '../../hooks/use-summary';
 
 // Add formatFileSize utility function
 const formatFileSize = (size: number) => {
@@ -291,6 +292,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
   const { labels: threadLabels } = useThreadLabels(
     emailData.tags ? emailData.tags.map((l) => l.id) : [],
   );
+  const { data: brainState } = useBrainState();
 
   useEffect(() => {
     if (!demo) {
@@ -485,7 +487,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   })()}
                 </div>
               </div>
-              <AiSummary />
+              { brainState?.enabled && <AiSummary /> }
             </>
           )}
         </div>
