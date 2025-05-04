@@ -151,6 +151,22 @@ export const parseAddressList = (header: string): Sender[] => {
   });
 };
 
+// Helper function to clean email addresses by removing angle brackets
+export const cleanEmailAddresses = (emails: string | undefined) => {
+  if (!emails || emails.trim() === '') return undefined;
+  // Split by commas and clean each address individually
+  return emails
+    .split(',')
+    .map(email => email.trim().replace(/^<|>$/g, ''))
+    .filter(Boolean); // Remove any empty entries
+};
+
+// Format recipients for display or sending
+export const formatRecipients = (recipients: string[] | undefined) => {
+  if (!recipients || recipients.length === 0) return undefined;
+  return recipients.join(', ');
+};
+
 export const wasSentWithTLS = (receivedHeaders: string[]) => {
   const tlsIndicators = [
     /using\s+TLS/i,
