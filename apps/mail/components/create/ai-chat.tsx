@@ -1,14 +1,10 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { useSearchValue } from '@/hooks/use-search-value';
-import { useConnections } from '@/hooks/use-connections';
 import { useRef, useCallback, useEffect } from 'react';
 import { Markdown } from '@react-email/components';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
-import { useSession } from '@/lib/auth-client';
 import { cn, getEmailLogo } from '@/lib/utils';
 import { CurvedArrow } from '../icons/icons';
 import { AITextarea } from './ai-textarea';

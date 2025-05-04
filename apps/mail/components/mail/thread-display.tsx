@@ -34,12 +34,12 @@ import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useAISidebar } from '@/components/ui/ai-sidebar';
-import { markAsRead, markAsUnread } from '@/actions/mail';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { MailDisplaySkeleton } from './mail-skeleton';
+import { useTRPC } from '@/providers/query-provider';
+import { useMutation } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { modifyLabels } from '@/actions/mail';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
 import ReplyCompose from './reply-composer';
@@ -154,29 +154,20 @@ export function ThreadDisplay() {
   const params = useParams<{ folder: string }>();
   const folder = params?.folder ?? 'inbox';
   const [id, setThreadId] = useQueryState('threadId');
-  const { data: emailData, isLoading, mutate: mutateThread } = useThread(id ?? null);
-  const { mutate: mutateThreads } = useThreads();
+  const { data: emailData, isLoading, refetch: refetchThreads } = useThread(id ?? null);
+  const [{ refetch: mutateThreads }, items] = useThreads();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mail, setMail] = useMail();
   const t = useTranslations();
-  const { mutate: mutateStats } = useStats();
+  const { refetch: refetchStats } = useStats();
   const [mode, setMode] = useQueryState('mode');
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
   const [, setDraftId] = useQueryState('draftId');
   const { resolvedTheme } = useTheme();
   const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
-  const [optimisticStarred, setOptimisticStarred] = useState<boolean | null>(null);
-
-  const {
-    data: { threads: items = [] },
-  } = useThreads();
-
-  const isStarred = useMemo(() => {
-    if (optimisticStarred !== null) return optimisticStarred;
-    if (!emailData?.latest?.tags) return false;
-    return emailData.latest.tags.some((tag) => tag.name === 'STARRED');
-  }, [emailData?.latest?.tags, optimisticStarred]);
+  const trpc = useTRPC();
+  const { mutateAsync: markAsRead } = useMutation(trpc.mail.markAsRead.mutationOptions());
 
   const handlePrevious = useCallback(() => {
     if (!id || !items.length || focusedIndex === null) return;
@@ -235,7 +226,7 @@ export function ThreadDisplay() {
           console.error('Failed to mark email as read:', error);
           toast.error(t('common.mail.failedToMarkAsRead'));
         })
-        .then(() => Promise.allSettled([mutateThread(), mutateStats()]));
+        .then(() => Promise.allSettled([refetchThreads(), refetchStats()]));
     }
   }, [emailData, id]);
 
@@ -280,7 +271,7 @@ export function ThreadDisplay() {
       toast.promise(promise, {
         error: t('common.actions.failedToMove'),
         finally: async () => {
-          await Promise.all([mutateStats(), mutateThreads()]);
+          await Promise.all([refetchStats(), refetchThreads()]);
           //   setBackgroundQueue({ type: 'delete', threadId: `thread:${threadId}` });
         },
       });

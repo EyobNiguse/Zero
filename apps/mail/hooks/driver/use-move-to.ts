@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 const useMoveTo = () => {
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
-  const { mutate: refetchThreads } = useThreads();
-  const { mutate: refetchStats } = useStats();
+  const [{ refetch: refetchThreads }] = useThreads();
+  const { refetch: refetchStats } = useStats();
   const [mail, setMail] = useMail();
   const { addToQueue, deleteFromQueue } = useBackgroundQueue();
 

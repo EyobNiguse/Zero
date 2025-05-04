@@ -1,22 +1,21 @@
 'use client';
 
 import { Form, FormControl, FormField, FormItem } from '../ui/form';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { AnimatedNumber } from '../ui/animated-number';
 import { useState, useEffect, ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTRPC } from '@/providers/query-provider';
 import { useSession } from '@/lib/auth-client';
 import { Card, CardContent } from '../ui/card';
 import Balancer from 'react-wrap-balancer';
 import { useForm } from 'react-hook-form';
-import { GithubIcon } from 'lucide-react';
-import { GitHub } from '../icons/icons';
 import confetti from 'canvas-confetti';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import axios from 'axios';
 import { z } from 'zod';
 
 const betaSignupSchema = z.object({
@@ -26,8 +25,12 @@ const betaSignupSchema = z.object({
 export default function Hero({ title }: { title: ReactNode }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [signupCount, setSignupCount] = useState<number>(0);
   const { data: session } = useSession();
+  const trpc = useTRPC();
+  const { data, refetch } = useQuery(
+    trpc.earlyAccess.getCount.queryOptions(void 0, { initialData: { count: 0 } }),
+  );
+  const { mutateAsync: register } = useMutation(trpc.earlyAccess.register.mutationOptions());
 
   const form = useForm<z.infer<typeof betaSignupSchema>>({
     resolver: zodResolver(betaSignupSchema),
@@ -36,29 +39,14 @@ export default function Hero({ title }: { title: ReactNode }) {
     },
   });
 
-  useEffect(() => {
-    const fetchSignupCount = async () => {
-      try {
-        const response = await axios.get('/api/auth/early-access/count');
-        setSignupCount(response.data.count);
-      } catch (error) {
-        console.error('Failed to fetch signup count:', error);
-      }
-    };
-
-    fetchSignupCount();
-  }, []);
-
   const onSubmit = async (values: z.infer<typeof betaSignupSchema>) => {
     setIsSubmitting(true);
     try {
       console.log('Starting form submission with email:', values.email);
 
-      const response = await axios.post('/api/auth/early-access', {
-        email: values.email,
-      });
+      const response = await register({ email: values.email });
 
-      console.log('Response data:', response.data);
+      console.log('Response data:', response);
 
       form.reset();
       console.log('Form submission successful');
@@ -71,9 +59,7 @@ export default function Hero({ title }: { title: ReactNode }) {
       setShowSuccess(true);
 
       // Increment the signup count if it was a new signup
-      if (response.status === 201 && signupCount !== null) {
-        setSignupCount(signupCount + 1);
-      }
+      refetch();
     } catch (error) {
       console.error('Form submission error:', {
         error,
@@ -177,7 +163,7 @@ export default function Hero({ title }: { title: ReactNode }) {
           )}
 
           <div className="mt-4 flex items-center gap-2">
-            {signupCount !== null && (
+            {data.count && (
               <div className="dark:text-shinyGray text-center text-sm text-gray-600">
                 <span className="font-semibold text-gray-900 dark:text-white">
                   <AnimatedNumber
@@ -185,7 +171,7 @@ export default function Hero({ title }: { title: ReactNode }) {
                       bounce: 0,
                       duration: 2000,
                     }}
-                    value={signupCount}
+                    value={data.count}
                   />
                 </span>{' '}
                 people have already joined the waitlist

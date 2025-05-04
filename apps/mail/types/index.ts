@@ -1,4 +1,5 @@
-import { Label } from '@/hooks/use-labels';
+// TODO: fix types
+export type Label = any;
 
 export interface User {
   name: string;

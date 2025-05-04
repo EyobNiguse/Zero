@@ -289,7 +289,6 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
   const { data: session } = useSession();
   const { labels: threadLabels } = useThreadLabels(
-    // @ts-expect-error shutup
     emailData.tags ? emailData.tags.map((l) => l.id) : [],
   );
 
