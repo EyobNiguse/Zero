@@ -10,9 +10,7 @@ concurrency:
 jobs:
   autofix:
     timeout-minutes: 10
-    env:
-      RUNNER_IMAGE: ubuntu-latest
-    runs-on: ${{ github.env.RUNNER_IMAGE }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code 🛎
         uses: actions/checkout@v4
