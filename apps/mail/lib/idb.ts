@@ -1,114 +1,118 @@
-import { InitialThread } from '@/types';
-import type { Cache, State } from 'swr';
-import Dexie from 'dexie';
+/*
+Removed for now, In future more granular cache management will be added along with offline support
+*/
 
-interface CacheEntry {
-  key: string;
-  state: State<any>;
-  timestamp: number;
-}
+// import { InitialThread } from '@/types';
+// import type { Cache, State } from 'swr';
+// import Dexie from 'dexie';
 
-class SWRDatabase extends Dexie {
-  cache!: Dexie.Table<CacheEntry, string>;
+// interface CacheEntry {
+//   key: string;
+//   state: State<any>;
+//   timestamp: number;
+// }
 
-  constructor() {
-    super('SWRCache');
-    this.version(1).stores({
-      cache: 'key,timestamp',
-    });
-  }
-}
+// class SWRDatabase extends Dexie {
+//   cache!: Dexie.Table<CacheEntry, string>;
 
-const db = new SWRDatabase();
-const ONE_DAY = 1000 * 60 * 60 * 24;
+//   constructor() {
+//     super('SWRCache');
+//     this.version(1).stores({
+//       cache: 'key,timestamp',
+//     });
+//   }
+// }
 
-export function dexieStorageProvider(): Cache & {
-  clear: () => Promise<void>;
-  list: (
-    prefix: string,
-  ) => Promise<{ key: string; state: { data?: [{ threads: InitialThread[] }] } }[]>;
-} {
-  const memoryCache = new Map<string, State<any>>();
-  let isInitialized = false;
+// const db = new SWRDatabase();
+// const ONE_DAY = 1000 * 60 * 60 * 24;
 
-  // Initialize cache from IndexedDB
-  const initializeCache = async () => {
-    if (isInitialized) return;
+// export function dexieStorageProvider(): Cache & {
+//   clear: () => Promise<void>;
+//   list: (
+//     prefix: string,
+//   ) => Promise<{ key: string; state: { data?: [{ threads: InitialThread[] }] } }[]>;
+// } {
+//   const memoryCache = new Map<string, State<any>>();
+//   let isInitialized = false;
 
-    try {
-      const entries = await db.cache.toArray();
-      const now = Date.now();
+//   // Initialize cache from IndexedDB
+//   const initializeCache = async () => {
+//     if (isInitialized) return;
 
-      for (const entry of entries) {
-        if (now - entry.timestamp <= ONE_DAY) {
-          memoryCache.set(entry.key, entry.state);
-        } else {
-          // Remove expired entries
-          await db.cache.delete(entry.key);
-        }
-      }
+//     try {
+//       const entries = await db.cache.toArray();
+//       const now = Date.now();
 
-      isInitialized = true;
-    } catch (error) {
-      console.error('Failed to initialize cache:', error);
-      // Clear memory cache on initialization failure
-      memoryCache.clear();
-    }
-  };
+//       for (const entry of entries) {
+//         if (now - entry.timestamp <= ONE_DAY) {
+//           memoryCache.set(entry.key, entry.state);
+//         } else {
+//           // Remove expired entries
+//           await db.cache.delete(entry.key);
+//         }
+//       }
 
-  // Initialize cache immediately
-  initializeCache().catch(console.error);
+//       isInitialized = true;
+//     } catch (error) {
+//       console.error('Failed to initialize cache:', error);
+//       // Clear memory cache on initialization failure
+//       memoryCache.clear();
+//     }
+//   };
 
-  return {
-    keys() {
-      return memoryCache.keys();
-    },
+//   // Initialize cache immediately
+//   initializeCache().catch(console.error);
 
-    async list(prefix: string) {
-      await initializeCache();
-      return db.cache.where('key').startsWith(prefix).toArray();
-    },
+//   return {
+//     keys() {
+//       return memoryCache.keys();
+//     },
 
-    get(key: string) {
-      return memoryCache.get(key);
-    },
+//     async list(prefix: string) {
+//       await initializeCache();
+//       return db.cache.where('key').startsWith(prefix).toArray();
+//     },
 
-    async clear() {
-      memoryCache.clear();
-      try {
-        await db.cache.clear();
-      } catch (error) {
-        console.error('Failed to clear cache:', error);
-      }
-    },
+//     get(key: string) {
+//       return memoryCache.get(key);
+//     },
 
-    async set(key: string, value: State) {
-      // Don't cache promises or undefined data
-      if (value.data instanceof Promise || value.data === undefined) return;
+//     async clear() {
+//       memoryCache.clear();
+//       try {
+//         await db.cache.clear();
+//       } catch (error) {
+//         console.error('Failed to clear cache:', error);
+//       }
+//     },
 
-      try {
-        memoryCache.set(key, value);
+//     async set(key: string, value: State) {
+//       // Don't cache promises or undefined data
+//       if (value.data instanceof Promise || value.data === undefined) return;
 
-        // Update IndexedDB
-        await db.cache.put({
-          key,
-          state: value,
-          timestamp: Date.now(),
-        });
-      } catch (error) {
-        console.error('Failed to set cache entry:', error);
-        // Remove from memory cache if IndexedDB update fails
-        memoryCache.delete(key);
-      }
-    },
+//       try {
+//         memoryCache.set(key, value);
 
-    async delete(key: string) {
-      try {
-        memoryCache.delete(key);
-        await db.cache.delete(key);
-      } catch (error) {
-        console.error('Failed to delete cache entry:', error);
-      }
-    },
-  };
-}
+//         // Update IndexedDB
+//         await db.cache.put({
+//           key,
+//           state: value,
+//           timestamp: Date.now(),
+//         });
+//       } catch (error) {
+//         console.error('Failed to set cache entry:', error);
+//         // Remove from memory cache if IndexedDB update fails
+//         memoryCache.delete(key);
+//       }
+//     },
+
+//     async delete(key: string) {
+//       try {
+//         memoryCache.delete(key);
+//         await db.cache.delete(key);
+//       } catch (error) {
+//         console.error('Failed to delete cache entry:', error);
+//       }
+//     },
+//   };
+// }

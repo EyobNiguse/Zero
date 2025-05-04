@@ -289,7 +289,6 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
   const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
   const { data: session } = useSession();
   const { labels: threadLabels } = useThreadLabels(
-    // @ts-expect-error shutup
     emailData.tags ? emailData.tags.map((l) => l.id) : [],
   );
 
@@ -761,7 +760,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                 </div>
               )}
               {emailData?.attachments && emailData?.attachments.length > 0 ? (
-                <div className="mb-4 flex items-center gap-2 pt-4 px-4">
+                <div className="mb-4 flex items-center gap-2 px-4 pt-4">
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button

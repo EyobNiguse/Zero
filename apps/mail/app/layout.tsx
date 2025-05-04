@@ -1,5 +1,6 @@
 import { CircleX, AlertCircle, AlertOctagon } from 'lucide-react';
 import { CookieProvider } from '@/providers/cookie-provider';
+import { QueryProvider } from '@/providers/query-provider';
 import { getLocale, getMessages } from 'next-intl/server';
 import { CircleCheck } from '@/components/icons/icons';
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -59,15 +60,17 @@ export default async function RootLayout({
         className={cn(geistSans.variable, geistMono.variable, 'antialiased')}
         suppressHydrationWarning
       >
-        <Providers attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <NextIntlClientProvider messages={messages}>
-            {children}
-            {cookies}
-            <CustomToaster />
-            <Analytics />
-            {/* {isEuRegion && <CookieConsent />} */}
-          </NextIntlClientProvider>
-        </Providers>
+        <QueryProvider>
+          <Providers attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <NextIntlClientProvider messages={messages}>
+              {children}
+              {cookies}
+              <CustomToaster />
+              <Analytics />
+              {/* {isEuRegion && <CookieConsent />} */}
+            </NextIntlClientProvider>
+          </Providers>
+        </QueryProvider>
       </body>
     </html>
   );
