@@ -46,3 +46,8 @@ next-env.d.ts
 .turbo
 i18n.cache
 apps/mail/scripts.ts
+.gitignore
+.husky
+.github
+.devcontainer
+.env.example

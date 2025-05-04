@@ -14,20 +14,13 @@ import { getBrowserTimezone, isValidTimezone } from '@/lib/timezones';
 import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
-import { getActiveDriver } from '@/actions/utils';
-import { createDriver } from '@/app/api/driver';
-import { EnableBrain } from '@/actions/brain';
-import { redirect } from 'next/navigation';
+import { getActiveDriver } from '@/lib/driver-utils';
+import { enableBrainFunction } from './brain';
+import { createDriver } from '@/lib/driver';
 import { APIError } from 'better-auth/api';
+import { resend } from './resend';
 import { eq } from 'drizzle-orm';
-import { Resend } from 'resend';
 import { db } from '@zero/db';
-
-// If there is no resend key, it might be a local dev environment
-// In that case, we don't want to send emails and just log them
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : { emails: { send: async (...args: any[]) => console.log(args) } };
 
 const connectionHandlerHook = async (account: Account) => {
   if (!account.accessToken || !account.refreshToken) {
@@ -35,11 +28,13 @@ const connectionHandlerHook = async (account: Account) => {
     throw new APIError('EXPECTATION_FAILED', { message: 'Missing Access/Refresh Tokens' });
   }
 
-  const driver = await createDriver(account.providerId, {});
+  const driver = await createDriver(account.providerId, {
+    auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
+  });
   const userInfo = await driver
     .getUserInfo({
-      access_token: account.accessToken,
-      refresh_token: account.refreshToken,
+      accessToken: account.accessToken,
+      refreshToken: account.refreshToken,
       email: '',
     })
     .catch(() => {
@@ -91,7 +86,8 @@ const options = {
     deleteUser: {
       enabled: true,
       beforeDelete: async (user, request) => {
-        const driver = await getActiveDriver();
+        if (!request) throw new APIError('BAD_REQUEST', { message: 'Request object is missing' });
+        const driver = await getActiveDriver(request);
         const refreshToken = (
           await db.select().from(connection).where(eq(connection.userId, user.id)).limit(1)
         )[0]?.refreshToken;
@@ -281,9 +277,7 @@ const options = {
 
             // this type error is pissing me tf off
             if (newConnection) {
-              void EnableBrain({
-                connection: { id: newConnectionId, providerId: userAccount.providerId },
-              });
+              void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
               console.warn('Created new connection for user', user.email);
             }
           }

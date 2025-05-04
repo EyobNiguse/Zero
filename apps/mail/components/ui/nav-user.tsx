@@ -24,16 +24,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { dataTagErrorSymbol, useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { DisableBrain, EnableBrain } from '@/actions/brain';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
-import { putConnection } from '@/actions/connections';
+import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
-import { dexieStorageProvider } from '@/lib/idb';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
@@ -45,11 +45,17 @@ import { toast } from 'sonner';
 export function NavUser() {
   const { data: session, refetch } = useSession();
   const router = useRouter();
-  const { data: connections, isLoading, mutate } = useConnections();
+  const { data, isLoading, refetch: refetchConnections } = useConnections();
   const [isRendered, setIsRendered] = useState(false);
   const { theme, resolvedTheme, setTheme } = useTheme();
   const t = useTranslations();
   const { state } = useSidebar();
+  const trpc = useTRPC();
+  const { mutateAsync: setDefaultConnection } = useMutation(
+    trpc.connections.setDefault.mutationOptions(),
+  );
+  const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
+  const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -63,7 +69,6 @@ export function NavUser() {
   }, [pathname, searchParams]);
 
   const handleClearCache = useCallback(async () => {
-    dexieStorageProvider().clear();
     toast.success('Cache cleared successfully');
   }, []);
 
@@ -85,16 +90,16 @@ export function NavUser() {
   }, []);
 
   const activeAccount = useMemo(() => {
-    if (!session) return null;
-    return connections?.find((connection) => connection.id === session?.connectionId);
-  }, [session, connections]);
+    if (!session || !data) return null;
+    return data.connections?.find((connection) => connection.id === session?.connectionId);
+  }, [session, data]);
 
   useEffect(() => setIsRendered(true), []);
 
-  const handleAccountSwitch = (connection: IConnection) => async () => {
-    await putConnection(connection.id);
+  const handleAccountSwitch = (connectionId: string) => async () => {
+    await setDefaultConnection({ connectionId });
     refetch();
-    mutate();
+    refetchConnections();
   };
 
   const handleLogout = async () => {
@@ -189,12 +194,12 @@ export function NavUser() {
                       {t('common.navUser.accounts')}
                     </p>
 
-                    {connections
+                    {data?.connections
                       ?.filter((connection) => connection.id !== session.connectionId)
                       .map((connection) => (
                         <DropdownMenuItem
                           key={connection.id}
-                          onClick={handleAccountSwitch(connection)}
+                          onClick={handleAccountSwitch(connection.id)}
                           className="flex cursor-pointer items-center gap-3 py-1"
                         >
                           <Avatar className="size-7 rounded-lg">
@@ -282,12 +287,12 @@ export function NavUser() {
         ) : (
           <div className="mt-0. flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
-              {connections?.map((connection) => (
+              {data?.connections.map((connection) => (
                 <div
                   key={connection.id}
-                  onClick={handleAccountSwitch(connection)}
+                  onClick={handleAccountSwitch(connection.id)}
                   className={`flex cursor-pointer items-center ${
-                    connection.id === session.connectionId && connections.length > 1
+                    connection.id === session.connectionId && data.connections.length > 1
                       ? 'outline-mainBlue rounded-[5px] outline outline-2'
                       : ''
                   }`}
@@ -308,7 +313,7 @@ export function NavUser() {
                           .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    {connection.id === session.connectionId && connections.length > 1 && (
+                    {connection.id === session.connectionId && data.connections.length > 1 && (
                       <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black" />
                     )}
                   </div>
