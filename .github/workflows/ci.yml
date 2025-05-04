@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 10
     env:
       RUNNER_IMAGE: ubuntu-latest
-    runs-on: ${{ env.RUNNER_IMAGE }}
+    runs-on: ${{ github.env.RUNNER_IMAGE }}
     steps:
       - name: Checkout Code 🛎
         uses: actions/checkout@v4
