@@ -665,7 +665,7 @@ const Thread = memo(
                         {highlightText(latestMessage.subject, searchValue.highlight)}
                       </p>
                     )}
-                    {threadLabels ? <MailLabels labels={threadLabels} /> : null}
+                    {getThreadData.labels ? <MailLabels labels={getThreadData.labels} /> : null}
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
