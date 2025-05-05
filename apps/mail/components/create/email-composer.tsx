@@ -25,10 +25,9 @@ import { serializeFiles } from '@/lib/schemas';
 import { Input } from '@/components/ui/input';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useQueryState } from 'nuqs';
 import pluralize from 'pluralize';
-import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -56,6 +55,7 @@ interface EmailComposerProps {
   }) => Promise<void>;
   onClose?: () => void;
   className?: string;
+  autofocus?: boolean;
 }
 
 const isValidEmail = (email: string): boolean => {
@@ -86,6 +86,7 @@ export function EmailComposer({
   onSendEmail,
   onClose,
   className,
+  autofocus = false,
 }: EmailComposerProps) {
   const [showCc, setShowCc] = useState(initialCc.length > 0);
   const [showBcc, setShowBcc] = useState(initialBcc.length > 0);
@@ -231,14 +232,24 @@ export function EmailComposer({
     },
     onModEnter: () => {
       void handleSend();
-
       return true;
     },
     onAttachmentsChange: (files) => {
       handleAttachment(files);
     },
     placeholder: 'Start your email here',
+    autofocus,
   });
+
+  // Add effect to focus editor when component mounts
+  useEffect(() => {
+    if (autofocus && editor) {
+      const timeoutId = setTimeout(() => {
+        editor.commands.focus('end');
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [editor, autofocus]);
 
   const handleSend = async () => {
     try {
