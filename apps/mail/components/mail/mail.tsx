@@ -503,7 +503,7 @@ export const Categories = () => {
     {
       id: 'Important',
       name: t('common.mailCategories.important'),
-      searchValue: 'is:important',
+      searchValue: 'is:important NOT is:sent NOT is:draft',
       icon: (
         <Lightning
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Important' && 'fill-white')}
@@ -513,7 +513,7 @@ export const Categories = () => {
     {
       id: 'All Mail',
       name: 'All Mail',
-      searchValue: 'is:inbox',
+      searchValue: 'is:inbox NOT is:sent NOT is:draft',
       icon: (
         <Mail
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'All Mail' && 'fill-white')}
@@ -525,7 +525,7 @@ export const Categories = () => {
     {
       id: 'Personal',
       name: t('common.mailCategories.personal'),
-      searchValue: 'is:personal',
+      searchValue: 'is:personal NOT is:sent NOT is:draft',
       icon: (
         <User
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Personal' && 'fill-white')}
@@ -535,7 +535,7 @@ export const Categories = () => {
     {
       id: 'Updates',
       name: t('common.mailCategories.updates'),
-      searchValue: 'is:updates',
+      searchValue: 'is:updates NOT is:sent NOT is:draft',
       icon: (
         <Bell
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Updates' && 'fill-white')}
@@ -545,7 +545,7 @@ export const Categories = () => {
     {
       id: 'Promotions',
       name: 'Promotions',
-      searchValue: 'is:promotions',
+      searchValue: 'is:promotions NOT is:sent NOT is:draft',
       icon: (
         <Tag
           className={cn(
@@ -558,7 +558,7 @@ export const Categories = () => {
     {
       id: 'Unread',
       name: 'Unread',
-      searchValue: 'is:unread',
+      searchValue: 'is:unread NOT is:sent NOT is:draft',
       icon: (
         <ScanEye
           className={cn(

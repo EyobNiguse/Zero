@@ -10,11 +10,11 @@ import {
   BrainIcon,
   CopyCheckIcon,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircleCheck, ThreeDots } from '../icons/icons';
 import { SunIcon } from '../icons/animated/sun';
 import Link from 'next/link';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import {
   DropdownMenu,
@@ -81,12 +81,14 @@ export function NavUser() {
   const handleEnableBrain = useCallback(async () => {
     // This takes too long, not waiting
     const enabled = await EnableBrain({});
+    await refetchBrainState();
     if (enabled) toast.success('Brain enabled successfully');
   }, []);
 
   const handleDisableBrain = useCallback(async () => {
     // This takes too long, not waiting
     const enabled = await DisableBrain({});
+    await refetchBrainState();
     if (enabled) toast.success('Brain disabled');
   }, []);
 
@@ -114,7 +116,7 @@ export function NavUser() {
     );
   };
 
-  const { data: brainState } = useBrainState();
+  const { data: brainState, refetch: refetchBrainState } = useBrainState();
 
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -283,7 +285,6 @@ export function NavUser() {
                   </div>
                 </>
               </DropdownMenuContent>
-             
             </DropdownMenu>
           )
         ) : (
@@ -457,7 +458,7 @@ export function NavUser() {
                     <DropdownMenuItem onClick={handleEnableBrain}>
                       <div className="flex items-center gap-2">
                         <BrainIcon size={16} className="opacity-60" />
-                        <p className="text-[13px] opacity-60">Enable Brain Activity</p>
+                        <p className="text-[13px] opacity-60">Enable Auto Labeling</p>
                       </div>
                     </DropdownMenuItem>
                   ) : null}
@@ -465,33 +466,32 @@ export function NavUser() {
                     <DropdownMenuItem onClick={handleDisableBrain}>
                       <div className="flex items-center gap-2">
                         <BrainIcon size={16} className="opacity-60" />
-                        <p className="text-[13px] opacity-60">Disable Brain Activity</p>
+                        <p className="text-[13px] opacity-60">Disable Auto Labeling</p>
                       </div>
                     </DropdownMenuItem>
                   ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            
           </div>
         )}
       </div>
-     {state === 'collapsed' && (
-       <Tooltip>
-       <TooltipTrigger asChild>
-         <div className='mt-2'>
-           <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
-         </div>
-       </TooltipTrigger>
-       <TooltipContent className='text-xs'>
-         <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-         <p>Upgrade for unlimited messages!</p>
-       </TooltipContent>
-     </Tooltip>
-     )}
+      {state === 'collapsed' && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="mt-2">
+              <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent className="text-xs">
+            <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+            <p>Upgrade for unlimited messages!</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
-          <div className='my-2 flex flex-col items-start gap-1 space-y-1'>
+          <div className="my-2 flex flex-col items-start gap-1 space-y-1">
             <div className="text-[13px] leading-none text-black dark:text-white">
               {activeAccount?.name || session.user.name || 'User'}
             </div>
@@ -506,7 +506,7 @@ export function NavUser() {
                 <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
               </div>
             </TooltipTrigger>
-            <TooltipContent className='text-xs'>
+            <TooltipContent className="text-xs">
               <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
               <p>Upgrade for unlimited messages!</p>
             </TooltipContent>
