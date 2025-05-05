@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useConnections } from '@/hooks/use-connections';
@@ -117,6 +118,11 @@ export function NavUser() {
   };
 
   const { data: brainState, refetch: refetchBrainState } = useBrainState();
+
+  const otherConnections = useMemo(() => {
+    if (!data || !activeAccount) return [];
+    return data.connections.filter((connection) => connection.id !== activeAccount?.id);
+  }, [data, activeAccount]);
 
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -290,12 +296,12 @@ export function NavUser() {
         ) : (
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
-              {data?.connections.slice(0, 3).map((connection) => (
+              {data && activeAccount ? (
                 <div
-                  key={connection.id}
-                  onClick={handleAccountSwitch(connection.id)}
+                  key={activeAccount.id}
+                  onClick={handleAccountSwitch(activeAccount.id)}
                   className={`flex cursor-pointer items-center ${
-                    connection.id === session.connectionId && data.connections.length > 1
+                    activeAccount.id === session.connectionId && data.connections.length > 1
                       ? 'outline-mainBlue rounded-[5px] outline outline-2'
                       : ''
                   }`}
@@ -304,11 +310,11 @@ export function NavUser() {
                     <Avatar className="size-7 rounded-[5px]">
                       <AvatarImage
                         className="rounded-[5px]"
-                        src={connection.picture || undefined}
-                        alt={connection.name || connection.email}
+                        src={activeAccount.picture || undefined}
+                        alt={activeAccount.name || activeAccount.email}
                       />
                       <AvatarFallback className="rounded-[5px] text-[10px]">
-                        {(connection.name || connection.email)
+                        {(activeAccount.name || activeAccount.email)
                           .split(' ')
                           .map((n) => n[0])
                           .join('')
@@ -316,18 +322,56 @@ export function NavUser() {
                           .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    {connection.id === session.connectionId && data.connections.length > 1 && (
+                    {activeAccount.id === session.connectionId && data.connections.length > 1 && (
                       <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black" />
                     )}
                   </div>
                 </div>
+              ) : null}
+              {otherConnections.slice(0, 2).map((connection) => (
+                <Tooltip key={connection.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      onClick={handleAccountSwitch(connection.id)}
+                      className={`flex cursor-pointer items-center ${
+                        connection.id === session.connectionId && otherConnections.length > 1
+                          ? 'outline-mainBlue rounded-[5px] outline outline-2'
+                          : ''
+                      }`}
+                    >
+                      <div className="relative">
+                        <Avatar className="size-7 rounded-[5px]">
+                          <AvatarImage
+                            className="rounded-[5px]"
+                            src={connection.picture || undefined}
+                            alt={connection.name || connection.email}
+                          />
+                          <AvatarFallback className="rounded-[5px] text-[10px]">
+                            {(connection.name || connection.email)
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {connection.id === session.connectionId && otherConnections.length > 1 && (
+                          <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black" />
+                        )}
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-muted-foreground text-xs">
+                    {connection.email}
+                  </TooltipContent>
+                </Tooltip>
               ))}
 
-              {data?.connections && data.connections.length > 3 && (
+              {otherConnections.length > 3 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="hover:bg-muted flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px]">
-                      <span className="text-[10px]">+{data.connections.length - 3}</span>
+                      <span className="text-[10px]">+{otherConnections.length - 3}</span>
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
@@ -336,7 +380,7 @@ export function NavUser() {
                     side={'bottom'}
                     sideOffset={8}
                   >
-                    {data.connections.slice(3).map((connection) => (
+                    {otherConnections.slice(3).map((connection) => (
                       <DropdownMenuItem
                         key={connection.id}
                         onClick={handleAccountSwitch(connection.id)}
@@ -403,14 +447,6 @@ export function NavUser() {
                         )}
                         <p className="text-[13px] opacity-60">{t('common.navUser.appTheme')}</p>
                       </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={getSettingsHref()} className="cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <Settings size={16} className="opacity-60" />
-                          <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
-                        </div>
-                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <a href="https://discord.gg/0email" target="_blank" className="w-full">
@@ -495,7 +531,7 @@ export function NavUser() {
             <div className="text-[13px] leading-none text-black dark:text-white">
               {activeAccount?.name || session.user.name || 'User'}
             </div>
-            <div className="text-xs font-normal leading-none text-[#898989] truncate max-w-[150px] overflow-hidden">
+            <div className="max-w-[150px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}
             </div>
           </div>
