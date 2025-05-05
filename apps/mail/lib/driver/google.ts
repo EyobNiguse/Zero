@@ -7,7 +7,7 @@ import {
   sanitizeContext,
   StandardizedError,
 } from '../driver-utils';
-import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
+import { formatMimeRecipients, parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
 import { IOutgoingMessage, Label, ParsedMessage } from '@/types';
 import { sanitizeTipTapHtml } from '../sanitize-tip-tap-html';
 import { withExponentialBackoff } from '@/app/api/utils';
@@ -971,6 +971,18 @@ export class GoogleMailManager implements MailManager {
         ?.value?.split(',')
         .map((e) => e.trim())
         .filter(Boolean) || [];
+    const cc =
+      headers
+        .find((h) => h.name === 'Cc')
+        ?.value?.split(',')
+        .map((e) => e.trim())
+        .filter(Boolean) || [];
+    const bcc =
+      headers
+        .find((h) => h.name === 'Bcc')
+        ?.value?.split(',')
+        .map((e) => e.trim())
+        .filter(Boolean) || [];
     const subject = headers.find((h) => h.name === 'Subject')?.value;
 
     let content = '';
@@ -987,11 +999,11 @@ export class GoogleMailManager implements MailManager {
       }
     }
 
-    // TODO: Hook up CC and BCC from the draft so it can populate the composer on open.
-
     return {
       id: draft.id || '',
       to,
+      cc,
+      bcc,
       subject: subject ? he.decode(subject).trim() : '',
       content,
       rawMessage: draft.message,

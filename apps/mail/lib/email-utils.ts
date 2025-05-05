@@ -167,6 +167,19 @@ export const formatRecipients = (recipients: string[] | undefined) => {
   return recipients.join(', ');
 };
 
+/**
+ * Format recipients for MIME message creation
+ * Handles both string and array formats for recipients
+ */
+export const formatMimeRecipients = (recipients: string | string[]) => {
+  if (Array.isArray(recipients)) {
+    return recipients.map(recipient => ({ addr: recipient }));
+  } else if (typeof recipients === 'string' && recipients.trim() !== '') {
+    return recipients.split(',').map(recipient => ({ addr: recipient.trim() }));
+  }
+  return null;
+};
+
 export const wasSentWithTLS = (receivedHeaders: string[]) => {
   const tlsIndicators = [
     /using\s+TLS/i,

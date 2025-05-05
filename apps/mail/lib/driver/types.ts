@@ -14,6 +14,8 @@ export interface IGetThreadResponse {
 export interface ParsedDraft<T = unknown> {
   id: string;
   to?: string[];
+  cc?: string[];
+  bcc?: string[];
   subject?: string;
   content?: string;
   rawMessage?: T;

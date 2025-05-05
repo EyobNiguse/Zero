@@ -131,8 +131,8 @@ async function createDraftFromMailto(
 
     // For the draft creation, we need to ensure we're providing the to/cc/bcc in the proper format
     const toAddresses = cleanEmailAddresses(mailtoData.to);
-    const ccAddresses = cleanEmailAddresses(mailtoData.cc);
-    const bccAddresses = cleanEmailAddresses(mailtoData.bcc);
+    const ccAddresses = mailtoData.cc ? cleanEmailAddresses(mailtoData.cc) : [];
+    const bccAddresses = mailtoData.bcc ? cleanEmailAddresses(mailtoData.bcc) : [];
     
     // Let's try a simpler approach for multiple recipients
     const draftData: any = {
@@ -142,20 +142,38 @@ async function createDraftFromMailto(
       attachments: [],
     };
     
-    // Add recipients - ensuring they are in the correct format (string, not array)
-    // The server expects 'to' to be a string, not an array
+    // Add recipients - ensuring they are in the correct format
+    // For multiple recipients, use array format; for single recipient, use string format
     if (toAddresses && toAddresses.length > 0) {
-      draftData.to = toAddresses.join(',');
+      if (toAddresses.length === 1) {
+        draftData.to = toAddresses[0];
+      } else {
+        draftData.to = toAddresses.join(',');
+      }
     }
     
     // Do the same for CC
     if (ccAddresses && ccAddresses.length > 0) {
-      draftData.cc = ccAddresses.join(',');
+      if (ccAddresses.length === 1) {
+        draftData.cc = ccAddresses[0];
+      } else {
+        draftData.cc = ccAddresses.join(',');
+      }
+    } else {
+      // Always include cc in the draft data, even if empty
+      draftData.cc = '';
     }
     
     // And for BCC
     if (bccAddresses && bccAddresses.length > 0) {
-      draftData.bcc = bccAddresses.join(',');
+      if (bccAddresses.length === 1) {
+        draftData.bcc = bccAddresses[0];
+      } else {
+        draftData.bcc = bccAddresses.join(',');
+      }
+    } else {
+      // Always include bcc in the draft data, even if empty
+      draftData.bcc = '';
     }
 
     console.log('Creating draft with data:', {
@@ -173,7 +191,7 @@ async function createDraftFromMailto(
         
         const result = await serverTrpc(c).drafts.create(draftData);
         
-        if (result?.success && result.id) {
+        if (result?.id) {
           console.log('Draft created successfully with ID:', result.id);
           return result.id;
         } else {
