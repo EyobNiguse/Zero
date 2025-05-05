@@ -11,8 +11,8 @@ COPY packages/tsconfig/base.json ./packages/tsconfig/base.json
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
 # Install minimal dependencies in one layer
-RUN bun install && \
-    bun install drizzle-kit drizzle-orm postgres typescript
+RUN bun install --omit dev --ignore-scripts && \
+    bun install --omit dev --ignore-scripts drizzle-kit drizzle-orm postgres
 
 # ========================================
 # Runner Stage: Production Environment
@@ -26,9 +26,5 @@ COPY packages/db/drizzle.config.ts ./packages/db/drizzle.config.ts
 COPY packages/db/src ./packages/db/src
 COPY packages/db/migrations ./packages/db/migrations
 COPY packages/db/package.json ./packages/db/package.json
-
-# Define build arguments and environment variables
-ARG DATABASE_URL
-ENV DATABASE_URL=${DATABASE_URL}
 
 WORKDIR /app/packages/db

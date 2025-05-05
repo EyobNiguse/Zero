@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-zerodotemail}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres', '-d', 'zerodotemail']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: docker.io/bitnami/valkey:8.0
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - VALKEY_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    volumes:
+      - valkey-data:/bitnami/valkey/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-h', 'localhost', '-p', '6379', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  upstash-proxy:
+    container_name: zerodotemail-upstash-proxy
+    image: hiett/serverless-redis-http:latest
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: ${REDIS_TOKEN:-upstash-local-token}
+      SRH_CONNECTION_STRING: 'redis://valkey:6379'
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/80' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 8079:80
+
+volumes:
+  valkey-data:
+  postgres-data:

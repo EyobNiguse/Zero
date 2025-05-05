@@ -19,7 +19,7 @@ COPY apps/*/package.json ./apps/
 COPY packages/*/package.json ./packages/
 COPY packages/tsconfig/ ./packages/tsconfig/
 
-RUN bun install
+RUN bun install --omit dev --ignore-scripts
 
 # ========================================
 # Builder Stage: Build the Application
@@ -31,7 +31,11 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Installing with full context to prevent missing dependencies error
-RUN bun install
+RUN bun install --omit dev --ignore-scripts
+
+# Required for standalone nextjs build
+WORKDIR /app/apps/mail
+RUN bun install sharp
 
 # Define build arguments
 ARG NEXT_PUBLIC_APP_URL \
@@ -47,8 +51,7 @@ ARG NEXT_PUBLIC_APP_URL \
     OPENAI_API_KEY \
     AI_SYSTEM_PROMPT \
     GROQ_API_KEY \
-    GOOGLE_GENERATIVE_AI_API_KEY \
-    NEXT_TELEMETRY_DISABLED
+    GOOGLE_GENERATIVE_AI_API_KEY
 
 # Set environment variables for build
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
@@ -65,12 +68,9 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
     AI_SYSTEM_PROMPT=${AI_SYSTEM_PROMPT} \
     GROQ_API_KEY=${GROQ_API_KEY} \
     GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY} \
-    NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED} \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_ENV=production \
     DOCKER_BUILD=true
-
-# Required for standalone nextjs build
-WORKDIR /app/apps/mail
-RUN bun install sharp
 
 WORKDIR /app
 RUN bun run build
@@ -81,6 +81,9 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 
+RUN addgroup -S -g 1001 bunjs && \
+    adduser -S -u 1001 nextjs -G bunjs
+
 # Define build arguments
 ARG NEXT_PUBLIC_APP_URL \
     DATABASE_URL \
@@ -95,8 +98,7 @@ ARG NEXT_PUBLIC_APP_URL \
     OPENAI_API_KEY \
     AI_SYSTEM_PROMPT \
     GROQ_API_KEY \
-    GOOGLE_GENERATIVE_AI_API_KEY \
-    NEXT_TELEMETRY_DISABLED
+    GOOGLE_GENERATIVE_AI_API_KEY
 
 # Set environment variables for build
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
@@ -113,11 +115,10 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
     AI_SYSTEM_PROMPT=${AI_SYSTEM_PROMPT} \
     GROQ_API_KEY=${GROQ_API_KEY} \
     GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY} \
-    NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED} \
-    NODE_ENV=production
-
-RUN addgroup -S -g 1001 bunjs && \
-    adduser -S -u 1001 nextjs -G bunjs
+    NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0" \
+    NEXT_TELEMETRY_DISABLED=1
 
 # Copy public assets
 COPY --from=builder --chown=nextjs:bunjs /app/apps/mail/public ./apps/mail/public
@@ -131,8 +132,6 @@ USER nextjs
 
 # Set server port and host
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
 # Start the server
 CMD ["bun", "apps/mail/server.js"]
