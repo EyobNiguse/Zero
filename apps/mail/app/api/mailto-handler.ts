@@ -1,3 +1,4 @@
+import { cleanEmailAddresses, formatRecipients } from '@/lib/email-utils';
 import type { HonoContext } from '@/trpc/hono';
 import { serverTrpc } from '@/trpc';
 
@@ -20,6 +21,8 @@ async function parseMailtoUrl(mailtoUrl: string) {
     // Default values
     let subject = '';
     let body = '';
+    let cc = '';
+    let bcc = '';
 
     // Parse query parameters if they exist
     if (queryPart) {
@@ -47,6 +50,8 @@ async function parseMailtoUrl(mailtoUrl: string) {
         // Get and decode parameters
         const rawSubject = queryParams.get('subject') || '';
         const rawBody = queryParams.get('body') || '';
+        const rawCc = queryParams.get('cc') || '';
+        const rawBcc = queryParams.get('bcc') || '';
 
         // Try to decode them in case they're still encoded
         try {
@@ -60,15 +65,27 @@ async function parseMailtoUrl(mailtoUrl: string) {
         } catch (e) {
           body = rawBody;
         }
+
+        try {
+          cc = decodeURIComponent(rawCc);
+        } catch (e) {
+          cc = rawCc;
+        }
+
+        try {
+          bcc = decodeURIComponent(rawBcc);
+        } catch (e) {
+          bcc = rawBcc;
+        }
       } catch (e) {
         console.error('Error parsing query parameters:', e);
       }
     }
 
-    // Return the parsed data if email is valid
-    if (toEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
-      console.log('Parsed mailto data:', { to: toEmail, subject, body });
-      return { to: toEmail, subject, body };
+    // Return the parsed data if email is valid - handle multiple recipients
+    if (toEmail) {
+      console.log('Parsed mailto data:', { to: toEmail, subject, body, cc, bcc });
+      return { to: toEmail, subject, body, cc, bcc };
     }
   } catch (error) {
     console.error('Failed to parse mailto URL:', error);
@@ -80,13 +97,23 @@ async function parseMailtoUrl(mailtoUrl: string) {
 // Function to create a draft and get its ID
 async function createDraftFromMailto(
   c: HonoContext,
-  mailtoData: { to: string; subject: string; body: string },
+  mailtoData: { to: string; subject: string; body: string; cc?: string; bcc?: string },
 ) {
-  try {
-    // The driver's parseDraft function looks for text/plain MIME type
-    // We need to ensure line breaks are preserved in the plain text
-    // The Gmail editor will handle displaying these line breaks correctly
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second
 
+  // Helper function to handle Invalid To header errors by toggling format
+  const handleInvalidToHeader = (draftData: any) => {
+    if (Array.isArray(draftData.to)) {
+      // Convert array to comma-separated string
+      draftData.to = draftData.to.join(',');
+    } else if (typeof draftData.to === 'string') {
+      // Convert string to array
+      draftData.to = draftData.to.split(',').map((e: string) => e.trim().replace(/^<|>$/g, ''));
+    }
+  };
+
+  try {
     // Ensure any non-standard line breaks are normalized to \n
     const normalizedBody = mailtoData.body.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -101,27 +128,110 @@ async function createDraftFromMailto(
         .join('\n')}
     </body></html>`;
 
-    const draftData = {
+    // For the draft creation, we need to ensure we're providing the to/cc/bcc in the proper format
+    const toAddresses = cleanEmailAddresses(mailtoData.to);
+    const ccAddresses = mailtoData.cc ? cleanEmailAddresses(mailtoData.cc) : [];
+    const bccAddresses = mailtoData.bcc ? cleanEmailAddresses(mailtoData.bcc) : [];
+
+    // Let's try a simpler approach for multiple recipients
+    const draftData: any = {
       id: null,
-      to: mailtoData.to,
       subject: mailtoData.subject,
       message: htmlContent,
       attachments: [],
     };
 
-    console.log('Creating draft with body sample:', {
+    // Add recipients - ensuring they are in the correct format
+    // For multiple recipients, use array format; for single recipient, use string format
+    if (toAddresses && toAddresses.length > 0) {
+      if (toAddresses.length === 1) {
+        draftData.to = toAddresses[0];
+      } else {
+        draftData.to = toAddresses.join(',');
+      }
+    }
+
+    // Do the same for CC
+    if (ccAddresses && ccAddresses.length > 0) {
+      if (ccAddresses.length === 1) {
+        draftData.cc = ccAddresses[0];
+      } else {
+        draftData.cc = ccAddresses.join(',');
+      }
+    } else {
+      // Always include cc in the draft data, even if empty
+      draftData.cc = '';
+    }
+
+    // And for BCC
+    if (bccAddresses && bccAddresses.length > 0) {
+      if (bccAddresses.length === 1) {
+        draftData.bcc = bccAddresses[0];
+      } else {
+        draftData.bcc = bccAddresses.join(',');
+      }
+    } else {
+      // Always include bcc in the draft data, even if empty
+      draftData.bcc = '';
+    }
+
+    console.log('Creating draft with data:', {
       to: draftData.to,
+      cc: draftData.cc,
+      bcc: draftData.bcc,
       subject: draftData.subject,
       messageSample: htmlContent.substring(0, 100) + (htmlContent.length > 100 ? '...' : ''),
     });
 
-    const result = await serverTrpc(c).drafts.create(draftData);
+    // Try to create the draft with retries
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        console.log(`Attempt ${attempt} to create draft...`);
 
-    if (result?.success && result.id) {
-      console.log('Draft created successfully with ID:', result.id);
-      return result.id;
-    } else {
-      console.error('Draft creation failed:', result?.error || 'Unknown error');
+        const result = await serverTrpc(c).drafts.create(draftData);
+
+        if (result?.id) {
+          console.log('Draft created successfully with ID:', result.id);
+          return result.id;
+        } else {
+          console.error(
+            `Draft creation failed (attempt ${attempt}):`,
+            result?.error || 'Unknown error',
+          );
+
+          // If the error is related to "Invalid To header", try to fix the format for the next attempt
+          if (attempt < MAX_RETRIES) {
+            if (
+              typeof result === 'object' &&
+              result &&
+              'error' in result &&
+              String(result.error).includes('Invalid To header')
+            ) {
+              handleInvalidToHeader(draftData);
+            }
+
+            // Wait before retrying
+            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY * attempt)); // Exponential backoff
+            continue;
+          }
+        }
+      } catch (error) {
+        console.error(`Error creating draft (attempt ${attempt}):`, error);
+        console.error('Error details:', error instanceof Error ? error.message : String(error));
+
+        // If the error is related to "Invalid To header", try to fix the format for the next attempt
+        if (attempt < MAX_RETRIES) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (errorMessage.includes('Invalid To header')) {
+            handleInvalidToHeader(draftData);
+          }
+
+          // Wait before retrying
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY * attempt)); // Exponential backoff
+          continue;
+        }
+      }
     }
   } catch (error) {
     console.error('Error creating draft from mailto:', error);
@@ -147,8 +257,16 @@ export async function mailtoHandler(c: HonoContext) {
   // Create a draft from the mailto data
   const draftId = await createDraftFromMailto(c, mailtoData);
 
-  // If draft creation failed, redirect to empty compose
-  if (!draftId) return c.redirect('/mail/compose');
+  // If draft creation failed, redirect to empty compose with the parsed data as a fallback
+  if (!draftId) {
+    const fallbackUrl = new URL('/mail/compose', c.req.url);
+    if (mailtoData.to) fallbackUrl.searchParams.append('to', mailtoData.to);
+    if (mailtoData.subject) fallbackUrl.searchParams.append('subject', mailtoData.subject);
+    if (mailtoData.body) fallbackUrl.searchParams.append('body', mailtoData.body);
+    if (mailtoData.cc) fallbackUrl.searchParams.append('cc', mailtoData.cc);
+    if (mailtoData.bcc) fallbackUrl.searchParams.append('bcc', mailtoData.bcc);
+    return c.redirect(fallbackUrl.toString());
+  }
 
   // Redirect to compose with the draft ID
   return c.redirect(`/mail/compose?draftId=${draftId}`);
