@@ -171,6 +171,7 @@ export class OutlookMailManager implements MailManager {
     return this.withErrorHandler(
       'count',
       async () => {
+<<<<<<< HEAD
         const userLabels = await this.graphClient.api('/me/mailfolders').get();
         
         if (!userLabels.value) {
@@ -501,6 +502,320 @@ export class OutlookMailManager implements MailManager {
       .filter((req) => typeof req !== 'undefined')
       .filter((req) => Object.keys(req.body).length > 0 || req.method === 'POST');
 
+=======
+        const mailFolders: MailFolder[] = (await this.graphClient.api('/me/mailfolders').get())
+          .value;
+
+        const counts = mailFolders
+          .filter((folder) =>
+            ['inbox', 'sentitems', 'drafts', 'deleteditems', 'archive'].includes(
+              folder.id?.toLowerCase() || '',
+            ),
+          )
+          .map((folder) => ({
+            label: folder.displayName || folder.id || '',
+            count: folder.unreadItemCount ?? undefined,
+          }));
+
+        return counts;
+      },
+      { email: this.config.auth?.email },
+    );
+  }
+  public list(params: {
+    folder: string;
+    query?: string;
+    maxResults?: number;
+    labelIds?: string[];
+    pageToken?: string;
+  }) {
+    const { folder, query: q, maxResults = 100, pageToken } = params;
+
+    let folderId = this.getOutlookFolderId(folder);
+    if (!folderId) {
+      folderId = folder;
+    }
+
+    let request = this.graphClient.api(`/me/mailFolders/${folderId}/messages`).top(maxResults);
+
+    // if (q) {
+    //   request = request.search(`"${q}"`);
+    // }
+
+    request = request.select(
+      'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,parentFolderId',
+    );
+
+    if (maxResults > 0) {
+      request = request.top(maxResults);
+    }
+    if (pageToken) {
+      console.warn(
+        'Outlook pagination typically uses @odata.nextLink (full URL). pageToken needs to be handled accordingly.',
+      );
+    }
+
+    // request = request.orderby('receivedDateTime desc');
+
+    return this.withErrorHandler(
+      'list',
+      async () => {
+        const res = await request.get();
+
+        // console.log(JSON.stringify(res, null, 4));
+
+        const messages: Message[] = res.value;
+        const nextPageLink: string | undefined = res['@odata.nextLink'];
+
+        // First parse all messages to get basic info
+        const parsedMessages = await Promise.all(
+          messages.map((msg) => this.parseOutlookMessage(msg)),
+        );
+
+        // Then fetch full content for each message
+        const fullMessages = await Promise.all(
+          messages.map(async (msg, index) => {
+            try {
+              // Get the full message content using the get method
+              const fullMessage = await this.get(msg.id || '');
+              return {
+                ...parsedMessages[index],
+                ...fullMessage.latest,
+                decodedBody: fullMessage.latest.decodedBody || '',
+              };
+            } catch (error) {
+              console.error(`Failed to fetch full message for ${msg.id}:`, error);
+              // If get fails, fall back to basic message info
+              return {
+                ...parsedMessages[index],
+                body: '',
+                processedHtml: '',
+                blobUrl: '',
+                decodedBody: '',
+                attachments: [],
+              };
+            }
+          }),
+        );
+
+        // Format response according to interface requirements
+        return {
+          threads: messages.map((msg, index) => ({
+            id: msg.id || msg.internetMessageId || '',
+            $raw: {
+              ...msg,
+              ...fullMessages[index],
+            },
+          })),
+          nextPageToken: nextPageLink || null,
+        };
+      },
+      {
+        folder,
+        q,
+        maxResults,
+        _labelIds: params.labelIds,
+        pageToken,
+        email: this.config.auth?.email,
+      },
+    );
+  }
+  private getOutlookFolderId(folderName: string): string | undefined {
+    switch (folderName.toLowerCase()) {
+      case 'inbox':
+        return 'inbox';
+      case 'sent':
+        return 'sentitems';
+      case 'drafts':
+        return 'drafts';
+      case 'bin':
+      case 'trash':
+        return 'deleteditems';
+      case 'archive':
+        return 'archive';
+      case 'junk':
+      case 'spam':
+        return 'junkemail';
+      default:
+        return undefined;
+    }
+  }
+  public get(id: string) {
+    return this.withErrorHandler(
+      'get',
+      async () => {
+        const message: Message = await this.graphClient
+          .api(`/me/messages/${id}`)
+          .select(
+            'id,subject,body,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,attachments',
+          )
+          .get();
+
+        if (!message) {
+          throw new Error('Message not found');
+        }
+
+        const bodyContent = message.body?.content || '';
+        const bodyContentType = message.body?.contentType?.toLowerCase() || 'text';
+
+        let decodedBody = '';
+        if (bodyContentType === 'html') {
+          decodedBody = he.decode(bodyContent);
+        } else {
+          decodedBody = he.decode(bodyContent).replace(/\n/g, '<br>');
+        }
+
+        const attachmentsData = message.attachments || [];
+
+        const attachments = await Promise.all(
+          attachmentsData.map(async (att) => {
+            if (!att.id || !att.name || att.size === undefined || att.contentType === undefined) {
+              return null;
+            }
+            const attachmentContent = await this.graphClient
+              .api(`/me/messages/${message.id}/attachments/${att.id}`)
+              .get();
+
+            if (!attachmentContent.contentBytes) {
+              return null;
+            }
+
+            return {
+              filename: att.name,
+              mimeType: att.contentType ?? 'application/octet-stream',
+              size: att.size,
+              attachmentId: att.id,
+              headers: [],
+              body: attachmentContent.contentBytes,
+            };
+          }),
+        ).then((attachments) => attachments.filter((a): a is NonNullable<typeof a> => a !== null));
+
+        const parsedData = this.parseOutlookMessage(message);
+
+        const fullEmailData = {
+          ...parsedData,
+          body: '',
+          processedHtml: '',
+          blobUrl: '',
+          decodedBody: decodedBody,
+          attachments,
+        };
+
+        return {
+          labels: parsedData.tags,
+          messages: [fullEmailData],
+          latest: fullEmailData,
+          hasUnread: parsedData.unread,
+          totalReplies: 1,
+        };
+      },
+      { id, email: this.config.auth?.email },
+    );
+  }
+  public create(data: IOutgoingMessage) {
+    return this.withErrorHandler(
+      'create',
+      async () => {
+        const messagePayload = await this.parseOutgoingOutlook(data);
+
+        const res = await this.graphClient.api('/me/sendMail').post({
+          message: messagePayload,
+          saveToSentItems: true,
+        });
+
+        return res;
+      },
+      { data, email: this.config.auth?.email },
+    );
+  }
+  public delete(id: string) {
+    return this.withErrorHandler(
+      'delete',
+      async () => {
+        await this.graphClient.api(`/me/messages/${id}`).delete();
+      },
+      { id },
+    );
+  }
+  public normalizeIds(ids: string[]) {
+    return this.withSyncErrorHandler(
+      'normalizeIds',
+      () => {
+        const messageIds: string[] = ids.map((id) =>
+          id.startsWith('thread:') ? id.substring(7) : id,
+        );
+        return { threadIds: messageIds }; // Renamed from threadIds to messageIds conceptually
+      },
+      { ids },
+    );
+  }
+  public modifyLabels(
+    messageIds: string[],
+    options: { addLabels: string[]; removeLabels: string[] },
+  ) {
+    return this.withErrorHandler(
+      'modifyLabels',
+      async () => {
+        await this.modifyMessageLabelsOrFolders(
+          messageIds,
+          options.addLabels,
+          options.removeLabels,
+        );
+      },
+      { messageIds, options },
+    );
+  }
+  private async modifyMessageLabelsOrFolders(
+    messageIds: string[],
+    addItems: string[],
+    removeItems: string[],
+  ) {
+    if (messageIds.length === 0) {
+      return;
+    }
+    const batchRequests = messageIds.map((id, index) => {
+      const patchBody = {};
+
+      if (addItems.length > 0 || removeItems.length > 0) {
+        console.warn(
+          `Modifying categories (${addItems.join(',')}, ${removeItems.join(',')}) on message ${id} is not fully implemented.`,
+        );
+      }
+
+      if (!addItems[0]) {
+        console.warn('No addItems');
+        return;
+      }
+
+      let moveToFolderId: string | undefined;
+      if (addItems.length > 0 && this.getOutlookFolderId(addItems[0])) {
+        moveToFolderId = this.getOutlookFolderId(addItems[0]) || addItems[0];
+        console.warn(
+          `Attempting to move message ${id} to folder ${moveToFolderId}. This is a move operation, not adding a label.`,
+        );
+        return {
+          id: `${index}`,
+          method: 'POST',
+          url: `/me/messages/${id}/move`,
+          body: { destinationId: moveToFolderId },
+          headers: { 'Content-Type': 'application/json' },
+        };
+      }
+      return {
+        id: `${index}`,
+        method: 'PATCH',
+        url: `/me/messages/${id}`,
+        body: patchBody,
+        headers: { 'Content-Type': 'application/json' },
+      };
+    });
+
+    const validBatchRequests = batchRequests
+      .filter((req) => typeof req !== 'undefined')
+      .filter((req) => Object.keys(req.body).length > 0 || req.method === 'POST');
+
+>>>>>>> a9d1ae61 (feat: outlook driver)
     if (validBatchRequests.length === 0) {
       console.warn('No valid batch requests generated for modifyMessageLabelsOrFolders.');
       return;

@@ -36,7 +36,10 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
+<<<<<<< HEAD
 import { MailList } from '@/components/mail/mail-list';
+=======
+>>>>>>> a9d1ae61 (feat: outlook driver)
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
@@ -332,6 +335,13 @@ export function MailLayout() {
     );
   }, [session?.activeConnection?.id, connections?.connections]);
 
+  const activeAccount = useMemo(() => {
+    if (!session?.activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find(
+      (connection) => connection.id === session.activeConnection?.id,
+    );
+  }, [session?.activeConnection?.id, connections?.connections]);
+
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
       clearBulkSelection();
@@ -447,7 +457,26 @@ export function MailLayout() {
                         </div>
                       ) : null}
                     </div>
+<<<<<<< HEAD
                     <AutoLabelingSettings />
+=======
+                    {true ? <AutoLabelingSettings /> : null}
+                    <Button
+                      disabled={isEnablingBrain || isDisablingBrain}
+                      onClick={handleToggleAutolabeling}
+                      variant="outline"
+                      size={'sm'}
+                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
+                    >
+                      <div
+                        className={cn(
+                          'h-2 w-2 animate-pulse rounded-full',
+                          brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
+                        )}
+                      />
+                      Auto Labeling
+                    </Button>
+>>>>>>> a9d1ae61 (feat: outlook driver)
                     <Button
                       onClick={() => {
                         refetchThreads();
