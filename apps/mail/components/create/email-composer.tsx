@@ -657,9 +657,7 @@ export function EmailComposer({
               <button
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSend}
-                disabled={
-                  isLoading || !toEmails.length || !editor.getHTML().trim() || !subjectInput.trim()
-                }
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="text-center text-sm leading-none text-white dark:text-black">

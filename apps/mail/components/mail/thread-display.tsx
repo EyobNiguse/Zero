@@ -158,6 +158,7 @@ export function ThreadDisplay() {
   const [{ refetch: mutateThreads }, items] = useThreads();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mail, setMail] = useMail();
+  const [isStarred, setIsStarred] = useState(false);
   const t = useTranslations();
   const { refetch: refetchStats } = useStats();
   const [mode, setMode] = useQueryState('mode');
@@ -284,27 +285,21 @@ export function ThreadDisplay() {
     if (!emailData || !id) return;
 
     const newStarredState = !isStarred;
-    setOptimisticStarred(newStarredState);
-    
+    setIsStarred(newStarredState);
     if (newStarredState) {
       toast.success(t('common.actions.addedToFavorites'));
     } else {
       toast.success(t('common.actions.removedFromFavorites'));
     }
+    mutateThreads();
+  }, [emailData, id, isStarred, mutateThreads, t]);
 
-    try {
-      await toggleStar({ ids: [id] });
-      await Promise.all([mutateThread(), mutateThreads()]);
-    } catch (error) {
-      // Revert optimistic update on error
-      setOptimisticStarred(!newStarredState);
-      toast.error(t('common.actions.failedToStar'));
-    }
-  }, [emailData, id, isStarred, mutateThread, mutateThreads, t]);
-
-  // Reset optimistic state when thread data changes
+  // Set initial star state based on email data
   useEffect(() => {
-    setOptimisticStarred(null);
+    if (emailData?.latest?.tags) {
+      // Check if any tag has the name 'STARRED'
+      setIsStarred(emailData.latest.tags.some((tag) => tag.name === 'STARRED'));
+    }
   }, [emailData?.latest?.tags]);
 
   useEffect(() => {

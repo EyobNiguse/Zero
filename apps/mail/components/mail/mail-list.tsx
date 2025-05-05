@@ -53,6 +53,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
 import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
+import { useDraft } from '@/hooks/use-drafts';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
@@ -187,18 +188,18 @@ const Thread = memo(
 
     const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
 
-    const isStarred = useMemo(() => {
-      if (optimisticStarred !== null) return optimisticStarred;
-      if (!getThreadData?.latest?.tags) return false;
-      return getThreadData.latest.tags.some((tag) => tag.name === 'STARRED');
-    }, [getThreadData?.latest?.tags, optimisticStarred]);
+    // Set initial star state based on email data
+    useEffect(() => {
+      if (getThreadData?.latest?.tags) {
+        setIsStarred(getThreadData.latest.tags.some((tag) => tag.name === 'STARRED'));
+      }
+    }, [getThreadData?.latest?.tags]);
 
     const handleToggleStar = useCallback(async () => {
       if (!getThreadData || !message.id) return;
 
       const newStarredState = !isStarred;
-      setOptimisticStarred(newStarredState);
-      
+      setIsStarred(newStarredState);
       if (newStarredState) {
         toast.success(t('common.actions.addedToFavorites'));
       } else {
@@ -488,13 +489,7 @@ const Thread = memo(
                       />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent 
-                    className={cn(
-                      "mb-1 bg-white dark:bg-[#1A1A1A]",
-                      index === 0 && "mt-1"
-                    )}
-                    side={index === 0 ? "bottom" : "top"}
-                  >
+                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
                     {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
                   </TooltipContent>
                 </Tooltip>
@@ -509,13 +504,7 @@ const Thread = memo(
                       <Archive2 className="fill-[#9D9D9D]" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent 
-                    className={cn(
-                      "mb-1 bg-white dark:bg-[#1A1A1A]",
-                      index === 0 && "mt-1"
-                    )}
-                    side={index === 0 ? "bottom" : "top"}
-                  >
+                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
                     {t('common.threadDisplay.archive')}
                   </TooltipContent>
                 </Tooltip>
@@ -530,13 +519,7 @@ const Thread = memo(
                       <Trash className="fill-[#F43F5E]" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent 
-                    className={cn(
-                      "mb-1 bg-white dark:bg-[#1A1A1A]",
-                      index === 0 && "mt-1"
-                    )}
-                    side={index === 0 ? "bottom" : "top"}
-                  >
+                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
                     {t('common.actions.Bin')}
                   </TooltipContent>
                 </Tooltip>
