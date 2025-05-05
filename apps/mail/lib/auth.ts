@@ -17,7 +17,6 @@ import { getSocialProviders } from './auth-providers';
 import { getActiveDriver } from '@/lib/driver-utils';
 import { enableBrainFunction } from './brain';
 import { createDriver } from '@/lib/driver';
-import { redirect } from 'next/navigation';
 import { APIError } from 'better-auth/api';
 import { resend } from './resend';
 import { eq } from 'drizzle-orm';
@@ -29,16 +28,12 @@ const connectionHandlerHook = async (account: Account) => {
     throw new APIError('EXPECTATION_FAILED', { message: 'Missing Access/Refresh Tokens' });
   }
 
-  const driver = await createDriver(account.providerId, {});
-  const userInfo = await driver
-    .getUserInfo({
-      access_token: account.accessToken,
-      refresh_token: account.refreshToken,
-      email: '',
-    })
-    .catch(() => {
-      throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
-    });
+  const driver = await createDriver(account.providerId, {
+    auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
+  });
+  const userInfo = await driver.getUserInfo().catch(() => {
+    throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
+  });
 
   if (!userInfo?.address) {
     console.error('Missing email in user info:', { userInfo });

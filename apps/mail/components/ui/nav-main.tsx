@@ -433,11 +433,10 @@ export function NavMain({ items }: NavMainProps) {
                   )}
                 >
                   {data?.map((label) => (
-                    <LabelSidebarContextMenu labelId={label.id}>
+                    <LabelSidebarContextMenu labelId={label.id} key={label.id}>
                       <div
                         onClick={handleFilterByLabel(label)}
-                        key={label.id}
-                        className="flex items-center gap-2 text-sm"
+                        className="flex cursor-pointer items-center gap-2 text-sm"
                       >
                         <span
                           className={cn(

@@ -32,6 +32,7 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import AttachmentsAccordion from './attachments-accordion';
 import { cn, getEmailLogo, formatDate } from '@/lib/utils';
+import { useBrainState } from '../../hooks/use-summary';
 import { useThreadLabels } from '@/hooks/use-labels';
 import { Sender, type ParsedMessage } from '@/types';
 import { Markdown } from '@react-email/components';
@@ -249,7 +250,7 @@ const AiSummary = () => {
   };
 
   if (isLoading) return null;
-  if (!summary?.short.length) return null;
+  if (!summary?.short?.length) return null;
 
   return (
     <div
@@ -265,7 +266,9 @@ const AiSummary = () => {
           />
         )}
       </div>
-      {showSummary && <Markdown>{summary?.short || ''}</Markdown>}
+      {showSummary && (
+        <Markdown markdownContainerStyles={{ fontSize: 12 }}>{summary?.short || ''}</Markdown>
+      )}
     </div>
   );
 };
@@ -291,6 +294,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
   const { labels: threadLabels } = useThreadLabels(
     emailData.tags ? emailData.tags.map((l) => l.id) : [],
   );
+  const { data: brainState } = useBrainState();
 
   useEffect(() => {
     if (!demo) {
@@ -485,7 +489,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   })()}
                 </div>
               </div>
-              <AiSummary />
+              {brainState?.enabled && <AiSummary />}
             </>
           )}
         </div>
