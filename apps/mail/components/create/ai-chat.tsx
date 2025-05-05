@@ -63,10 +63,66 @@ const RenderThreads = ({
   return <div className="flex flex-col gap-2">{threads.map(renderThread)}</div>;
 };
 
+const ExampleQueries = ({ onQueryClick }: { onQueryClick: (query: string) => void }) => {
+  const firstRowQueries = [
+    "Find invoice from Stripe",
+    "Show unpaid invoices",
+    "Show recent work feedback"
+  ];
+  
+  const secondRowQueries = [
+    "Find all work meetings",
+    "What projects do i have coming up"
+  ];
+
+  return (
+    <div className="mt-6 flex w-full flex-col items-center gap-2">
+      {/* First row */}
+      <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
+        <div className="flex gap-4 px-4">
+          {firstRowQueries.map((query, index) => (
+            <button
+              key={index}
+              onClick={() => onQueryClick(query)}
+              className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]"
+            >
+              {query}
+            </button>
+          ))}
+        </div>
+        {/* Left mask */}
+        <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+        {/* Right mask */}
+        <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
+      </div>
+
+      {/* Second row */}
+      <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
+        <div className="flex gap-4 px-4">
+          {secondRowQueries.map((query, index) => (
+            <button
+              key={index}
+              onClick={() => onQueryClick(query)}
+              className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]"
+            >
+              {query}
+            </button>
+          ))}
+        </div>
+        {/* Left mask */}
+        <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
+        {/* Right mask */}
+        <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
+      </div>
+    </div>
+  );
+};
+
 export function AIChat() {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { refetch, chatMessages } = useBilling();
 
   const { messages, input, setInput, error, handleSubmit, status } = useChat({
@@ -108,51 +164,18 @@ export function AIChat() {
                 <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
                 <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
               </div>
-              <p className="mb-1 mt-2 hidden text-sm font-medium text-black md:block dark:text-white">
+              <p className="mb-1 mt-2 hidden text-sm text-center font-medium text-black md:block dark:text-white">
                 Ask anything about your emails
               </p>
-              <p className="mb-3 text-sm text-[#8C8C8C] dark:text-[#929292]">
+              <p className="mb-3 text-sm text-center text-[#8C8C8C] dark:text-[#929292]">
                 Ask to do or show anything using natural language
               </p>
 
               {/* Example Thread */}
-
-              <div className="mt-6 flex w-full flex-col items-center gap-2">
-                {/* First row */}
-                <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
-                  <div className="flex gap-4 px-4">
-                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                      Find invoice from Stripe
-                    </p>
-                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                      Reply to Nick
-                    </p>
-                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                      Show recent design feedback
-                    </p>
-                  </div>
-                  {/* Left mask */}
-                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
-                  {/* Right mask */}
-                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
-                </div>
-
-                {/* Second row */}
-                <div className="no-scrollbar relative flex w-full justify-center overflow-x-auto">
-                  <div className="flex gap-4 px-4">
-                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                      Find meeting with Sarah
-                    </p>
-                    <p className="flex-shrink-0 whitespace-nowrap rounded-md bg-[#f0f0f0] p-1 px-2 text-sm text-[#555555] dark:bg-[#262626] dark:text-[#929292]">
-                      What did alex say about the design
-                    </p>
-                  </div>
-                  {/* Left mask */}
-                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 left-0 top-0 w-12 bg-gradient-to-r to-transparent"></div>
-                  {/* Right mask */}
-                  <div className="from-panelLight dark:from-panelDark pointer-events-none absolute bottom-0 right-0 top-0 w-12 bg-gradient-to-l to-transparent"></div>
-                </div>
-              </div>
+              <ExampleQueries onQueryClick={(query) => {
+                setInput(query);
+                inputRef.current?.focus();
+              }} />
             </div>
           ) : (
             messages.map((message, index) => {
@@ -214,6 +237,7 @@ export function AIChat() {
               <div className="w-full">
                 <form id="ai-chat-form" onSubmit={handleSubmit} className="relative">
                   <Input
+                    ref={inputRef}
                     readOnly={!chatMessages.enabled}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
