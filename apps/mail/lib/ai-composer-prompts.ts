@@ -1,5 +1,7 @@
+import dedent from 'dedent';
+
 export const StyledEmailAssistantSystemPrompt = () => {
-  return `
+  return dedent`
     <system_prompt>
     <role>
       You are an AI assistant that composes on-demand email bodies while
