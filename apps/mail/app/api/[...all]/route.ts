@@ -1,6 +1,6 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { mailtoHandler } from '../mailto-handler';
-import { HonoVariables } from '@/trpc/hono';
+import type { HonoVariables } from '@/trpc/hono';
 import { chatHandler } from '../chat';
 import { appRouter } from '@/trpc';
 import { auth } from '@/lib/auth';

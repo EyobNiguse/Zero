@@ -1,21 +1,16 @@
-import { MailManager, ManagerConfig } from './types';
+import type { MailManager, ManagerConfig } from './types';
 import { GoogleMailManager } from './google';
 
-const SupportedProviders = {
+const supportedProviders = {
   google: GoogleMailManager,
   // microsoft: microsoftDriver,
 };
 
-export const createDriver = async (
-  provider: keyof typeof SupportedProviders | (string & {}),
+export const createDriver = (
+  provider: keyof typeof supportedProviders | (string & {}),
   config: ManagerConfig,
-): Promise<MailManager> => {
-  const factory = SupportedProviders[provider as keyof typeof SupportedProviders];
-  if (!factory) throw new Error('Provider not supported');
-  switch (provider) {
-    case 'google':
-      return new GoogleMailManager(config);
-    default:
-      throw new Error('Provider not supported');
-  }
+): MailManager => {
+  const Provider = supportedProviders[provider as keyof typeof supportedProviders];
+  if (!Provider) throw new Error('Provider not supported');
+  return new Provider(config);
 };

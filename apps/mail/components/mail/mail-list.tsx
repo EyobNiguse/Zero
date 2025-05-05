@@ -31,9 +31,9 @@ import {
 } from 'react';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { Briefcase, Check, Star, StickyNote, Users } from 'lucide-react';
 import { ThreadContextMenu } from '@/components/context/thread-context';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useMail, type Config } from '@/components/mail/use-mail';

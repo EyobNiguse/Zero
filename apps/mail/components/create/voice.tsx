@@ -11,10 +11,10 @@ import { Mic, MicOff, Volume2, VolumeX, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Auth
-import { trpcClient, useTRPC } from '@/providers/query-provider';
+import { trpcClient } from '@/providers/query-provider';
 import { useThreads } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
-import { Sender } from '@/types';
+import type { Sender } from '@/types';
 import dedent from 'dedent';
 
 interface EmailContent {

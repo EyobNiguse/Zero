@@ -6,15 +6,15 @@ import {
   fromBinary,
   sanitizeContext,
   StandardizedError,
-} from '../driver-utils';
+} from './utils';
 import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
-import { IOutgoingMessage, Label, ParsedMessage } from '@/types';
+import type { IOutgoingMessage, Label, ParsedMessage } from '@/types';
 import { sanitizeTipTapHtml } from '../sanitize-tip-tap-html';
+import type { MailManager, ManagerConfig } from './types';
 import { withExponentialBackoff } from '@/app/api/utils';
-import { MailManager, ManagerConfig } from './types';
+import type { CreateDraftData } from '../schemas';
 import { gmail_v1, google } from 'googleapis';
 import { setTimeout } from 'timers/promises';
-import { CreateDraftData } from '../schemas';
 import { createMimeMessage } from 'mimetext';
 import { cleanSearchValue } from '../utils';
 import * as he from 'he';

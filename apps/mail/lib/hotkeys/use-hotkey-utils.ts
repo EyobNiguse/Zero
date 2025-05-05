@@ -1,7 +1,7 @@
 'use client';
 
 // TODO: Implement shortcuts syncing and caching
-import { Shortcut, keyboardShortcuts } from '@/config/shortcuts';
+import { type Shortcut, keyboardShortcuts } from '@/config/shortcuts';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useCallback, useMemo } from 'react';
 

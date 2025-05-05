@@ -2,10 +2,10 @@
 import {
   AnimatePresence,
   motion,
-  TargetAndTransition,
-  Transition,
-  Variant,
-  Variants,
+  type TargetAndTransition,
+  type Transition,
+  type Variant,
+  type Variants,
 } from 'motion/react';
 import { cn } from '@/lib/utils';
 import React from 'react';

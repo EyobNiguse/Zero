@@ -1,7 +1,7 @@
-import { COOKIE_CONSENT_KEY, CookiePreferences } from '@/lib/cookies';
+import { COOKIE_CONSENT_KEY, type CookiePreferences } from '@/lib/cookies';
 import { getCookie, setCookie } from 'hono/cookie';
 import { privateProcedure, router } from '../trpc';
-import { Context } from 'hono';
+import type { Context } from 'hono';
 import { z } from 'zod';
 
 const getCookiePreferences = async (c: Context) => {

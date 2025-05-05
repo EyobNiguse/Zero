@@ -26,8 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { CircleAlertIcon, Inbox, ShieldAlertIcon, StopCircleIcon } from 'lucide-react';
+import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
@@ -42,6 +42,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
+import type { ParsedMessage } from '@/types';
 import ReplyCompose from './reply-composer';
 import { Separator } from '../ui/separator';
 import { useTranslations } from 'next-intl';
@@ -49,7 +50,6 @@ import { useMail } from '../mail/use-mail';
 import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
-import { ParsedMessage } from '@/types';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';

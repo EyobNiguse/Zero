@@ -17,11 +17,11 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { availableLocales, locales, type Locale } from '@/i18n/config';
+import { useForm, type ControllerRenderProps } from 'react-hook-form';
 import { userSettingsSchema } from '@zero/db/user_settings_default';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SettingsCard } from '@/components/settings/settings-card';
-import { availableLocales, locales, Locale } from '@/i18n/config';
-import { useForm, ControllerRenderProps } from 'react-hook-form';
 import { useState, useEffect, useMemo, memo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslations, useLocale } from 'next-intl';

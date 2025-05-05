@@ -1,6 +1,5 @@
-import { HonoContext, HonoVariables } from '@/trpc/hono';
+import type { HonoContext } from '@/trpc/hono';
 import { serverTrpc } from '@/trpc';
-import { Context } from 'hono';
 
 // Function to parse mailto URLs
 async function parseMailtoUrl(mailtoUrl: string) {
