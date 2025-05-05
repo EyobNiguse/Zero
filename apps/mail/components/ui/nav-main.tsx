@@ -461,71 +461,77 @@ export function NavMain({ items }: NavMainProps) {
 
                     return (
                       <>
-                        {Object.entries(groupedLabels).map(([groupName, labels]) => {
-                          if (groupName === 'other') {
-                            return labels.map((label) => (
-                              <LabelSidebarContextMenu labelId={label.id} key={label.id}>
-                                <div
-                                  onClick={handleFilterByLabel(label)}
-                                  className="flex cursor-pointer items-center gap-2 text-sm"
-                                >
-                                  <span
-                                    className={cn(
-                                      'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
-                                      searchValue.value.includes(`label:${label.name}`)
-                                        ? 'border-accent-foreground'
-                                        : 'dark:bg-subtleBlack',
-                                    )}
+                        {Object.entries(groupedLabels)
+                          .sort(([a], [b]) => {
+                            if (a === 'other') return 1;
+                            if (b === 'other') return -1;
+                            return a.localeCompare(b);
+                          })
+                          .map(([groupName, labels]) => {
+                            if (groupName === 'other') {
+                              return labels.map((label) => (
+                                <LabelSidebarContextMenu labelId={label.id} key={label.id}>
+                                  <div
+                                    onClick={handleFilterByLabel(label)}
+                                    className="flex cursor-pointer items-center gap-2 text-sm"
                                   >
-                                    {label.name}
-                                  </span>
-                                </div>
-                              </LabelSidebarContextMenu>
-                            ));
-                          }
+                                    <span
+                                      className={cn(
+                                        'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
+                                        searchValue.value.includes(`label:${label.name}`)
+                                          ? 'border-accent-foreground'
+                                          : 'dark:bg-subtleBlack',
+                                      )}
+                                    >
+                                      {label.name}
+                                    </span>
+                                  </div>
+                                </LabelSidebarContextMenu>
+                              ));
+                            }
 
-                          return (
-                            <DropdownMenu key={groupName}>
-                              <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1.5 py-0.5 text-xs">
-                                <span>
-                                  <Folder className="h-4 w-4" />
-                                </span>
-                                <span className="truncate">{groupName}</span>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-56">
-                                {labels.map((label) => {
-                                  const folderParts = label.name.split('/').slice(1);
-                                  return (
-                                    <LabelSidebarContextMenu labelId={label.id} key={label.id}>
-                                      <div
-                                        onClick={handleFilterByLabel(label)}
-                                        className="flex cursor-pointer items-center gap-2 text-sm"
-                                      >
-                                        <span
-                                          className={cn(
-                                            'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
-                                            searchValue.value.includes(`label:${label.name}`)
-                                              ? 'border-accent-foreground'
-                                              : 'dark:bg-subtleBlack',
-                                          )}
+                            return (
+                              <DropdownMenu key={groupName}>
+                                <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1.5 py-0.5 text-xs">
+                                  <span>
+                                    <Folder className="h-4 w-4" />
+                                  </span>
+                                  <span className="truncate">{groupName}</span>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56">
+                                  {labels.map((label) => {
+                                    const folderParts = label.name.split('/').slice(1);
+                                    return (
+                                      <LabelSidebarContextMenu labelId={label.id} key={label.id}>
+                                        <div
+                                          onClick={handleFilterByLabel(label)}
+                                          className="flex cursor-pointer items-center gap-2 text-sm"
                                         >
-                                          {folderParts.map((part, index) => (
-                                            <span key={index}>
-                                              {part}
-                                              {index < folderParts.length - 1 && (
-                                                <span className="text-muted-foreground">/</span>
-                                              )}
-                                            </span>
-                                          ))}
-                                        </span>
-                                      </div>
-                                    </LabelSidebarContextMenu>
-                                  );
-                                })}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          );
-                        })}
+                                          <span
+                                            className={cn(
+                                              'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
+                                              searchValue.value.includes(`label:${label.name}`)
+                                                ? 'border-accent-foreground'
+                                                : 'dark:bg-subtleBlack',
+                                            )}
+                                          >
+                                            {folderParts.map((part, index) => (
+                                              <span key={index}>
+                                                {part}
+                                                {index < folderParts.length - 1 && (
+                                                  <span className="text-muted-foreground">/</span>
+                                                )}
+                                              </span>
+                                            ))}
+                                          </span>
+                                        </div>
+                                      </LabelSidebarContextMenu>
+                                    );
+                                  })}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            );
+                          })}
                       </>
                     );
                   })()}
