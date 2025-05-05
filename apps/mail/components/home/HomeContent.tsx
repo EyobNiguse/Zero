@@ -29,6 +29,7 @@ import {
   Figma,
   Docx,
   ImageFile,
+  Expand,
 } from '../icons/icons';
 import {
   NavigationMenu,
@@ -518,7 +519,7 @@ export default function HomeContent() {
       </div>
 
       <div className="relative bottom-96 bg-[#111111]">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 max-w-[1250px] mx-auto">
+        <div className="mx-auto grid max-w-[1250px] md:grid-cols-2 lg:grid-cols-3">
           <div className="flex flex-col">
             <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
               <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl border border-[#252525] bg-neutral-800" />
@@ -895,41 +896,40 @@ export default function HomeContent() {
               </p>
             </div>
           </div>
-          <div >
+          <div>
             <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
-              <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl  bg-[#2B2B2B]" />
-              <div className="bg-[#1A1A1A] absolute left-[34px] top-[34px] inline-flex w-[600px] flex-col items-start justify-start overflow-hidden rounded-xl">
+              <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl bg-[#2B2B2B]" />
+              <div className="absolute left-[34px] top-[34px] inline-flex w-[600px] flex-col items-start justify-start overflow-hidden rounded-xl bg-[#1A1A1A]">
                 <div className="bg-tokens-surface-secondary border-tokens-stroke-light/5 inline-flex h-12 items-center justify-center gap-3 self-stretch overflow-hidden border-b-[0.50px] px-4 py-3">
-                  <div className="bg-[#262626] flex h-6 items-center justify-center overflow-hidden rounded pl-1 pr-1.5">
+                  <div className="flex h-6 items-center justify-center overflow-hidden rounded bg-[#262626] pl-1 pr-1.5">
                     <X className="relative h-3.5 w-3.5 overflow-hidden fill-[#767676]" />
                     <div className="flex items-center justify-center gap-2.5 px-0.5 text-[#767676]">
                       esc
                     </div>
                   </div>
                   <div className="flex flex-1 items-center justify-start gap-1">
-                    <div className="bg-[#767676] relative w-px self-stretch rounded-full" />
-                    <div className="text-[#767676] flex-1 justify-center  text-sm font-normal leading-none">
+                    <div className="relative w-px self-stretch rounded-full bg-[#767676]" />
+                    <div className="flex-1 justify-center text-sm font-normal leading-none text-[#767676]">
                       Search by sender, subject, or content...
                     </div>
                   </div>
                 </div>
                 <div className="bg-tokens-surface-secondary border-tokens-stroke-light/5 flex flex-col items-start justify-start self-stretch overflow-hidden border-b-[0.50px]">
                   <div className="inline-flex items-center justify-start gap-1.5 self-stretch px-5 pb-3 pt-5">
-                    <div className="text-[#8C8C8C] flex-1 justify-start  text-sm leading-none">
+                    <div className="flex-1 justify-start text-sm leading-none text-[#8C8C8C]">
                       Recently interacted
                     </div>
                   </div>
                   <div className="flex flex-col items-start justify-start gap-2 self-stretch p-2">
                     <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-lg p-3">
                       <div className="relative h-8 w-8 rounded-full bg-indigo-500/10">
-                       
                         <div className="absolute left-[10.2px] top-[4px] h-7 w-3 overflow-hidden">
                           <Image
                             src="/stripe.svg"
                             alt="Stripe"
                             width={12}
                             height={24}
-                            className="absolute h-6 w-18"
+                            className="w-18 absolute h-6"
                           />
                         </div>
                       </div>
@@ -937,17 +937,17 @@ export default function HomeContent() {
                         <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                           <div className="flex flex-1 items-center justify-start gap-3">
                             <div className="flex items-center justify-start gap-1">
-                              <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              <div className="text-base-gray-950 justify-start text-sm leading-none">
                                 Stripe
                               </div>
                             </div>
                           </div>
-                          <div className="text-base-gray-500/50 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 justify-start text-sm font-normal leading-none">
                             Mar 29
                           </div>
                         </div>
                         <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                          <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                          <div className="flex-1 justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                             Payment confirmation #1234
                           </div>
                           <div className="flex items-start justify-start gap-1">
@@ -961,24 +961,30 @@ export default function HomeContent() {
                       <div className="relative h-8 w-8 rounded-full bg-red-600/10">
                         <div className="absolute left-0 top-0 h-8 w-8 rounded-full" />
                         <div className="absolute left-[11px] top-[4px] h-7 w-2.5">
-                          <Image src="/netflix.svg" alt="Stripe" width={12} height={24} className="absolute h-6 w-18" />
+                          <Image
+                            src="/netflix.svg"
+                            alt="Stripe"
+                            width={12}
+                            height={24}
+                            className="w-18 absolute h-6"
+                          />
                         </div>
                       </div>
                       <div className="inline-flex flex-1 flex-col items-start justify-start gap-2.5">
                         <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                           <div className="flex flex-1 items-center justify-start gap-3">
                             <div className="flex items-center justify-start gap-1">
-                              <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              <div className="text-base-gray-950 justify-start text-sm leading-none">
                                 Netflix
                               </div>
                             </div>
                           </div>
-                          <div className="text-base-gray-500/50 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 justify-start text-sm font-normal leading-none">
                             Mar 29
                           </div>
                         </div>
                         <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                          <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                          <div className="flex-1 justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                             New shows added to your list
                           </div>
                           <div className="flex items-start justify-start gap-1">
@@ -988,7 +994,7 @@ export default function HomeContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-[#202020] inline-flex items-center justify-start gap-3 self-stretch rounded-[10px] p-3">
+                    <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-[10px] bg-[#202020] p-3">
                       <Image
                         className="h-8 w-8 rounded-full"
                         src="/dudu.jpg"
@@ -1000,20 +1006,20 @@ export default function HomeContent() {
                         <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                           <div className="flex flex-1 items-center justify-start gap-3">
                             <div className="flex items-center justify-start gap-1">
-                              <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              <div className="text-base-gray-950 justify-start text-sm leading-none">
                                 Dudu
                               </div>
-                              <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                              <div className="justify-start text-center text-sm leading-none text-[#8C8C8C]">
                                 [9]
                               </div>
                             </div>
                           </div>
-                          <div className="text-base-gray-500/50 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 justify-start text-sm font-normal leading-none">
                             Mar 29
                           </div>
                         </div>
                         <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                          <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                          <div className="flex-1 justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                             New design review
                           </div>
                           <div className="flex items-start justify-start gap-1">
@@ -1023,7 +1029,7 @@ export default function HomeContent() {
                       </div>
                     </div>
                     <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-lg p-3">
-                      <div className="bg-[#2B2B2B] inline-flex h-8 w-8 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-full ">
+                      <div className="inline-flex h-8 w-8 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-full bg-[#2B2B2B]">
                         <div className="relative h-8 w-8 overflow-hidden">
                           <div className="absolute left-[10.60px] top-[8px] h-4 w-2.5 overflow-hidden">
                             <Figma className="relative h-4 w-2.5 overflow-hidden" />
@@ -1034,20 +1040,20 @@ export default function HomeContent() {
                         <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                           <div className="flex flex-1 items-center justify-start gap-3">
                             <div className="flex items-center justify-start gap-1">
-                              <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              <div className="text-base-gray-950 justify-start text-sm leading-none">
                                 Figma
                               </div>
-                              <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                              <div className="justify-start text-center text-sm leading-none text-[#8C8C8C]">
                                 [5]
                               </div>
                             </div>
                           </div>
-                          <div className="text-base-gray-500/50 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 justify-start text-sm font-normal leading-none">
                             Mar 26
                           </div>
                         </div>
                         <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                          <div className="text-base-gray-500/50 flex-1 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 flex-1 justify-start text-sm font-normal leading-none">
                             Comments on "Landing Page v2"
                           </div>
                           <div className="flex items-start justify-start gap-1">
@@ -1069,17 +1075,17 @@ export default function HomeContent() {
                         <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                           <div className="flex flex-1 items-center justify-start gap-3">
                             <div className="flex items-center justify-start gap-1">
-                              <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              <div className="text-base-gray-950 justify-start text-sm leading-none">
                                 Asana
                               </div>
                             </div>
                           </div>
-                          <div className="text-base-gray-500/50 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 justify-start text-sm font-normal leading-none">
                             Mar 25
                           </div>
                         </div>
                         <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                          <div className="text-base-gray-500/50 flex-1 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 flex-1 justify-start text-sm font-normal leading-none">
                             Weekly task summary
                           </div>
                           <div className="flex items-start justify-start gap-1">
@@ -1096,17 +1102,17 @@ export default function HomeContent() {
                         <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                           <div className="flex flex-1 items-center justify-start gap-3">
                             <div className="flex items-center justify-start gap-1">
-                              <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              <div className="text-base-gray-950 justify-start text-sm leading-none">
                                 Nick
                               </div>
                             </div>
                           </div>
-                          <div className="text-base-gray-500/50 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 justify-start text-sm font-normal leading-none">
                             Mar 28
                           </div>
                         </div>
                         <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                          <div className="text-base-gray-500/50 flex-1 justify-start  text-sm font-normal leading-none">
+                          <div className="text-base-gray-500/50 flex-1 justify-start text-sm font-normal leading-none">
                             Coffee next week?
                           </div>
                           <div className="flex items-start justify-start gap-1">
@@ -1119,40 +1125,40 @@ export default function HomeContent() {
                 </div>
                 <div className="inline-flex items-center justify-between self-stretch overflow-hidden">
                   <div className="border-tokens-stroke-light/5 flex h-12 flex-1 items-center justify-center gap-2 border-r-[0.50px]">
-                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1.5 ">
+                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1.5">
                       <div className="bg-base-gray-500/50 h-2 w-3" />
                     </div>
-                    <div className="text-base-gray-500/50 justify-start  text-sm leading-none">
+                    <div className="text-base-gray-500/50 justify-start text-sm leading-none">
                       Open
                     </div>
                   </div>
                   <div className="border-tokens-stroke-light/5 flex h-12 flex-1 items-center justify-center gap-2 border-r-[0.50px]">
-                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1 ">
-                      <div className="text-base-gray-500/50 justify-start text-center  text-sm leading-none">
+                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1">
+                      <div className="text-base-gray-500/50 justify-start text-center text-sm leading-none">
                         ⌘R
                       </div>
                     </div>
-                    <div className="text-base-gray-500/50 justify-start  text-sm leading-none">
+                    <div className="text-base-gray-500/50 justify-start text-sm leading-none">
                       Reply
                     </div>
                   </div>
                   <div className="border-tokens-stroke-light/5 flex h-12 flex-1 items-center justify-center gap-2 border-r-[0.50px]">
-                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1 ">
-                      <div className="text-base-gray-500/50 justify-start text-center  text-sm leading-none">
+                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1">
+                      <div className="text-base-gray-500/50 justify-start text-center text-sm leading-none">
                         ⌘E
                       </div>
                     </div>
-                    <div className="text-base-gray-500/50 justify-start  text-sm leading-none">
+                    <div className="text-base-gray-500/50 justify-start text-sm leading-none">
                       Archive
                     </div>
                   </div>
                   <div className="border-tokens-stroke-light/5 flex h-12 flex-1 items-center justify-center gap-2 border-r-[0.50px]">
-                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1 ">
-                      <div className="text-base-gray-500/50 justify-start text-center  text-sm leading-none">
+                    <div className="bg-tokens-button-surface/10 flex h-5 items-center justify-center overflow-hidden rounded px-1">
+                      <div className="text-base-gray-500/50 justify-start text-center text-sm leading-none">
                         ⌘M
                       </div>
                     </div>
-                    <div className="text-base-gray-500/50 justify-start  text-sm leading-none">
+                    <div className="text-base-gray-500/50 justify-start text-sm leading-none">
                       Mark read
                     </div>
                   </div>
@@ -1181,8 +1187,213 @@ export default function HomeContent() {
             <h1 className="text-6xl font-medium text-white">Ask away</h1>
             <h1 className="text-6xl font-medium text-white/40">Get your answers</h1>
           </div>
+
+
+
           <div className="relative bottom-2 flex items-center justify-center">
-            <Image src="/ai-chat.png" alt="speed" width={850} height={800} />
+            <div className="relative h-[587px] w-[894px] rounded-xl">
+              <div className=" opacity-30 absolute left-0 top-[319px] inline-flex w-[894px] flex-col items-start justify-start overflow-hidden rounded-xl bg-zinc-900 ">
+                <div className="inline-flex items-center justify-start gap-1.5 self-stretch px-5 pb-4 pt-7">
+                  <div className="flex flex-1 items-center justify-start gap-1.5">
+                    <div className="text-[#8C8C8C] justify-start  text-sm leading-none">
+                      Pinned
+                    </div>
+                    <div className="text-[#8C8C8C] justify-start  text-sm leading-none">
+                      [3]
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-start justify-start gap-2 self-stretch px-2 pb-2">
+                  <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-lg p-3">
+                    <img
+                      className="h-8 w-8 rounded-full px-1.5 py-2.5"
+                      src="https://placehold.co/32x32"
+                    />
+                    <div className="inline-flex h-9 flex-1 flex-col items-start justify-start gap-2.5">
+                      <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
+                        <div className="flex flex-1 items-center justify-start gap-3">
+                          <div className="flex items-center justify-start gap-1">
+                            <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              Ali from Baked
+                            </div>
+                            <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                              [9]
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-[#8C8C8C] justify-start  text-sm font-normal leading-none">
+                          Mar 29
+                        </div>
+                      </div>
+                      <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
+                        <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                          New design review
+                        </div>
+                        <div className="flex items-start justify-start gap-1">
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-[10px] p-3">
+                    <div className="bg-[#313131] inline-flex h-8 w-8 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-full px-1.5 py-2.5 shadow-[0px_0px_0px_0.5px_rgba(255,255,255,0.00)] shadow-[0px_1px_2px_0px_rgba(255,255,255,0.00)]">
+                      <GroupPeople className="fill-[#989898] h-5 w-5 overflow-hidden" />
+                    </div>
+                    <div className="inline-flex flex-1 flex-col items-start justify-start gap-2.5">
+                      <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
+                        <div className="flex flex-1 items-center justify-start gap-3">
+                          <div className="flex items-center justify-start gap-1.5">
+                            <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              Alex, Ali, Sarah
+                            </div>
+                            <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                              [6]
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-[#8C8C8C] justify-start  text-sm font-normal leading-none">
+                          Mar 28
+                        </div>
+                      </div>
+                      <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
+                        <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                          Re: Design review feedback
+                        </div>
+                        <div className="flex items-start justify-start gap-1">
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-lg p-3">
+                    <div className="bg-tokens-surface-primary inline-flex h-8 w-8 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-full px-1.5 py-2.5">
+                      <div className="relative h-fit">
+                        <GitHub className="fill-white h-[25px] w-[25px]" />
+                      </div>
+                    </div>
+                    <div className="inline-flex flex-1 flex-col items-start justify-start gap-2.5">
+                      <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
+                        <div className="flex flex-1 items-center justify-start gap-3">
+                          <div className="flex items-center justify-start gap-1">
+                            <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                              GitHub
+                            </div>
+                            <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                              [8]
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-[#8C8C8C] justify-start  text-sm font-normal leading-none">
+                          Mar 28
+                        </div>
+                      </div>
+                      <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
+                        <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                          Security alert: Critical vulnerability
+                        </div>
+                        <div className="flex items-start justify-start gap-1">
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-[#252525] absolute left-[247px] top-0 inline-flex h-[500px] w-96 flex-col items-center justify-center overflow-hidden rounded-xl">
+                <div className="border-tokens-stroke-light/5 inline-flex items-center justify-start gap-2 self-stretch overflow-hidden border-b-[0.50px] py-3.5 pl-5 pr-3.5">
+                  <div className="flex flex-1 items-center justify-start gap-3">
+                    <div className="text-base-gray-950 flex-1 items-center justify-start flex text-sm leading-none">
+                      <X className="h-4 w-4 fill-[#8C8C8C] mr-2" />
+                      New chat
+                    </div>
+                  </div>
+                  <div className="flex h-6 items-center justify-center gap-0.5 overflow-hidden rounded-md px-1">
+                    <Plus className="fill-[#8C8C8C] h-3 w-3 overflow-hidden" />
+                  </div>
+                  <div className="flex h-6 items-center justify-center gap-0.5 overflow-hidden rounded-md px-1 ">
+                    <PanelLeftOpen className="fill-[#8C8C8C] h-3 w-3 overflow-hidden" />
+                  </div>
+                  <div className="flex h-6 items-center justify-center gap-0.5 overflow-hidden rounded-md px-1">
+                    <Expand className="fill-[#8C8C8C] h-2.5 w-2.5 overflow-hidden" />
+                  </div>
+                </div>
+                <div className="relative flex flex-1 flex-col items-center justify-center gap-8 self-stretch overflow-hidden px-5 py-4">
+                  <Image
+                    src="/white-icon.svg"
+                    alt="chat"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 "
+                  />
+                  <div className="flex flex-col items-center justify-start gap-3">
+                    <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                      Ask anything about your emails
+                    </div>
+                    <div className="text-[#929292] justify-start  text-sm font-normal leading-none">
+                      Ask to do or show anything using natural language
+                    </div>
+                  </div>
+                  <div className="relative inline-flex w-96 flex-wrap content-start items-start justify-center gap-2">
+                    <div className="flex items-center justify-start gap-2 pr-8">
+                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
+                        <div className="flex items-center justify-start gap-1 px-0.5">
+                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
+                            Show recent design feedback
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
+                        <div className="flex items-center justify-start gap-1 px-0.5">
+                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
+                            Reply to Nick
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
+                        <div className="flex items-center justify-start gap-1 px-0.5">
+                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
+                            Find invoice from Stripe
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-start justify-center gap-2 pl-8">
+                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
+                        <div className="flex items-center justify-start gap-1 px-0.5">
+                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
+                            Schedule meeting with Sarah
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
+                        <div className="flex items-center justify-start gap-1 px-0.5">
+                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
+                            What did alex say about the design
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute left-0 top-0 h-16 w-12 bg-gradient-to-l from-neutral-800/0 to-neutral-800" />
+                    <div className="absolute left-[352px] top-0 h-16 w-12 bg-gradient-to-l from-neutral-800 to-neutral-800/0" />
+                  </div>
+                  <div className="absolute left-0 top-[384px] inline-flex w-96 items-center justify-start gap-4 overflow-hidden p-4">
+                    <div className="bg-[#141414] flex h-8 flex-1 items-center justify-start gap-1.5 overflow-hidden rounded-md pl-2.5 pr-1">
+                      <div className="bg-white relative h-3 w-px rounded-full" />
+                      <div className="text-[#727272] flex-1 justify-start  text-sm leading-none">
+                        Ask AI to do anything...
+                      </div>
+                      <div className="bg-[#262626] flex h-6 items-center justify-center gap-2.5 rounded px-1">
+                      <CurvedArrow className="relative left-[1px] h-4 w-4 mt-1 fill-black dark:fill-[#929292]" />
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <Image
             src="/pixel.svg"
