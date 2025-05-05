@@ -31,7 +31,12 @@ const connectionHandlerHook = async (account: Account) => {
   }
 
   const driver = createDriver(account.providerId, {
-    auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
+    auth: {
+      accessToken: account.accessToken,
+      refreshToken: account.refreshToken,
+      userId: account.userId,
+      email: '',
+    },
   });
 
   const userInfo = await driver.getUserInfo().catch(() => {

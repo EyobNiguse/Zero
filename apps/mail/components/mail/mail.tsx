@@ -35,6 +35,7 @@ import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { useConnections } from '@/hooks/use-connections';
 import { MailList } from '@/components/mail/mail-list';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
@@ -319,9 +320,17 @@ export function MailLayout() {
   const isMobile = useIsMobile();
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const { data: connections } = useConnections();
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
+
+  const activeAccount = useMemo(() => {
+    if (!session?.activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find(
+      (connection) => connection.id === session.activeConnection?.id,
+    );
+  }, [session?.activeConnection?.id, connections?.connections]);
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -454,7 +463,7 @@ export function MailLayout() {
               <div className="p-2 px-[22px]">
                 <SearchBar />
                 <div className="mt-2">
-                  {folder === 'inbox' && (
+                  {activeAccount?.providerId === 'google' && folder === 'inbox' && (
                     <CategorySelect isMultiSelectMode={mail.bulkSelected.length > 0} />
                   )}
                 </div>
