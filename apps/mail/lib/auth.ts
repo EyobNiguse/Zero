@@ -15,7 +15,6 @@ import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
 import { getActiveDriver } from '@/lib/driver-utils';
-import { enableBrainFunction } from './brain';
 import { createDriver } from '@/lib/driver';
 import { APIError } from 'better-auth/api';
 import { resend } from './resend';
@@ -270,7 +269,7 @@ const options = {
             } as typeof connection.$inferInsert);
             // this type error is pissing me tf off
             if (newConnection) {
-              void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
+              //   void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
               console.warn('Created new connection for user', user.email);
             }
           }
