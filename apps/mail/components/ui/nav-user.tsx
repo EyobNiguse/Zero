@@ -495,14 +495,14 @@ export function NavUser() {
             <div className="text-[13px] leading-none text-black dark:text-white">
               {activeAccount?.name || session.user.name || 'User'}
             </div>
-            <div className="text-xs font-normal leading-none text-[#898989]">
+            <div className="text-xs font-normal leading-none text-[#898989] truncate max-w-[150px] overflow-hidden">
               {activeAccount?.email || session.user.email}
             </div>
           </div>
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <div>
+              <div className="ml-2">
                 <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
               </div>
             </TooltipTrigger>
