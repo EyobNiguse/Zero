@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircleCheck, ThreeDots } from '../icons/icons';
 import { SunIcon } from '../icons/animated/sun';
 import Link from 'next/link';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { useBilling } from '@/hooks/use-billing';
+import { Gauge } from '@/components/ui/gauge';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
@@ -281,6 +283,7 @@ export function NavUser() {
                   </div>
                 </>
               </DropdownMenuContent>
+             
             </DropdownMenu>
           )
         ) : (
@@ -375,6 +378,7 @@ export function NavUser() {
                 </button>
               </AddConnectionDialog>
             </div>
+
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -468,21 +472,50 @@ export function NavUser() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            
           </div>
         )}
       </div>
+     {state === 'collapsed' && (
+       <Tooltip>
+       <TooltipTrigger asChild>
+         <div className='mt-2'>
+           <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+         </div>
+       </TooltipTrigger>
+       <TooltipContent className='text-xs'>
+         <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+         <p>Upgrade for unlimited messages!</p>
+       </TooltipContent>
+     </Tooltip>
+     )}
       {state !== 'collapsed' && (
-        <div className="my-2 flex flex-col items-start gap-1 space-y-1">
-          <div className="text-[13px] leading-none text-black dark:text-white">
-            {activeAccount?.name || session.user.name || 'User'}
+        <div className="flex items-center justify-between gap-2">
+          <div className='my-2 flex flex-col items-start gap-1 space-y-1'>
+            <div className="text-[13px] leading-none text-black dark:text-white">
+              {activeAccount?.name || session.user.name || 'User'}
+            </div>
+            <div className="text-xs font-normal leading-none text-[#898989]">
+              {activeAccount?.email || session.user.email}
+            </div>
           </div>
-          <div className="text-xs font-normal leading-none text-[#898989]">
-            {activeAccount?.email || session.user.email}
-          </div>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className='text-xs'>
+              <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+              <p>Upgrade for unlimited messages!</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       )}
+
       <div className="space-y-1">
-        <div>
+        {/* <div>
           <div className="text-muted-foreground flex justify-between text-[10px] uppercase tracking-widest">
             <span>AI Chats</span>
             {chatMessages.unlimited ? (
@@ -494,8 +527,8 @@ export function NavUser() {
             )}
           </div>
           <Progress className="h-1" value={(chatMessages.remaining! / chatMessages.total) * 100} />
-        </div>
-        <div>
+        </div> */}
+        {/* <div>
           <div className="text-muted-foreground flex justify-between text-[10px] uppercase tracking-widest">
             <span>AI Labels</span>
             {brainActivity.unlimited ? (
@@ -510,7 +543,7 @@ export function NavUser() {
             className="h-1"
             value={(brainActivity.remaining! / brainActivity.total) * 100}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );
