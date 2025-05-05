@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { Form, FormField, FormItem, FormLabel } from './ui/form';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTRPC } from '@/providers/query-provider';
 import { CurvedArrow, Ticket } from './icons/icons';
 import { useEffect, useState, useRef } from 'react';
 import { Command, TicketIcon } from 'lucide-react';
@@ -34,10 +36,14 @@ export const GoldenTicketModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { state } = useSidebar();
   const isMobile = useIsMobile();
-  const isSubmitting = useRef(false);
+
   const form = useForm({
     resolver: zodResolver(schema),
   });
+  const trpc = useTRPC();
+  const { mutateAsync: claimGoldenTicket } = useMutation(
+    trpc.earlyAccess.claimGoldenTicket.mutationOptions(),
+  );
 
   useEffect(() => {
     const hasDeclined = localStorage.getItem('goldenTicketDeclined');
@@ -47,34 +53,26 @@ export const GoldenTicketModal = () => {
   }, []);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
-    if (isSubmitting.current) return;
-    isSubmitting.current = true;
+    const toastId = toast.loading('Sending invite...');
 
-    try {
-      const response = await fetch('/api/golden-ticket', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    await claimGoldenTicket(
+      { email: data.email },
+      {
+        onSuccess: () => {
+          toast.success('Invitation sent, your friend will be notified!!', {
+            id: toastId,
+          });
+          refetch();
+          router.refresh();
+          setIsOpen(false);
         },
-        body: JSON.stringify({ email: data.email }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success('Invitation sent, your friend will be notified!!');
-        refetch();
-        router.refresh();
-        setIsOpen(false);
-      } else {
-        toast.error(result.error || 'Failed to send invite');
-      }
-    } catch (error) {
-      console.error('Error sending golden ticket:', error);
-      toast.error('Failed to send golden ticket');
-    } finally {
-      isSubmitting.current = false;
-    }
+        onError: (error) => {
+          toast.error(error.message || 'Failed to send invite', {
+            id: toastId,
+          });
+        },
+      },
+    );
   };
 
   const handleMaybeLater = () => {

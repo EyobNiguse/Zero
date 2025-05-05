@@ -10,9 +10,9 @@ import { useSettings } from '@/hooks/use-settings';
 import { Provider as JotaiProvider } from 'jotai';
 
 export function Providers({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
-  const { settings } = useSettings();
+  const { data } = useSettings();
 
-  const theme = settings?.colorTheme || 'system';
+  const theme = data?.settings.colorTheme || 'system';
 
   return (
     <NuqsAdapter>

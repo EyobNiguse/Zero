@@ -8,7 +8,7 @@ import { twMerge } from 'tailwind-merge';
 import { JSONContent } from 'novel';
 import LZString from 'lz-string';
 import { Sender } from '@/types';
-import axios from 'axios';
+import { z } from 'zod';
 
 export const FOLDERS = {
   SPAM: 'spam',
@@ -125,8 +125,6 @@ export const truncateFileName = (name: string, maxLength = 15) => {
   }
   return `${name.slice(0, maxLength)}...`;
 };
-
-export const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 export type FilterSuggestion = {
   filter: string;
