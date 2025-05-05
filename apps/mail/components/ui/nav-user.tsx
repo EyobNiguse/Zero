@@ -286,7 +286,7 @@ export function NavUser() {
         ) : (
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
-              {data?.connections.map((connection) => (
+              {data?.connections.slice(0, 3).map((connection) => (
                 <div
                   key={connection.id}
                   onClick={handleAccountSwitch(connection.id)}
@@ -318,6 +318,56 @@ export function NavUser() {
                   </div>
                 </div>
               ))}
+
+              {data?.connections && data.connections.length > 3 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="hover:bg-muted flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px]">
+                      <span className="text-[10px]">+{data.connections.length - 3}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="ml-3 min-w-56 bg-white font-medium dark:bg-[#131313]"
+                    align="end"
+                    side={'bottom'}
+                    sideOffset={8}
+                  >
+                    {data.connections.slice(3).map((connection) => (
+                      <DropdownMenuItem
+                        key={connection.id}
+                        onClick={handleAccountSwitch(connection.id)}
+                        className="flex cursor-pointer items-center gap-3 py-1"
+                      >
+                        <Avatar className="size-7 rounded-lg">
+                          <AvatarImage
+                            className="rounded-lg"
+                            src={connection.picture || undefined}
+                            alt={connection.name || connection.email}
+                          />
+                          <AvatarFallback className="rounded-lg text-[10px]">
+                            {(connection.name || connection.email)
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="-space-y-0.5">
+                          <p className="text-[12px]">{connection.name || connection.email}</p>
+                          {connection.name && (
+                            <p className="text-muted-foreground text-[11px]">
+                              {connection.email.length > 25
+                                ? `${connection.email.slice(0, 25)}...`
+                                : connection.email}
+                            </p>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
               <AddConnectionDialog>
                 <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
