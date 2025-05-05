@@ -59,7 +59,6 @@ import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { Button } from '../ui/button';
-import type { Label } from '@/types';
 import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
 import items from './demo.json';
