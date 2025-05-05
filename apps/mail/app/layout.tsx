@@ -7,10 +7,12 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { NextIntlClientProvider } from 'next-intl';
 import CustomToaster from '@/components/ui/toast';
+import { AutumnProvider } from 'autumn-js/next';
 import { siteConfig } from '@/lib/site-config';
 import { Providers } from '@/lib/providers';
 import { headers } from 'next/headers';
 import type { Viewport } from 'next';
+import { auth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import Script from 'next/script';
 import './globals.css';
@@ -60,17 +62,29 @@ export default async function RootLayout({
         className={cn(geistSans.variable, geistMono.variable, 'antialiased')}
         suppressHydrationWarning
       >
-        <QueryProvider>
-          <Providers attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <NextIntlClientProvider messages={messages}>
-              {children}
-              {cookies}
-              <CustomToaster />
-              <Analytics />
-              {/* {isEuRegion && <CookieConsent />} */}
-            </NextIntlClientProvider>
-          </Providers>
-        </QueryProvider>
+        <AutumnProvider
+          authPlugin={{
+            provider: 'better-auth',
+            instance: auth, // Your server-side better-auth instance
+          }}
+        >
+          <QueryProvider>
+            <Providers
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <NextIntlClientProvider messages={messages}>
+                {children}
+                {cookies}
+                <CustomToaster />
+                <Analytics />
+                {/* {isEuRegion && <CookieConsent />} */}
+              </NextIntlClientProvider>
+            </Providers>
+          </QueryProvider>
+        </AutumnProvider>
       </body>
     </html>
   );

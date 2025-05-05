@@ -2,10 +2,31 @@ import { connectionToDriver, getActiveConnection } from '@/lib/server-utils';
 import { prompt } from '@/lib/chat-prompts';
 import { HonoContext } from '@/trpc/hono';
 import { openai } from '@ai-sdk/openai';
+import { Autumn } from 'autumn-js';
 import { streamText } from 'ai';
 import { z } from 'zod';
 
 export const chatHandler = async (c: HonoContext) => {
+  const { session } = c.var;
+  const canSendMessages = await Autumn.check({
+    feature_id: 'chat-messages',
+    customer_id: session!.user.id,
+  });
+
+  console.log({ canSendMessages });
+
+  if (!canSendMessages.data) {
+    return c.json({ error: 'Insufficient permissions' }, 403);
+  }
+
+  if (!canSendMessages.data.balance && !canSendMessages.data.unlimited) {
+    return c.json({ error: 'Insufficient plan quota' }, 403);
+  }
+
+  if ((canSendMessages.data.balance ?? 0) <= 0) {
+    return c.json({ error: 'Insufficient plan balance' }, 403);
+  }
+
   const driver = await getActiveConnection(c)
     .then((conn) => connectionToDriver(conn, c))
     .catch((err) => {
@@ -13,10 +34,13 @@ export const chatHandler = async (c: HonoContext) => {
       throw c.json({ error: 'Failed to get active connection' }, 500);
     });
 
-  const messages = await c.req.json().catch((err: Error) => {
+
+  const { messages } = await c.req.json().catch((err: Error) => {
     console.error('Error parsing JSON:', err);
     throw c.json({ error: 'Failed to parse request body' }, 400);
   });
+
+  void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
 
   const result = streamText({
     model: openai('gpt-4o'),
@@ -31,8 +55,9 @@ export const chatHandler = async (c: HonoContext) => {
             .optional()
             .default('inbox')
             .describe('The folder to list threads from'),
+            
           query: z.string().optional().describe('The search query'),
-          maxResults: z.number().optional().default(20).describe('The maximum number of results'),
+          maxResults: z.number().optional().default(5).describe('The maximum number of results'),
           labelIds: z.array(z.string()).optional().describe('The label IDs to filter by'),
         }),
         execute: async ({ folder, query, maxResults, labelIds }) => {

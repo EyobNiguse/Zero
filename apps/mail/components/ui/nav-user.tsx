@@ -7,8 +7,6 @@ import {
   MoonIcon,
   Settings,
   Plus,
-  ChevronDown,
-  BrainCircuitIcon,
   BrainIcon,
   CopyCheckIcon,
 } from 'lucide-react';
@@ -16,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircleCheck, ThreeDots } from '../icons/icons';
 import { SunIcon } from '../icons/animated/sun';
 import Link from 'next/link';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import {
   DropdownMenu,
@@ -24,8 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { dataTagErrorSymbol, useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useConnections } from '@/hooks/use-connections';
@@ -33,11 +30,15 @@ import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
 import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
+import { useBilling } from '@/hooks/use-billing';
+import { Gauge } from '@/components/ui/gauge';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
+import { Progress } from './progress';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -56,7 +57,7 @@ export function NavUser() {
   );
   const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
   const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
-
+  const { chatMessages, brainActivity } = useBilling();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -282,12 +283,13 @@ export function NavUser() {
                   </div>
                 </>
               </DropdownMenuContent>
+             
             </DropdownMenu>
           )
         ) : (
-          <div className="mt-0. flex w-full items-center justify-between">
+          <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
-              {data?.connections.map((connection) => (
+              {data?.connections.slice(0, 3).map((connection) => (
                 <div
                   key={connection.id}
                   onClick={handleAccountSwitch(connection.id)}
@@ -320,12 +322,63 @@ export function NavUser() {
                 </div>
               ))}
 
+              {data?.connections && data.connections.length > 3 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="hover:bg-muted flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px]">
+                      <span className="text-[10px]">+{data.connections.length - 3}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="ml-3 min-w-56 bg-white font-medium dark:bg-[#131313]"
+                    align="end"
+                    side={'bottom'}
+                    sideOffset={8}
+                  >
+                    {data.connections.slice(3).map((connection) => (
+                      <DropdownMenuItem
+                        key={connection.id}
+                        onClick={handleAccountSwitch(connection.id)}
+                        className="flex cursor-pointer items-center gap-3 py-1"
+                      >
+                        <Avatar className="size-7 rounded-lg">
+                          <AvatarImage
+                            className="rounded-lg"
+                            src={connection.picture || undefined}
+                            alt={connection.name || connection.email}
+                          />
+                          <AvatarFallback className="rounded-lg text-[10px]">
+                            {(connection.name || connection.email)
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="-space-y-0.5">
+                          <p className="text-[12px]">{connection.name || connection.email}</p>
+                          {connection.name && (
+                            <p className="text-muted-foreground text-[11px]">
+                              {connection.email.length > 25
+                                ? `${connection.email.slice(0, 25)}...`
+                                : connection.email}
+                            </p>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
               <AddConnectionDialog>
                 <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
                   <Plus className="size-4" />
                 </button>
               </AddConnectionDialog>
             </div>
+
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -419,19 +472,79 @@ export function NavUser() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            
           </div>
         )}
       </div>
+     {state === 'collapsed' && (
+       <Tooltip>
+       <TooltipTrigger asChild>
+         <div className='mt-2'>
+           <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+         </div>
+       </TooltipTrigger>
+       <TooltipContent className='text-xs'>
+         <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+         <p>Upgrade for unlimited messages!</p>
+       </TooltipContent>
+     </Tooltip>
+     )}
       {state !== 'collapsed' && (
-        <div className="my-2 flex flex-col items-start gap-1 space-y-1">
-          <div className="text-[13px] leading-none text-black dark:text-white">
-            {activeAccount?.name || session.user.name || 'User'}
+        <div className="flex items-center justify-between gap-2">
+          <div className='my-2 flex flex-col items-start gap-1 space-y-1'>
+            <div className="text-[13px] leading-none text-black dark:text-white">
+              {activeAccount?.name || session.user.name || 'User'}
+            </div>
+            <div className="text-xs font-normal leading-none text-[#898989]">
+              {activeAccount?.email || session.user.email}
+            </div>
           </div>
-          <div className="text-xs font-normal leading-none text-[#898989]">
-            {activeAccount?.email || session.user.email}
-          </div>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className='text-xs'>
+              <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+              <p>Upgrade for unlimited messages!</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       )}
+
+      <div className="space-y-1">
+        {/* <div>
+          <div className="text-muted-foreground flex justify-between text-[10px] uppercase tracking-widest">
+            <span>AI Chats</span>
+            {chatMessages.unlimited ? (
+              <span>Unlimited</span>
+            ) : (
+              <span>
+                {chatMessages.remaining}/{chatMessages.total}
+              </span>
+            )}
+          </div>
+          <Progress className="h-1" value={(chatMessages.remaining! / chatMessages.total) * 100} />
+        </div> */}
+        {/* <div>
+          <div className="text-muted-foreground flex justify-between text-[10px] uppercase tracking-widest">
+            <span>AI Labels</span>
+            {brainActivity.unlimited ? (
+              <span>Unlimited</span>
+            ) : (
+              <span>
+                {brainActivity.remaining}/{brainActivity.total}
+              </span>
+            )}
+          </div>
+          <Progress
+            className="h-1"
+            value={(brainActivity.remaining! / brainActivity.total) * 100}
+          />
+        </div> */}
+      </div>
     </div>
   );
 }

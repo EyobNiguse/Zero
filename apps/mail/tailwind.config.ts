@@ -148,6 +148,14 @@ export default {
             height: '0',
           },
         },
+        gauge_fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        gauge_fill: {
+          from: { "stroke-dashoffset": "332", opacity: "0" },
+          to: { opacity: "1" },
+        },
       },
       animation: {
         'fade-up': 'fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -157,6 +165,8 @@ export default {
         'shine-slow': 'shine-slow 8s linear infinite',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        gauge_fadeIn: "gauge_fadeIn 1s ease forwards",
+        gauge_fill: "gauge_fill 1s ease forwards",
       },
     },
   },
