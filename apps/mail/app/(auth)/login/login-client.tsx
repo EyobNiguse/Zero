@@ -4,7 +4,7 @@ import { useEffect, type ReactNode, useState, Suspense } from 'react';
 import type { EnvVarInfo } from '@zero/server/auth-providers';
 import ErrorMessage from '@/app/(auth)/login/error-message';
 import { signIn, useSession } from '@/lib/auth-client';
-import { Google } from '@/components/icons/icons';
+import { Google, Microsoft } from '@/components/icons/icons';
 import { Button } from '@/components/ui/button';
 import { TriangleAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -41,6 +41,9 @@ const getProviderIcon = (providerId: string, className?: string): ReactNode => {
   switch (providerId) {
     case 'google':
       return <Google className={defaultClass} />;
+
+    case 'microsoft':
+      return <Microsoft className={defaultClass} />;
 
     case 'zero':
       return (
