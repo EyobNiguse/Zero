@@ -64,7 +64,7 @@ export interface MailManager {
     code: string,
   ): Promise<{ tokens: { access_token?: string; refresh_token?: string; expiry_date?: number } }>;
   getUserInfo(
-    tokens: ManagerConfig['auth'],
+    tokens?: ManagerConfig['auth'],
   ): Promise<{ address: string; name: string; photo: string }>;
   getScope(): string;
   markAsRead(threadIds: string[]): Promise<void>;

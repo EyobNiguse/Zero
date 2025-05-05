@@ -16,7 +16,9 @@ import {
 import { useTRPC } from '@/providers/query-provider';
 import { useMutation } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
+import { useLabels } from '@/hooks/use-labels';
 import { useTranslations } from 'next-intl';
+import { Trash } from '../icons/icons';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 
@@ -39,37 +41,54 @@ export function LabelSidebarContextMenu({ children, labelId }: LabelSidebarConte
   const t = useTranslations();
   const trpc = useTRPC();
   const { mutateAsync: deleteLabel } = useMutation(trpc.labels.delete.mutationOptions());
+  const { refetch } = useLabels();
 
   const handleDelete = () => {
-    deleteLabel({ id: labelId });
-    setDeleteDialogOpen(false);
-    toast(t('common.labels.deleteLabelSuccess'));
+    toast.promise(deleteLabel({ id: labelId }), {
+      success: t('common.labels.deleteLabelSuccess'),
+      error: 'Error deleting label',
+      finally: () => {
+        refetch();
+        setDeleteDialogOpen(false);
+      },
+    });
   };
 
   return (
     <>
-      <ContextMenu>
+      <ContextMenu modal={false}>
         <ContextMenuTrigger>{children}</ContextMenuTrigger>
-        <ContextMenuContent className="w-56">
+        <ContextMenuContent>
           <ContextMenuItem
+            asChild
             onClick={() => setDeleteDialogOpen(true)}
             disabled={false}
-            className="font-normal"
+            className="gap-2 text-sm"
           >
-            {t('common.labels.deleteLabel')}
+            <Button
+              size={'sm'}
+              variant="ghost"
+              className="hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] [&_svg]:size-3.5"
+            >
+              <Trash className="fill-[#F43F5E]" />
+              <span>{t('common.labels.deleteLabel')}</span>
+            </Button>
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent showOverlay={true}>
+        <DialogContent
+          className="bg-panelLight dark:bg-panelDark rounded-xl p-4"
+          showOverlay={true}
+        >
           <DialogHeader>
             <DialogTitle>{t('common.labels.deleteLabelConfirm')}</DialogTitle>
             <DialogDescription>
               {t('common.labels.deleteLabelConfirmDescription')}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="mt-2">
             <DialogClose asChild>
               <Button variant="outline">{t('common.labels.deleteLabelConfirmCancel')}</Button>
             </DialogClose>

@@ -266,7 +266,9 @@ const AiSummary = () => {
           />
         )}
       </div>
-      {showSummary && <Markdown>{summary?.short || ''}</Markdown>}
+      {showSummary && (
+        <Markdown markdownContainerStyles={{ fontSize: 12 }}>{summary?.short || ''}</Markdown>
+      )}
     </div>
   );
 };
