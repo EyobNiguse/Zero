@@ -3,7 +3,7 @@ export const Gauge = ({
   size = "small",
   showValue = true,
   color = "text-[hsla(131,41%,46%,1)]",
-  bgcolor = "text-[#333]",
+  bgcolor = "text-[#d1d1d1] dark:text-[#333]",
 }: {
   value: number;
   size: "small" | "medium" | "large";
@@ -76,7 +76,7 @@ export const Gauge = ({
       </svg>
       {showValue ? (
         <div className="absolute flex opacity-0 animate-gauge_fadeIn">
-          <p className={`text-gray-100 ${sizes[size].textSize}`}>{value}</p>
+          <p className={`text-gray-700 dark:text-gray-100 ${sizes[size].textSize}`}>{value}</p>
         </div>
       ) : null}
     </div>
