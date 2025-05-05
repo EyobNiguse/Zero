@@ -2,6 +2,7 @@ import { default as flattenColorPalette } from 'tailwindcss/lib/util/flattenColo
 import sharedConfig from '../../packages/tailwind-config/tailwind.config';
 import * as defaultTheme from 'tailwindcss/defaultTheme';
 import * as animate from 'tailwindcss-animate';
+import scrollbar from 'tailwind-scrollbar';
 import type { Config } from 'tailwindcss';
 
 export default {
@@ -166,6 +167,10 @@ export default {
     function ({ matchUtilities, theme }: any) {
       matchUtilities({ values: flattenColorPalette(theme('backgroundColor')), type: 'color' });
     },
+    scrollbar({
+      nocompatible: true,
+      preferredStrategy: 'pseudoelements',
+  })
   ],
 } satisfies Config;
 
