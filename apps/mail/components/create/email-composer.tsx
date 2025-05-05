@@ -655,11 +655,9 @@ export function EmailComposer({
           <div className="flex items-center justify-start gap-2">
             <div className="flex items-center justify-start gap-2">
               <button
-                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
+                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSend}
-                disabled={
-                  isLoading || !toEmails.length || !editor.getHTML().trim() || !subjectInput.trim()
-                }
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="text-center text-sm leading-none text-white dark:text-black">
@@ -863,7 +861,7 @@ export function EmailComposer({
               <TooltipTrigger asChild>
                 <button
                   disabled
-                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50"
                 >
                   <Smile className="h-3 w-3 fill-[#9A9A9A]" />
                   <span className="px-0.5 text-sm">Casual</span>
@@ -877,7 +875,7 @@ export function EmailComposer({
               <TooltipTrigger asChild>
                 <button
                   disabled
-                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50"
                 >
                   {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
                   {messageLength >= 50 && messageLength < 200 && (

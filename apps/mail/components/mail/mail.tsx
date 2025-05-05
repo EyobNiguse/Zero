@@ -217,7 +217,7 @@ export function MailLayout() {
               </div>
               <div
                 className={cn(
-                  `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : category[0] === 'Unread' ? 'bg-[#006FFE]' : 'bg-[#F59E0D]'}`,
+                  `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : category[0] === 'Unread' ? 'bg-[#FF4800]' : 'bg-[#F59E0D]'}`,
                   'relative bottom-0.5 z-[5] h-0.5 w-full transition-opacity',
                   isFetching ? 'opacity-100' : 'opacity-0',
                 )}
