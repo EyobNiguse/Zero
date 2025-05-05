@@ -162,6 +162,13 @@ export function AIChat() {
               return (
                 <div key={`${message.id}-${index}`} className="flex flex-col gap-2">
                   {/* Text in chat bubble */}
+                  
+                  {/* Threads below the bubble */}
+                  {toolParts.map((part, idx) =>
+                    'result' in part.toolInvocation && 'threads' in part.toolInvocation.result ? (
+                      <RenderThreads threads={part.toolInvocation.result.threads} key={idx} />
+                    ) : null,
+                  )}
                   {textParts.length > 0 && (
                     <div
                       className={cn(
@@ -175,12 +182,6 @@ export function AIChat() {
                         <Markdown key={part.text}>{part.text}</Markdown>
                       ))}
                     </div>
-                  )}
-                  {/* Threads below the bubble */}
-                  {toolParts.map((part, idx) =>
-                    'result' in part.toolInvocation && 'threads' in part.toolInvocation.result ? (
-                      <RenderThreads threads={part.toolInvocation.result.threads} key={idx} />
-                    ) : null,
                   )}
                 </div>
               );
