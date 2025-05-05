@@ -40,6 +40,7 @@ import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { useConnections } from '@/hooks/use-connections';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
@@ -172,10 +173,18 @@ export function MailLayout() {
   const isMobile = useIsMobile();
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const { data: connections } = useConnections();
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
   const { data: brainState } = useBrainState();
+
+  const activeAccount = useMemo(() => {
+    if (!session?.activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find(
+      (connection) => connection.id === session.activeConnection?.id,
+    );
+  }, [session?.activeConnection?.id, connections?.connections]);
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -301,30 +310,30 @@ export function MailLayout() {
                   <div>
                     <SidebarToggle className="h-fit px-2" />
                   </div>
-                 
+
                   <div className="flex items-center gap-2">
-                  <div>
-                    {mail.bulkSelected.length > 0 ? (
-                      <div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => {
-                                setMail({ ...mail, bulkSelected: [] });
-                              }}
-                              className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
-                            >
-                              <X className="h-3 w-3 fill-[#A0A0A0]" />
-                              <span>esc</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t('common.actions.exitSelectionModeEsc')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    ) : null}
-                  </div>
+                    <div>
+                      {mail.bulkSelected.length > 0 ? (
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  setMail({ ...mail, bulkSelected: [] });
+                                }}
+                                className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
+                              >
+                                <X className="h-3 w-3 fill-[#A0A0A0]" />
+                                <span>esc</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t('common.actions.exitSelectionModeEsc')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      ) : null}
+                    </div>
                     {true ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
@@ -356,7 +365,7 @@ export function MailLayout() {
               <div className="p-2 px-[22px]">
                 <SearchBar />
                 <div className="mt-2">
-                  {folder === 'inbox' && (
+                  {activeAccount?.providerId === 'google' && folder === 'inbox' && (
                     <CategorySelect isMultiSelectMode={mail.bulkSelected.length > 0} />
                   )}
                 </div>
