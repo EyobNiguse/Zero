@@ -1,6 +1,6 @@
 import { connectionToDriver, getActiveConnection } from '@/lib/server-utils';
-import { prompt } from '@/lib/chat-prompts';
-import { HonoContext } from '@/trpc/hono';
+import type { HonoContext } from '@/trpc/hono';
+import { AiChatPrompt } from '@/lib/prompts';
 import { openai } from '@ai-sdk/openai';
 import { Autumn } from 'autumn-js';
 import { streamText } from 'ai';
@@ -43,7 +43,7 @@ export const chatHandler = async (c: HonoContext) => {
 
   const result = streamText({
     model: openai('gpt-4o'),
-    system: prompt,
+    system: AiChatPrompt(),
     messages,
     tools: {
       listThreads: {

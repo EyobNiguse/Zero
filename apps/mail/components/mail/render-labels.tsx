@@ -4,8 +4,8 @@ import { PopoverContent, PopoverTrigger } from '@radix-ui/react-popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { Popover } from '../ui/popover';
+import type { Label } from '@/types';
 import { cn } from '@/lib/utils';
-import { Label } from '@/types';
 import * as React from 'react';
 
 export const RenderLabels = ({ count = 1, labels }: { count?: number; labels: Label[] }) => {

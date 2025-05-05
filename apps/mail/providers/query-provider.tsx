@@ -3,8 +3,8 @@ import { QueryCache, QueryClient, QueryClientProvider, hashKey } from '@tanstack
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client';
 import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { useSession, type Session } from '@/lib/auth-client';
-import { PropsWithChildren } from 'react';
-import { AppRouter } from '@/trpc';
+import type { PropsWithChildren } from 'react';
+import type { AppRouter } from '@/trpc';
 import superjson from 'superjson';
 import { toast } from 'sonner';
 
@@ -35,19 +35,19 @@ export const makeQueryClient = (session: Session | null) =>
 
 let browserQueryClient: QueryClient | undefined = undefined;
 
-function getQueryClient(session: Session | null) {
+const getQueryClient = (session: Session | null) => {
   if (typeof window === 'undefined') {
     return makeQueryClient(session);
   } else {
     if (!browserQueryClient) browserQueryClient = makeQueryClient(session);
     return browserQueryClient;
   }
-}
+};
 
-function getUrl() {
+const getUrl = () => {
   if (typeof window === 'undefined') return process.env.NEXT_PUBLIC_APP_URL + '/api/trpc';
   return window.location.origin + '/api/trpc';
-}
+};
 
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 

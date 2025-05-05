@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/select';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { MessageKey } from '@/config/navigation';
 import { useTRPC } from '@/providers/query-provider';
 import { useMutation } from '@tanstack/react-query';
 import { useSettings } from '@/hooks/use-settings';
-import { MessageKey } from '@/config/navigation';
 import { Laptop, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';

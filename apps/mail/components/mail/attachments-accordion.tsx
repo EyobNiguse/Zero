@@ -1,7 +1,7 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { formatFileSize, getFileIcon } from '@/lib/utils';
+import type { Attachment } from '@/types';
 import { Paperclip } from 'lucide-react';
-import { Attachment } from '@/types';
 
 type Props = {
   attachments: Attachment[];
@@ -65,14 +65,14 @@ const AttachmentsAccordion = ({ attachments, setSelectedAttachment }: Props) => 
                         )}
                       </div>
                       <div className="p-2">
-                        <div className="flex justify-between items-center gap-2">
+                        <div className="flex items-center justify-between gap-2">
                           <span
-                            className="truncate text-sm font-medium max-w-[150px] overflow-hidden whitespace-nowrap text-ellipsis"
+                            className="max-w-[150px] overflow-hidden truncate text-ellipsis whitespace-nowrap text-sm font-medium"
                             title={attachment.filename}
                           >
                             {attachment.filename}
                           </span>
-                          <span className="text-muted-foreground text-xs flex-shrink-0">
+                          <span className="text-muted-foreground flex-shrink-0 text-xs">
                             {formatFileSize(attachment.size)}
                           </span>
                         </div>

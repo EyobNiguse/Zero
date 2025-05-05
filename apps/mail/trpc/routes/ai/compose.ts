@@ -2,7 +2,7 @@ import {
   getWritingStyleMatrixForConnectionId,
   type WritingStyleMatrix,
 } from '@/services/writing-style-service';
-import { StyledEmailAssistantSystemPrompt } from '@/lib/ai-composer-prompts';
+import { StyledEmailAssistantSystemPrompt } from '@/lib/prompts';
 import { activeConnectionProcedure } from '@/trpc/trpc';
 import { stripHtml } from 'string-strip-html';
 import { openai } from '@ai-sdk/openai';
