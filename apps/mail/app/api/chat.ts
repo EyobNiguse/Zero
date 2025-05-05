@@ -2,10 +2,29 @@ import { connectionToDriver, getActiveConnection } from '@/lib/server-utils';
 import { prompt } from '@/lib/chat-prompts';
 import { HonoContext } from '@/trpc/hono';
 import { openai } from '@ai-sdk/openai';
+import { Autumn } from 'autumn-js';
 import { streamText } from 'ai';
 import { z } from 'zod';
 
 export const chatHandler = async (c: HonoContext) => {
+  const { session } = c.var;
+  const canSendMessages = await Autumn.check({
+    feature_id: 'chat-messages',
+    customer_id: session!.user.id,
+  });
+
+  if (!canSendMessages.data) {
+    return c.json({ error: 'Insufficient permissions' }, 403);
+  }
+
+  if (!canSendMessages.data.balance && !canSendMessages.data.unlimited) {
+    return c.json({ error: 'Insufficient plan quota' }, 403);
+  }
+
+  if ((canSendMessages.data.balance ?? 0) <= 0) {
+    return c.json({ error: 'Insufficient plan balance' }, 403);
+  }
+
   const driver = await getActiveConnection(c)
     .then((conn) => connectionToDriver(conn, c))
     .catch((err) => {
@@ -13,7 +32,9 @@ export const chatHandler = async (c: HonoContext) => {
       throw c.json({ error: 'Failed to get active connection' }, 500);
     });
 
-  const messages = await c.req.json().catch((err: Error) => {
+  void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
+
+  const { messages } = await c.req.json().catch((err: Error) => {
     console.error('Error parsing JSON:', err);
     throw c.json({ error: 'Failed to parse request body' }, 400);
   });

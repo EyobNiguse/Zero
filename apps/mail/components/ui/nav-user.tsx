@@ -7,8 +7,6 @@ import {
   MoonIcon,
   Settings,
   Plus,
-  ChevronDown,
-  BrainCircuitIcon,
   BrainIcon,
   CopyCheckIcon,
 } from 'lucide-react';
@@ -24,8 +22,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { dataTagErrorSymbol, useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useConnections } from '@/hooks/use-connections';
@@ -33,11 +29,14 @@ import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
 import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
+import { useBilling } from '@/hooks/use-billing';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
+import { Progress } from './progress';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -56,7 +55,7 @@ export function NavUser() {
   );
   const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
   const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
-
+  const { chatMessages, brainActivity } = useBilling();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -285,7 +284,7 @@ export function NavUser() {
             </DropdownMenu>
           )
         ) : (
-          <div className="mt-0. flex w-full items-center justify-between">
+          <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
               {data?.connections.map((connection) => (
                 <div
@@ -432,6 +431,37 @@ export function NavUser() {
           </div>
         </div>
       )}
+      <div className="space-y-1">
+        <div>
+          <div className="text-muted-foreground flex justify-between text-[10px] uppercase tracking-widest">
+            <span>AI Chats</span>
+            {chatMessages.unlimited ? (
+              <span>Unlimited</span>
+            ) : (
+              <span>
+                {chatMessages.remaining}/{chatMessages.total}
+              </span>
+            )}
+          </div>
+          <Progress className="h-1" value={(chatMessages.remaining! / chatMessages.total) * 100} />
+        </div>
+        <div>
+          <div className="text-muted-foreground flex justify-between text-[10px] uppercase tracking-widest">
+            <span>AI Labels</span>
+            {brainActivity.unlimited ? (
+              <span>Unlimited</span>
+            ) : (
+              <span>
+                {brainActivity.remaining}/{brainActivity.total}
+              </span>
+            )}
+          </div>
+          <Progress
+            className="h-1"
+            value={(brainActivity.remaining! / brainActivity.total) * 100}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -267,8 +267,7 @@ const options = {
               ),
               createdAt: new Date(),
               updatedAt: new Date(),
-            } as any);
-
+            } as typeof connection.$inferInsert);
             // this type error is pissing me tf off
             if (newConnection) {
               void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
