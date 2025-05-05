@@ -115,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </AnimatePresence>
           </SidebarContent>
 
-          <SidebarFooter className={`pb-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
+          <SidebarFooter className={`pb-0 px-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
             <GoldenTicketModal />
             <NavMain items={bottomNavItems} />
           </SidebarFooter>
