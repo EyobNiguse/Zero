@@ -120,11 +120,10 @@ export class GoogleMailManager implements MailManager {
     );
   }
 
-  public getUserInfo(tokens: ManagerConfig['auth']) {
+  public getUserInfo() {
     return this.withErrorHandler(
       'getUserInfo',
       async () => {
-        this.auth.setCredentials({ ...tokens, scope: this.getScope() });
         const res = await google
           .people({ version: 'v1', auth: this.auth })
           .people.get({ resourceName: 'people/me', personFields: 'names,photos,emailAddresses' });
@@ -134,7 +133,7 @@ export class GoogleMailManager implements MailManager {
           photo: res.data.photos?.[0]?.url ?? '',
         };
       },
-      { tokens },
+      {},
     );
   }
 

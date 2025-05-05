@@ -48,7 +48,6 @@ import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useTRPC } from '@/providers/query-provider';
 import { useThreadLabels } from '@/hooks/use-labels';
-import type { VirtuosoHandle } from 'react-virtuoso';
 import { useKeyState } from '@/hooks/use-hot-key';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
@@ -170,7 +169,6 @@ const Thread = memo(
     demoMessage,
     index,
   }: ConditionalThreadProps & { index?: number }) => {
-    const [mail] = useMail();
     const [searchValue, setSearchValue] = useSearchValue();
     const t = useTranslations();
     const { folder } = useParams<{ folder: string }>();
@@ -451,27 +449,20 @@ const Thread = memo(
 
     const content =
       latestMessage && getThreadData ? (
-        <div className="select-none py-1" onClick={onClick ? onClick(latestMessage) : undefined}>
+        <div className={'select-none'} onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative mx-[8px] flex cursor-pointer flex-col items-start rounded-[10px] border-transparent py-3 text-left text-sm transition-all hover:opacity-100',
+              'hover:bg-offsetLight hover:bg-primary/5 group relative mx-1 flex cursor-pointer flex-col items-start rounded-lg border-transparent py-2 text-left text-sm transition-all hover:opacity-100',
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
               isKeyboardFocused && 'ring-primary/50',
               'relative',
             )}
           >
-            <div
-              className={cn(
-                'absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
-                isMailBulkSelected && 'translate-x-0',
-              )}
-            />
-
             {/* Quick Action Row */}
             {isHovered && !isMobile && (
               <div
@@ -557,30 +548,12 @@ const Thread = memo(
                     <Check className="h-4 w-4 text-white" />
                   </div>
                   {isGroupThread ? (
-                    <div
-                      className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        const threadId = latestMessage.threadId ?? message.id;
-                        setMail((prev: Config) => ({
-                          ...prev,
-                          bulkSelected: [...prev.bulkSelected, threadId],
-                        }));
-                      }}
-                    >
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#FFFFFF] p-2 dark:bg-[#373737]">
                       <GroupPeople className="h-4 w-4" />
                     </div>
                   ) : (
                     <>
                       <AvatarImage
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          const threadId = latestMessage.threadId ?? message.id;
-                          setMail((prev: Config) => ({
-                            ...prev,
-                            bulkSelected: [...prev.bulkSelected, threadId],
-                          }));
-                        }}
                         className="rounded-full bg-[#FFFFFF] dark:bg-[#373737]"
                         src={getEmailLogo(latestMessage.sender.email)}
                       />
@@ -665,7 +638,7 @@ const Thread = memo(
                         {highlightText(latestMessage.subject, searchValue.highlight)}
                       </p>
                     )}
-                    {threadLabels ? <MailLabels labels={threadLabels} /> : null}
+                    {getThreadData.labels ? <MailLabels labels={getThreadData.labels} /> : null}
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
@@ -787,7 +760,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   }, [refetch]);
 
   const parentRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<VirtuosoHandle>(null);
 
   const handleNavigateToThread = useCallback(
     (threadId: string) => {
@@ -938,7 +910,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </div>
             </div>
           ) : (
-            <>
+            <div className="flex flex-col gap-2">
               {items
                 .filter((data) => data.id)
                 .map((data, index) => {
@@ -981,7 +953,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
                   )}
                 </Button>
               )}
-            </>
+            </div>
           )}
         </ScrollArea>
       </div>

@@ -1,14 +1,15 @@
 import HomeContent from '@/components/home/HomeContent';
-import Speed from '@/components/home/speed';
-import { getSession } from '@/lib/auth-client';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 
 export default async function Home() {
-  //   const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
 
-  //   if (session.data) {
-  //     redirect('/mail/inbox');
-  //   }
+  if (session?.connectionId) {
+    redirect('/mail/inbox');
+  }
 
   return (
     <div>

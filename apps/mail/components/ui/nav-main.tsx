@@ -436,7 +436,7 @@ export function NavMain({ items }: NavMainProps) {
                     <LabelSidebarContextMenu labelId={label.id} key={label.id}>
                       <div
                         onClick={handleFilterByLabel(label)}
-                        className="flex items-center gap-2 text-sm"
+                        className="flex cursor-pointer items-center gap-2 text-sm"
                       >
                         <span
                           className={cn(
