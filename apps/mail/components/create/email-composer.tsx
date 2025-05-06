@@ -101,8 +101,6 @@ export function EmailComposer({
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
   const [draftId, setDraftId] = useState<string | null>(null);
-
-  // const { data: draft } = useDraft(draftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
 
