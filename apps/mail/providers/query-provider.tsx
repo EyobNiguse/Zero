@@ -34,8 +34,8 @@ export const makeQueryClient = (session: Session | null) =>
     queryCache: new QueryCache({
       onError: (err, { meta }) => {
         if (meta && meta.noGlobalError === true) return;
-        if (meta && typeof meta.customError === 'string') toast.error(meta.customError);
-        else toast.error(err.message || 'Something went wrong');
+        // if (meta && typeof meta.customError === 'string') toast.error(meta.customError);
+        // else toast.error(err.message || 'Something went wrong');
       },
     }),
     defaultOptions: {
@@ -49,9 +49,9 @@ export const makeQueryClient = (session: Session | null) =>
           ]),
         gcTime: 1000 * 60 * 60 * 24,
       },
-      mutations: {
-        onError: (err) => toast.error(err.message),
-      },
+      //   mutations: {
+      //     onError: (err) => toast.error(err.message),
+      //   },
     },
   });
 
