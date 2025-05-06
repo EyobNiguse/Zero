@@ -1,6 +1,5 @@
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { cookiePreferencesRouter } from './routes/cookies';
-import { earlyAccessRouter } from './routes/early-access';
 import { connectionsRouter } from './routes/connections';
 import { shortcutRouter } from './routes/shortcut';
 import { settingsRouter } from './routes/settings';
@@ -20,7 +19,6 @@ export const appRouter = router({
   connections: connectionsRouter,
   cookiePreferences: cookiePreferencesRouter,
   drafts: draftsRouter,
-  earlyAccess: earlyAccessRouter,
   labels: labelsRouter,
   mail: mailRouter,
   notes: notesRouter,

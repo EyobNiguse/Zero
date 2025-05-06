@@ -25,7 +25,7 @@ import {
   Trash,
   MailOpen,
 } from 'lucide-react';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
+import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -312,7 +312,7 @@ export function ThreadContextMenu({
           label: t('common.mail.deleteFromBin'),
           icon: <Trash className="mr-2.5 h-4 w-4" />,
           action: handleDelete(),
-          disabled: false,
+          disabled: true,
         },
       ];
     }

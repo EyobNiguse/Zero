@@ -1,4 +1,4 @@
-import { CoreMessage, generateText, tool } from 'ai';
+import { type CoreMessage, generateText, tool } from 'ai';
 import { activeDriverProcedure } from '@/trpc/trpc';
 import { type gmail_v1 } from 'googleapis';
 import { TRPCError } from '@trpc/server';
@@ -75,7 +75,7 @@ export const generateSearchQuery = activeDriverProcedure
       } as const;
 
       const { text, steps } = await generateText({
-        model: openai('gpt-3.5-turbo'),
+        model: openai('gpt-4o'),
         messages: [systemMessage, ...messages],
         tools: {
           emailSearch: emailSearchTool,

@@ -1,11 +1,30 @@
 import { connectionToDriver, getActiveConnection } from '@/lib/server-utils';
-import { prompt } from '@/lib/chat-prompts';
-import { HonoContext } from '@/trpc/hono';
+import type { HonoContext } from '@/trpc/hono';
+import { AiChatPrompt } from '@/lib/prompts';
 import { openai } from '@ai-sdk/openai';
+import { Autumn } from 'autumn-js';
 import { streamText } from 'ai';
 import { z } from 'zod';
 
 export const chatHandler = async (c: HonoContext) => {
+  const { session } = c.var;
+  const canSendMessages = await Autumn.check({
+    feature_id: 'chat-messages',
+    customer_id: session!.user.id,
+  });
+
+  if (!canSendMessages.data) {
+    return c.json({ error: 'Insufficient permissions' }, 403);
+  }
+
+  if (!canSendMessages.data.balance && !canSendMessages.data.unlimited) {
+    return c.json({ error: 'Insufficient plan quota' }, 403);
+  }
+
+  if ((canSendMessages.data.balance ?? 0) <= 0) {
+    return c.json({ error: 'Insufficient plan balance' }, 403);
+  }
+
   const driver = await getActiveConnection(c)
     .then((conn) => connectionToDriver(conn, c))
     .catch((err) => {
@@ -13,16 +32,28 @@ export const chatHandler = async (c: HonoContext) => {
       throw c.json({ error: 'Failed to get active connection' }, 500);
     });
 
-  const messages = await c.req.json().catch((err: Error) => {
-    console.error('Error parsing JSON:', err);
-    throw c.json({ error: 'Failed to parse request body' }, 400);
-  });
+  const { messages, threadId, currentFolder, currentFilter } = await c.req
+    .json()
+    .catch((err: Error) => {
+      console.error('Error parsing JSON:', err);
+      throw c.json({ error: 'Failed to parse request body' }, 400);
+    });
 
   const result = streamText({
     model: openai('gpt-4o'),
-    system: prompt,
+    system: AiChatPrompt(threadId, currentFolder, currentFilter),
     messages,
     tools: {
+      getThread: {
+        description: 'Get a thread by ID',
+        parameters: z.object({
+          threadId: z.string().describe('The thread ID to get'),
+        }),
+        execute: async ({ threadId }) => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
+          return driver.get(threadId);
+        },
+      },
       listThreads: {
         description: 'List email threads',
         parameters: z.object({
@@ -32,10 +63,11 @@ export const chatHandler = async (c: HonoContext) => {
             .default('inbox')
             .describe('The folder to list threads from'),
           query: z.string().optional().describe('The search query'),
-          maxResults: z.number().optional().default(20).describe('The maximum number of results'),
+          maxResults: z.number().optional().default(5).describe('The maximum number of results'),
           labelIds: z.array(z.string()).optional().describe('The label IDs to filter by'),
         }),
         execute: async ({ folder, query, maxResults, labelIds }) => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           return driver.list({ folder, query, maxResults, labelIds });
         },
       },
@@ -45,6 +77,7 @@ export const chatHandler = async (c: HonoContext) => {
           threadIds: z.array(z.string()).describe('Array of thread IDs to archive'),
         }),
         execute: async ({ threadIds }) => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           await driver.modifyLabels(threadIds, {
             removeLabels: ['INBOX'],
             addLabels: [],
@@ -58,6 +91,7 @@ export const chatHandler = async (c: HonoContext) => {
           threadIds: z.array(z.string()).describe('Array of thread IDs to mark as read'),
         }),
         execute: async ({ threadIds }) => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           await driver.markAsRead(threadIds);
           return { marked: threadIds.length };
         },
@@ -68,6 +102,7 @@ export const chatHandler = async (c: HonoContext) => {
           threadIds: z.array(z.string()).describe('Array of thread IDs to mark as unread'),
         }),
         execute: async ({ threadIds }) => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           await driver.markAsUnread(threadIds);
           return { marked: threadIds.length };
         },
@@ -80,9 +115,8 @@ export const chatHandler = async (c: HonoContext) => {
           textColor: z.string().optional().describe('Text color for the label'),
         }),
         execute: async ({ name, backgroundColor = '#f691b3', textColor = '#434343' }) => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           try {
-            console.log({ backgroundColor, textColor });
-
             const label = await driver.createLabel({
               name,
               color: { backgroundColor, textColor },
@@ -102,6 +136,7 @@ export const chatHandler = async (c: HonoContext) => {
           labelIds: z.array(z.string()).describe('Array of label IDs to add'),
         }),
         execute: async ({ threadIds, labelIds }) => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           await driver.modifyLabels(threadIds, {
             addLabels: labelIds,
             removeLabels: [],
@@ -113,6 +148,7 @@ export const chatHandler = async (c: HonoContext) => {
         description: 'Get all user labels',
         parameters: z.object({}),
         execute: async () => {
+          void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           return driver.getUserLabels();
         },
       },

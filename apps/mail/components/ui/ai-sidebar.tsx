@@ -12,7 +12,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/comp
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { ResizablePanelGroup, ResizablePanel } from '@/components/ui/resizable';
-import { StyledEmailAssistantSystemPrompt } from '@/lib/ai-composer-prompts';
+import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
 import { useEditor } from '@/components/providers/editor-provider';
 import { AIChat } from '@/components/create/ai-chat';
 import { X, Paper } from '@/components/icons/icons';
@@ -20,7 +20,6 @@ import { GitBranchPlus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { usePathname } from 'next/navigation';
-import { prompt } from '@/lib/chat-prompts';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
 import { cn } from '@/lib/utils';
@@ -146,10 +145,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                             </TooltipTrigger>
                             <TooltipContent>Prompts</TooltipContent>
                           </Tooltip>
-                          <DialogContent
-                            showOverlay={true}
-                            className="dark:bg-panelDark bg-panelLight max-w-2xl rounded-2xl p-4"
-                          >
+                          <DialogContent showOverlay={true}>
                             <DialogHeader>
                               <DialogTitle>AI System Prompts</DialogTitle>
                               <DialogDescription>
@@ -169,7 +165,11 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                                 <GitBranchPlus className="h-4 w-4" />
                               </Link>
                             </div>
-                            <Textarea className="min-h-60" readOnly value={prompt} />
+                            <Textarea
+                              className="min-h-60"
+                              readOnly
+                              value={AiChatPrompt('', '', '')}
+                            />
                             <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
                               <span>Zero Compose / System Prompt</span>
                               <Link

@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useTRPC } from '@/providers/query-provider';
 import { useMutation } from '@tanstack/react-query';
+import { useRef, useState, useEffect } from 'react';
 import { cn, formatFileSize } from '@/lib/utils';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
@@ -25,10 +26,8 @@ import { serializeFiles } from '@/lib/schemas';
 import { Input } from '@/components/ui/input';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
-import { useRef, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import pluralize from 'pluralize';
-import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -56,6 +55,7 @@ interface EmailComposerProps {
   }) => Promise<void>;
   onClose?: () => void;
   className?: string;
+  autofocus?: boolean;
 }
 
 const isValidEmail = (email: string): boolean => {
@@ -86,6 +86,7 @@ export function EmailComposer({
   onSendEmail,
   onClose,
   className,
+  autofocus = false,
 }: EmailComposerProps) {
   const [showCc, setShowCc] = useState(initialCc.length > 0);
   const [showBcc, setShowBcc] = useState(initialBcc.length > 0);
@@ -96,7 +97,7 @@ export function EmailComposer({
   const toInputRef = useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const [mode] = useQueryState('mode');
-  const [isComposeOpen] = useQueryState('isComposeOpen');
+  const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
   const [draftId] = useQueryState('draftId');
@@ -231,14 +232,24 @@ export function EmailComposer({
     },
     onModEnter: () => {
       void handleSend();
-
       return true;
     },
     onAttachmentsChange: (files) => {
       handleAttachment(files);
     },
     placeholder: 'Start your email here',
+    autofocus,
   });
+
+  // Add effect to focus editor when component mounts
+  useEffect(() => {
+    if (autofocus && editor) {
+      const timeoutId = setTimeout(() => {
+        editor.commands.focus('end');
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [editor, autofocus]);
 
   const handleSend = async () => {
     try {
@@ -256,6 +267,7 @@ export function EmailComposer({
       setHasUnsavedChanges(false);
       editor.commands.clearContent(true);
       form.reset();
+      setIsComposeOpen(null);
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');
@@ -312,7 +324,7 @@ export function EmailComposer({
 
     if (!hasUnsavedChanges) return;
     console.log('DRAFT HTML', editor.getHTML());
-    const messageText = editor.getHTML();
+    const messageText = editor.getText();
     console.log(values, messageText);
     if (!values.to.length || !values.subject.length || !messageText.length) return;
 
@@ -323,7 +335,7 @@ export function EmailComposer({
         cc: values.cc?.join(', '),
         bcc: values.bcc?.join(', '),
         subject: values.subject,
-        message: messageText,
+        message: editor.getHTML(),
         attachments: await serializeFiles(values.attachments ?? []),
         id: draftId,
       };
@@ -655,11 +667,9 @@ export function EmailComposer({
           <div className="flex items-center justify-start gap-2">
             <div className="flex items-center justify-start gap-2">
               <button
-                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white"
+                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white"
                 onClick={handleSend}
-                disabled={
-                  isLoading || !toEmails.length || !editor.getHTML().trim() || !subjectInput.trim()
-                }
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-2.5 pl-0.5">
                   <div className="text-center text-sm leading-none text-white dark:text-black">
@@ -863,7 +873,7 @@ export function EmailComposer({
               <TooltipTrigger asChild>
                 <button
                   disabled
-                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50"
                 >
                   <Smile className="h-3 w-3 fill-[#9A9A9A]" />
                   <span className="px-0.5 text-sm">Casual</span>
@@ -877,7 +887,7 @@ export function EmailComposer({
               <TooltipTrigger asChild>
                 <button
                   disabled
-                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10"
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50"
                 >
                   {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
                   {messageLength >= 50 && messageLength < 200 && (

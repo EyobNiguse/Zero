@@ -1,5 +1,5 @@
+import type { HonoContext } from '@/trpc/hono';
 import { connection } from '@zero/db/schema';
-import { HonoContext } from '@/trpc/hono';
 import { createDriver } from './driver';
 import { and, eq } from 'drizzle-orm';
 
@@ -21,11 +21,11 @@ export const getActiveConnection = async (c: HonoContext) => {
   return activeConnection;
 };
 
-export const connectionToDriver = async (
+export const connectionToDriver = (
   activeConnection: typeof connection.$inferSelect,
   c: HonoContext,
 ) => {
-  const driver = await createDriver(activeConnection.providerId, {
+  const driver = createDriver(activeConnection.providerId, {
     auth: {
       accessToken: activeConnection.accessToken,
       refreshToken: activeConnection.refreshToken!,

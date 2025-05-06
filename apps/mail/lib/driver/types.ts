@@ -14,6 +14,8 @@ export interface IGetThreadResponse {
 export interface ParsedDraft<T = unknown> {
   id: string;
   to?: string[];
+  cc?: string[];
+  bcc?: string[];
   subject?: string;
   content?: string;
   rawMessage?: T;
@@ -62,7 +64,7 @@ export interface MailManager {
     code: string,
   ): Promise<{ tokens: { access_token?: string; refresh_token?: string; expiry_date?: number } }>;
   getUserInfo(
-    tokens: ManagerConfig['auth'],
+    tokens?: ManagerConfig['auth'],
   ): Promise<{ address: string; name: string; photo: string }>;
   getScope(): string;
   markAsRead(threadIds: string[]): Promise<void>;

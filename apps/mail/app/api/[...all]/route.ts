@@ -1,6 +1,6 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { mailtoHandler } from '../mailto-handler';
-import { HonoVariables } from '@/trpc/hono';
+import type { HonoVariables } from '@/trpc/hono';
 import { chatHandler } from '../chat';
 import { appRouter } from '@/trpc';
 import { auth } from '@/lib/auth';
@@ -28,7 +28,7 @@ const api = new Hono<{ Variables: HonoVariables }>()
       },
     }),
   )
-  .get('/chat', async (c) => chatHandler(c))
+  .post('/chat', async (c) => chatHandler(c))
   .get('/mailto-handler', async (c) => mailtoHandler(c))
   .onError(async (err, c) => {
     if (err instanceof Response) return err;

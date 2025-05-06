@@ -1,24 +1,21 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   connection,
   user as _user,
   account,
   userSettings,
-  earlyAccess,
   session,
   userHotkeys,
 } from '@zero/db/schema';
+import { type Account, betterAuth, type BetterAuthOptions } from 'better-auth';
 import { createAuthMiddleware, customSession } from 'better-auth/plugins';
-import { Account, betterAuth, type BetterAuthOptions } from 'better-auth';
 import { getBrowserTimezone, isValidTimezone } from '@/lib/timezones';
 import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
-import { getActiveDriver } from '@/lib/driver-utils';
-import { enableBrainFunction } from './brain';
+import { getActiveDriver } from '@/lib/driver/utils';
 import { createDriver } from '@/lib/driver';
 import { APIError } from 'better-auth/api';
-import { resend } from './resend';
+import { resend } from './services';
 import { eq } from 'drizzle-orm';
 import { db } from '@zero/db';
 
@@ -28,18 +25,12 @@ const connectionHandlerHook = async (account: Account) => {
     throw new APIError('EXPECTATION_FAILED', { message: 'Missing Access/Refresh Tokens' });
   }
 
-  const driver = await createDriver(account.providerId, {
+  const driver = createDriver(account.providerId, {
     auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
   });
-  const userInfo = await driver
-    .getUserInfo({
-      accessToken: account.accessToken,
-      refreshToken: account.refreshToken,
-      email: '',
-    })
-    .catch(() => {
-      throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
-    });
+  const userInfo = await driver.getUserInfo().catch(() => {
+    throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
+  });
 
   if (!userInfo?.address) {
     console.error('Missing email in user info:', { userInfo });
@@ -171,48 +162,18 @@ const options = {
   },
   plugins: [
     customSession(async ({ user, session }) => {
-      const [foundUser] = await db
-        .select({
-          activeConnectionId: _user.defaultConnectionId,
-          hasUsedTicket: earlyAccess.hasUsedTicket,
-        })
-        .from(_user)
-        .leftJoin(earlyAccess, eq(_user.email, earlyAccess.email))
-        .where(eq(_user.id, user.id))
-        .limit(1);
-
-      //   // Check early access and proceed
-      //   if (
-      //     !foundUser?.hasEarlyAccess &&
-      //     process.env.NODE_ENV === 'production' &&
-      //     process.env.EARLY_ACCESS_ENABLED
-      //   ) {
-      //     await db
-      //       .insert(earlyAccess)
-      //       .values({
-      //         id: crypto.randomUUID(),
-      //         email: user.email,
-      //         createdAt: new Date(),
-      //         updatedAt: new Date(),
-      //       })
-      //       .catch((err) =>
-      //         console.log('Tried to add user to earlyAccess after error, failed', foundUser, err),
-      //       );
-      //     try {
-      //       throw redirect('/login?error=early_access_required');
-      //     } catch (error) {
-      //       console.warn('Error redirecting to login page:', error);
-      //     }
-      //   }
+      const foundUser = await db.query.user.findFirst({
+        where: eq(_user.id, user.id),
+      });
 
       let activeConnection = null;
 
-      if (foundUser?.activeConnectionId) {
+      if (foundUser?.defaultConnectionId) {
         // Get the active connection details
         const [connectionDetails] = await db
           .select()
           .from(connection)
-          .where(eq(connection.id, foundUser.activeConnectionId))
+          .where(eq(connection.id, foundUser.defaultConnectionId))
           .limit(1);
 
         if (connectionDetails) {
@@ -232,7 +193,7 @@ const options = {
         }
       }
 
-      if (!foundUser?.activeConnectionId) {
+      if (!foundUser?.defaultConnectionId) {
         const [defaultConnection] = await db
           .select()
           .from(connection)
@@ -273,11 +234,10 @@ const options = {
               ),
               createdAt: new Date(),
               updatedAt: new Date(),
-            } as any);
-
+            } as typeof connection.$inferInsert);
             // this type error is pissing me tf off
             if (newConnection) {
-              void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
+              //   void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
               console.warn('Created new connection for user', user.email);
             }
           }
@@ -289,7 +249,6 @@ const options = {
         activeConnection,
         user,
         session,
-        hasUsedTicket: foundUser?.hasUsedTicket ?? false,
       };
     }),
   ],

@@ -6,15 +6,20 @@ import {
   fromBinary,
   sanitizeContext,
   StandardizedError,
-} from '../driver-utils';
-import { parseAddressList, parseFrom, wasSentWithTLS } from '@/lib/email-utils';
-import { IOutgoingMessage, Label, ParsedMessage } from '@/types';
+} from './utils';
+import {
+  formatMimeRecipients,
+  parseAddressList,
+  parseFrom,
+  wasSentWithTLS,
+} from '@/lib/email-utils';
+import type { IOutgoingMessage, Label, ParsedMessage } from '@/types';
 import { sanitizeTipTapHtml } from '../sanitize-tip-tap-html';
+import type { MailManager, ManagerConfig } from './types';
 import { withExponentialBackoff } from '@/app/api/utils';
-import { MailManager, ManagerConfig } from './types';
+import type { CreateDraftData } from '../schemas';
 import { gmail_v1, google } from 'googleapis';
 import { setTimeout } from 'timers/promises';
-import { CreateDraftData } from '../schemas';
 import { createMimeMessage } from 'mimetext';
 import { cleanSearchValue } from '../utils';
 import * as he from 'he';
@@ -120,11 +125,10 @@ export class GoogleMailManager implements MailManager {
     );
   }
 
-  public getUserInfo(tokens: ManagerConfig['auth']) {
+  public getUserInfo() {
     return this.withErrorHandler(
       'getUserInfo',
       async () => {
-        this.auth.setCredentials({ ...tokens, scope: this.getScope() });
         const res = await google
           .people({ version: 'v1', auth: this.auth })
           .people.get({ resourceName: 'people/me', personFields: 'names,photos,emailAddresses' });
@@ -134,7 +138,7 @@ export class GoogleMailManager implements MailManager {
           photo: res.data.photos?.[0]?.url ?? '',
         };
       },
-      { tokens },
+      {},
     );
   }
 
@@ -357,10 +361,13 @@ export class GoogleMailManager implements MailManager {
               return fullEmailData;
             }),
           );
+          const lastMessageThatIsNotFromMe = messages.findLast(
+            (m) => m.sender.email !== this.config.auth?.email,
+          );
           return {
             labels: Array.from(labels).map((id) => ({ id, name: id })),
             messages,
-            latest: messages[messages.length - 1],
+            latest: lastMessageThatIsNotFromMe ?? messages[messages.length - 1],
             hasUnread,
             totalReplies: messages.length,
           };
@@ -972,6 +979,18 @@ export class GoogleMailManager implements MailManager {
         ?.value?.split(',')
         .map((e) => e.trim())
         .filter(Boolean) || [];
+    const cc =
+      headers
+        .find((h) => h.name === 'Cc')
+        ?.value?.split(',')
+        .map((e) => e.trim())
+        .filter(Boolean) || [];
+    const bcc =
+      headers
+        .find((h) => h.name === 'Bcc')
+        ?.value?.split(',')
+        .map((e) => e.trim())
+        .filter(Boolean) || [];
     const subject = headers.find((h) => h.name === 'Subject')?.value;
 
     let content = '';
@@ -988,11 +1007,11 @@ export class GoogleMailManager implements MailManager {
       }
     }
 
-    // TODO: Hook up CC and BCC from the draft so it can populate the composer on open.
-
     return {
       id: draft.id || '',
       to,
+      cc,
+      bcc,
       subject: subject ? he.decode(subject).trim() : '',
       content,
       rawMessage: draft.message,

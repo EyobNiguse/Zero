@@ -1,7 +1,15 @@
-import { pgTableCreator, text, timestamp, boolean, integer, jsonb, primaryKey } from 'drizzle-orm/pg-core';
+import {
+  pgTableCreator,
+  text,
+  timestamp,
+  boolean,
+  integer,
+  jsonb,
+  primaryKey,
+} from 'drizzle-orm/pg-core';
+import type { WritingStyleMatrix } from '@zero/mail/services/writing-style-service';
 import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { unique } from 'drizzle-orm/pg-core';
-import type { WritingStyleMatrix } from '@zero/mail/services/writing-style-service';
 
 export const createTable = pgTableCreator((name) => `mail0_${name}`);
 
@@ -133,17 +141,24 @@ export const userSettings = createTable('user_settings', {
   updatedAt: timestamp('updated_at').notNull(),
 });
 
-export const writingStyleMatrix = createTable('writing_style_matrix', {
-  connectionId: text()
-    .notNull()
-    .references(() => connection.id),
-  numMessages: integer().notNull(),
-  style: jsonb().$type<WritingStyleMatrix>().notNull(),
-  updatedAt: timestamp().defaultNow().notNull().$onUpdate(() => new Date())
-}, (table) => {
-  return [
-    primaryKey({
-      columns: [table.connectionId],
-    }),
-  ]
-})
+export const writingStyleMatrix = createTable(
+  'writing_style_matrix',
+  {
+    connectionId: text()
+      .notNull()
+      .references(() => connection.id, { onDelete: 'cascade' }),
+    numMessages: integer().notNull(),
+    style: jsonb().$type<WritingStyleMatrix>().notNull(),
+    updatedAt: timestamp()
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => {
+    return [
+      primaryKey({
+        columns: [table.connectionId],
+      }),
+    ];
+  },
+);

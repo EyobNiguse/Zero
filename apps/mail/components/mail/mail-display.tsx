@@ -34,7 +34,7 @@ import AttachmentsAccordion from './attachments-accordion';
 import { cn, getEmailLogo, formatDate } from '@/lib/utils';
 import { useBrainState } from '../../hooks/use-summary';
 import { useThreadLabels } from '@/hooks/use-labels';
-import { Sender, type ParsedMessage } from '@/types';
+import type { Sender, ParsedMessage } from '@/types';
 import { Markdown } from '@react-email/components';
 import AttachmentDialog from './attachment-dialog';
 import { useSummary } from '@/hooks/use-summary';
@@ -250,7 +250,7 @@ const AiSummary = () => {
   };
 
   if (isLoading) return null;
-  if (!summary?.short.length) return null;
+  if (!summary?.short?.length) return null;
 
   return (
     <div
@@ -266,7 +266,9 @@ const AiSummary = () => {
           />
         )}
       </div>
-      {showSummary && <Markdown>{summary?.short || ''}</Markdown>}
+      {showSummary && (
+        <Markdown markdownContainerStyles={{ fontSize: 12 }}>{summary?.short || ''}</Markdown>
+      )}
     </div>
   );
 };
@@ -762,7 +764,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                 </div>
               )}
               {emailData?.attachments && emailData?.attachments.length > 0 ? (
-                <div className="mb-4 flex items-center gap-2 px-4 pt-4">
+                <div className="mb-4 flex flex-wrap items-center gap-2 px-4 pt-4">
                   {emailData?.attachments.map((attachment, index) => (
                     <div key={index}>
                       <button
@@ -793,10 +795,10 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                         }}
                       >
                         {getFileIcon(attachment.filename)}
-                        <span className="text-black dark:text-white">
+                        <span className="max-w-[15ch] truncate text-sm text-black dark:text-white">
                           {attachment.filename}
                         </span>{' '}
-                        <span className="text-[#6D6D6D] dark:text-[#929292]">
+                        <span className="whitespace-nowrap text-sm text-[#6D6D6D] dark:text-[#929292]">
                           {formatFileSize(attachment.size)}
                         </span>
                       </button>

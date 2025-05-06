@@ -11,9 +11,9 @@ import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { useDraft } from '@/hooks/use-drafts';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import type { Sender } from '@/types';
 import { useQueryState } from 'nuqs';
-import { useEffect } from 'react';
-import { Sender } from '@/types';
 import { toast } from 'sonner';
 
 interface ReplyComposeProps {
@@ -183,6 +183,16 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
     };
   }, [mode, enableScope, disableScope]);
 
+  // Add effect to handle initial focus
+  const [shouldFocus, setShouldFocus] = useState(true);
+  useEffect(() => {
+    if (mode) {
+      setShouldFocus(true);
+    } else {
+      setShouldFocus(false);
+    }
+  }, [mode]);
+
   if (!mode || !emailData) return null;
 
   if (draftId && isDraftLoading) {
@@ -210,19 +220,18 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
               if (recipient.name) {
                 to.push(recipient.name);
               }
-
               return to;
             }, []),
             cc: message.cc?.reduce<string[]>((cc, recipient) => {
               if (recipient.name) {
                 cc.push(recipient.name);
               }
-
               return cc;
             }, []),
             subject: message.subject,
           };
         })}
+        autofocus={shouldFocus}
       />
     </div>
   );

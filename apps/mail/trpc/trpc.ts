@@ -1,8 +1,8 @@
 import { connectionToDriver, getActiveConnection } from '@/lib/server-utils';
-import { Ratelimit, RatelimitConfig } from '@upstash/ratelimit';
-import { HonoContext, HonoVariables } from './hono';
+import { Ratelimit, type RatelimitConfig } from '@upstash/ratelimit';
+import type { HonoContext, HonoVariables } from './hono';
 import { initTRPC, TRPCError } from '@trpc/server';
-import { redis } from '@/lib/redis';
+import { redis } from '@/lib/services';
 import superjson from 'superjson';
 
 type TrpcContext = {
@@ -34,7 +34,7 @@ export const activeConnectionProcedure = privateProcedure.use(async ({ ctx, next
 
 export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx, next }) => {
   const { activeConnection } = ctx;
-  const driver = await connectionToDriver(activeConnection, ctx.c);
+  const driver = connectionToDriver(activeConnection, ctx.c);
   return next({ ctx: { ...ctx, driver } });
 });
 

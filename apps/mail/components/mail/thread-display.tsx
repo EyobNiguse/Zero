@@ -26,8 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { CircleAlertIcon, Inbox, ShieldAlertIcon, StopCircleIcon } from 'lucide-react';
+import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
@@ -42,6 +42,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useStats } from '@/hooks/use-stats';
 import ThreadSubject from './thread-subject';
+import type { ParsedMessage } from '@/types';
 import ReplyCompose from './reply-composer';
 import { Separator } from '../ui/separator';
 import { useTranslations } from 'next-intl';
@@ -49,7 +50,6 @@ import { useMail } from '../mail/use-mail';
 import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
-import { ParsedMessage } from '@/types';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
@@ -522,21 +522,23 @@ export function ThreadDisplay() {
                   </Tooltip>
                 </TooltipProvider>
 
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => moveThreadTo('bin')}
-                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
-                      >
-                        <Trash className="fill-[#F43F5E]" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
-                      {t('common.mail.moveToBin')}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {!isInBin && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => moveThreadTo('bin')}
+                          className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
+                        >
+                          <Trash className="fill-[#F43F5E]" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                        {t('common.mail.moveToBin')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

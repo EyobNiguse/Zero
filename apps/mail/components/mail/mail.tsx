@@ -33,6 +33,7 @@ import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
+import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useAISidebar } from '@/components/ui/ai-sidebar';
@@ -46,6 +47,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
@@ -62,7 +64,7 @@ export function MailLayout() {
   const folder = params?.folder ?? 'inbox';
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const t = useTranslations();
@@ -86,18 +88,6 @@ export function MailLayout() {
   const [{ isLoading, isFetching }] = useThreads();
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
-
-  // Check if we're on mobile on mount and when window resizes
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768); // 768px is the 'md' breakpoint
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   const [threadId, setThreadId] = useQueryState('threadId');
 
@@ -217,7 +207,7 @@ export function MailLayout() {
               </div>
               <div
                 className={cn(
-                  `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : category[0] === 'Unread' ? 'bg-[#006FFE]' : 'bg-[#F59E0D]'}`,
+                  `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : category[0] === 'Unread' ? 'bg-[#FF4800]' : 'bg-[#F59E0D]'}`,
                   'relative bottom-0.5 z-[5] h-0.5 w-full transition-opacity',
                   isFetching ? 'opacity-100' : 'opacity-0',
                 )}
@@ -269,6 +259,7 @@ export function MailLayout() {
 function BulkSelectActions() {
   const t = useTranslations();
   const [errorQty, setErrorQty] = useState(0);
+  const [threadId, setThreadId] = useQueryState('threadId');
   const [isLoading, setIsLoading] = useState(false);
   const [isUnsub, setIsUnsub] = useState(false);
   const [mail, setMail] = useMail();
@@ -281,6 +272,7 @@ function BulkSelectActions() {
   const { mutateAsync: markAsImportant } = useMutation(trpc.mail.markAsImportant.mutationOptions());
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
+  const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
 
   const handleMassUnsubscribe = async () => {
@@ -314,12 +306,12 @@ function BulkSelectActions() {
     );
   };
 
-  //   const onMoveSuccess = useCallback(async () => {
-  //     await mutateThreads();
-  //     await mutateStats();
-  //     setMail({ ...mail, bulkSelected: [] });
-  //   }, [mail, setMail, mutateThreads, mutateStats]);
-  const onMoveSuccess = useCallback(async () => {}, []);
+  const onMoveSuccess = useCallback(async () => {
+    if (threadId && mail.bulkSelected.includes(threadId)) setThreadId(null);
+    refetchThreads();
+    refetchStats();
+    setMail({ ...mail, bulkSelected: [] });
+  }, [mail, setMail, refetchThreads, refetchStats, threadId, setThreadId]);
 
   return (
     <div className="flex items-center gap-2">
@@ -435,7 +427,6 @@ function BulkSelectActions() {
 
         <DialogContent
           showOverlay
-          className="bg-panelLight dark:bg-panelDark max-w-lg rounded-xl border p-4"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
@@ -476,11 +467,18 @@ function BulkSelectActions() {
             className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] px-2 text-sm transition-all duration-300 ease-out hover:bg-[#FDE4E9]/80 dark:border-[#6E2532] dark:bg-[#411D23] dark:hover:bg-[#313131]/80 hover:dark:bg-[#411D23]/60"
             onClick={() => {
               if (mail.bulkSelected.length === 0) return;
-              toast.promise(bulkDeleteThread({ ids: mail.bulkSelected }).then(onMoveSuccess), {
-                loading: 'Moving to bin...',
-                success: 'All done! moved to bin',
-                error: 'Something went wrong!',
-              });
+              toast.promise(
+                new Promise((resolve, reject) => {
+                  mail.bulkSelected.map((id) =>
+                    setBackgroundQueue({ type: 'add', threadId: `thread:${id}` }),
+                  );
+                  return bulkDeleteThread({ ids: mail.bulkSelected }).then(resolve).catch(reject);
+                }).then(onMoveSuccess),
+                {
+                  success: 'All done! moved to bin',
+                  error: 'Something went wrong!',
+                },
+              );
             }}
           >
             <div className="relative overflow-visible">
@@ -503,7 +501,7 @@ export const Categories = () => {
     {
       id: 'Important',
       name: t('common.mailCategories.important'),
-      searchValue: 'is:important',
+      searchValue: 'is:important NOT is:sent NOT is:draft',
       icon: (
         <Lightning
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Important' && 'fill-white')}
@@ -513,7 +511,7 @@ export const Categories = () => {
     {
       id: 'All Mail',
       name: 'All Mail',
-      searchValue: 'is:inbox',
+      searchValue: 'NOT is:draft (is:inbox OR (is:sent AND to:me))',
       icon: (
         <Mail
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'All Mail' && 'fill-white')}
@@ -525,7 +523,7 @@ export const Categories = () => {
     {
       id: 'Personal',
       name: t('common.mailCategories.personal'),
-      searchValue: 'is:personal',
+      searchValue: 'is:personal NOT is:sent NOT is:draft',
       icon: (
         <User
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Personal' && 'fill-white')}
@@ -535,7 +533,7 @@ export const Categories = () => {
     {
       id: 'Updates',
       name: t('common.mailCategories.updates'),
-      searchValue: 'is:updates',
+      searchValue: 'is:updates NOT is:sent NOT is:draft',
       icon: (
         <Bell
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Updates' && 'fill-white')}
@@ -545,7 +543,7 @@ export const Categories = () => {
     {
       id: 'Promotions',
       name: 'Promotions',
-      searchValue: 'is:promotions',
+      searchValue: 'is:promotions NOT is:sent NOT is:draft',
       icon: (
         <Tag
           className={cn(
@@ -558,7 +556,7 @@ export const Categories = () => {
     {
       id: 'Unread',
       name: 'Unread',
-      searchValue: 'is:unread',
+      searchValue: 'is:unread NOT is:sent NOT is:draft',
       icon: (
         <ScanEye
           className={cn(
