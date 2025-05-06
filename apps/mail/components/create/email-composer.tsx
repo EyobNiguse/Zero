@@ -25,7 +25,6 @@ import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { Input } from '@/components/ui/input';
 import { EditorContent } from '@tiptap/react';
-import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
 import pluralize from 'pluralize';
