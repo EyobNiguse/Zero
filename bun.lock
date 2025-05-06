@@ -87,7 +87,7 @@
         "@zero/db": "workspace:*",
         "@zero/eslint-config": "workspace:*",
         "ai": "^4.3.9",
-        "autumn-js": "^0.0.22",
+        "autumn-js": "0.0.22",
         "better-auth": "1.2.7",
         "canvas-confetti": "1.9.3",
         "cheerio": "1.0.0",

@@ -75,7 +75,7 @@ export const generateSearchQuery = activeDriverProcedure
       } as const;
 
       const { text, steps } = await generateText({
-        model: openai('gpt-3.5-turbo'),
+        model: openai('gpt-4o'),
         messages: [systemMessage, ...messages],
         tools: {
           emailSearch: emailSearchTool,

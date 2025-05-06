@@ -32,21 +32,24 @@ export const chatHandler = async (c: HonoContext) => {
       throw c.json({ error: 'Failed to get active connection' }, 500);
     });
 
-  const { messages, threadId } = await c.req.json().catch((err: Error) => {
-    console.error('Error parsing JSON:', err);
-    throw c.json({ error: 'Failed to parse request body' }, 400);
-  });
+  const { messages, threadId, currentFolder, currentFilter } = await c.req
+    .json()
+    .catch((err: Error) => {
+      console.error('Error parsing JSON:', err);
+      throw c.json({ error: 'Failed to parse request body' }, 400);
+    });
 
   const result = streamText({
     model: openai('gpt-4o'),
-    system: AiChatPrompt(!!threadId),
+    system: AiChatPrompt(threadId, currentFolder, currentFilter),
     messages,
     tools: {
       getThread: {
-        description: 'Get the current thread visible on the user screen',
-        parameters: z.object({}),
-        execute: async () => {
-          if (!threadId) return {};
+        description: 'Get a thread by ID',
+        parameters: z.object({
+          threadId: z.string().describe('The thread ID to get'),
+        }),
+        execute: async ({ threadId }) => {
           void Autumn.track({ feature_id: 'chat-messages', customer_id: session!.user.id });
           return driver.get(threadId);
         },

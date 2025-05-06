@@ -10,6 +10,7 @@ import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { authClient } from '@/lib/auth-client';
 import { Plus, UserPlus } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
@@ -28,6 +29,7 @@ export const AddConnectionDialog = ({
   const { connections, attach } = useBilling();
   const t = useTranslations();
 
+  const pathname = usePathname();
   const canCreateConnection = useMemo(() => {
     if (!connections?.remaining && !connections?.unlimited) return false;
     return (connections?.unlimited && !connections?.remaining) || (connections?.remaining ?? 0) > 0;
@@ -38,7 +40,7 @@ export const AddConnectionDialog = ({
       return attach({
         productId: 'pro-example',
       })
-        .catch((error) => {
+        .catch((error: Error) => {
           console.error('Failed to upgrade:', error);
         })
         .then(() => {
@@ -110,6 +112,7 @@ export const AddConnectionDialog = ({
                 onClick={async () =>
                   await authClient.linkSocial({
                     provider: provider.providerId,
+                    callbackURL: pathname,
                   })
                 }
               >

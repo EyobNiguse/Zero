@@ -33,6 +33,7 @@ import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
+import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useAISidebar } from '@/components/ui/ai-sidebar';
@@ -271,6 +272,7 @@ function BulkSelectActions() {
   const { mutateAsync: markAsImportant } = useMutation(trpc.mail.markAsImportant.mutationOptions());
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
+  const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
 
   const handleMassUnsubscribe = async () => {
@@ -466,11 +468,18 @@ function BulkSelectActions() {
             className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] px-2 text-sm transition-all duration-300 ease-out hover:bg-[#FDE4E9]/80 dark:border-[#6E2532] dark:bg-[#411D23] dark:hover:bg-[#313131]/80 hover:dark:bg-[#411D23]/60"
             onClick={() => {
               if (mail.bulkSelected.length === 0) return;
-              toast.promise(bulkDeleteThread({ ids: mail.bulkSelected }).then(onMoveSuccess), {
-                loading: 'Moving to bin...',
-                success: 'All done! moved to bin',
-                error: 'Something went wrong!',
-              });
+              toast.promise(
+                new Promise((resolve, reject) => {
+                  mail.bulkSelected.map((id) =>
+                    setBackgroundQueue({ type: 'add', threadId: `thread:${id}` }),
+                  );
+                  return bulkDeleteThread({ ids: mail.bulkSelected }).then(resolve).catch(reject);
+                }).then(onMoveSuccess),
+                {
+                  success: 'All done! moved to bin',
+                  error: 'Something went wrong!',
+                },
+              );
             }}
           >
             <div className="relative overflow-visible">
