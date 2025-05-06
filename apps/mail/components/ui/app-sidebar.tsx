@@ -27,7 +27,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
 import React, { useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { GoldenTicketModal } from '../golden';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { FOLDERS } from '@/lib/utils';
@@ -118,10 +117,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           className={`mt-auto flex w-full flex-col ${state !== 'collapsed' ? 'px-0 md:px-2' : ''}`}
         >
           <SidebarContent className="py-0 pt-0">
-            <div className="sm:px-2">
-              <GoldenTicketModal />
-            </div>
-
             <NavMain items={bottomNavItems} />
           </SidebarContent>
         </div>

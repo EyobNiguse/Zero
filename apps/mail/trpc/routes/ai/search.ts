@@ -1,4 +1,4 @@
-import { CoreMessage, generateText, tool } from 'ai';
+import { type CoreMessage, generateText, tool } from 'ai';
 import { activeDriverProcedure } from '@/trpc/trpc';
 import { type gmail_v1 } from 'googleapis';
 import { TRPCError } from '@trpc/server';

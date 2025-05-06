@@ -46,6 +46,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { useThreads } from '@/hooks/use-threads';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
@@ -62,7 +63,7 @@ export function MailLayout() {
   const folder = params?.folder ?? 'inbox';
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const t = useTranslations();
@@ -86,18 +87,6 @@ export function MailLayout() {
   const [{ isLoading, isFetching }] = useThreads();
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
-
-  // Check if we're on mobile on mount and when window resizes
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768); // 768px is the 'md' breakpoint
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   const [threadId, setThreadId] = useQueryState('threadId');
 
@@ -269,6 +258,7 @@ export function MailLayout() {
 function BulkSelectActions() {
   const t = useTranslations();
   const [errorQty, setErrorQty] = useState(0);
+  const [threadId, setThreadId] = useQueryState('threadId');
   const [isLoading, setIsLoading] = useState(false);
   const [isUnsub, setIsUnsub] = useState(false);
   const [mail, setMail] = useMail();
@@ -314,12 +304,12 @@ function BulkSelectActions() {
     );
   };
 
-  //   const onMoveSuccess = useCallback(async () => {
-  //     await mutateThreads();
-  //     await mutateStats();
-  //     setMail({ ...mail, bulkSelected: [] });
-  //   }, [mail, setMail, mutateThreads, mutateStats]);
-  const onMoveSuccess = useCallback(async () => {}, []);
+  const onMoveSuccess = useCallback(async () => {
+    if (threadId && mail.bulkSelected.includes(threadId)) setThreadId(null);
+    refetchThreads();
+    refetchStats();
+    setMail({ ...mail, bulkSelected: [] });
+  }, [mail, setMail, refetchThreads, refetchStats, threadId, setThreadId]);
 
   return (
     <div className="flex items-center gap-2">
@@ -503,7 +493,7 @@ export const Categories = () => {
     {
       id: 'Important',
       name: t('common.mailCategories.important'),
-      searchValue: 'is:important',
+      searchValue: 'is:important NOT is:sent NOT is:draft',
       icon: (
         <Lightning
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Important' && 'fill-white')}
@@ -513,7 +503,7 @@ export const Categories = () => {
     {
       id: 'All Mail',
       name: 'All Mail',
-      searchValue: 'is:inbox',
+      searchValue: 'NOT is:draft (is:inbox OR (is:sent AND to:me))',
       icon: (
         <Mail
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'All Mail' && 'fill-white')}
@@ -525,7 +515,7 @@ export const Categories = () => {
     {
       id: 'Personal',
       name: t('common.mailCategories.personal'),
-      searchValue: 'is:personal',
+      searchValue: 'is:personal NOT is:sent NOT is:draft',
       icon: (
         <User
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Personal' && 'fill-white')}
@@ -535,7 +525,7 @@ export const Categories = () => {
     {
       id: 'Updates',
       name: t('common.mailCategories.updates'),
-      searchValue: 'is:updates',
+      searchValue: 'is:updates NOT is:sent NOT is:draft',
       icon: (
         <Bell
           className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Updates' && 'fill-white')}
@@ -545,7 +535,7 @@ export const Categories = () => {
     {
       id: 'Promotions',
       name: 'Promotions',
-      searchValue: 'is:promotions',
+      searchValue: 'is:promotions NOT is:sent NOT is:draft',
       icon: (
         <Tag
           className={cn(
@@ -558,7 +548,7 @@ export const Categories = () => {
     {
       id: 'Unread',
       name: 'Unread',
-      searchValue: 'is:unread',
+      searchValue: 'is:unread NOT is:sent NOT is:draft',
       icon: (
         <ScanEye
           className={cn(

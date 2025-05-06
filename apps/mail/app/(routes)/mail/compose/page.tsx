@@ -6,9 +6,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { CreateEmail } from '@/components/create/create-email';
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 // Define the type for search params
 interface ComposePageProps {
@@ -17,27 +17,29 @@ interface ComposePageProps {
     subject?: string;
     body?: string;
     draftId?: string;
+    cc?: string;
+    bcc?: string;
   }>;
 }
 
 export default async function ComposePage({ searchParams }: ComposePageProps) {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
-
+  
   if (!session) {
     redirect('/login');
   }
 
   // Need to await searchParams in Next.js 15+
   const params = await searchParams;
-
+  
   // Check if this is a mailto URL
   const toParam = params.to || '';
   if (toParam.startsWith('mailto:')) {
     // Redirect to our dedicated mailto handler
-    redirect(`/api/mailto-handler?mailto=${encodeURIComponent(toParam)}`);
+    redirect(`/mail/compose/handle-mailto?mailto=${encodeURIComponent(toParam)}`);
   }
-
+  
   // Handle normal compose page (direct or with draftId)
   return (
     <Dialog open={true}>
@@ -49,8 +51,11 @@ export default async function ComposePage({ searchParams }: ComposePageProps) {
           initialTo={params.to || ''}
           initialSubject={params.subject || ''}
           initialBody={params.body || ''}
+          initialCc={params.cc || ''}
+          initialBcc={params.bcc || ''}
+          draftId={params.draftId || null}
         />
       </DialogContent>
     </Dialog>
   );
-}
+} 

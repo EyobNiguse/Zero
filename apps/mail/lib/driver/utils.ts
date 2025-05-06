@@ -1,6 +1,5 @@
 import { connection } from '@zero/db/schema';
 import { createDriver } from '@/lib/driver';
-import { revalidatePath } from 'next/cache';
 import { toByteArray } from 'base64-js';
 import { and, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
@@ -10,64 +9,42 @@ export const FatalErrors = ['invalid_grant'];
 
 export const deleteActiveConnection = async (request: Request) => {
   const session = await auth.api.getSession({ headers: request.headers });
-  if (session?.connectionId) {
-    try {
-      console.log('Server: Successfully deleted connection, please reload');
-      await auth.api.signOut({ headers: request.headers });
-      await db
-        .delete(connection)
-        .where(
-          and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)),
-        );
-      return revalidatePath('/mail/inbox');
-    } catch (error) {
-      console.error('Server: Error deleting connection:', error);
-      throw error;
-    }
-  } else {
-    console.log('No connection ID found');
+  if (!session?.connectionId) return console.log('No connection ID found');
+  try {
+    await auth.api.signOut({ headers: request.headers });
+    await db
+      .delete(connection)
+      .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
+  } catch (error) {
+    console.error('Server: Error deleting connection:', error);
+    throw error;
   }
 };
 
 export const getActiveDriver = async (request: Request) => {
   const session = await auth.api.getSession({ headers: request.headers });
+  if (!session || !session.connectionId) throw new Error('Invalid session');
 
-  if (!session || !session.connectionId) {
-    throw new Error('Invalid session');
-  }
-
-  const [_connection] = await db
-    .select()
-    .from(connection)
-    .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
-
-  if (!_connection) {
-    throw new Error('Invalid connection');
-  }
-
-  if (!_connection.accessToken || !_connection.refreshToken) {
-    throw new Error('Invalid connection');
-  }
-
-  const driver = await createDriver(_connection.providerId, {
-    auth: {
-      accessToken: _connection.accessToken,
-      refreshToken: _connection.refreshToken,
-      email: _connection.email,
-    },
+  const activeConnection = await db.query.connection.findFirst({
+    where: and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)),
   });
 
-  return driver;
+  if (!activeConnection || !activeConnection.accessToken || !activeConnection.refreshToken)
+    throw new Error('Invalid connection');
+
+  return createDriver(activeConnection.providerId, {
+    auth: {
+      accessToken: activeConnection.accessToken,
+      refreshToken: activeConnection.refreshToken,
+      email: activeConnection.email,
+    },
+  });
 };
 
-export function fromBase64Url(str: string) {
-  return str.replace(/-/g, '+').replace(/_/g, '/');
-}
+export const fromBase64Url = (str: string) => str.replace(/-/g, '+').replace(/_/g, '/');
 
-export function fromBinary(str: string) {
-  const bytes = toByteArray(str.replace(/-/g, '+').replace(/_/g, '/'));
-  return new TextDecoder().decode(bytes);
-}
+export const fromBinary = (str: string) =>
+  new TextDecoder().decode(toByteArray(str.replace(/-/g, '+').replace(/_/g, '/')));
 
 export const findHtmlBody = (parts: any[]): string => {
   for (const part of parts) {

@@ -2,10 +2,10 @@ import {
   getWritingStyleMatrixForConnectionId,
   type WritingStyleMatrix,
 } from '@/services/writing-style-service';
-import { StyledEmailAssistantSystemPrompt } from '@/lib/ai-composer-prompts';
+import { StyledEmailAssistantSystemPrompt } from '@/lib/prompts';
 import { activeConnectionProcedure } from '@/trpc/trpc';
 import { stripHtml } from 'string-strip-html';
-import { openai } from '@ai-sdk/openai';
+import { groq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
 import { z } from 'zod';
 
@@ -58,7 +58,7 @@ export const compose = activeConnectionProcedure
     });
 
     const { text } = await generateText({
-      model: openai('gpt-4o-mini'),
+      model: groq('meta-llama/llama-4-maverick-17b-128e-instruct'),
       messages: [
         {
           role: 'system',

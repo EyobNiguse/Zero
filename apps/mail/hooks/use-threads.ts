@@ -25,8 +25,10 @@ export const useThreads = () => {
       {
         initialCursor: '',
         getNextPageParam: (lastPage) => lastPage?.nextPageToken ?? null,
-        staleTime: 30000 * 2,
+        staleTime: 10000,
         refetchOnMount: true,
+        refetchInterval: 10000,
+        refetchIntervalInBackground: true,
       },
     ),
   );
@@ -70,7 +72,7 @@ export const useThread = (threadId: string | null) => {
       },
       {
         enabled: !!id && !!session?.user.id,
-        staleTime: 1000 * 60 * 60 * 12, // 12 hour
+        staleTime: 1000 * 60 * 60, // 60 minutes
       },
     ),
   );

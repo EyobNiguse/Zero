@@ -31,9 +31,9 @@ import {
 } from 'react';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { Briefcase, Check, Star, StickyNote, Users } from 'lucide-react';
 import { ThreadContextMenu } from '@/components/context/thread-context';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useMail, type Config } from '@/components/mail/use-mail';
@@ -564,7 +564,7 @@ const Thread = memo(
                   )}
                 </Avatar>
                 <div className="z-1 relative">
-                  {getThreadData.hasUnread && !isMailSelected ? (
+                  {getThreadData.hasUnread && !isMailSelected && !isFolderSent && !isFolderBin ? (
                     <span className="absolute -bottom-[1px] right-0.5 size-2 rounded bg-[#006FFE]" />
                   ) : null}
                 </div>
@@ -581,7 +581,9 @@ const Thread = memo(
                         )}
                       >
                         {isFolderSent ? (
-                          <span>{highlightText(latestMessage.subject, searchValue.highlight)}</span>
+                          <span className={cn('truncate text-sm md:max-w-[15ch] xl:max-w-[25ch]')}>
+                            {highlightText(latestMessage.subject, searchValue.highlight)}
+                          </span>
                         ) : (
                           <span className={cn('truncate text-sm md:max-w-[15ch] xl:max-w-[25ch]')}>
                             {highlightText(
@@ -893,6 +895,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
                 <Image
+                  suppressHydrationWarning
                   src={resolvedTheme === 'dark' ? '/empty-state.svg' : '/empty-state-light.svg'}
                   alt="Empty Inbox"
                   width={200}

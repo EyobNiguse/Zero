@@ -25,7 +25,7 @@ import {
   Trash,
   MailOpen,
 } from 'lucide-react';
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
+import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useSearchValue } from '@/hooks/use-search-value';

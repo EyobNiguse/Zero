@@ -1,6 +1,6 @@
 'use client';
 
-import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
+import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useParams, useRouter } from 'next/navigation';
 import { useTRPC } from '@/providers/query-provider';
