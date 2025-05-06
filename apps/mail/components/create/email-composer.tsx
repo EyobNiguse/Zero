@@ -313,9 +313,7 @@ export function EmailComposer({
       as: url.pathname + url.search,
       url: url.pathname + url.search,
     };
-
     setDraftId(draftId);
-
     window.history.replaceState(nextState, '', url);
   };
 
