@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation'
 import { useMemo } from 'react';
 
 export const AddConnectionDialog = ({
@@ -28,6 +29,7 @@ export const AddConnectionDialog = ({
   const { connections, attach } = useBilling();
   const t = useTranslations();
 
+  const pathname = usePathname();
   const canCreateConnection = useMemo(() => {
     if (!connections?.remaining && !connections?.unlimited) return false;
     return (connections?.unlimited && !connections?.remaining) || (connections?.remaining ?? 0) > 0;
@@ -110,6 +112,7 @@ export const AddConnectionDialog = ({
                 onClick={async () =>
                   await authClient.linkSocial({
                     provider: provider.providerId,
+                    callbackURL: pathname
                   })
                 }
               >
