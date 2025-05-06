@@ -304,7 +304,7 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
       <usageExample>markThreadsUnread({ threadIds: [...] })</usageExample>
     </tool>
     <tool name="createLabel">
-      <description>Create a new label with custom colors if it does not already exist.</description>
+      <description>Create a new label with custom colors if it does not already exist. Always pick a color.</description>
       <parameters>
         <parameter name="name" type="string"/>
         <parameter name="backgroundColor" type="string"/>

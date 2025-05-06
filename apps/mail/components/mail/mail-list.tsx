@@ -720,8 +720,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
   const { enableScope, disableScope } = useHotkeysContext();
-  const [{ refetch, isLoading, isFetching, hasNextPage }, items, isReachingEnd, loadMore] =
-    useThreads();
+  const [{ refetch, isLoading, isFetching, hasNextPage }, items, , loadMore] = useThreads();
 
   const allCategories = Categories();
 
@@ -875,6 +874,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   return (
     <>
+      {shouldFilter ? <p>Filtering</p> : null}
       <div
         ref={parentRef}
         className={cn(
