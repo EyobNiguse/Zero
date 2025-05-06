@@ -150,13 +150,10 @@ export function AIChat() {
   const prevStatusRef = useRef(status);
 
   const refetchAll = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: [
-        trpc.mail.get.queryKey(),
-        trpc.mail.listThreads.queryKey(),
-        trpc.labels.list.queryKey(),
-      ],
-    });
+    refetchLabels();
+    refetchStats();
+    refetchThread();
+    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
     refetch();
   }, [refetchLabels, refetchStats, refetchThread, queryClient, trpc.mail.get.queryKey]);
 
