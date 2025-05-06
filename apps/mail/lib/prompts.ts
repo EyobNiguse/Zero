@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
 import dedent from 'dedent';
 
+const CATEGORY_IDS = ['Important', 'All Mail', 'Personal', 'Updates', 'Promotions', 'Unread'];
+
 const colors = [
   '#000000',
   '#434343',
@@ -249,7 +251,7 @@ export const StyledEmailAssistantSystemPrompt = () =>
   </system_prompt>
   `;
 
-export const AiChatPrompt = (isOnThread: boolean) =>
+export const AiChatPrompt = (threadId: string, currentFolder: string, currentFilter: string) =>
   dedent`
 <system>
   <description>
@@ -281,16 +283,14 @@ export const AiChatPrompt = (isOnThread: boolean) =>
   <tools>
     <tool name="listThreads">
       <description>Search for and retrieve up to 5 threads matching a query.</description>
+      ${currentFolder ? `<note>If the user does not specify a folder, use the current folder: ${currentFolder || '...'}</note>` : ''}
+      ${currentFilter ? `<note>If the user does not specify a filter, use this as the base filter then add your own filters: ${currentFilter || '...'}</note>` : ''}
       <usageExample>listThreads({ query: "subject:invoice AND is:unread", maxResults: 5 })</usageExample>
     </tool>
-    ${
-      isOnThread
-        ? `<tool name="getThread">
-      <description>Get the thread currently in the user’s view or context.</description>
-      <usageExample>getThread()</usageExample>
-    </tool>`
-        : ''
-    }
+    <tool name="getThread">
+      <description>Get a thread by ID</description>
+      <usageExample>getThread({ threadId: "..." })</usageExample>
+    </tool>
     <tool name="archiveThreads">
       <description>Archive specified email threads.</description>
       <usageExample>archiveThreads({ threadIds: [...] })</usageExample>
@@ -329,9 +329,10 @@ export const AiChatPrompt = (isOnThread: boolean) =>
     <practice>Never delete emails or perform irreversible actions without explicit consent.</practice>
     <practice>Use timestamps to prioritize and filter relevance.</practice>
     <practice>Group related messages to propose efficient batch actions.</practice>
-    ${isOnThread ? `<practice>If the user refers to *“this thread”* or *“this email”*, use <tool>getThread</tool> to retrieve context before proceeding.</practice>` : ''}
+    <practice>If the user refers to *“this thread”* or *“this email”*, use this ID: ${threadId} and <tool>getThread</tool> to retrieve context before proceeding.</practice>
     <practice>When asked to apply a label, first use <tool>getUserLabels</tool> to check for existence. If the label exists, apply it with <tool>addLabelsToThreads</tool>. If it does not exist, create it with <tool>createLabel</tool>, then apply it.</practice>
     <practice>Use *{text}* to emphasize text when replying to users.</practice>
+    <practice>Never create a label with any of these names: ${CATEGORY_IDS.join(', ')}.</practice>
   </bestPractices>
 
   <responseRules>

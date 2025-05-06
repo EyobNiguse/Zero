@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useSearchValue } from '@/hooks/use-search-value';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useCallback, useEffect } from 'react';
 import { useTRPC } from '@/providers/query-provider';
@@ -12,6 +13,7 @@ import { useThread } from '@/hooks/use-threads';
 import { useLabels } from '@/hooks/use-labels';
 import { cn, getEmailLogo } from '@/lib/utils';
 import { useStats } from '@/hooks/use-stats';
+import { useParams } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
 import { format } from 'date-fns-tz';
@@ -132,29 +134,35 @@ export function AIChat() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { refetch: refetchThread } = useThread(threadId);
+  const { folder } = useParams<{ folder: string }>();
+  const [searchValue] = useSearchValue();
 
   const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
     api: '/api/chat',
     maxSteps: 5,
     body: {
       threadId: threadId ?? undefined,
+      currentFolder: folder ?? undefined,
+      currentFilter: searchValue.value ?? undefined,
     },
   });
 
-  useEffect(() => {
-    if (messages.length) {
-      refetch();
-    }
-  }, [messages]);
+  const prevStatusRef = useRef(status);
+
+  const refetchAll = useCallback(() => {
+    refetchLabels();
+    refetchStats();
+    refetchThread();
+    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
+    refetch();
+  }, [refetchLabels, refetchStats, refetchThread, queryClient, trpc.mail.get.queryKey]);
 
   useEffect(() => {
-    if (status === 'submitted') {
-      refetchLabels();
-      refetchStats();
-      refetchThread();
-      queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
+    if (prevStatusRef.current === 'streaming' && status === 'ready') {
+      refetchAll();
     }
-  }, [status]);
+    prevStatusRef.current = status;
+  }, [status, refetchAll]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -162,13 +170,9 @@ export function AIChat() {
     }
   }, []);
 
-  // Auto scroll when messages change
   useEffect(() => {
     scrollToBottom();
-    // if (onMessagesChange) {
-    //   onMessagesChange(messages);
-    // }
-  }, [messages, messagesEndRef]);
+  }, [messages, scrollToBottom]);
 
   return (
     <div className="flex h-full flex-col">

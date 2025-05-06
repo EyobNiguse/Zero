@@ -10,11 +10,11 @@ import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { authClient } from '@/lib/auth-client';
 import { Plus, UserPlus } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { usePathname } from 'next/navigation'
 import { useMemo } from 'react';
 
 export const AddConnectionDialog = ({
@@ -40,7 +40,7 @@ export const AddConnectionDialog = ({
       return attach({
         productId: 'pro-example',
       })
-        .catch((error) => {
+        .catch((error: Error) => {
           console.error('Failed to upgrade:', error);
         })
         .then(() => {
@@ -112,7 +112,7 @@ export const AddConnectionDialog = ({
                 onClick={async () =>
                   await authClient.linkSocial({
                     provider: provider.providerId,
-                    callbackURL: pathname
+                    callbackURL: pathname,
                   })
                 }
               >
