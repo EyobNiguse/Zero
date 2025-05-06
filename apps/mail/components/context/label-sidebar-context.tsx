@@ -78,10 +78,7 @@ export function LabelSidebarContextMenu({ children, labelId }: LabelSidebarConte
       </ContextMenu>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent
-          className="bg-panelLight dark:bg-panelDark rounded-xl p-4"
-          showOverlay={true}
-        >
+        <DialogContent showOverlay={true}>
           <DialogHeader>
             <DialogTitle>{t('common.labels.deleteLabelConfirm')}</DialogTitle>
             <DialogDescription>

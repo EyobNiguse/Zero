@@ -427,7 +427,6 @@ function BulkSelectActions() {
 
         <DialogContent
           showOverlay
-          className="bg-panelLight dark:bg-panelDark max-w-lg rounded-xl border p-4"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();

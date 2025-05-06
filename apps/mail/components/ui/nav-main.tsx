@@ -302,10 +302,7 @@ export function NavMain({ items }: NavMainProps) {
                       <Plus className="h-3 w-3 text-[#6D6D6D] dark:text-[#898989]" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent
-                    showOverlay={true}
-                    className="bg-panelLight dark:bg-panelDark w-full max-w-[500px] rounded-xl p-4"
-                  >
+                  <DialogContent showOverlay={true}>
                     <DialogHeader>
                       <DialogTitle>Create New Label</DialogTitle>
                     </DialogHeader>
