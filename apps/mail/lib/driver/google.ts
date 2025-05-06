@@ -361,10 +361,13 @@ export class GoogleMailManager implements MailManager {
               return fullEmailData;
             }),
           );
+          const lastMessageThatIsNotFromMe = messages.findLast(
+            (m) => m.sender.email !== this.config.auth?.email,
+          );
           return {
             labels: Array.from(labels).map((id) => ({ id, name: id })),
             messages,
-            latest: messages[messages.length - 1],
+            latest: lastMessageThatIsNotFromMe ?? messages[messages.length - 1],
             hasUnread,
             totalReplies: messages.length,
           };

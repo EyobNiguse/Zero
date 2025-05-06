@@ -433,7 +433,7 @@ export function NavMain({ items }: NavMainProps) {
               <div className="mr-0 pr-0">
                 <div
                   className={cn(
-                    'hide-scrollbar flex h-full max-h-[13vh] flex-row flex-wrap gap-2 overflow-scroll sm:max-h-[16vh]',
+                    'hide-scrollbar flex h-full max-h-[calc(100vh-40rem)] min-h-[4rem] flex-row flex-wrap gap-2 overflow-scroll',
                   )}
                 >
                   {(() => {

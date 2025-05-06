@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useTRPC } from '@/providers/query-provider';
 import { useMutation } from '@tanstack/react-query';
+import { useRef, useState, useEffect } from 'react';
 import { cn, formatFileSize } from '@/lib/utils';
 import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
@@ -25,7 +26,6 @@ import { serializeFiles } from '@/lib/schemas';
 import { Input } from '@/components/ui/input';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
-import { useRef, useState, useEffect } from 'react';
 import { useQueryState } from 'nuqs';
 import pluralize from 'pluralize';
 import { toast } from 'sonner';
@@ -323,7 +323,7 @@ export function EmailComposer({
 
     if (!hasUnsavedChanges) return;
     console.log('DRAFT HTML', editor.getHTML());
-    const messageText = editor.getHTML();
+    const messageText = editor.getText();
     console.log(values, messageText);
     if (!values.to.length || !values.subject.length || !messageText.length) return;
 
@@ -334,7 +334,7 @@ export function EmailComposer({
         cc: values.cc?.join(', '),
         bcc: values.bcc?.join(', '),
         subject: values.subject,
-        message: messageText,
+        message: editor.getHTML(),
         attachments: await serializeFiles(values.attachments ?? []),
         id: draftId,
       };
@@ -666,7 +666,7 @@ export function EmailComposer({
           <div className="flex items-center justify-start gap-2">
             <div className="flex items-center justify-start gap-2">
               <button
-                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 dark:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white"
                 onClick={handleSend}
                 disabled={isLoading}
               >
