@@ -874,7 +874,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   return (
     <>
-      {shouldFilter ? <p>Filtering</p> : null}
       <div
         ref={parentRef}
         className={cn(
