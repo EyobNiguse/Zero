@@ -1,7 +1,9 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useCallback, useEffect } from 'react';
+import { useTRPC } from '@/providers/query-provider';
 import { Markdown } from '@react-email/components';
 import { CurvedArrow, Stop } from '../icons/icons';
 import { useBilling } from '@/hooks/use-billing';
@@ -127,6 +129,8 @@ export function AIChat() {
   const [threadId] = useQueryState('threadId');
   const { refetch: refetchLabels } = useLabels();
   const { refetch: refetchStats } = useStats();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { refetch: refetchThread } = useThread(threadId);
 
   const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
@@ -148,6 +152,7 @@ export function AIChat() {
       refetchLabels();
       refetchStats();
       refetchThread();
+      queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
     }
   }, [status]);
 
