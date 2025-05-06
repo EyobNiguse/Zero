@@ -5,7 +5,7 @@ import {
 import { StyledEmailAssistantSystemPrompt } from '@/lib/prompts';
 import { activeConnectionProcedure } from '@/trpc/trpc';
 import { stripHtml } from 'string-strip-html';
-import { groq } from '@ai-sdk/groq';
+import { openai } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { z } from 'zod';
 
@@ -58,7 +58,7 @@ export const compose = activeConnectionProcedure
     });
 
     const { text } = await generateText({
-      model: groq('meta-llama/llama-4-maverick-17b-128e-instruct'),
+      model: openai('gpt-4o'),
       messages: [
         {
           role: 'system',
