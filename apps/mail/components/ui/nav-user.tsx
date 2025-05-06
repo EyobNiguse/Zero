@@ -1,6 +1,13 @@
 'use client';
 
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   HelpCircle,
   LogIn,
   LogOut,
@@ -12,28 +19,20 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CircleCheck, ThreeDots } from '../icons/icons';
-import { SunIcon } from '../icons/animated/sun';
-import Link from 'next/link';
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
+import { CircleCheck, ThreeDots } from '../icons/icons';
 import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
-import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { useBilling } from '@/hooks/use-billing';
+import { SunIcon } from '../icons/animated/sun';
+import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -43,6 +42,7 @@ import { Progress } from './progress';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 export function NavUser() {
   const { data: session, refetch } = useSession();
@@ -61,6 +61,7 @@ export function NavUser() {
   const { chatMessages, brainActivity } = useBilling();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const getSettingsHref = useCallback(() => {
     const category = searchParams.get('category');
@@ -71,7 +72,11 @@ export function NavUser() {
   }, [pathname, searchParams]);
 
   const handleClearCache = useCallback(async () => {
+    queryClient.clear();
+    await idbClear();
     toast.success('Cache cleared successfully');
+    // Reload the page after clearing the cache
+    setTimeout(() => window.location.reload(), 500);
   }, []);
 
   const handleCopyConnectionId = useCallback(async () => {
