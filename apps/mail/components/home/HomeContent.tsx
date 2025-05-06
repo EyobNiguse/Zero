@@ -56,9 +56,21 @@ import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import Footer from './footer';
 import Link from 'next/link';
 import React from 'react';
 import { z } from 'zod';
+
+const firstRowQueries: string[] = [
+  'Show recent design feedback',
+  'Reply to Nick',
+  'Find invoice from Stripe',
+];
+
+const secondRowQueries: string[] = [
+  'Schedule meeting with Sarah',
+  'What did alex say about the design',
+];
 
 const tabs = [
   { label: 'Chat With Your Inbox', value: 'smart-categorization' },
@@ -154,13 +166,13 @@ export default function HomeContent() {
   };
 
   return (
-    <main className="relative flex h-full flex-1 flex-col overflow-x-hidden">
+    <main className="relative flex h-full flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
         className="absolute -top-32 left-1/2 -z-10 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
         style={{ mixBlendMode: 'screen' }}
       />
       {/* Desktop Navigation - Hidden on mobile */}
-      <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
+      <header className="fixed z-10 hidden w-full items-center justify-center px-4 pt-6 md:flex">
         <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="relative cursor-pointer">
@@ -197,6 +209,14 @@ export default function HomeContent() {
                       ))}
                     </ul>
                   </NavigationMenuContent>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link
+                    href="/pricing"
+                    className="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[state=open]:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:hover:bg-accent data-[state=open]:focus:bg-accent group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    Pricing
+                  </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
@@ -263,7 +283,7 @@ export default function HomeContent() {
         </Sheet>
       </div>
 
-      <section className="mt-32 flex flex-col items-center px-4 md:mt-40">
+      <section className="mt-32 flex flex-col items-center px-4 md:mt-40 ">
         <div className="border-input/50 mb-6 inline-flex items-center gap-4 rounded-full border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-1 pr-1.5">
           <span className="text-sm">See what's new from 0.email</span>
           <Link
@@ -288,7 +308,8 @@ export default function HomeContent() {
           <Link href="/login">Get Started</Link>
         </Button>
       </section>
-      <section className="relative mt-10 hidden flex-col justify-center md:flex">
+
+      <section className="relative mt-10 hidden flex-col justify-center md:flex ">
         <div className="bg-border absolute left-1/2 top-0 h-px w-full -translate-x-1/2 md:container xl:max-w-7xl" />
         <Tabs
           defaultValue="smart-categorization"
@@ -319,7 +340,7 @@ export default function HomeContent() {
           </div> */}
           <div
             className="relative flex w-full justify-center md:border-t"
-            style={{ clipPath: 'inset(0 0 42% 0)' }}
+            style={{ clipPath: 'inset(0 0 42% 0)', height: '100%' }}
           >
             <div className="container relative md:border-x xl:max-w-7xl">
               <PixelatedLeft
@@ -341,6 +362,7 @@ export default function HomeContent() {
                     height={1080}
                     className="relative -top-2 hidden md:block"
                     priority
+                    
                   />
                 </TabsContent>
               ))}
@@ -349,15 +371,21 @@ export default function HomeContent() {
         </Tabs>
       </section>
 
-      <div className="relative bottom-96 z-[-2]">
+      <div className="flex items-center justify-center md:hidden ">
         <Image
-          src="/pixel.svg"
-          alt="hero"
+          src="/email-preview.png"
+          alt="Zero Email Preview"
           width={1920}
           height={1080}
-          className="relative opacity-70"
+          className="mt-10 h-fit w-96"
+          priority
         />
-        <div className="relative bottom-48">
+      </div>
+
+      <div>
+        
+
+        <div className="relative mt-">
           <div className="flex items-center justify-center">
             <h1 className="text-xl font-light text-white/40">
               Designed for power users who value time
@@ -367,7 +395,7 @@ export default function HomeContent() {
             <h1 className="text-6xl font-medium text-white">Speed Is Everything</h1>
             <h1 className="text-6xl font-medium text-white/40">Reply in seconds</h1>
           </div>
-          <div className="relative bottom-3 flex items-center justify-center">
+          <div className="relative bottom-3 flex items-center justify-center bg-[#0F0F0F]">
             <div className="mx-auto inline-flex max-w-[600px] flex-col items-center justify-center overflow-hidden rounded-2xl bg-[#1A1A1A] shadow-md">
               <div className="inline-flex h-12 items-center justify-start gap-2 self-stretch border-b-[0.50px] p-4">
                 <div className="text-base-gray-500/50 justify-start text-sm leading-none">To:</div>
@@ -518,7 +546,7 @@ export default function HomeContent() {
         </div>
       </div>
 
-      <div className="relative bottom-96 bg-[#111111]">
+      <div className="relative mt-52">
         <div className="mx-auto grid max-w-[1250px] md:grid-cols-2 lg:grid-cols-3">
           <div className="flex flex-col">
             <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
@@ -609,16 +637,14 @@ export default function HomeContent() {
                             </div>
                           </div>
                         </div>
-                        <div className="justify-start text-xs font-normal leading-3 text-[#8C8C8C]">
-                          Mar 29
-                        </div>
+                        <div className="text-xs font-normal leading-3 text-[#8C8C8C]">Mar 29</div>
                       </div>
                       <div className="inline-flex items-center justify-start gap-2 self-stretch">
-                        <div className="flex-1 justify-start text-xs font-normal leading-3 text-[#8C8C8C]">
+                        <div className="text-xs font-normal leading-3 text-[#8C8C8C]">
                           New design review
                         </div>
                         <div className="flex items-start justify-start gap-[3.04px]">
-                          <div className="relative h-2.5 w-2.5 overflow-hidden" />
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
                         </div>
                       </div>
                     </div>
@@ -639,17 +665,15 @@ export default function HomeContent() {
                             </div>
                           </div>
                         </div>
-                        <div className="justify-start text-xs font-normal leading-3 text-[#8C8C8C]">
-                          Mar 28
-                        </div>
+                        <div className="text-xs font-normal leading-3 text-[#8C8C8C]">Mar 28</div>
                       </div>
                       <div className="inline-flex items-center justify-start gap-2 self-stretch">
-                        <div className="flex-1 justify-start text-xs font-normal leading-3 text-[#8C8C8C]">
+                        <div className="text-xs font-normal leading-3 text-[#8C8C8C]">
                           Re: Design review feedback
                         </div>
                         <div className="flex items-start justify-start gap-[3.04px]">
-                          <div className="relative h-2.5 w-2.5 overflow-hidden" />
-                          <div className="relative h-2.5 w-2.5 overflow-hidden" />
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
+                          <div className="relative h-3.5 w-3.5 overflow-hidden" />
                         </div>
                       </div>
                     </div>
@@ -1176,8 +1200,8 @@ export default function HomeContent() {
         </div>
       </div>
 
-      <div className="bottom-70 relative z-[-2]">
-        <div className="z-1 relative bottom-48">
+      <div className="relative mt-52 ">
+        <div className="z-1 relative">
           <div className="flex items-center justify-center">
             <h1 className="text-xl font-light text-white/40">
               AI email chat with natural language
@@ -1188,45 +1212,42 @@ export default function HomeContent() {
             <h1 className="text-6xl font-medium text-white/40">Get your answers</h1>
           </div>
 
-
-
           <div className="relative bottom-2 flex items-center justify-center">
             <div className="relative h-[587px] w-[894px] rounded-xl">
-              <div className=" opacity-30 absolute left-0 top-[319px] inline-flex w-[894px] flex-col items-start justify-start overflow-hidden rounded-xl bg-zinc-900 ">
+              <div className="absolute left-0 top-[319px] inline-flex w-[894px] flex-col items-start justify-start overflow-hidden rounded-xl bg-zinc-900 opacity-30">
                 <div className="inline-flex items-center justify-start gap-1.5 self-stretch px-5 pb-4 pt-7">
                   <div className="flex flex-1 items-center justify-start gap-1.5">
-                    <div className="text-[#8C8C8C] justify-start  text-sm leading-none">
-                      Pinned
-                    </div>
-                    <div className="text-[#8C8C8C] justify-start  text-sm leading-none">
-                      [3]
-                    </div>
+                    <div className="justify-start text-sm leading-none text-[#8C8C8C]">Pinned</div>
+                    <div className="justify-start text-sm leading-none text-[#8C8C8C]">[3]</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-start justify-start gap-2 self-stretch px-2 pb-2">
                   <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-lg p-3">
-                    <img
-                      className="h-8 w-8 rounded-full px-1.5 py-2.5"
-                      src="https://placehold.co/32x32"
+                    <Image
+                      src="/adam.jpg"
+                      alt="avatar"
+                      width={32}
+                      height={32}
+                      className="rounded-full"
                     />
                     <div className="inline-flex h-9 flex-1 flex-col items-start justify-start gap-2.5">
                       <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                         <div className="flex flex-1 items-center justify-start gap-3">
                           <div className="flex items-center justify-start gap-1">
-                            <div className="text-base-gray-950 justify-start  text-sm leading-none">
-                              Ali from Baked
+                            <div className="text-base-gray-950 justify-start text-sm leading-none">
+                              Adam from Zero
                             </div>
-                            <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                            <div className="justify-start text-center text-sm leading-none text-[#8C8C8C]">
                               [9]
                             </div>
                           </div>
                         </div>
-                        <div className="text-[#8C8C8C] justify-start  text-sm font-normal leading-none">
+                        <div className="justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                           Mar 29
                         </div>
                       </div>
                       <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                        <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                        <div className="flex-1 justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                           New design review
                         </div>
                         <div className="flex items-start justify-start gap-1">
@@ -1236,27 +1257,27 @@ export default function HomeContent() {
                     </div>
                   </div>
                   <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-[10px] p-3">
-                    <div className="bg-[#313131] inline-flex h-8 w-8 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-full px-1.5 py-2.5 shadow-[0px_0px_0px_0.5px_rgba(255,255,255,0.00)] shadow-[0px_1px_2px_0px_rgba(255,255,255,0.00)]">
-                      <GroupPeople className="fill-[#989898] h-5 w-5 overflow-hidden" />
+                    <div className="inline-flex h-8 w-8 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-full bg-[#313131] px-1.5 py-2.5 shadow-[0px_0px_0px_0.5px_rgba(255,255,255,0.00)] shadow-[0px_1px_2px_0px_rgba(255,255,255,0.00)]">
+                      <GroupPeople className="h-5 w-5 overflow-hidden fill-[#989898]" />
                     </div>
                     <div className="inline-flex flex-1 flex-col items-start justify-start gap-2.5">
                       <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                         <div className="flex flex-1 items-center justify-start gap-3">
                           <div className="flex items-center justify-start gap-1.5">
-                            <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                            <div className="text-base-gray-950 justify-start text-sm leading-none">
                               Alex, Ali, Sarah
                             </div>
-                            <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                            <div className="justify-start text-center text-sm leading-none text-[#8C8C8C]">
                               [6]
                             </div>
                           </div>
                         </div>
-                        <div className="text-[#8C8C8C] justify-start  text-sm font-normal leading-none">
+                        <div className="justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                           Mar 28
                         </div>
                       </div>
                       <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                        <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                        <div className="flex-1 justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                           Re: Design review feedback
                         </div>
                         <div className="flex items-start justify-start gap-1">
@@ -1269,27 +1290,27 @@ export default function HomeContent() {
                   <div className="inline-flex items-center justify-start gap-3 self-stretch rounded-lg p-3">
                     <div className="bg-tokens-surface-primary inline-flex h-8 w-8 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-full px-1.5 py-2.5">
                       <div className="relative h-fit">
-                        <GitHub className="fill-white h-[25px] w-[25px]" />
+                        <GitHub className="h-[25px] w-[25px] fill-white" />
                       </div>
                     </div>
                     <div className="inline-flex flex-1 flex-col items-start justify-start gap-2.5">
                       <div className="inline-flex items-start justify-start gap-2.5 self-stretch">
                         <div className="flex flex-1 items-center justify-start gap-3">
                           <div className="flex items-center justify-start gap-1">
-                            <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                            <div className="text-base-gray-950 justify-start text-sm leading-none">
                               GitHub
                             </div>
-                            <div className="text-[#8C8C8C] justify-start text-center  text-sm leading-none">
+                            <div className="justify-start text-center text-sm leading-none text-[#8C8C8C]">
                               [8]
                             </div>
                           </div>
                         </div>
-                        <div className="text-[#8C8C8C] justify-start  text-sm font-normal leading-none">
+                        <div className="justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                           Mar 28
                         </div>
                       </div>
                       <div className="inline-flex items-center justify-start gap-2.5 self-stretch">
-                        <div className="text-[#8C8C8C] flex-1 justify-start  text-sm font-normal leading-none">
+                        <div className="flex-1 justify-start text-sm font-normal leading-none text-[#8C8C8C]">
                           Security alert: Critical vulnerability
                         </div>
                         <div className="flex items-start justify-start gap-1">
@@ -1302,22 +1323,22 @@ export default function HomeContent() {
                   </div>
                 </div>
               </div>
-              <div className="bg-[#252525] absolute left-[247px] top-0 inline-flex h-[500px] w-96 flex-col items-center justify-center overflow-hidden rounded-xl">
+              <div className="absolute left-[247px] top-0 inline-flex h-[500px] w-96 flex-col items-center justify-center overflow-hidden rounded-xl bg-[#252525]">
                 <div className="border-tokens-stroke-light/5 inline-flex items-center justify-start gap-2 self-stretch overflow-hidden border-b-[0.50px] py-3.5 pl-5 pr-3.5">
                   <div className="flex flex-1 items-center justify-start gap-3">
-                    <div className="text-base-gray-950 flex-1 items-center justify-start flex text-sm leading-none">
-                      <X className="h-4 w-4 fill-[#8C8C8C] mr-2" />
+                    <div className="text-base-gray-950 flex flex-1 items-center justify-start text-sm leading-none">
+                      <X className="mr-2 h-4 w-4 fill-[#8C8C8C]" />
                       New chat
                     </div>
                   </div>
                   <div className="flex h-6 items-center justify-center gap-0.5 overflow-hidden rounded-md px-1">
-                    <Plus className="fill-[#8C8C8C] h-3 w-3 overflow-hidden" />
-                  </div>
-                  <div className="flex h-6 items-center justify-center gap-0.5 overflow-hidden rounded-md px-1 ">
-                    <PanelLeftOpen className="fill-[#8C8C8C] h-3 w-3 overflow-hidden" />
+                    <Plus className="h-3 w-3 overflow-hidden fill-[#8C8C8C]" />
                   </div>
                   <div className="flex h-6 items-center justify-center gap-0.5 overflow-hidden rounded-md px-1">
-                    <Expand className="fill-[#8C8C8C] h-2.5 w-2.5 overflow-hidden" />
+                    <PanelLeftOpen className="h-3 w-3 overflow-hidden fill-[#8C8C8C]" />
+                  </div>
+                  <div className="flex h-6 items-center justify-center gap-0.5 overflow-hidden rounded-md px-1">
+                    <Expand className="h-2.5 w-2.5 overflow-hidden fill-[#8C8C8C]" />
                   </div>
                 </div>
                 <div className="relative flex flex-1 flex-col items-center justify-center gap-8 self-stretch overflow-hidden px-5 py-4">
@@ -1326,68 +1347,65 @@ export default function HomeContent() {
                     alt="chat"
                     width={28}
                     height={28}
-                    className="h-7 w-7 "
+                    className="h-7 w-7"
                   />
                   <div className="flex flex-col items-center justify-start gap-3">
-                    <div className="text-base-gray-950 justify-start  text-sm leading-none">
+                    <div className="text-base-gray-950 justify-start text-sm leading-none">
                       Ask anything about your emails
                     </div>
-                    <div className="text-[#929292] justify-start  text-sm font-normal leading-none">
+                    <div className="justify-start text-sm font-normal leading-none text-[#929292]">
                       Ask to do or show anything using natural language
                     </div>
                   </div>
-                  <div className="relative inline-flex w-96 flex-wrap content-start items-start justify-center gap-2">
-                    <div className="flex items-center justify-start gap-2 pr-8">
-                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
-                        <div className="flex items-center justify-start gap-1 px-0.5">
-                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
-                            Show recent design feedback
+                  <div className="relative inline-flex w-96 flex-col items-start justify-center gap-2">
+                    {/* First row */}
+                    <div className="no-scrollbar relative flex w-full justify-center">
+                      <div className="flex items-center justify-start gap-2 whitespace-nowrap">
+                        {firstRowQueries.map((query, i) => (
+                          <div
+                            key={i}
+                            className="flex h-7 flex-shrink-0 items-center justify-start gap-1.5 overflow-hidden rounded-md bg-[#303030] px-2 py-1.5"
+                          >
+                            <div className="flex items-center justify-start gap-1 px-0.5">
+                              <div className="justify-start text-sm leading-none text-[#8B8B8B]">
+                                {query}
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
-                        <div className="flex items-center justify-start gap-1 px-0.5">
-                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
-                            Reply to Nick
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
-                        <div className="flex items-center justify-start gap-1 px-0.5">
-                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
-                            Find invoice from Stripe
-                          </div>
-                        </div>
-                      </div>
+                      <div className="absolute left-0 top-0 h-7 w-12 bg-gradient-to-l from-neutral-800/0 to-neutral-800" />
+                      <div className="absolute right-0 top-0 h-7 w-12 bg-gradient-to-l from-neutral-800 to-neutral-800/0" />
                     </div>
-                    <div className="flex items-start justify-center gap-2 pl-8">
-                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
-                        <div className="flex items-center justify-start gap-1 px-0.5">
-                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
-                            Schedule meeting with Sarah
+
+                    {/* Second row */}
+                    <div className="no-scrollbar relative flex w-full justify-center">
+                      <div className="flex items-center justify-start gap-2 whitespace-nowrap">
+                        {secondRowQueries.map((query, i) => (
+                          <div
+                            key={i}
+                            className="flex h-7 flex-shrink-0 items-center justify-start gap-1.5 overflow-hidden rounded-md bg-[#303030] px-2 py-1.5"
+                          >
+                            <div className="flex items-center justify-start gap-1 px-0.5">
+                              <div className="justify-start text-sm leading-none text-[#8B8B8B]">
+                                {query}
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                      <div className="bg-[#303030]  flex h-7 items-center justify-start gap-1.5 overflow-hidden rounded-md px-2 py-1.5">
-                        <div className="flex items-center justify-start gap-1 px-0.5">
-                          <div className="text-[#8B8B8B] justify-start  text-sm leading-none">
-                            What did alex say about the design
-                          </div>
-                        </div>
-                      </div>
+                      <div className="absolute left-0 top-0 h-7 w-12 bg-gradient-to-l from-neutral-800/0 to-neutral-800" />
+                      <div className="absolute right-0 top-0 h-7 w-12 bg-gradient-to-l from-neutral-800 to-neutral-800/0" />
                     </div>
-                    <div className="absolute left-0 top-0 h-16 w-12 bg-gradient-to-l from-neutral-800/0 to-neutral-800" />
-                    <div className="absolute left-[352px] top-0 h-16 w-12 bg-gradient-to-l from-neutral-800 to-neutral-800/0" />
                   </div>
                   <div className="absolute left-0 top-[384px] inline-flex w-96 items-center justify-start gap-4 overflow-hidden p-4">
-                    <div className="bg-[#141414] flex h-8 flex-1 items-center justify-start gap-1.5 overflow-hidden rounded-md pl-2.5 pr-1">
-                      <div className="bg-white relative h-3 w-px rounded-full" />
-                      <div className="text-[#727272] flex-1 justify-start  text-sm leading-none">
+                    <div className="flex h-8 flex-1 items-center justify-start gap-1.5 overflow-hidden rounded-md bg-[#141414] pl-2.5 pr-1">
+                      <div className="relative h-3 w-px rounded-full bg-white" />
+                      <div className="flex-1 justify-start text-sm leading-none text-[#727272]">
                         Ask AI to do anything...
                       </div>
-                      <div className="bg-[#262626] flex h-6 items-center justify-center gap-2.5 rounded px-1">
-                      <CurvedArrow className="relative left-[1px] h-4 w-4 mt-1 fill-black dark:fill-[#929292]" />
-
+                      <div className="flex h-6 items-center justify-center gap-2.5 rounded bg-[#262626] px-1">
+                        <CurvedArrow className="relative left-[1px] mt-1 h-4 w-4 fill-black dark:fill-[#929292]" />
                       </div>
                     </div>
                   </div>
@@ -1400,13 +1418,13 @@ export default function HomeContent() {
             alt="hero"
             width={1920}
             height={1080}
-            className="relative bottom-16 z-[-2] rotate-180 opacity-70"
+            className="relative bottom-16 z-[-2] rotate-180 opacity-70 "
             style={{ clipPath: 'inset(45% 0 0 0)' }}
           />
         </div>
       </div>
 
-      <div className="relative bottom-72 z-[-2]">
+      <div className="relative">
         <div className="mx-auto max-w-[920px] text-center text-4xl font-normal leading-[48px] text-white">
           <span className="text-[#B7B7B7]">Work smarter, not harder.</span>{' '}
           <span className="pr-8 text-white">Automate repetitive</span>{' '}
@@ -1443,6 +1461,10 @@ export default function HomeContent() {
             height={50}
           />
         </div>
+      </div>
+
+      <div className="relative flex items-center justify-center mt-72">
+        <Footer />
       </div>
     </main>
   );
