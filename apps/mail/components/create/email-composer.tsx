@@ -100,7 +100,8 @@ export function EmailComposer({
   const [isComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [draftId, setDraftId] = useState<string | null>(null);
+  const [urlDraftId] = useQueryState('draftId');
+  const [draftId, setDraftId] = useState<string | null>(urlDraftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
 
@@ -351,6 +352,12 @@ export function EmailComposer({
       setHasUnsavedChanges(false);
     }
   };
+
+  useEffect(() => {
+    if (urlDraftId !== draftId) {
+      setDraftId(urlDraftId ?? null);
+    }
+  }, [urlDraftId]);
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
