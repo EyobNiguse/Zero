@@ -564,7 +564,7 @@ const Thread = memo(
                   )}
                 </Avatar>
                 <div className="z-1 relative">
-                  {getThreadData.hasUnread && !isMailSelected ? (
+                  {getThreadData.hasUnread && !isMailSelected && !isFolderSent && !isFolderBin ? (
                     <span className="absolute -bottom-[1px] right-0.5 size-2 rounded bg-[#006FFE]" />
                   ) : null}
                 </div>
@@ -581,7 +581,9 @@ const Thread = memo(
                         )}
                       >
                         {isFolderSent ? (
-                          <span>{highlightText(latestMessage.subject, searchValue.highlight)}</span>
+                          <span className={cn('truncate text-sm md:max-w-[15ch] xl:max-w-[25ch]')}>
+                            {highlightText(latestMessage.subject, searchValue.highlight)}
+                          </span>
                         ) : (
                           <span className={cn('truncate text-sm md:max-w-[15ch] xl:max-w-[25ch]')}>
                             {highlightText(
