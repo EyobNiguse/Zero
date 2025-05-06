@@ -895,6 +895,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
                 <Image
+                  suppressHydrationWarning
                   src={resolvedTheme === 'dark' ? '/empty-state.svg' : '/empty-state-light.svg'}
                   alt="Empty Inbox"
                   width={200}
