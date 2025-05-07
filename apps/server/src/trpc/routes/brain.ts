@@ -1,5 +1,6 @@
 import { activeConnectionProcedure, brainServerAvailableMiddleware, router } from '../trpc';
 import { disableBrainFunction, enableBrainFunction } from '../../lib/brain';
+import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 
 export const brainRouter = router({
@@ -19,7 +20,7 @@ export const brainRouter = router({
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
       if (!ctx.brainServerAvailable) return false;
-      return await enableBrainFunction(ctx.c.env, connection);
+      return await enableBrainFunction(connection);
     }),
   disableBrain: activeConnectionProcedure
     .input(
@@ -37,7 +38,7 @@ export const brainRouter = router({
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
       if (!ctx.brainServerAvailable) return false;
-      return await disableBrainFunction(ctx.c.env, connection);
+      return await disableBrainFunction(connection);
     }),
 
   generateSummary: activeConnectionProcedure
@@ -50,17 +51,17 @@ export const brainRouter = router({
     .query(async ({ input, ctx }) => {
       const { threadId } = input;
       if (!ctx.brainServerAvailable) return null;
-      const response = await fetch(ctx.c.env.BRAIN_URL + `/brain/thread/summary/${threadId}`).then(
+      const response = await fetch(env.BRAIN_URL + `/brain/thread/summary/${threadId}`).then(
         (res) => res.json(),
       );
       return (response as { short: string }) ?? null;
     }),
   getState: activeConnectionProcedure.use(brainServerAvailableMiddleware).query(async ({ ctx }) => {
-    const connection = ctx.activeConnection;
-    if (!ctx.brainServerAvailable) return { enabled: false };
-    const response = await fetch(ctx.c.env.BRAIN_URL + `/limit/${connection.id}`).then((res) =>
-      res.json(),
-    );
-    return (response as { enabled: boolean }) ?? null;
+    // const connection = ctx.activeConnection;
+    // if (!ctx.brainServerAvailable) return { enabled: false };
+    // const response = await fetch(env.BRAIN_URL + `/limit/${connection.id}`).then((res) =>
+    //   res.json(),
+    // );
+    return { enabled: false };
   }),
 });

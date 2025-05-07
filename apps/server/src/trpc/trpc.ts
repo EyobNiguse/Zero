@@ -2,9 +2,9 @@ import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
 import { Ratelimit, type RatelimitConfig } from '@upstash/ratelimit';
 import type { HonoContext, HonoVariables } from '../ctx';
 import { initTRPC, TRPCError } from '@trpc/server';
+import { env } from 'cloudflare:workers';
 import { redis } from '../lib/services';
 import superjson from 'superjson';
-
 type TrpcContext = {
   c: HonoContext;
 } & HonoVariables;
@@ -42,7 +42,7 @@ export const brainServerAvailableMiddleware = t.middleware(async ({ next, ctx })
   return next({
     ctx: {
       ...ctx,
-      brainServerAvailable: !!ctx.c.env.BRAIN_URL,
+      brainServerAvailable: !!env.BRAIN_URL,
     },
   });
 });
@@ -50,7 +50,7 @@ export const brainServerAvailableMiddleware = t.middleware(async ({ next, ctx })
 export const processIP = (c: HonoContext) => {
   const cfIP = c.req.header('CF-Connecting-IP');
   const ip = c.req.header('x-forwarded-for');
-  if (!ip && !cfIP && c.env.NODE_ENV === 'production') {
+  if (!ip && !cfIP && env.NODE_ENV === 'production') {
     console.log('No IP detected');
     throw new Error('No IP detected');
   }
@@ -65,7 +65,7 @@ export const createRateLimiterMiddleware = (config: {
 }) =>
   t.middleware(async ({ next, ctx, input }) => {
     const ratelimiter = new Ratelimit({
-      redis: redis(ctx.c.env),
+      redis: redis(),
       limiter: config.limiter,
       analytics: true,
       prefix: config.generatePrefix(ctx, input),

@@ -1,3 +1,5 @@
+import type { Context } from 'hono';
+
 export type Label = {
   id: string;
   name: string;
@@ -135,3 +137,5 @@ export interface IOutgoingMessage {
   threadId?: string;
   fromEmail?: string;
 }
+
+export type AppContext = Context<{ Bindings: Env }>;

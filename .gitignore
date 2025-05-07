@@ -52,3 +52,5 @@ apps/mail/scripts.ts
 
 .wrangler
 worker-configuration.d.ts
+
+.dev.vars.*

@@ -16,17 +16,14 @@ import type { CreateDraftData } from '../schemas';
 import { setTimeout } from 'timers/promises';
 import { createMimeMessage } from 'mimetext';
 import { cleanSearchValue } from '../utils';
-import type { AppEnv } from '../../ctx';
+import { env } from 'cloudflare:workers';
 import * as he from 'he';
 
 export class GoogleMailManager implements MailManager {
   private auth;
   private gmail;
 
-  constructor(
-    public config: ManagerConfig,
-    env: AppEnv,
-  ) {
+  constructor(public config: ManagerConfig) {
     this.auth = new google.auth.OAuth2(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET);
 
     if (config.auth)

@@ -25,7 +25,8 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
 
-    "composite": true
+    "composite": true,
+    "types": ["@types/node", "@types/service-worker-mock"]
   },
-  "include": ["src/**/*.ts", "worker-configuration.d.ts"]
+  "include": ["src/**/*.ts", "worker-configuration.d.ts", "types.d.ts"]
 }

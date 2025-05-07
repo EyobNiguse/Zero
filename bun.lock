@@ -217,6 +217,10 @@
         "wrangler": "^4.14.3",
         "zod": "^3.24.4",
       },
+      "devDependencies": {
+        "@types/node": "^22.9.0",
+        "@types/service-worker-mock": "^2.0.4",
+      },
     },
     "packages/db": {
       "name": "@zero/db",
@@ -950,6 +954,8 @@
     "@types/retry": ["@types/retry@0.12.0", "", {}, "sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA=="],
 
     "@types/sanitize-html": ["@types/sanitize-html@2.13.0", "", { "dependencies": { "htmlparser2": "^8.0.0" } }, "sha512-X31WxbvW9TjIhZZNyNBZ/p5ax4ti7qsNDBDEnH4zAgmEh35YnFD1UiS6z9Cd34kKm0LslFW0KPmTQzu/oGtsqQ=="],
+
+    "@types/service-worker-mock": ["@types/service-worker-mock@2.0.4", "", {}, "sha512-MEBT2eiqYfhxjqYm/oAf2AvKLbPTPwJJAYrMdheKnGyz1yG9XBRfxCzi93h27qpSvI7jOYfXqFLVMLBXFDqo4A=="],
 
     "@types/trusted-types": ["@types/trusted-types@2.0.7", "", {}, "sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw=="],
 

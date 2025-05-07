@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "wrangler dev --show-interactive-dev-session=false",
     "build": "wrangler deploy --minify --dry-run",
-    "deploy": "wrangler deploy --minify"
+    "deploy": "wrangler deploy --minify",
+    "types": "wrangler types --e staging"
   },
   "exports": {
     "./trpc": "./src/trpc/index.ts",
@@ -39,5 +40,9 @@
     "superjson": "^2.2.2",
     "wrangler": "^4.14.3",
     "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/service-worker-mock": "^2.0.4"
   }
 }

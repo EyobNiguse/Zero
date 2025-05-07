@@ -2,6 +2,7 @@ import { mailtoHandler } from './routes/mailto-handler';
 import { trpcServer } from '@hono/trpc-server';
 import { chatHandler } from './routes/chat';
 import type { HonoVariables } from './ctx';
+import { env } from 'cloudflare:workers';
 import { createAuth } from './lib/auth';
 import { createDb } from '@zero/db';
 import { appRouter } from './trpc';
@@ -9,7 +10,7 @@ import { Hono } from 'hono';
 
 const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
   .use('*', async (c, next) => {
-    const db = createDb(c.env.DATABASE_URL);
+    const db = createDb(env.HYPERDRIVE.connectionString);
     c.set('db', db);
     const auth = createAuth(c);
     c.set('auth', auth);
