@@ -22,6 +22,7 @@ import { Input } from '../ui/input';
 import { useState } from 'react';
 import VoiceChat from './voice';
 import Image from 'next/image';
+import { Button } from '../ui/button';
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
@@ -180,7 +181,8 @@ export function AIChat() {
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p>No more</p>
+              <TextShimmer className="text-center text-xl font-medium ">Upgrade to Zero Pro for unlimited AI chats</TextShimmer>
+              <Button className="mt-2 w-52 h-8">Upgrade</Button>
             </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -273,7 +275,7 @@ export function AIChat() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask AI to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-16 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
                   />
                   {status === 'ready' ? (
                     <button

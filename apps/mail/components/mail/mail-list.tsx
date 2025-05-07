@@ -449,7 +449,7 @@ const Thread = memo(
 
     const content =
       latestMessage && getThreadData ? (
-        <div className={'select-none'} onClick={onClick ? onClick(latestMessage) : undefined}>
+        <div className={'select-none '} onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             onMouseEnter={handleMouseEnter}
