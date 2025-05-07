@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import { SquarePenIcon, type SquarePenIconHandle } from '../icons/animated/square-pen';
 import { navigationConfig, bottomNavItems } from '@/config/navigation';
+import { AutumnProvider, useAutumn } from 'autumn-js/next';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { CreateEmail } from '../create/create-email';
@@ -27,22 +28,18 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
 import React, { useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { GoldenTicketModal } from '../golden';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { FOLDERS } from '@/lib/utils';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 import { useQueryState } from 'nuqs';
-import { Button } from './button';
-import Image from 'next/image';
-import Link from 'next/link';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: stats } = useStats();
 
   const pathname = usePathname();
-  const { data: session, isPending } = useSession();
+  const { data: session } = useSession();
   const { currentSection, navItems } = useMemo(() => {
     // Find which section we're in based on the pathname
     const section = Object.entries(navigationConfig).find(([, config]) =>
@@ -83,9 +80,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {...props}
         className={`top-2.5 flex h-screen select-none flex-col items-center ${state === 'collapsed' ? '' : ''} pb-2`}
       >
-
           <SidebarHeader className={`flex flex-col gap-2  ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}>
-            <NavUser />
+            {session && <NavUser />}
             <AnimatePresence mode="wait">
               {showComposeButton && (
                 <motion.div
@@ -114,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </motion.div>
             </AnimatePresence>
           </SidebarContent>
-
+        
           <SidebarFooter className={`pb-0 px-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
             <GoldenTicketModal />
             <NavMain items={bottomNavItems} />
@@ -126,7 +122,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 }
 
 function ComposeButton() {
-  const iconRef = useRef<SquarePenIconHandle>(null);
   const { state } = useSidebar();
   const isMobile = useIsMobile();
   const t = useTranslations();
@@ -156,7 +151,9 @@ function ComposeButton() {
           ) : (
             <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
               <PencilCompose className="fill-iconLight dark:fill-iconDark" />
-              <div className="justify-start text-sm leading-none">New email</div>
+              <div className="justify-start text-sm leading-none">
+                {t('common.commandPalette.commands.newEmail')}
+              </div>
             </div>
           )}
         </button>
