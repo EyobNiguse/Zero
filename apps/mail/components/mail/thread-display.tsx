@@ -522,21 +522,23 @@ export function ThreadDisplay() {
                   </Tooltip>
                 </TooltipProvider>
 
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => moveThreadTo('bin')}
-                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
-                      >
-                        <Trash className="fill-[#F43F5E]" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
-                      {t('common.mail.moveToBin')}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {!isInBin && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => moveThreadTo('bin')}
+                          className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] dark:border-[#6E2532] dark:bg-[#411D23]"
+                        >
+                          <Trash className="fill-[#F43F5E]" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-white dark:bg-[#313131]">
+                        {t('common.mail.moveToBin')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

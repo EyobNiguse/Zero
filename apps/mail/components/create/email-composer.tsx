@@ -97,7 +97,7 @@ export function EmailComposer({
   const toInputRef = useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const [mode] = useQueryState('mode');
-  const [isComposeOpen] = useQueryState('isComposeOpen');
+  const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
   const [urlDraftId] = useQueryState('draftId');
@@ -267,6 +267,7 @@ export function EmailComposer({
       setHasUnsavedChanges(false);
       editor.commands.clearContent(true);
       form.reset();
+      setIsComposeOpen(null);
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');

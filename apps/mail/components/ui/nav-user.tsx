@@ -22,15 +22,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CircleCheck, Danger, ThreeDots } from '../icons/icons';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
-import { CircleCheck, ThreeDots } from '../icons/icons';
 import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
 import { useBilling } from '@/hooks/use-billing';
+import { useThreads } from '@/hooks/use-threads';
 import { SunIcon } from '../icons/animated/sun';
 import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
@@ -47,18 +48,19 @@ import Link from 'next/link';
 export function NavUser() {
   const { data: session, refetch } = useSession();
   const router = useRouter();
-  const { data, isLoading, refetch: refetchConnections } = useConnections();
+  const { data, refetch: refetchConnections } = useConnections();
   const [isRendered, setIsRendered] = useState(false);
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const t = useTranslations();
   const { state } = useSidebar();
   const trpc = useTRPC();
+  const [{ refetch: refetchThreads }] = useThreads();
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
   const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
   const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
-  const { chatMessages, brainActivity } = useBilling();
+  const { chatMessages } = useBilling();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -100,7 +102,7 @@ export function NavUser() {
 
   const activeAccount = useMemo(() => {
     if (!session || !data) return null;
-    return data.connections?.find((connection) => connection.id === session?.connectionId);
+    return data.connections?.find((connection) => connection.id === session.connectionId);
   }, [session, data]);
 
   useEffect(() => setIsRendered(true), []);
@@ -109,6 +111,7 @@ export function NavUser() {
     await setDefaultConnection({ connectionId });
     refetch();
     refetchConnections();
+    refetchThreads();
   };
 
   const handleLogout = async () => {
@@ -332,7 +335,9 @@ export function NavUser() {
                     )}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <Danger />
+              )}
               {otherConnections.slice(0, 2).map((connection) => (
                 <Tooltip key={connection.id}>
                   <TooltipTrigger asChild>

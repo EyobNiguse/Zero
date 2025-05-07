@@ -9,8 +9,8 @@ import {
 import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { authClient } from '@/lib/auth-client';
-import { Plus, UserPlus } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { Plus, UserPlus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
@@ -63,10 +63,7 @@ export const AddConnectionDialog = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent
-        className="w-full max-w-sm rounded-xl border bg-white p-6 sm:max-w-md dark:bg-[#1A1A1A]"
-        showOverlay={true}
-      >
+      <DialogContent showOverlay={true}>
         <DialogHeader>
           <DialogTitle>{t('pages.settings.connections.connectEmail')}</DialogTitle>
           <DialogDescription>

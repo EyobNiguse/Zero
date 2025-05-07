@@ -508,21 +508,23 @@ const Thread = memo(
                     {t('common.threadDisplay.archive')}
                   </TooltipContent>
                 </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] [&_svg]:size-3.5"
-                      onClick={() => moveThreadTo('bin')}
-                    >
-                      <Trash className="fill-[#F43F5E]" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
-                    {t('common.actions.Bin')}
-                  </TooltipContent>
-                </Tooltip>
+                {!isFolderBin ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] [&_svg]:size-3.5"
+                        onClick={() => moveThreadTo('bin')}
+                      >
+                        <Trash className="fill-[#F43F5E]" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                      {t('common.actions.Bin')}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
               </div>
             )}
 
@@ -718,8 +720,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [category, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
   const { enableScope, disableScope } = useHotkeysContext();
-  const [{ refetch, isLoading, isFetching, hasNextPage }, items, isReachingEnd, loadMore] =
-    useThreads();
+  const [{ refetch, isLoading, isFetching, hasNextPage }, items, , loadMore] = useThreads();
 
   const allCategories = Categories();
 

@@ -73,8 +73,6 @@ export function AISidebarProvider({ children }: { children: React.ReactNode }) {
 
 export function AISidebar({ children, className }: AISidebarProps & { children: React.ReactNode }) {
   const { open, setOpen } = useAISidebar();
-  const { editor } = useEditor();
-  const [hasMessages, setHasMessages] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const pathname = usePathname();
 
@@ -88,7 +86,6 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
 
   const handleNewChat = useCallback(() => {
     setResetKey((prev) => prev + 1);
-    setHasMessages(false);
   }, []);
 
   // Only show on /mail pages
@@ -145,10 +142,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                             </TooltipTrigger>
                             <TooltipContent>Prompts</TooltipContent>
                           </Tooltip>
-                          <DialogContent
-                            showOverlay={true}
-                            className="dark:bg-panelDark bg-panelLight max-w-2xl rounded-2xl p-4"
-                          >
+                          <DialogContent showOverlay={true}>
                             <DialogHeader>
                               <DialogTitle>AI System Prompts</DialogTitle>
                               <DialogDescription>
@@ -168,7 +162,11 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                                 <GitBranchPlus className="h-4 w-4" />
                               </Link>
                             </div>
-                            <Textarea className="min-h-60" readOnly value={AiChatPrompt()} />
+                            <Textarea
+                              className="min-h-60"
+                              readOnly
+                              value={AiChatPrompt('', '', '')}
+                            />
                             <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
                               <span>Zero Compose / System Prompt</span>
                               <Link

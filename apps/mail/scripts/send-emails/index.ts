@@ -40,16 +40,8 @@ const RandomEmails = (companyName: string) => [
     body: `URGENT: Special 50% OFF!\n\nDear Valued Customer,\n\n${companyName} is offering an EXCLUSIVE deal that you won't want to miss! Act now before this offer expires!\n\nClick here to claim your discount!\n\nBest regards`,
   },
   {
-    subject: `Zero - Your Account Needs Verification`,
-    body: `IMPORTANT: Action Required\n\nDear User,\n\nYour ${companyName} account has been flagged for suspicious activity. Please verify your information immediately to avoid account suspension.\n\nClick here to verify now.\n\nRegards`,
-  },
-  {
     subject: `You've Won!`,
     body: `CONGRATULATIONS! You're a Winner!\n\nDear Lucky Winner,\n\n${companyName} is pleased to inform you that you've been selected to receive a special prize! Claim your reward now!\n\nClick here to claim your prize!\n\nBest regards`,
-  },
-  {
-    subject: `Security Alert`,
-    body: `SECURITY ALERT: Unusual Activity Detected\n\nDear Customer,\n\n${companyName} has detected unusual activity on your account. Please verify your identity immediately to secure your account.\n\nClick here to verify now.\n\nRegards`,
   },
   {
     subject: `Special Discount Inside!`,
@@ -60,16 +52,8 @@ const RandomEmails = (companyName: string) => [
     body: `IMPORTANT: Order Update Required\n\nDear Customer,\n\n${companyName} needs additional information to process your recent order. Please verify your details immediately.\n\nClick here to update now.\n\nRegards`,
   },
   {
-    subject: `Account Suspension Notice`,
-    body: `URGENT: Account Action Required\n\nDear User,\n\n${companyName} has detected suspicious activity on your account. Immediate action is required to prevent suspension.\n\nClick here to verify now.\n\nBest regards`,
-  },
-  {
     subject: `Special Promotion`,
     body: `EXCLUSIVE OFFER: Buy One Get One Free!\n\nDear Valued Customer,\n\n${companyName} is offering a special promotion just for you! Don't miss out on this amazing deal.\n\nClick here to claim your offer!\n\nRegards`,
-  },
-  {
-    subject: `Payment Verification Required`,
-    body: `IMPORTANT: Payment Issue Detected\n\nDear Customer,\n\n${companyName} has detected an issue with your recent payment. Please verify your payment information immediately.\n\nClick here to verify now.\n\nBest regards`,
   },
 ];
 
