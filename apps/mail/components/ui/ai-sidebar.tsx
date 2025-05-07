@@ -73,8 +73,6 @@ export function AISidebarProvider({ children }: { children: React.ReactNode }) {
 
 export function AISidebar({ children, className }: AISidebarProps & { children: React.ReactNode }) {
   const { open, setOpen } = useAISidebar();
-  const { editor } = useEditor();
-  const [hasMessages, setHasMessages] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const pathname = usePathname();
 
@@ -88,7 +86,6 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
 
   const handleNewChat = useCallback(() => {
     setResetKey((prev) => prev + 1);
-    setHasMessages(false);
   }, []);
 
   // Only show on /mail pages

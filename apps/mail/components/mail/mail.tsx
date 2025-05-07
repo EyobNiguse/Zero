@@ -46,6 +46,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
+import { Command, RefreshCcw } from 'lucide-react';
 import { useThreads } from '@/hooks/use-threads';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,6 @@ import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
-import { Command } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
@@ -85,7 +85,7 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const [{ isLoading, isFetching }] = useThreads();
+  const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -185,16 +185,29 @@ export function MailLayout() {
                       </div>
                     ) : null}
                   </div>
-                  {brainState?.enabled ? (
-                    <Button
-                      variant="outline"
-                      size={'sm'}
-                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
-                    >
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
-                      Auto Labeling
-                    </Button>
-                  ) : null}
+                  <div className="flex items-center gap-2">
+                    {true ? (
+                      <Button
+                        variant="outline"
+                        size={'sm'}
+                        className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
+                      >
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                        Auto Labeling
+                      </Button>
+                    ) : null}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <RefreshCcw
+                          className="text-muted-foreground h-4 w-4 cursor-pointer"
+                          onClick={() => {
+                            refetchThreads();
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>Refresh</TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
               <div className="p-2 px-[22px]">
