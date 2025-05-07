@@ -128,7 +128,7 @@ export function AIChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { refetch, chatMessages } = useBilling();
+  const { refetch, chatMessages, attach } = useBilling();
   const [threadId] = useQueryState('threadId');
   const { refetch: refetchLabels } = useLabels();
   const { refetch: refetchStats } = useStats();
@@ -175,6 +175,20 @@ export function AIChat() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  const handleUpgrade = async () => {
+    if (attach) {
+      return attach({
+        productId: 'pro-example',
+      })
+        .catch((error: Error) => {
+          console.error('Failed to upgrade:', error);
+        })
+        .then(() => {
+          console.log('Upgraded successfully');
+        });
+    }
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
@@ -182,7 +196,7 @@ export function AIChat() {
           {chatMessages && !chatMessages.enabled ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <TextShimmer className="text-center text-xl font-medium ">Upgrade to Zero Pro for unlimited AI chats</TextShimmer>
-              <Button className="mt-2 w-52 h-8">Upgrade</Button>
+              <Button onClick={handleUpgrade} className="mt-2 w-52 h-8">Upgrade</Button>
             </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">

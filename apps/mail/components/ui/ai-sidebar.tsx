@@ -77,7 +77,21 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { open, setOpen } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
   const pathname = usePathname();
-  const { chatMessages } = useBilling();
+  const { chatMessages, attach } = useBilling();
+
+  const handleUpgrade = async () => {
+    if (attach) {
+      return attach({
+        productId: 'pro-example',
+      })
+        .catch((error: Error) => {
+          console.error('Failed to upgrade:', error);
+        })
+        .then(() => {
+          console.log('Upgraded successfully');
+        });
+    }
+  };
 
   useHotkeys('Meta+0', () => {
     setOpen(!open);
@@ -145,7 +159,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                           <TooltipContent>
                             <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
                             <p className='mb-2'>Upgrade for unlimited messages!</p>
-                            <Button className="w-full h-8">Upgrade </Button>
+                            <Button onClick={handleUpgrade} className="w-full h-8">Upgrade</Button>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
