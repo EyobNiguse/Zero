@@ -60,6 +60,7 @@ import Footer from './footer';
 import Link from 'next/link';
 import React from 'react';
 import { z } from 'zod';
+import { useInView , motion} from 'motion/react';
 
 const firstRowQueries: string[] = [
   'Show recent design feedback',
@@ -132,6 +133,8 @@ export default function HomeContent() {
   const [glowStyle, setGlowStyle] = useState({ left: 0, width: 0 });
   const [open, setOpen] = useState(false);
   const { setTheme } = useTheme();
+  const ref = useRef(null);
+
 
   useEffect(() => {
     setTheme('dark');
@@ -168,11 +171,11 @@ export default function HomeContent() {
   return (
     <main className="relative flex h-full flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
-        className="absolute -top-32 left-1/2 -z-10 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
+        className="absolute -top-32 left-1/2 z-1 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
         style={{ mixBlendMode: 'screen' }}
       />
       {/* Desktop Navigation - Hidden on mobile */}
-      <header className="fixed z-10 hidden w-full items-center justify-center px-4 pt-6 md:flex">
+      <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
         <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="relative cursor-pointer">
@@ -283,33 +286,55 @@ export default function HomeContent() {
         </Sheet>
       </div>
 
-      <section className="mt-32 flex flex-col items-center px-4 md:mt-40 ">
-        <div className="border-input/50 mb-6 inline-flex items-center gap-4 rounded-full border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-1 pr-1.5">
-          <span className="text-sm">See what's new from 0.email</span>
-          <Link
+      <section className="mt-32 flex flex-col items-center px-4 z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="border-input/50 mb-6 inline-flex items-center gap-4 rounded-full border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-1"
+        >
+          
+          <span className="text-sm flex items-center gap-2 "><Image src="/yc-small.svg" alt="Y Combinator" className='rounded-[2px]' width={18} height={18} /> Backed by Y Combinator</span>
+          {/* <Link
             href="https://x.com/zerodotemail"
             target="_blank"
             className="text-foreground flex items-center gap-1 rounded-full bg-gradient-to-b from-neutral-600 to-neutral-700 px-3 py-1 text-sm"
           >
             <span>Learn More</span>
             <ArrowRight className="ml-1" />
-          </Link>
-        </div>
-        <h1 className="text-center text-4xl font-medium md:text-6xl">
+          </Link> */}
+        </motion.div>
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-center text-4xl font-medium md:text-6xl"
+        >
           <Balancer className="mb-3 max-w-[1130px]">
             AI Powered Email, Built to Save You Time
           </Balancer>
-        </h1>
-        <p className="mx-auto mb-4 max-w-2xl text-center text-base font-medium text-[#B7B7B7] md:text-lg">
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mx-auto mb-4 max-w-2xl text-center text-base font-medium text-[#B7B7B7] md:text-lg"
+        >
           Zero is an AI native email client that manages your inbox, so you don't have to.
-        </p>
+        </motion.p>
 
-        <Button className="h-8">
-          <Link href="/login">Get Started</Link>
-        </Button>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <Button className="h-8">
+            <Link href="/login">Get Started</Link>
+          </Button>
+        </motion.div>
       </section>
 
-      <section className="relative mt-10 hidden flex-col justify-center md:flex ">
+      <section className="relative mt-10 hidden flex-col justify-center md:flex">
         <div className="bg-border absolute left-1/2 top-0 h-px w-full -translate-x-1/2 md:container xl:max-w-7xl" />
         <Tabs
           defaultValue="smart-categorization"
@@ -339,10 +364,10 @@ export default function HomeContent() {
             </TabsList>
           </div> */}
           <div
-            className="relative flex w-full justify-center md:border-t"
-            style={{ clipPath: 'inset(0 0 42% 0)', height: '100%' }}
+            className="relative bottom-2 flex w-full justify-center md:border-t"
+            style={{ clipPath: 'inset(0 0 0 0)', height: '110%' }}
           >
-            <div className="container relative md:border-x xl:max-w-7xl">
+            <div className="container relative -top-1.5 md:border-x xl:max-w-7xl">
               <PixelatedLeft
                 className="absolute left-0 top-0 -z-10 hidden h-full w-auto -translate-x-full opacity-50 md:block"
                 style={{ mixBlendMode: 'screen' }}
@@ -351,8 +376,8 @@ export default function HomeContent() {
                 className="absolute right-0 top-0 -z-10 hidden h-full w-auto translate-x-full opacity-50 md:block"
                 style={{ mixBlendMode: 'screen' }}
               />
-              <div className="bg-border absolute -left-px -top-4 hidden h-4 w-px md:block" />
-              <div className="bg-border absolute -right-px -top-4 hidden h-4 w-px md:block" />
+              {/* <div className="bg-border absolute -left-px -top-4 hidden h-4 w-px md:block" />
+              <div className="bg-border absolute -right-px -top-4 hidden h-4 w-px md:block" /> */}
               {tabs.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value}>
                   <Image
@@ -360,9 +385,8 @@ export default function HomeContent() {
                     alt="Zero Email Preview"
                     width={1920}
                     height={1080}
-                    className="relative -top-2 hidden md:block"
+                    className="relative hidden md:block"
                     priority
-                    
                   />
                 </TabsContent>
               ))}
@@ -371,185 +395,193 @@ export default function HomeContent() {
         </Tabs>
       </section>
 
-      <div className="flex items-center justify-center md:hidden ">
+      <div className="flex items-center justify-center px-4 md:hidden">
         <Image
           src="/email-preview.png"
           alt="Zero Email Preview"
           width={1920}
           height={1080}
-          className="mt-10 h-fit w-96"
+          className="mt-10 h-fit w-full rounded-xl border"
           priority
         />
       </div>
 
-      <div>
-        
+      <div className='w-full bg-[#313135] h-[1px] relative -top-3.5 hidden md:block' />
 
-        <div className="relative mt-">
-          <div className="flex items-center justify-center">
-            <h1 className="text-xl font-light text-white/40">
-              Designed for power users who value time
-            </h1>
-          </div>
-          <div className="mt-8 flex flex-col items-center justify-center">
-            <h1 className="text-6xl font-medium text-white">Speed Is Everything</h1>
-            <h1 className="text-6xl font-medium text-white/40">Reply in seconds</h1>
-          </div>
-          <div className="relative bottom-3 flex items-center justify-center bg-[#0F0F0F]">
-            <div className="mx-auto inline-flex max-w-[600px] flex-col items-center justify-center overflow-hidden rounded-2xl bg-[#1A1A1A] shadow-md">
-              <div className="inline-flex h-12 items-center justify-start gap-2 self-stretch border-b-[0.50px] p-4">
-                <div className="text-base-gray-500/50 justify-start text-sm leading-none">To:</div>
-                <div className="flex flex-1 items-center justify-start gap-1">
-                  <div className="outline-tokens-badge-default/10 flex items-center justify-start gap-1.5 rounded-full border border-[#2B2B2B] py-1 pl-1 pr-1.5">
-                    <Image
-                      height={20}
-                      width={20}
-                      className="h-5 w-5 rounded-full"
-                      src="/adam.jpg"
-                      alt="Adam"
-                    />
-                    <div className="flex items-center justify-start">
-                      <div className="flex items-center justify-center gap-2.5 pr-0.5">
-                        <div className="text-base-gray-950 justify-start text-sm leading-none">
-                          Adam
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="outline-tokens-badge-default/10 flex items-center justify-start gap-1.5 rounded-full border border-[#2B2B2B] py-1 pl-1 pr-1.5">
-                    <Image
-                      height={20}
-                      width={20}
-                      className="h-5 w-5 rounded-full"
-                      src="/ryan.jpg"
-                      alt="Ryan"
-                    />{' '}
-                    <div className="flex items-center justify-start">
-                      <div className="flex items-center justify-center gap-2.5 pr-0.5">
-                        <div className="text-base-gray-950 justify-start text-sm leading-none">
-                          Ryan
-                        </div>
+      <div className="relative mt-52">
+        <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5 }} className="flex items-center justify-center">
+          <h1 className="text-lg font-light text-white/40 md:text-xl">
+            Designed for power users who value time
+          </h1>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5, delay: 0.2 }} className="mt-2 flex flex-col items-center justify-center md:mt-8">
+          <h1 className="text-center text-4xl font-medium text-white md:text-6xl">
+            Speed Is Everything
+          </h1>
+          <h1 className="text-center text-4xl font-medium text-white/40 md:text-6xl">
+            Reply in seconds
+          </h1>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5, delay: 0.4 }} className="relative bottom-3 mx-12 flex items-center justify-center bg-[#0F0F0F] md:mx-0">
+          <div className="mx-auto inline-flex max-w-[600px] flex-col items-center justify-center overflow-hidden rounded-2xl bg-[#1A1A1A] shadow-md">
+            <div className="inline-flex h-12 items-center justify-start gap-2 self-stretch border-b-[0.50px] p-4">
+              <div className="text-base-gray-500/50 justify-start text-sm leading-none">To:</div>
+              <div className="flex flex-1 items-center justify-start gap-1">
+                <div className="outline-tokens-badge-default/10 flex items-center justify-start gap-1.5 rounded-full border border-[#2B2B2B] py-1 pl-1 pr-1.5">
+                  <Image
+                    height={20}
+                    width={20}
+                    className="h-5 w-5 rounded-full"
+                    src="/adam.jpg"
+                    alt="Adam"
+                  />
+                  <div className="flex items-center justify-start">
+                    <div className="flex items-center justify-center gap-2.5 pr-0.5">
+                      <div className="text-base-gray-950 justify-start text-sm leading-none">
+                        Adam
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="inline-flex h-12 items-center justify-start gap-2.5 self-stretch p-4">
-                <Clock className="relative h-3.5 w-3.5 overflow-hidden fill-[#9A9A9A]" />
-                <div className="inline-flex flex-1 flex-col items-start justify-start gap-3">
-                  <div className="inline-flex items-center justify-start gap-1 self-stretch">
-                    <div className="text-base-gray-950 flex-1 justify-start text-sm font-normal leading-none">
-                      Re: Code review feedback
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-start justify-start gap-12 self-stretch rounded-2xl bg-[#202020] px-4 py-3">
-                <div className="flex flex-col items-start justify-start gap-3 self-stretch">
-                  <div className="justify-start self-stretch text-sm font-normal leading-normal text-white">
-                    Hey team,
-                  </div>
-                  <div className="justify-start self-stretch text-sm font-normal leading-normal text-white">
-                    I took a look at the code review feedback. Really like the keyboard navigation -
-                    it makes everything much faster to access. The search implementation is clean,
-                    though I'd love to see the link to test it out myself.
-                  </div>
-                  <div className="justify-start self-stretch text-sm font-normal leading-normal text-white">
-                    Let me know when you can share the preview and I'll provide more detailed
-                    feedback.
-                  </div>
-                </div>
-                <div className="inline-flex items-center justify-between self-stretch">
-                  <div className="flex items-center justify-start gap-3">
-                    <div className="flex items-center justify-start rounded-md bg-white text-black">
-                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-bl-md rounded-tl-md bg-white pl-1.5 pr-1">
-                        <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                          <div className="justify-start text-center text-sm leading-none text-black">
-                            Send now
-                          </div>
-                        </div>
-                        <div className="flex h-5 items-center justify-center gap-2.5 rounded bg-[#E7E7E7] px-1 outline outline-1 outline-offset-[-1px] outline-[#D2D2D2]">
-                          <div className="text-tokens-shortcut-primary-symbol justify-start text-center text-sm font-semibold leading-none">
-                            ⏎
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-base-gray-950 flex items-center justify-start gap-2.5 self-stretch px-2 pr-3">
-                        <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]" />
-                      </div>
-                      <div className="bg-base-gray-950 flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-br-md rounded-tr-md pr-2">
-                        <ChevronDown className="relative h-2 w-2 overflow-hidden fill-black" />
+                <div className="outline-tokens-badge-default/10 flex items-center justify-start gap-1.5 rounded-full border border-[#2B2B2B] py-1 pl-1 pr-1.5">
+                  <Image
+                    height={20}
+                    width={20}
+                    className="h-5 w-5 rounded-full"
+                    src="/ryan.jpg"
+                    alt="Ryan"
+                  />{' '}
+                  <div className="flex items-center justify-start">
+                    <div className="flex items-center justify-center gap-2.5 pr-0.5">
+                      <div className="text-base-gray-950 justify-start text-sm leading-none">
+                        Ryan
                       </div>
                     </div>
-                    <div className="flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-[#373737] px-1.5">
-                      <Plus className="relative h-2.5 w-2.5 overflow-hidden fill-[#9A9A9A]" />
-                      <div className="flex items-center justify-center gap-2.5 px-0.5">
-                        <div className="text-base-gray-950 justify-start text-sm leading-none">
-                          Add files
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start justify-start gap-3">
-                    <div className="flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-[#373737] px-1.5">
-                      <Cube className="relative h-3 w-3 overflow-hidden fill-[#9A9A9A]" />
-
-                      <div className="flex items-center justify-center gap-2.5 px-0.5">
-                        <div className="text-base-gray-950 justify-start text-sm leading-none">
-                          Neutral
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-[#373737] px-1.5">
-                      <MediumStack className="relative mx-1 h-2.5 w-2.5 overflow-hidden fill-[#9A9A9A]" />
-
-                      <div className="flex items-center justify-center gap-2.5 px-0.5">
-                        <div className="text-base-gray-950 justify-start text-sm leading-none">
-                          Medium-length
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="inline-flex items-start justify-start self-stretch">
-                <div className="border-tokens-stroke-light/5 flex h-12 flex-1 items-center justify-center gap-2 border-r-[0.50px]">
-                  <div className="flex items-center justify-start gap-1">
-                    <div className="flex h-5 w-5 items-center justify-center gap-2.5 rounded-[5px] bg-[#2B2B2B] px-1.5">
-                      <div className="justify-start text-center text-sm font-semibold leading-none text-[#8C8C8C]">
-                        ↓
-                      </div>
-                    </div>
-                    <div className="flex h-5 w-5 items-center justify-center gap-2.5 rounded-[5px] bg-[#2B2B2B] px-1.5">
-                      <div className="justify-start text-center text-sm font-semibold leading-none text-[#8C8C8C]">
-                        ↑
-                      </div>
-                    </div>
-                  </div>
-                  <div className="justify-start text-sm leading-none text-[#8C8C8C]">
-                    to navigate
-                  </div>
-                </div>
-                <div className="flex h-12 flex-1 items-center justify-center gap-2">
-                  <div className="flex h-5 items-center justify-center gap-2.5 rounded-[5px] bg-[#2B2B2B] px-1">
-                    <div className="justify-start text-center text-sm font-semibold leading-none text-[#8C8C8C]">
-                      ⌘Z
-                    </div>
-                  </div>
-                  <div className="justify-start text-sm leading-none text-[#8C8C8C]">
-                    return generation
                   </div>
                 </div>
               </div>
             </div>
+            <div className="inline-flex h-12 items-center justify-start gap-2.5 self-stretch p-4">
+              <Clock className="relative h-3.5 w-3.5 overflow-hidden fill-[#9A9A9A]" />
+              <div className="inline-flex flex-1 flex-col items-start justify-start gap-3">
+                <div className="inline-flex items-center justify-start gap-1 self-stretch">
+                  <div className="text-base-gray-950 flex-1 justify-start text-sm font-normal leading-none">
+                    Re: Code review feedback
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-start justify-start gap-12 self-stretch rounded-2xl bg-[#202020] px-4 py-3">
+              <div className="flex flex-col items-start justify-start gap-3 self-stretch">
+                <div className="justify-start self-stretch text-sm font-normal leading-normal text-white">
+                  Hey team,
+                </div>
+                <div className="justify-start self-stretch text-sm font-normal leading-normal text-white">
+                  I took a look at the code review feedback. Really like the keyboard navigation -
+                  it makes everything much faster to access. The search implementation is clean,
+                  though I'd love to see the link to test it out myself.
+                </div>
+                <div className="justify-start self-stretch text-sm font-normal leading-normal text-white">
+                  Let me know when you can share the preview and I'll provide more detailed
+                  feedback.
+                </div>
+              </div>
+              <div className="inline-flex items-center justify-between self-stretch">
+                <div className="flex items-center justify-start gap-3">
+                  <div className="flex items-center justify-start rounded-md bg-white text-black">
+                    <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-bl-md rounded-tl-md bg-white pl-1.5 pr-1">
+                      <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                        <div className="justify-start text-center text-sm leading-none text-black">
+                          Send <span className="hidden md:inline">now</span>
+                        </div>
+                      </div>
+                      <div className="flex h-5 items-center justify-center gap-2.5 rounded bg-[#E7E7E7] px-1 outline outline-1 outline-offset-[-1px] outline-[#D2D2D2]">
+                        <div className="text-tokens-shortcut-primary-symbol justify-start text-center text-sm font-semibold leading-none">
+                          ⏎
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-base-gray-950 flex items-center justify-start gap-2.5 self-stretch px-2 pr-3">
+                      <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]" />
+                    </div>
+                    <div className="bg-base-gray-950 flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-br-md rounded-tr-md pr-2">
+                      <ChevronDown className="relative h-2 w-2 overflow-hidden fill-black" />
+                    </div>
+                  </div>
+                  <div className="flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-[#373737] px-1.5">
+                    <Plus className="relative h-2.5 w-2.5 overflow-hidden fill-[#9A9A9A]" />
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="text-base-gray-950 justify-start text-sm leading-none">
+                        Add <span className="hidden md:inline">files</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="hidden items-start justify-start gap-3 md:flex">
+                  <div className="flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-[#373737] px-1.5">
+                    <Cube className="relative h-3 w-3 overflow-hidden fill-[#9A9A9A]" />
+
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="text-base-gray-950 justify-start text-sm leading-none">
+                        Neutral
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-md bg-[#373737] px-1.5">
+                    <MediumStack className="relative mx-1 h-2.5 w-2.5 overflow-hidden fill-[#9A9A9A]" />
+
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="text-base-gray-950 justify-start text-sm leading-none">
+                        Medium-length
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="inline-flex items-start justify-start self-stretch">
+              <div className="border-tokens-stroke-light/5 flex h-12 flex-1 items-center justify-center gap-2 border-r-[0.50px]">
+                <div className="flex items-center justify-start gap-1">
+                  <div className="flex h-5 w-5 items-center justify-center gap-2.5 rounded-[5px] bg-[#2B2B2B] px-1.5">
+                    <div className="justify-start text-center text-sm font-semibold leading-none text-[#8C8C8C]">
+                      ↓
+                    </div>
+                  </div>
+                  <div className="flex h-5 w-5 items-center justify-center gap-2.5 rounded-[5px] bg-[#2B2B2B] px-1.5">
+                    <div className="justify-start text-center text-sm font-semibold leading-none text-[#8C8C8C]">
+                      ↑
+                    </div>
+                  </div>
+                </div>
+                <div className="justify-start text-sm leading-none text-[#8C8C8C]">to navigate</div>
+              </div>
+              <div className="flex h-12 flex-1 items-center justify-center gap-2">
+                <div className="flex h-5 items-center justify-center gap-2.5 rounded-[5px] bg-[#2B2B2B] px-1">
+                  <div className="justify-start text-center text-sm font-semibold leading-none text-[#8C8C8C]">
+                    ⌘Z
+                  </div>
+                </div>
+                <div className="justify-start text-sm leading-none text-[#8C8C8C]">
+                  return generation
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <div className="relative mt-52">
-        <div className="mx-auto grid max-w-[1250px] md:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-col">
-            <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
+      <div  className="relative flex items-center justify-center mt-52 ">
+        <div className="mx-auto grid max-w-[1250px] gap-12 md:grid-cols-2 lg:grid-cols-3">
+          <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5 }} className="flex flex-col">
+            <div className="relative h-96 w-full overflow-hidden rounded-2xl">
               <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl border border-[#252525] bg-neutral-800" />
               <div className="outline-tokens-stroke-light/5 absolute left-[39px] top-[34px] inline-flex h-[771px] w-72 flex-col items-start justify-start overflow-hidden rounded-lg bg-[#1A1A1A]">
                 <div className="inline-flex h-10 items-center justify-start gap-3 self-stretch overflow-hidden border-b-[0.38px] border-[#252525] px-4 py-5">
@@ -690,8 +722,10 @@ export default function HomeContent() {
                 Process hundreds of emails in minutes.
               </p>
             </div>
-          </div>
-          <div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5 }}>
             <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
               <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl bg-[#2B2B2B]" />
               <div className="absolute left-[44px] top-0 h-[720px] w-[610px]">
@@ -919,8 +953,10 @@ export default function HomeContent() {
                 extract action items automatically.
               </p>
             </div>
-          </div>
-          <div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5 }}>
             <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
               <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl bg-[#2B2B2B]" />
               <div className="absolute left-[34px] top-[34px] inline-flex w-[600px] flex-col items-start justify-start overflow-hidden rounded-xl bg-[#1A1A1A]">
@@ -1196,25 +1232,31 @@ export default function HomeContent() {
                 exactly how you organize,write, reply, and work.
               </p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       <div className="relative mt-52 ">
         <div className="z-1 relative">
-          <div className="flex items-center justify-center">
-            <h1 className="text-xl font-light text-white/40">
+          <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5 }} className="flex items-center justify-center">
+            <h1 className="text-lg font-light text-white/40 md:text-xl">
               AI email chat with natural language
             </h1>
-          </div>
-          <div className="mt-8 flex flex-col items-center justify-center">
-            <h1 className="text-6xl font-medium text-white">Ask away</h1>
-            <h1 className="text-6xl font-medium text-white/40">Get your answers</h1>
-          </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5, delay: 0.2 }} className="mt-2 flex flex-col items-center justify-center md:mt-8">
+            <h1 className="text-4xl font-medium text-white md:text-6xl">Ask away</h1>
+            <h1 className="text-4xl font-medium text-white/40 md:text-6xl">Get your answers</h1>
+          </motion.div>
 
-          <div className="relative bottom-2 flex items-center justify-center">
-            <div className="relative h-[587px] w-[894px] rounded-xl">
-              <div className="absolute left-0 top-[319px] inline-flex w-[894px] flex-col items-start justify-start overflow-hidden rounded-xl bg-zinc-900 opacity-30">
+          <motion.div initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 } }
+          transition={{ duration: 0.5, delay: 0.5 }} className="relative  flex items-center justify-center">
+            <div className="relative mx-auto flex h-[587px] w-full max-w-[894px] items-center justify-center rounded-xl">
+              <div className="absolute left-0 top-[319px] mx-auto inline-flex w-full max-w-[894px] flex-col items-start justify-start overflow-hidden rounded-xl bg-zinc-900 opacity-30">
                 <div className="inline-flex items-center justify-start gap-1.5 self-stretch px-5 pb-4 pt-7">
                   <div className="flex flex-1 items-center justify-start gap-1.5">
                     <div className="justify-start text-sm leading-none text-[#8C8C8C]">Pinned</div>
@@ -1323,7 +1365,7 @@ export default function HomeContent() {
                   </div>
                 </div>
               </div>
-              <div className="absolute left-[247px] top-0 inline-flex h-[500px] w-96 flex-col items-center justify-center overflow-hidden rounded-xl bg-[#252525]">
+              <div className="absolute top-0 inline-flex h-[500px] w-96 flex-col items-center justify-center overflow-hidden rounded-xl bg-[#252525]">
                 <div className="border-tokens-stroke-light/5 inline-flex items-center justify-start gap-2 self-stretch overflow-hidden border-b-[0.50px] py-3.5 pl-5 pr-3.5">
                   <div className="flex flex-1 items-center justify-start gap-3">
                     <div className="text-base-gray-950 flex flex-1 items-center justify-start text-sm leading-none">
@@ -1412,19 +1454,21 @@ export default function HomeContent() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
           <Image
             src="/pixel.svg"
             alt="hero"
             width={1920}
             height={1080}
-            className="relative bottom-16 z-[-2] rotate-180 opacity-70 "
+            className="relative bottom-24 z-2 rotate-180 opacity-50 bg-transparent"
             style={{ clipPath: 'inset(45% 0 0 0)' }}
           />
         </div>
       </div>
 
-      <div className="relative">
+      <motion.div  initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 } }
+      transition={{ duration: 0.5 }} className="relative  hidden lg:block">
         <div className="mx-auto max-w-[920px] text-center text-4xl font-normal leading-[48px] text-white">
           <span className="text-[#B7B7B7]">Work smarter, not harder.</span>{' '}
           <span className="pr-8 text-white">Automate repetitive</span>{' '}
@@ -1461,9 +1505,9 @@ export default function HomeContent() {
             height={50}
           />
         </div>
-      </div>
+      </motion.div>
 
-      <div className="relative flex items-center justify-center mt-72">
+      <div className="relative  flex items-center justify-center mt-52 ">
         <Footer />
       </div>
     </main>

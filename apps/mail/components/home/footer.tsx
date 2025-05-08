@@ -1,10 +1,11 @@
 'use client';
 
-import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { LinkedIn, Twitter, Discord } from '../icons/icons';
-import { Github } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '../ui/button';
+import { motion, useInView } from 'motion/react';
+import { useRef } from 'react';
 
 const socialLinks = [
   {
@@ -25,39 +26,55 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className='mb-72'>
+      <div className=''>
         {/* <div className="h-[527px] w-screen bg-gradient-to-b from-violet-600 via-orange-400 to-slate-950 blur-2xl" /> */}
         <div className="inline-flex justify-center">
-          <div className="inline-flex  relative  flex-col items-center justify-center gap-20 rounded-full ">
-            <div className="flex flex-col items-center">
-              <div className="flex flex-col items-center  py-5">
-                <div className="text-center text-6xl font-bold bg-gradient-to-b from-[#FFFFFF] to-[#1a1a19] inline-block text-transparent bg-clip-text">
+          <div ref={ref} className="inline-flex relative flex-col items-center justify-center gap-20 rounded-full">
+            <div className="flex flex-col items-center px-2">
+              <div className="flex flex-col items-center py-5">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 } }
+                  transition={{ duration: 0.5 }} 
+                  className="text-center text-4xl md:text-6xl font-bold bg-gradient-to-b from-[#FFFFFF] to-[#1a1a19] inline-block text-transparent bg-clip-text"
+                >
                   Experience the Future of <br />
                   Email Today
-                </div>
+                </motion.div>
               </div>
-              <div className="flex flex-col items-center justify-start">
-                <div className="justify-start text-center text-lg font-normal leading-7 text-white">
-                  Watch how 0.email helps you process your inbox  in a fraction of the time.
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 } }
+                transition={{ duration: 0.5, delay: 0.2 }} 
+                className="flex flex-col items-center justify-start"
+              >
+                <div className="justify-start text-center text-md md:text-ld font-normal leading-7 text-white">
+                  Watch how 0.email helps you process your inbox  in a fraction of the time.
                 </div>
-              </div>
-              <div className="flex w-[644.45px] flex-col items-center justify-center pt-8">
-                <Link href="/login" className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-white p-3.5 cursor-pointer">
-                  <div className="flex items-center justify-center gap-2.5 px-1">
-                    <div className="justify-start text-center font-['Geist'] text-base font-semibold leading-none text-zinc-950">
-                      Get Started
-                    </div>
-                  </div>
+              </motion.div>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 } }
+                transition={{ duration: 0.5, delay: 0.4 }} 
+                className="flex w-fit flex-col items-center justify-center pt-4"
+              >
+                <Link href="/login">
+                  <Button className="h-8">
+                    Get Started
+                  </Button>
                 </Link>
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
       </div>
-      <div className="relative z-50 mx-auto mb-12 inline-flex max-w-[2900px] flex-col items-start justify-start gap-10 self-stretch">
-        <div className="flex items-start justify-between gap-56 md:w-[900px]">
+      <div className="relative z-50 mx-auto mt-52 mb-12 max-w-[2900px] flex-col items-start justify-start gap-10 self-stretch flex px-4">
+        <div className="flex items-start justify-between lg:w-[900px] w-full">
           <div className="inline-flex flex-col items-start justify-between self-stretch">
             <div className="inline-flex w-8 items-center justify-start gap-3">
               <Link href="/">
@@ -79,7 +96,7 @@ export default function Footer() {
                 </Link>
               ))}
             </div>
-            {/* <div className="flex items-center justify-start gap-3">
+            <div className="flex items-center justify-start gap-3">
               <div className="justify-start text-base font-normal leading-none text-white opacity-80">
                 Backed by
               </div>
@@ -94,7 +111,7 @@ export default function Footer() {
                   />
                 </div>
               </Link>
-            </div> */}
+            </div>
           </div>
           <div className="flex flex-1 items-start justify-end gap-10">
             <div className="inline-flex flex-col items-start justify-start gap-5">
@@ -158,7 +175,7 @@ export default function Footer() {
         <div className="h-0.5 self-stretch bg-white/20" />
         <div className="flex flex-col items-start justify-start gap-6 self-stretch">
           <div className="inline-flex items-center justify-between self-stretch">
-            <div className="justify-start text-sm font-medium leading-tight text-white opacity-80">
+            <div className="justify-start text-xs sm:text-sm font-medium leading-tight text-white opacity-80">
               © 2025 Zero Email Inc, All Rights Reserved
             </div>
             <div className="flex items-center justify-start gap-4">
