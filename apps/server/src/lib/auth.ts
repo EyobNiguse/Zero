@@ -25,14 +25,10 @@ const connectionHandlerHook = async (account: Account, c: HonoContext) => {
     throw new APIError('EXPECTATION_FAILED', { message: 'Missing Access/Refresh Tokens' });
   }
 
-  const driver = createDriver(
-    account.providerId,
-    {
-      auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
-      c,
-    },
-    c.env,
-  );
+  const driver = createDriver(account.providerId, {
+    auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
+    c,
+  });
   const userInfo = await driver.getUserInfo().catch(() => {
     throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
   });
@@ -78,7 +74,12 @@ export const createAuth = (c: HonoContext) =>
       ipAddress: {
         disableIpTracking: true,
       },
+      crossSubDomainCookies: {
+        enabled: true,
+        domains: [c.env.NEXT_PUBLIC_APP_URL, c.env.BACKEND_URL],
+      },
     },
+    trustedOrigins: [c.env.NEXT_PUBLIC_APP_URL, c.env.BACKEND_URL],
     user: {
       deleteUser: {
         enabled: true,
@@ -135,7 +136,7 @@ export const createAuth = (c: HonoContext) =>
       enabled: false,
       requireEmailVerification: true,
       sendResetPassword: async ({ user, url }) => {
-        await resend(c.env).emails.send({
+        await resend().emails.send({
           from: '0.email <onboarding@0.email>',
           to: user.email,
           subject: 'Reset your password',
@@ -154,7 +155,7 @@ export const createAuth = (c: HonoContext) =>
       sendVerificationEmail: async ({ user, token }) => {
         const verificationUrl = `${c.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
 
-        await resend(c.env).emails.send({
+        await resend().emails.send({
           from: '0.email <onboarding@0.email>',
           to: user.email,
           subject: 'Verify your 0.email account',
