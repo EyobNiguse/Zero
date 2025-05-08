@@ -14,6 +14,7 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
     cors({
       origin: (_, c: HonoContext) => c.env.NEXT_PUBLIC_APP_URL,
       credentials: true,
+      allowHeaders: ['Content-Type', 'Authorization'],
     }),
   )
   .use('*', async (c, next) => {
