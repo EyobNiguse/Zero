@@ -522,19 +522,7 @@ export function NavUser() {
           </div>
         )}
       </div>
-      {state === 'collapsed' && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="mt-2">
-              <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent className="text-xs">
-            <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-            <p>Upgrade for unlimited messages!</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
@@ -546,17 +534,9 @@ export function NavUser() {
             </div>
           </div>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="ml-2">
-                <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="text-xs">
-              <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-              <p>Upgrade for unlimited messages!</p>
-            </TooltipContent>
-          </Tooltip>
+          <div className="ml-2">
+            {/* Gauge component removed */}
+          </div>
         </div>
       )}
 

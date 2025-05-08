@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
@@ -145,15 +145,15 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-1 overflow-hidden"
+          className="rounded-inherit overflow-hidden"
         >
-          <div
-            className={cn(
-              'w-full border-none !bg-transparent lg:w-fit',
-              threadId ? 'md:hidden lg:block' : '',
-            )}
+          <ResizablePanel
+          defaultSize={40}
+          minSize={40}
+          maxSize={50}
+          className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
           >
-            <div className="bg-panelLight dark:bg-panelDark h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex md:h-[calc(100dvh-0.5rem)] md:rounded-2xl md:border md:shadow-sm lg:w-screen lg:max-w-[415px] xl:max-w-[500px] dark:border-[#252525]">
+            <div className="md:h-[calc(100dvh-0.5rem)] w-full">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -196,17 +196,15 @@ export function MailLayout() {
                         Auto Labeling
                       </Button>
                     ) : null}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <RefreshCcw
-                          className="text-muted-foreground h-4 w-4 cursor-pointer"
-                          onClick={() => {
-                            refetchThreads();
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>Refresh</TooltipContent>
-                    </Tooltip>
+                    <Button
+                      onClick={() => {
+                        refetchThreads();
+                      }}
+                      variant="ghost"
+                      className="md:h-fit md:px-2"
+                    >
+                      <RefreshCcw className="text-muted-foreground h-4 w-4 cursor-pointer" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -229,13 +227,14 @@ export function MailLayout() {
                 <MailList isCompact={true} />
               </div>
             </div>
-          </div>
-
+          </ResizablePanel>
+          <ResizableHandle className='opacity-0 mr-0.5'/>
           {isDesktop && (
             <ResizablePanel
-              className={`bg-panelLight dark:bg-panelDark ${threadId ? 'mr-1' : 'lg:mr-1'} w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+              className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
               defaultSize={30}
               minSize={30}
+           
             >
               <div className="relative h-[calc(100vh-(10px))] flex-1 lg:h-[calc(100vh-(12px+14px))]">
                 <ThreadDisplay />
