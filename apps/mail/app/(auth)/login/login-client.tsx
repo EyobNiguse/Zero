@@ -129,7 +129,7 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
       toast.promise(
         signIn.social({
           provider: provider.id as any,
-          callbackURL: `${process.env.NEXT_PUBLIC_BACKEND_URL}/mail`,
+          callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
         }),
         {
           loading: 'Redirecting...',
