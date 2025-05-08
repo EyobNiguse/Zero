@@ -1,14 +1,21 @@
 import { mailtoHandler } from './routes/mailto-handler';
+import type { HonoContext, HonoVariables } from './ctx';
 import { trpcServer } from '@hono/trpc-server';
 import { chatHandler } from './routes/chat';
-import type { HonoVariables } from './ctx';
 import { env } from 'cloudflare:workers';
 import { createAuth } from './lib/auth';
 import { createDb } from '@zero/db';
 import { appRouter } from './trpc';
+import { cors } from 'hono/cors';
 import { Hono } from 'hono';
 
 const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
+  .use(
+    cors({
+      origin: (_, c: HonoContext) => c.env.NEXT_PUBLIC_APP_URL,
+      credentials: true,
+    }),
+  )
   .use('*', async (c, next) => {
     const db = createDb(env.HYPERDRIVE.connectionString);
     c.set('db', db);

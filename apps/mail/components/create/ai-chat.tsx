@@ -139,7 +139,8 @@ export function AIChat() {
   const [searchValue] = useSearchValue();
 
   const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
-    api: '/api/chat',
+    api: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+    fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
     maxSteps: 5,
     body: {
       threadId: threadId ?? undefined,

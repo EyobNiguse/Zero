@@ -67,8 +67,7 @@ const getQueryClient = (session: Session | null) => {
 };
 
 const getUrl = () => {
-  if (typeof window === 'undefined') return process.env.NEXT_PUBLIC_APP_URL + '/api/trpc';
-  return window.location.origin + '/api/trpc';
+  return process.env.NEXT_PUBLIC_BACKEND_URL + '/api/trpc';
 };
 
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
@@ -80,6 +79,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
       transformer: superjson,
       url: getUrl(),
       methodOverride: 'POST',
+      fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
     }),
   ],
 });

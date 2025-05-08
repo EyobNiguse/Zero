@@ -129,7 +129,7 @@ export function MailLayout() {
         // This ensures we don't keep the email content in the URL
         navigator.registerProtocolHandler(
           'mailto',
-          `${window.location.origin}/api/mailto-handler?mailto=%s`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mailto-handler?mailto=%s`,
         );
       } catch (error) {
         console.error('Failed to register protocol handler:', error);
