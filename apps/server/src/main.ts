@@ -11,6 +11,7 @@ import { Hono } from 'hono';
 
 const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
   .use(
+    '*',
     cors({
       origin: (_, c: HonoContext) => c.env.NEXT_PUBLIC_APP_URL,
       credentials: true,
