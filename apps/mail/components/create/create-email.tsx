@@ -193,6 +193,7 @@ export function CreateEmail({
                 processInitialEmails(initialBcc)
               }
               initialSubject={typedDraft?.subject || initialSubject}
+              autofocus={true}
             />
           )}
         </div>
