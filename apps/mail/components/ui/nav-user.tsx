@@ -1,13 +1,6 @@
 'use client';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   HelpCircle,
   LogIn,
   LogOut,
@@ -17,7 +10,15 @@ import {
   BrainIcon,
   CopyCheckIcon,
   BadgeCheck,
+  BanknoteIcon,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,11 +33,13 @@ import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
 import { useThreads } from '@/hooks/use-threads';
+import { useBilling } from '@/hooks/use-billing';
 import { SunIcon } from '../icons/animated/sun';
 import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
 import { useStats } from '@/hooks/use-stats';
+import { useCustomer } from 'autumn-js/next';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
@@ -46,7 +49,6 @@ import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useCustomer } from 'autumn-js/next';
 
 export function NavUser() {
   const { data: session, refetch } = useSession();
@@ -63,6 +65,7 @@ export function NavUser() {
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
+  const { openBillingPortal } = useBilling();
   const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
   const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
   const pathname = usePathname();
@@ -86,20 +89,6 @@ export function NavUser() {
   }, []);
 
   const { customer } = useCustomer();
-
-  if (customer) {
-    console.log('customer', customer);
-    console.log('customer products', customer.products);
-
-    if (Array.isArray(customer.products)) {
-      customer.products.forEach((product: { id: string; name: string }) => {
-        console.log('Product ID:', product.id, 'Product Name:', product.name);
-      });
-    }
-  } else {
-    console.log('Customer is null or undefined');
-  }
-
   const handleCopyConnectionId = useCallback(async () => {
     await navigator.clipboard.writeText(session?.connectionId || '');
     toast.success('Connection ID copied to clipboard');
@@ -159,8 +148,13 @@ export function NavUser() {
   };
 
   const isPro = useMemo(() => {
-    return customer && Array.isArray(customer.products) && customer.products.some((product: any) =>
-      product.id.includes('pro-example') || product.name.includes('pro-example')
+    return (
+      customer &&
+      Array.isArray(customer.products) &&
+      customer.products.some(
+        (product: any) =>
+          product.id.includes('pro-example') || product.name.includes('pro-example'),
+      )
     );
   }, [customer]);
 
@@ -477,6 +471,12 @@ export function NavUser() {
                   sideOffset={8}
                 >
                   <div className="space-y-1">
+                    <DropdownMenuItem onClick={openBillingPortal}>
+                      <div className="flex items-center gap-2">
+                        <BanknoteIcon size={16} className="opacity-60" />
+                        <p className="text-[13px] opacity-60">Billing</p>
+                      </div>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
                       <div className="flex w-full items-center gap-2">
                         {theme === 'dark' ? (
@@ -555,9 +555,11 @@ export function NavUser() {
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
-            <div className="text-[13px] leading-none text-black dark:text-white flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 text-[13px] leading-none text-black dark:text-white">
               {activeAccount?.name || session.user.name || 'User'}
-              {isPro && <BadgeCheck className=" h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />}
+              {isPro && (
+                <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+              )}
             </div>
             <div className="max-w-[150px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}

@@ -35,7 +35,7 @@ const FEATURE_IDS = {
 
 export const useBilling = () => {
   const { customer, refetch } = useCustomer();
-  const { attach, track } = useAutumn();
+  const { attach, track, openBillingPortal } = useAutumn();
 
   const customerFeatures = useMemo(() => {
     if (!customer) return DEFAULT_FEATURES;
@@ -77,6 +77,7 @@ export const useBilling = () => {
     refetch,
     attach,
     track,
+    openBillingPortal,
     ...customerFeatures,
   };
 };
