@@ -1,56 +1,63 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
+import Image from 'next/image';
 
 const steps = [
   {
     title: 'Welcome to Zero Email!',
     description: 'Your new intelligent email experience starts here.',
-    video: '/onboarding/get-started.png'
+    video: '/onboarding/get-started.png',
   },
   {
     title: 'Chat with your inbox',
     description: 'Zero allows you to chat with your inbox and do tasks on your behalf.',
-    video: '/onboarding/step2.gif'
+    video: '/onboarding/step2.gif',
   },
   {
     title: 'AI Compose & Reply',
     description: 'Our AI assistant allows you to write emails with a single click.',
-    video: '/onboarding/step1.gif'
+    video: '/onboarding/step1.gif',
   },
   {
     title: 'Label your emails',
     description: 'Zero helps you label your emails and helps you focus on what matters.',
-    video: '/onboarding/step3.gif'
+    video: '/onboarding/step3.gif',
   },
   {
     title: 'Coming Soon',
     description: (
       <>
-        <span className="mb-6 text-muted-foreground">We're excited to bring these powerful features to all users very soon!
-          
+        <span className="text-muted-foreground mb-6">
+          We're excited to bring these powerful features to all users very soon!
         </span>
         <div className="space-y-3 text-center">
           <div className="text-lg font-medium">Voice AI</div>
           <div className="text-lg font-medium">Actions</div>
           <div className="text-lg font-medium">Calendar Integration</div>
-          <div className="text-lg font-medium text-muted-foreground">And much more!</div>
+          <div className="text-muted-foreground text-lg font-medium">And much more!</div>
         </div>
       </>
     ),
-    video: null
+    video: null,
   },
   {
     title: 'Ready to start?',
     description: 'Click below to begin your intelligent email experience!',
-    video: '/onboarding/ready.png'
+    video: '/onboarding/ready.png',
   },
 ];
 
-export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function OnboardingDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
@@ -58,7 +65,7 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
       });
     }
   }, [currentStep]);
@@ -85,8 +92,11 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTitle></DialogTitle>
-      <DialogContent showOverlay className="sm:max-w-[690px] mx-auto bg-panelLight dark:bg-[#111111] w-full rounded-xl p-4 border">
-        <div className="flex flex-col p-6 gap-6">
+      <DialogContent
+        showOverlay
+        className="bg-panelLight mx-auto w-full rounded-xl border p-4 sm:max-w-[690px] dark:bg-[#111111]"
+      >
+        <div className="flex flex-col gap-6 p-6">
           <div className="flex items-center justify-center">
             <div className="flex gap-1">
               {steps.map((_, index) => (
@@ -100,28 +110,27 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
             </div>
           </div>
           <div className="space-y-2 text-center">
-            <h2 className="text-4xl font-semibold">
-              {steps[currentStep]?.title}
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            <h2 className="text-4xl font-semibold">{steps[currentStep]?.title}</h2>
+            <p className="text-muted-foreground mx-auto max-w-md text-sm">
               {steps[currentStep]?.description}
             </p>
           </div>
-          
+
           {/* Video/GIF Section */}
-          <div className="flex justify-center items-center">
+          <div className="flex items-center justify-center">
             {steps[currentStep]?.video && (
-              <div className="w-full max-w-4xl aspect-video rounded-lg overflow-hidden bg-muted">
-                <img 
-                  src={steps[currentStep].video} 
+              <div className="bg-muted aspect-video w-full max-w-4xl overflow-hidden rounded-lg">
+                <Image
+                  priority
+                  src={steps[currentStep].video}
                   alt={steps[currentStep].title}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
             )}
           </div>
 
-          <div className="flex mx-auto max-w-xl w-full gap-2">
+          <div className="mx-auto flex w-full max-w-xl gap-2">
             <Button
               onClick={() => setCurrentStep(currentStep - 1)}
               variant="outline"
@@ -130,10 +139,7 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
             >
               Go back
             </Button>
-            <Button 
-              onClick={handleNext} 
-              className="h-8 w-full"
-            >
+            <Button onClick={handleNext} className="h-8 w-full">
               {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
             </Button>
           </div>
