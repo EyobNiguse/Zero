@@ -18,6 +18,7 @@ export default async function MailPage({ params }: MailPageProps) {
   const headersList = await headers();
   const session = await authProxy.api.getSession({ headers: headersList });
 
+  console.error('redirecting from mail page', session);
   if (!session) {
     redirect('/login');
   }
