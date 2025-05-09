@@ -44,7 +44,9 @@ export const makeQueryClient = (session: Session | null) =>
         refetchOnWindowFocus: false,
         queryKeyHashFn: (queryKey) =>
           hashKey([
-            session ? { userId: session.user.id, connectionId: session.connectionId } : undefined,
+            session
+              ? { userId: session.user.id, connectionId: session.connectionId }
+              : { userId: null, connectionId: null },
             ...queryKey,
           ]),
         gcTime: 1000 * 60 * 60 * 24,
