@@ -39,7 +39,7 @@ export const makeQueryClient = (session: Session | null) =>
           signOut({
             fetchOptions: {
               onSuccess: () => {
-                window.location.href = '/login?error=required-scopes-missing';
+                window.location.href = '/login?error=require_scopes_missing';
               },
             },
           });

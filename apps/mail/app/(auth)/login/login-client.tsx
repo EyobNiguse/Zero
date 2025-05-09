@@ -2,12 +2,12 @@
 
 import { useEffect, type ReactNode, useState, Suspense } from 'react';
 import type { EnvVarInfo } from '@zero/server/auth-providers';
-import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorMessage from '@/app/(auth)/login/error-message';
 import { signIn, useSession } from '@/lib/auth-client';
 import { Google } from '@/components/icons/icons';
 import { Button } from '@/components/ui/button';
 import { TriangleAlert } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -68,25 +68,15 @@ const getProviderIcon = (providerId: string, className?: string): ReactNode => {
 
 function LoginClientContent({ providers, isProd }: LoginClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
   const { data: session, isPending } = useSession();
   const [expandedProviders, setExpandedProviders] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const error = searchParams.get('error');
-    if (error === 'early_access_required') {
-      toast.error('Early access is required to log in');
-    }
-
-    if (error === 'unauthorized') {
-      toast.error('Zero could not load your data from the 3rd party provider. Please try again.');
-    }
-
     const missing = providers.find((p) => p.required && !p.enabled);
     if (missing?.id) {
       setExpandedProviders({ [missing.id]: true });
     }
-  }, [searchParams, providers, router]);
+  }, [providers, router]);
 
   const missingRequiredProviders = providers
     .filter((p) => p.required && !p.enabled)

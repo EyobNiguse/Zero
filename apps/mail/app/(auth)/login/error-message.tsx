@@ -2,14 +2,27 @@
 
 import { TriangleAlert } from 'lucide-react';
 import { useQueryState } from 'nuqs';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 const errorMessages: Record<string, string> = {
-  'required-scopes-missing':
+  require_scopes_missing:
     'We’re missing the permissions needed to craft your full experience. Please sign in again and allow the requested access.',
+};
+
+const errorToasts: Record<string, string> = {
+  early_access_required: 'Early access is required to log in',
+  unauthorized: 'Zero could not load your data from the 3rd party provider. Please try again.',
 };
 
 const ErrorMessage = () => {
   const [error] = useQueryState('error');
+
+  useEffect(() => {
+    if (error && error in errorToasts) {
+      toast.error(errorToasts[error]);
+    }
+  });
 
   if (!error || !(error in errorMessages)) return null;
 
