@@ -128,7 +128,7 @@ export function AIChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { refetch, chatMessages, attach } = useBilling();
+  const { refetch, chatMessages } = useBilling();
   const [threadId] = useQueryState('threadId');
   const { refetch: refetchLabels } = useLabels();
   const { refetch: refetchStats } = useStats();
