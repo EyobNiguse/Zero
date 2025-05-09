@@ -158,7 +158,11 @@ export function NavUser() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const hasProExampleProduct = customer && Array.isArray(customer.products) && customer.products.some((product: any) => product.id === 'pro-example');
+  const isPro = useMemo(() => {
+    return customer && Array.isArray(customer.products) && customer.products.some((product: any) =>
+      product.id.includes('pro-example') || product.name.includes('pro-example')
+    );
+  }, [customer]);
 
   if (!isRendered) return null;
   if (!session) return null;
@@ -222,7 +226,7 @@ export function NavUser() {
                       <div className="w-full">
                         <div className="text-sm font-medium">
                           {activeAccount.name || session.user.name || 'User'}
-                          {hasProExampleProduct && <BadgeCheck className="text-gold" />}
+                          {isPro && <BadgeCheck className="text-gold" />}
                         </div>
                         <div className="text-muted-foreground text-xs">{activeAccount.email}</div>
                       </div>
@@ -553,7 +557,7 @@ export function NavUser() {
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
             <div className="text-[13px] leading-none text-black dark:text-white flex items-center gap-0.5">
               {activeAccount?.name || session.user.name || 'User'}
-              {hasProExampleProduct && <BadgeCheck className=" h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />}
+              {isPro && <BadgeCheck className=" h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />}
             </div>
             <div className="max-w-[150px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}
