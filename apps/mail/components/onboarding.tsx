@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import confetti from 'canvas-confetti';
 
@@ -25,6 +25,23 @@ const steps = [
     title: 'Label your emails',
     description: 'Zero helps you label your emails and helps you focus on what matters.',
     video: '/onboarding/step3.gif'
+  },
+  {
+    title: 'Coming Soon',
+    description: (
+      <>
+        <span className="mb-6 text-muted-foreground">We're excited to bring these powerful features to all users very soon!
+          
+        </span>
+        <div className="space-y-3 text-center">
+          <div className="text-lg font-medium">Voice AI</div>
+          <div className="text-lg font-medium">Actions</div>
+          <div className="text-lg font-medium">Calendar Integration</div>
+          <div className="text-lg font-medium text-muted-foreground">And much more!</div>
+        </div>
+      </>
+    ),
+    video: null
   },
   {
     title: 'Ready to start?',
@@ -67,6 +84,7 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTitle></DialogTitle>
       <DialogContent showOverlay className="sm:max-w-[690px] mx-auto bg-panelLight dark:bg-[#111111] w-full rounded-xl p-4 border">
         <div className="flex flex-col p-6 gap-6">
           <div className="flex items-center justify-center">
