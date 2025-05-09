@@ -320,7 +320,7 @@ export default function HomeContent() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="mx-auto mb-4 max-w-2xl text-center text-base font-medium text-[#B7B7B7] md:text-lg"
         >
-          Zero is an AI native email client that manages your inbox, so you don't have to.
+          Zero is an AI-native email client that manages your inbox, so you don't have to.
         </motion.p>
 
         <motion.div
@@ -1460,7 +1460,7 @@ export default function HomeContent() {
             alt="hero"
             width={1920}
             height={1080}
-            className="relative bottom-24 z-2 rotate-180 opacity-50 bg-transparent"
+            className="relative bottom-24 z-2 rotate-180  bg-transparent opacity-0"
             style={{ clipPath: 'inset(45% 0 0 0)' }}
           />
         </div>
