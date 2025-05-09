@@ -32,8 +32,10 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
 import { useThreads } from '@/hooks/use-threads';
 import { SunIcon } from '../icons/animated/sun';
+import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
+import { useStats } from '@/hooks/use-stats';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
@@ -53,7 +55,9 @@ export function NavUser() {
   const t = useTranslations();
   const { state } = useSidebar();
   const trpc = useTRPC();
+  const { refetch: refetchStats } = useStats();
   const [{ refetch: refetchThreads }] = useThreads();
+  const { refetch: refetchLabels } = useLabels();
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
@@ -110,6 +114,8 @@ export function NavUser() {
     refetch();
     refetchConnections();
     refetchThreads();
+    refetchLabels();
+    refetchStats();
   };
 
   const handleLogout = async () => {
