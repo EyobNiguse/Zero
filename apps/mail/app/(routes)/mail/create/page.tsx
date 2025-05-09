@@ -1,7 +1,7 @@
 import { CreateEmail } from '@/components/create/create-email';
+import { authProxy } from '@/lib/auth-proxy';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
 
 // Define the type for search params
 interface CreatePageProps {
@@ -13,8 +13,8 @@ interface CreatePageProps {
 }
 
 export default async function CreatePage({ searchParams }: CreatePageProps) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const headersList = new Headers(Object.fromEntries(await (await headers()).entries()));
+  const session = await authProxy.api.getSession({ headers: headersList });
   if (!session) {
     redirect('/login');
   }
@@ -34,7 +34,7 @@ export async function generateMetadata({ searchParams }: CreatePageProps) {
   // Create common metadata properties
   const title = `Email ${toParam} on Zero`;
   const description = 'Zero - The future of email is here';
-  const imageUrl = `/api/og/create?to=${encodeURIComponent(toParam)}${params.subject ? `&subject=${encodeURIComponent(params.subject)}` : ''}`;
+  const imageUrl = `/og-api/create?to=${encodeURIComponent(toParam)}${params.subject ? `&subject=${encodeURIComponent(params.subject)}` : ''}`;
 
   // Create metadata object
   return {
