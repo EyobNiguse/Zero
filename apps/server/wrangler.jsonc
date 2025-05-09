@@ -19,6 +19,9 @@
       "vars": {
         "NODE_ENV": "development",
         "FORCE_GMAIL_CONSENT": "true",
+        "NEXT_PUBLIC_BACKEND_URL": "https://sapi.0.email",
+        "NEXT_PUBLIC_APP_URL": "https://staging.0.email",
+        "COOKIE_DOMAIN": "0.email",
       },
     },
     "production": {
@@ -35,6 +38,9 @@
       "vars": {
         "NODE_ENV": "production",
         "FORCE_GMAIL_CONSENT": "true",
+        "NEXT_PUBLIC_BACKEND_URL": "https://api.0.email",
+        "NEXT_PUBLIC_APP_URL": "https://0.email",
+        "COOKIE_DOMAIN": "0.email",
       },
     },
   },

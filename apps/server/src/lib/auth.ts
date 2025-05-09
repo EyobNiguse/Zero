@@ -76,7 +76,7 @@ export const createAuth = (c: HonoContext) =>
       },
       crossSubDomainCookies: {
         enabled: true,
-        domain: '0.email',
+        domain: c.env.COOKIE_DOMAIN,
       },
     },
     baseURL: c.env.NEXT_PUBLIC_BACKEND_URL,

@@ -132,8 +132,6 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
           callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
         }),
         {
-          loading: 'Redirecting...',
-          success: 'Redirected successfully!',
           error: 'Login redirect failed',
         },
       );
