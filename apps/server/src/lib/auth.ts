@@ -14,9 +14,9 @@ import { type Account, betterAuth } from 'better-auth';
 import { getSocialProviders } from './auth-providers';
 import { getActiveDriver } from './driver/utils';
 import { APIError } from 'better-auth/api';
+import { redis, resend } from './services';
 import type { HonoContext } from '../ctx';
 import { createDriver } from './driver';
-import { resend } from './services';
 import { eq } from 'drizzle-orm';
 
 const connectionHandlerHook = async (account: Account, c: HonoContext) => {
@@ -67,9 +67,22 @@ const connectionHandlerHook = async (account: Account, c: HonoContext) => {
     });
 };
 
-export const createAuth = (c: HonoContext) =>
-  betterAuth({
+export const createAuth = (c: HonoContext) => {
+  const cache = redis();
+  return betterAuth({
     database: drizzleAdapter(c.var.db, { provider: 'pg' }),
+    secondaryStorage: {
+      get: async (key: string) => {
+        return (await cache.get(key)) ?? null;
+      },
+      set: async (key: string, value: string, ttl?: number) => {
+        if (ttl) await cache.set(key, value, { ex: ttl });
+        else await cache.set(key, value);
+      },
+      delete: async (key: string) => {
+        await cache.del(key);
+      },
+    },
     advanced: {
       ipAddress: {
         disableIpTracking: true,
@@ -299,5 +312,6 @@ export const createAuth = (c: HonoContext) =>
       }),
     },
   });
+};
 
 export type Auth = ReturnType<typeof createAuth>;
