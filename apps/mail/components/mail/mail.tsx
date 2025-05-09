@@ -27,8 +27,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
@@ -127,10 +127,7 @@ export function MailLayout() {
         // 2. Create a draft with these values
         // 3. Redirect to the compose page with just the draft ID
         // This ensures we don't keep the email content in the URL
-        navigator.registerProtocolHandler(
-          'mailto',
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mailto-handler?mailto=%s`,
-        );
+        navigator.registerProtocolHandler('mailto', `/api/mailto-handler?mailto=%s`);
       } catch (error) {
         console.error('Failed to register protocol handler:', error);
       }
@@ -148,12 +145,12 @@ export function MailLayout() {
           className="rounded-inherit overflow-hidden"
         >
           <ResizablePanel
-          defaultSize={40}
-          minSize={40}
-          maxSize={50}
-          className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+            defaultSize={40}
+            minSize={40}
+            maxSize={50}
+            className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
           >
-            <div className="md:h-[calc(100dvh-0.5rem)] w-full">
+            <div className="w-full md:h-[calc(100dvh-0.5rem)]">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -228,13 +225,12 @@ export function MailLayout() {
               </div>
             </div>
           </ResizablePanel>
-          <ResizableHandle className='opacity-0 mr-0.5'/>
+          <ResizableHandle className="mr-0.5 opacity-0" />
           {isDesktop && (
             <ResizablePanel
               className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
               defaultSize={30}
               minSize={30}
-           
             >
               <div className="relative h-[calc(100vh-(10px))] flex-1 lg:h-[calc(100vh-(12px+14px))]">
                 <ThreadDisplay />
