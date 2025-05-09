@@ -30,7 +30,6 @@ import { AddConnectionDialog } from '../connection/add';
 import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
-import { useBilling } from '@/hooks/use-billing';
 import { useThreads } from '@/hooks/use-threads';
 import { SunIcon } from '../icons/animated/sun';
 import { clear as idbClear } from 'idb-keyval';
@@ -60,7 +59,6 @@ export function NavUser() {
   );
   const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
   const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
-  const { chatMessages } = useBilling();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -522,7 +520,7 @@ export function NavUser() {
           </div>
         )}
       </div>
-      
+
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
@@ -534,9 +532,7 @@ export function NavUser() {
             </div>
           </div>
 
-          <div className="ml-2">
-            {/* Gauge component removed */}
-          </div>
+          <div className="ml-2">{/* Gauge component removed */}</div>
         </div>
       )}
 
