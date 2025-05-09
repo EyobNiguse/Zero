@@ -10,22 +10,22 @@ const steps = [
   {
     title: 'Welcome to Zero Email!',
     description: 'Your new intelligent email experience starts here.',
-    video: '/onboarding/get-started.png',
+    video: 'https://assets.0.email/get-started.png',
   },
   {
     title: 'Chat with your inbox',
     description: 'Zero allows you to chat with your inbox and do tasks on your behalf.',
-    video: '/onboarding/step2.gif',
+    video: 'https://assets.0.email/step2.gif',
   },
   {
     title: 'AI Compose & Reply',
     description: 'Our AI assistant allows you to write emails with a single click.',
-    video: '/onboarding/step1.gif',
+    video: 'https://assets.0.email/step1.gif',
   },
   {
     title: 'Label your emails',
     description: 'Zero helps you label your emails and helps you focus on what matters.',
-    video: '/onboarding/step3.gif',
+    video: 'https://assets.0.email/step3.gif',
   },
   {
     title: 'Coming Soon',
@@ -68,17 +68,6 @@ export function OnboardingDialog({
         origin: { y: 0.6 },
       });
     }
-  }, [currentStep]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        handleNext();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentStep]);
 
   const handleNext = () => {
