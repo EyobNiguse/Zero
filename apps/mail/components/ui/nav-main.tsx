@@ -342,7 +342,7 @@ export function NavMain({ items }: NavMainProps) {
                                   <FormLabel>Color</FormLabel>
                                   <FormControl>
                                     <div className="w-full">
-                                      <div className="grid grid-cols-7 gap-4">
+                                      <div className="grid grid-cols-7 gap-4 g-panelLight dark:bg-panelDark">
                                         {[
                                           // Row 1 - Grayscale
                                           '#000000',
