@@ -1,11 +1,11 @@
 'use client';
 
 import { LinkedIn, Twitter, Discord } from '../icons/icons';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '../ui/button';
 import { motion, useInView } from 'motion/react';
+import { Button } from '../ui/button';
+import Image from 'next/image';
 import { useRef } from 'react';
+import Link from 'next/link';
 
 const socialLinks = [
   {
@@ -27,54 +27,55 @@ const socialLinks = [
 
 export default function Footer() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className=''>
+      <div className="">
         {/* <div className="h-[527px] w-screen bg-gradient-to-b from-violet-600 via-orange-400 to-slate-950 blur-2xl" /> */}
         <div className="inline-flex justify-center">
-          <div ref={ref} className="inline-flex relative flex-col items-center justify-center gap-20 rounded-full">
+          <div
+            ref={ref}
+            className="relative inline-flex flex-col items-center justify-center gap-20 rounded-full"
+          >
             <div className="flex flex-col items-center px-2">
               <div className="flex flex-col items-center py-5">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 } }
-                  transition={{ duration: 0.5 }} 
-                  className="text-center text-4xl md:text-6xl font-bold bg-gradient-to-b from-[#FFFFFF] to-[#1a1a19] inline-block text-transparent bg-clip-text"
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="inline-block bg-gradient-to-b from-[#FFFFFF] to-[#1a1a19] bg-clip-text text-center text-4xl font-bold text-transparent md:text-6xl"
                 >
                   Experience the Future of <br />
                   Email Today
                 </motion.div>
               </div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 } }
-                transition={{ duration: 0.5, delay: 0.2 }} 
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
                 className="flex flex-col items-center justify-start"
               >
-                <div className="justify-start text-center text-md md:text-ld font-normal leading-7 text-white">
-                  Watch how 0.email helps you process your inbox  in a fraction of the time.
+                <div className="text-md md:text-ld justify-start text-center font-normal leading-7 text-white">
+                  Watch how 0.email helps you process your inbox in a fraction of the time.
                 </div>
               </motion.div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 } }
-                transition={{ duration: 0.5, delay: 0.4 }} 
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex w-fit flex-col items-center justify-center pt-4"
               >
                 <Link href="/login">
-                  <Button className="h-8">
-                    Get Started
-                  </Button>
+                  <Button className="h-8">Get Started</Button>
                 </Link>
               </motion.div>
             </div>
           </div>
         </div>
       </div>
-      <div className="relative z-50 mx-auto mt-52 mb-12 max-w-[2900px] flex-col items-start justify-start gap-10 self-stretch flex px-4">
-        <div className="flex items-start justify-between lg:w-[900px] w-full">
+      <div className="relative z-50 mx-auto mb-12 mt-52 flex max-w-[2900px] flex-col items-start justify-start gap-10 self-stretch px-4">
+        <div className="flex w-full items-start justify-between lg:w-[900px]">
           <div className="inline-flex flex-col items-start justify-between self-stretch">
             <div className="inline-flex w-8 items-center justify-start gap-3">
               <Link href="/">
@@ -115,7 +116,7 @@ export default function Footer() {
           </div>
           <div className="flex flex-1 items-start justify-end gap-10">
             <div className="inline-flex flex-col items-start justify-start gap-5">
-              <div className="justify-start self-stretch font-['Inter'] text-sm font-normal text-white/40">
+              <div className="justify-start self-stretch text-sm font-normal text-white/40">
                 Product
               </div>
               <div className="flex flex-col items-start justify-start gap-4 self-stretch">
@@ -149,7 +150,7 @@ export default function Footer() {
               </div>
             </div>
             <div className="inline-flex flex-col items-start justify-start gap-5">
-              <div className="justify-start self-stretch font-['Inter'] text-sm font-normal text-white/40">
+              <div className="justify-start self-stretch text-sm font-normal text-white/40">
                 Company
               </div>
               <div className="flex flex-col items-start justify-start gap-4 self-stretch">
@@ -175,7 +176,7 @@ export default function Footer() {
         <div className="h-0.5 self-stretch bg-white/20" />
         <div className="flex flex-col items-start justify-start gap-6 self-stretch">
           <div className="inline-flex items-center justify-between self-stretch">
-            <div className="justify-start text-xs sm:text-sm font-medium leading-tight text-white opacity-80">
+            <div className="justify-start text-xs font-medium leading-tight text-white opacity-80 sm:text-sm">
               © 2025 Zero Email Inc, All Rights Reserved
             </div>
             <div className="flex items-center justify-start gap-4">
