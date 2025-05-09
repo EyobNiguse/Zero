@@ -74,6 +74,7 @@ export const useBilling = () => {
   }, [customer]);
 
   return {
+    customer,
     refetch,
     attach,
     track,

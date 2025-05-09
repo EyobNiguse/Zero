@@ -65,7 +65,7 @@ export function NavUser() {
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
-  const { openBillingPortal } = useBilling();
+  const { openBillingPortal, customer: billingCustomer } = useBilling();
   const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
   const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
   const pathname = usePathname();
@@ -471,12 +471,14 @@ export function NavUser() {
                   sideOffset={8}
                 >
                   <div className="space-y-1">
-                    <DropdownMenuItem onClick={openBillingPortal}>
-                      <div className="flex items-center gap-2">
-                        <BanknoteIcon size={16} className="opacity-60" />
-                        <p className="text-[13px] opacity-60">Billing</p>
-                      </div>
-                    </DropdownMenuItem>
+                    {billingCustomer?.stripe_id ? (
+                      <DropdownMenuItem onClick={openBillingPortal}>
+                        <div className="flex items-center gap-2">
+                          <BanknoteIcon size={16} className="opacity-60" />
+                          <p className="text-[13px] opacity-60">Billing</p>
+                        </div>
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
                       <div className="flex w-full items-center gap-2">
                         {theme === 'dark' ? (
