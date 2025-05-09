@@ -48,12 +48,14 @@ export const mailRouter = router({
         const drafts = await driver.listDrafts({ q, maxResults: max, pageToken: cursor });
         return drafts;
       }
+      console.log('tr123');
       const threadsResponse = await driver.list({
         folder,
         query: q,
         maxResults: max,
         pageToken: cursor,
       });
+      console.log('tr246');
       return threadsResponse;
     }),
   markAsRead: activeDriverProcedure

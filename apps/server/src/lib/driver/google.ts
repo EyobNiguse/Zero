@@ -1002,6 +1002,7 @@ export class GoogleMailManager implements MailManager {
       return await Promise.resolve(fn());
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      console.error(error);
       const isFatal = FatalErrors.includes(error.message);
       console.error(
         `[${isFatal ? 'FATAL_ERROR' : 'ERROR'}] [Gmail Driver] Operation: ${operation}`,
