@@ -55,6 +55,7 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
 
 const app = new Hono()
   .get('/', (c) => c.json({ message: 'Zero Server is Up!' }))
+  .get('/mail/inbox', (c) => c.redirect(env.NEXT_PUBLIC_APP_URL))
   .route('/api', api);
 
 export default app;

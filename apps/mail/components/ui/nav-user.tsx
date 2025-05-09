@@ -113,14 +113,15 @@ export function NavUser() {
   };
 
   const handleLogout = async () => {
-    toast.promise(
-      signOut().then(() => router.push('/login')),
-      {
-        loading: 'Signing out...',
-        success: () => 'Signed out successfully!',
-        error: 'Error signing out',
+    toast.promise(signOut(), {
+      loading: 'Signing out...',
+      success: () => 'Signed out successfully!',
+      error: 'Error signing out',
+      finally() {
+        handleClearCache();
+        router.push('/login');
       },
-    );
+    });
   };
 
   const { data: brainState, refetch: refetchBrainState } = useBrainState();
