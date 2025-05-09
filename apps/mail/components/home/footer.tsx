@@ -15,7 +15,7 @@ const socialLinks = [
   },
   {
     name: 'LinkedIn',
-    href: 'https://linkedin.com/company/zero-email',
+    href: 'https://www.linkedin.com/company/zerodotemail/',
     icon: LinkedIn,
   },
   {
