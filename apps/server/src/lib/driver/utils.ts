@@ -7,10 +7,10 @@ import { and, eq } from 'drizzle-orm';
 export const FatalErrors = ['invalid_grant'];
 
 export const deleteActiveConnection = async (c: HonoContext) => {
-  console.log('DELETEME');
   const session = await c.var.auth.api.getSession({ headers: c.req.raw.headers });
   if (!session?.connectionId) return console.log('No connection ID found');
   try {
+    await c.var.auth.api.signOut({ headers: c.req.raw.headers });
     await c.var.db
       .delete(connection)
       .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
