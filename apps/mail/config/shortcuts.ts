@@ -112,34 +112,34 @@ const globalShortcuts: Shortcut[] = [
 ];
 
 const mailListShortcuts: Shortcut[] = [
-  // {
-  //   keys: ['r'],
-  //   action: 'markAsRead',
-  //   type: 'single',
-  //   description: 'Mark as read',
-  //   scope: 'mail-list',
-  // },
-  // {
-  //   keys: ['u'],
-  //   action: 'markAsUnread',
-  //   type: 'single',
-  //   description: 'Mark as unread',
-  //   scope: 'mail-list',
-  // },
-  // {
-  //   keys: ['m'],
-  //   action: 'muteThread',
-  //   type: 'single',
-  //   description: 'Mute thread',
-  //   scope: 'mail-list',
-  // },
-  // {
-  //   keys: ['e'],
-  //   action: 'archiveEmail',
-  //   type: 'single',
-  //   description: 'Archive email',
-  //   scope: 'mail-list',
-  // },
+  {
+    keys: ['r'],
+    action: 'markAsRead',
+    type: 'single',
+    description: 'Mark as read',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['u'],
+    action: 'markAsUnread',
+    type: 'single',
+    description: 'Mark as unread',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['m'],
+    action: 'muteThread',
+    type: 'single',
+    description: 'Mute thread',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['e'],
+    action: 'archiveEmail',
+    type: 'single',
+    description: 'Archive email',
+    scope: 'mail-list',
+  },
   {
     keys: ['escape'],
     action: 'exitSelectionMode',
