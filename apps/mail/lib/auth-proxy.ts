@@ -4,7 +4,7 @@ export const authProxy = {
   api: {
     getSession: async ({ headers }: { headers: Headers }) => {
       //   console.error('getSession', headers);
-      const session = await authClient.getSession();
+      const session = await authClient.getSession({ fetchOptions: { headers } });
       console.error('session', session);
       if (session.error) throw new Error(session.error.message);
       return session.data;
