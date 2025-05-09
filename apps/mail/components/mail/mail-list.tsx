@@ -178,31 +178,33 @@ const Thread = memo(
     const { refetch: refetchStats } = useStats();
     const { data: getThreadData, isLoading, isGroupThread } = useThread(demo ? null : message.id);
     const [isStarred, setIsStarred] = useState(false);
-    const queryClient = useQueryClient();
     const trpc = useTRPC();
-
+    const queryClient = useQueryClient();
     const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
 
-    // Set initial star state based on email data
     useEffect(() => {
       if (getThreadData?.latest?.tags) {
         setIsStarred(getThreadData.latest.tags.some((tag) => tag.name === 'STARRED'));
       }
     }, [getThreadData?.latest?.tags]);
 
-    const handleToggleStar = useCallback(async () => {
-      if (!getThreadData || !message.id) return;
+    const handleToggleStar = useCallback(
+      async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!getThreadData || !message.id) return;
 
-      const newStarredState = !isStarred;
-      setIsStarred(newStarredState);
-      if (newStarredState) {
-        toast.success(t('common.actions.addedToFavorites'));
-      } else {
-        toast.success(t('common.actions.removedFromFavorites'));
-      }
-      await toggleStar({ ids: [message.id] });
-      refetchThreads();
-    }, [getThreadData, message.id, isStarred, refetchThreads, t]);
+        const newStarredState = !isStarred;
+        setIsStarred(newStarredState);
+        if (newStarredState) {
+          toast.success(t('common.actions.addedToFavorites'));
+        } else {
+          toast.success(t('common.actions.removedFromFavorites'));
+        }
+        await toggleStar({ ids: [message.id] });
+        refetchThreads();
+      },
+      [getThreadData, message.id, isStarred, refetchThreads, t],
+    );
 
     const moveThreadTo = useCallback(
       async (destination: ThreadDestination) => {
@@ -226,7 +228,13 @@ const Thread = memo(
         toast.promise(promise, {
           error: t('common.actions.failedToMove'),
           finally: async () => {
-            await Promise.all([refetchStats(), refetchThreads()]);
+            await Promise.all([
+              refetchStats(),
+              refetchThreads(),
+              queryClient.invalidateQueries({
+                queryKey: trpc.mail.get.queryKey({ id: message.id }),
+              }),
+            ]);
           },
         });
       },
@@ -440,7 +448,10 @@ const Thread = memo(
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 [&_svg]:size-3.5"
-                    onClick={() => moveThreadTo('archive')}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      moveThreadTo('archive');
+                    }}
                   >
                     <Archive2 className="fill-[#9D9D9D]" />
                   </Button>
@@ -456,7 +467,10 @@ const Thread = memo(
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] [&_svg]:size-3.5"
-                      onClick={() => moveThreadTo('bin')}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        moveThreadTo('bin');
+                      }}
                     >
                       <Trash className="fill-[#F43F5E]" />
                     </Button>
