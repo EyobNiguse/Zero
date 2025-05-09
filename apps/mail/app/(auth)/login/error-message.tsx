@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 const errorMessages: Record<string, string> = {
-  require_scopes_missing:
+  required_scopes_missing:
     'We’re missing the permissions needed to craft your full experience. Please sign in again and allow the requested access.',
 };
 
