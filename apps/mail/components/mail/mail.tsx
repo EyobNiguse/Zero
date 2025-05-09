@@ -32,6 +32,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
@@ -43,7 +44,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { Command, RefreshCcw } from 'lucide-react';
@@ -282,6 +282,7 @@ function BulkSelectActions() {
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
+  const queryClient = useQueryClient();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
@@ -318,6 +319,11 @@ function BulkSelectActions() {
     if (threadId && mail.bulkSelected.includes(threadId)) setThreadId(null);
     refetchThreads();
     refetchStats();
+    await Promise.all(
+      mail.bulkSelected.map((threadId) =>
+        queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: threadId }) }),
+      ),
+    );
     setMail({ ...mail, bulkSelected: [] });
   }, [mail, setMail, refetchThreads, refetchStats, threadId, setThreadId]);
 
