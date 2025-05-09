@@ -25,7 +25,7 @@ const steps = [
   {
     title: 'Label your emails',
     description: 'Zero helps you label your emails and helps you focus on what matters.',
-    video: 'https://assets.0.email/step3.gif',
+    video: '/onboarding/step3.gif',
   },
   {
     title: 'Coming Soon',
@@ -105,20 +105,29 @@ export function OnboardingDialog({
             </p>
           </div>
 
-          {/* Video/GIF Section */}
-          <div className="flex items-center justify-center">
-            {steps[currentStep]?.video && (
-              <div className="bg-muted aspect-video w-full max-w-4xl overflow-hidden rounded-lg">
-                <Image
-                  priority
-                  width={500}
-                  height={500}
-                  src={steps[currentStep].video}
-                  alt={steps[currentStep].title}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            )}
+          <div className="relative flex items-center justify-center">
+            <div className="bg-muted aspect-video w-full max-w-4xl overflow-hidden rounded-lg">
+              {steps.map(
+                (step, index) =>
+                  step.video && (
+                    <div
+                      key={index}
+                      className={`absolute inset-0 transition-opacity duration-300 ${
+                        index === currentStep ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    >
+                      <Image
+                        priority
+                        width={500}
+                        height={500}
+                        src={step.video}
+                        alt={step.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ),
+              )}
+            </div>
           </div>
 
           <div className="mx-auto flex w-full max-w-xl gap-2">
