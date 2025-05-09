@@ -11,5 +11,10 @@ export default async function Home() {
     redirect('/mail/inbox');
   }
 
-  return <HomeContent />;
+  return (
+    <div>
+    <HomeContent />
+ 
+    </div>
+  )
 }
