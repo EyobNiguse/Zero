@@ -109,7 +109,7 @@ export const AddConnectionDialog = ({
                 onClick={async () =>
                   await authClient.linkSocial({
                     provider: provider.providerId,
-                    callbackURL: pathname,
+                    callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
                   })
                 }
               >
