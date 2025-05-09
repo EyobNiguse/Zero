@@ -80,17 +80,18 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { chatMessages, attach } = useBilling();
 
   const handleUpgrade = async () => {
-    // if (attach) {
-    //   return attach({
-    //     productId: 'pro-example',
-    //   })
-    //     .catch((error: Error) => {
-    //       console.error('Failed to upgrade:', error);
-    //     })
-    //     .then(() => {
-    //       console.log('Upgraded successfully');
-    //     });
-    // }
+    if (attach) {
+      return attach({
+        productId: 'pro-example',
+        successUrl: `${window.location.origin}/mail/inbox?success=true`,
+      })
+        .catch((error: Error) => {
+          console.error('Failed to upgrade:', error);
+        })
+        .then(() => {
+          console.log('Upgraded successfully');
+        });
+    }
   };
 
   useHotkeys('Meta+0', () => {
