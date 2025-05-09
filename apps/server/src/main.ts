@@ -39,7 +39,7 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
       },
     }),
   )
-  .post('/chat', async (c) => chatHandler(c))
+  .post('/api/chat', async (c) => chatHandler(c))
   .get('/mailto-handler', async (c) => mailtoHandler(c))
   .onError(async (err, c) => {
     if (err instanceof Response) return err;
