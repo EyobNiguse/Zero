@@ -27,12 +27,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
+import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useAISidebar } from '@/components/ui/ai-sidebar';
@@ -42,9 +44,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
+import { Command, RefreshCcw } from 'lucide-react';
 import { useThreads } from '@/hooks/use-threads';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -52,7 +54,6 @@ import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
-import { Command } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
@@ -84,7 +85,7 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const [{ isLoading, isFetching }] = useThreads();
+  const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -126,10 +127,7 @@ export function MailLayout() {
         // 2. Create a draft with these values
         // 3. Redirect to the compose page with just the draft ID
         // This ensures we don't keep the email content in the URL
-        navigator.registerProtocolHandler(
-          'mailto',
-          `${window.location.origin}/api/mailto-handler?mailto=%s`,
-        );
+        navigator.registerProtocolHandler('mailto', `/api/mailto-handler?mailto=%s`);
       } catch (error) {
         console.error('Failed to register protocol handler:', error);
       }
@@ -144,15 +142,15 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-1 overflow-hidden"
+          className="rounded-inherit overflow-hidden"
         >
-          <div
-            className={cn(
-              'w-full border-none !bg-transparent lg:w-fit',
-              threadId ? 'md:hidden lg:block' : '',
-            )}
+          <ResizablePanel
+            defaultSize={40}
+            minSize={40}
+            maxSize={50}
+            className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
           >
-            <div className="bg-panelLight dark:bg-panelDark h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex md:h-[calc(100dvh-0.5rem)] md:rounded-2xl md:border md:shadow-sm lg:w-screen lg:max-w-[415px] xl:max-w-[500px] dark:border-[#252525]">
+            <div className="w-full md:h-[calc(100dvh-0.5rem)]">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -184,16 +182,27 @@ export function MailLayout() {
                       </div>
                     ) : null}
                   </div>
-                  {brainState?.enabled ? (
+                  <div className="flex items-center gap-2">
+                    {brainState?.enabled ? (
+                      <Button
+                        variant="outline"
+                        size={'sm'}
+                        className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
+                      >
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                        Auto Labeling
+                      </Button>
+                    ) : null}
                     <Button
-                      variant="outline"
-                      size={'sm'}
-                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
+                      onClick={() => {
+                        refetchThreads();
+                      }}
+                      variant="ghost"
+                      className="md:h-fit md:px-2"
                     >
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
-                      Auto Labeling
+                      <RefreshCcw className="text-muted-foreground h-4 w-4 cursor-pointer" />
                     </Button>
-                  ) : null}
+                  </div>
                 </div>
               </div>
               <div className="p-2 px-[22px]">
@@ -215,11 +224,11 @@ export function MailLayout() {
                 <MailList isCompact={true} />
               </div>
             </div>
-          </div>
-
+          </ResizablePanel>
+          <ResizableHandle className="mr-0.5 opacity-0" />
           {isDesktop && (
             <ResizablePanel
-              className={`bg-panelLight dark:bg-panelDark ${threadId ? 'mr-1' : 'lg:mr-1'} w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+              className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
               defaultSize={30}
               minSize={30}
             >
@@ -271,7 +280,9 @@ function BulkSelectActions() {
   const { mutateAsync: markAsImportant } = useMutation(trpc.mail.markAsImportant.mutationOptions());
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
+  const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
+  const queryClient = useQueryClient();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
@@ -308,6 +319,11 @@ function BulkSelectActions() {
     if (threadId && mail.bulkSelected.includes(threadId)) setThreadId(null);
     refetchThreads();
     refetchStats();
+    await Promise.all(
+      mail.bulkSelected.map((threadId) =>
+        queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: threadId }) }),
+      ),
+    );
     setMail({ ...mail, bulkSelected: [] });
   }, [mail, setMail, refetchThreads, refetchStats, threadId, setThreadId]);
 
@@ -425,7 +441,6 @@ function BulkSelectActions() {
 
         <DialogContent
           showOverlay
-          className="bg-panelLight dark:bg-panelDark max-w-lg rounded-xl border p-4"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
@@ -466,11 +481,18 @@ function BulkSelectActions() {
             className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] px-2 text-sm transition-all duration-300 ease-out hover:bg-[#FDE4E9]/80 dark:border-[#6E2532] dark:bg-[#411D23] dark:hover:bg-[#313131]/80 hover:dark:bg-[#411D23]/60"
             onClick={() => {
               if (mail.bulkSelected.length === 0) return;
-              toast.promise(bulkDeleteThread({ ids: mail.bulkSelected }).then(onMoveSuccess), {
-                loading: 'Moving to bin...',
-                success: 'All done! moved to bin',
-                error: 'Something went wrong!',
-              });
+              toast.promise(
+                new Promise((resolve, reject) => {
+                  mail.bulkSelected.map((id) =>
+                    setBackgroundQueue({ type: 'add', threadId: `thread:${id}` }),
+                  );
+                  return bulkDeleteThread({ ids: mail.bulkSelected }).then(resolve).catch(reject);
+                }).then(onMoveSuccess),
+                {
+                  success: 'All done! moved to bin',
+                  error: 'Something went wrong!',
+                },
+              );
             }}
           >
             <div className="relative overflow-visible">

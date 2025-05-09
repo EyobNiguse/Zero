@@ -125,10 +125,7 @@ export default function LabelsPage() {
                   </Button>
                 </DialogTrigger>
                 <div className="container mx-auto max-w-[750px]">
-                  <DialogContent
-                    showOverlay={true}
-                    className="bg-panelLight dark:bg-panelDark w-full max-w-[500px] rounded-xl p-4"
-                  >
+                  <DialogContent showOverlay={true}>
                     <DialogHeader>
                       <DialogTitle>{editingLabel ? 'Edit Label' : 'Create New Label'}</DialogTitle>
                     </DialogHeader>

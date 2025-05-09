@@ -1,14 +1,22 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useSearchValue } from '@/hooks/use-search-value';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useCallback, useEffect } from 'react';
+import { useTRPC } from '@/providers/query-provider';
 import { Markdown } from '@react-email/components';
+import { CurvedArrow, Stop } from '../icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
+import { useLabels } from '@/hooks/use-labels';
 import { cn, getEmailLogo } from '@/lib/utils';
-import { CurvedArrow } from '../icons/icons';
+import { useStats } from '@/hooks/use-stats';
+import { useParams } from 'next/navigation';
+import { CheckCircle2 } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
+import { Button } from '../ui/button';
 import { format } from 'date-fns-tz';
 import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
@@ -65,15 +73,12 @@ const RenderThreads = ({
 
 const ExampleQueries = ({ onQueryClick }: { onQueryClick: (query: string) => void }) => {
   const firstRowQueries = [
-    "Find invoice from Stripe",
-    "Show unpaid invoices",
-    "Show recent work feedback"
+    'Find invoice from Stripe',
+    'Show unpaid invoices',
+    'Show recent work feedback',
   ];
-  
-  const secondRowQueries = [
-    "Find all work meetings",
-    "What projects do i have coming up"
-  ];
+
+  const secondRowQueries = ['Find all work meetings', 'What projects do i have coming up'];
 
   return (
     <div className="mt-6 flex w-full flex-col items-center gap-2">
@@ -124,17 +129,42 @@ export function AIChat() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { refetch, chatMessages } = useBilling();
+  const [threadId] = useQueryState('threadId');
+  const { refetch: refetchLabels } = useLabels();
+  const { refetch: refetchStats } = useStats();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { refetch: refetchThread } = useThread(threadId);
+  const { folder } = useParams<{ folder: string }>();
+  const [searchValue] = useSearchValue();
 
-  const { messages, input, setInput, error, handleSubmit, status } = useChat({
-    api: '/api/chat',
+  const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
+    api: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+    fetch: (url, options) => fetch(url, { ...options, method: 'POST', credentials: 'include' }),
     maxSteps: 5,
+    body: {
+      threadId: threadId ?? undefined,
+      currentFolder: folder ?? undefined,
+      currentFilter: searchValue.value ?? undefined,
+    },
   });
 
+  const prevStatusRef = useRef(status);
+
+  const refetchAll = useCallback(() => {
+    refetchLabels();
+    refetchStats();
+    if (threadId) refetchThread();
+    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
+    refetch();
+  }, [threadId, queryClient, trpc.mail.get.queryKey]);
+
   useEffect(() => {
-    if (messages.length) {
-      refetch();
+    if (prevStatusRef.current === 'streaming' && status === 'ready') {
+      refetchAll();
     }
-  }, [messages]);
+    prevStatusRef.current = status;
+  }, [status, refetchAll]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -142,13 +172,23 @@ export function AIChat() {
     }
   }, []);
 
-  // Auto scroll when messages change
   useEffect(() => {
     scrollToBottom();
-    // if (onMessagesChange) {
-    //   onMessagesChange(messages);
+  }, [messages, scrollToBottom]);
+
+  const handleUpgrade = async () => {
+    // if (attach) {
+    //   return attach({
+    //     productId: 'pro-example',
+    //   })
+    //     .catch((error: Error) => {
+    //       console.error('Failed to upgrade:', error);
+    //     })
+    //     .then(() => {
+    //       console.log('Upgraded successfully');
+    //     });
     // }
-  }, [messages, messagesEndRef]);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -156,7 +196,12 @@ export function AIChat() {
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p>No more</p>
+              <TextShimmer className="text-center text-xl font-medium">
+                Upgrade to Zero Pro for unlimited AI chats
+              </TextShimmer>
+              <Button onClick={handleUpgrade} className="mt-2 h-8 w-52">
+                Upgrade
+              </Button>
             </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -164,18 +209,20 @@ export function AIChat() {
                 <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
                 <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
               </div>
-              <p className="mb-1 mt-2 hidden text-sm text-center font-medium text-black md:block dark:text-white">
+              <p className="mb-1 mt-2 hidden text-center text-sm font-medium text-black md:block dark:text-white">
                 Ask anything about your emails
               </p>
-              <p className="mb-3 text-sm text-center text-[#8C8C8C] dark:text-[#929292]">
+              <p className="mb-3 text-center text-sm text-[#8C8C8C] dark:text-[#929292]">
                 Ask to do or show anything using natural language
               </p>
 
               {/* Example Thread */}
-              <ExampleQueries onQueryClick={(query) => {
-                setInput(query);
-                inputRef.current?.focus();
-              }} />
+              <ExampleQueries
+                onQueryClick={(query) => {
+                  setInput(query);
+                  inputRef.current?.focus();
+                }}
+              />
             </div>
           ) : (
             messages.map((message, index) => {
@@ -185,11 +232,16 @@ export function AIChat() {
               return (
                 <div key={`${message.id}-${index}`} className="flex flex-col gap-2">
                   {/* Text in chat bubble */}
-                  
+
                   {/* Threads below the bubble */}
                   {toolParts.map((part, idx) =>
                     'result' in part.toolInvocation && 'threads' in part.toolInvocation.result ? (
                       <RenderThreads threads={part.toolInvocation.result.threads} key={idx} />
+                    ) : 'result' in part.toolInvocation ? (
+                      <span className="text-muted-foreground flex gap-1 text-xs">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Used tool: {part.toolInvocation.toolName}
+                      </span>
                     ) : null,
                   )}
                   {textParts.length > 0 && (
@@ -242,18 +294,30 @@ export function AIChat() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask AI to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-16 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
                   />
-                  <button
-                    form="ai-chat-form"
-                    type="submit"
-                    className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
-                    disabled={!input.trim() || status !== 'ready' || !chatMessages.enabled}
-                  >
-                    <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
-                      <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
-                    </div>
-                  </button>
+                  {status === 'ready' ? (
+                    <button
+                      form="ai-chat-form"
+                      type="submit"
+                      className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
+                      disabled={!input.trim() || !chatMessages.enabled}
+                    >
+                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
+                        <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
+                      </div>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={stop}
+                      type="button"
+                      className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
+                    >
+                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
+                        <Stop className="h-4 w-4 fill-black dark:fill-[#929292]" />
+                      </div>
+                    </button>
+                  )}
                 </form>
               </div>
             </div>

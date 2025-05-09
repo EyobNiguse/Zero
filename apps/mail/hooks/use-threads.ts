@@ -25,9 +25,8 @@ export const useThreads = () => {
       {
         initialCursor: '',
         getNextPageParam: (lastPage) => lastPage?.nextPageToken ?? null,
-        staleTime: 10000,
+        staleTime: 3000 * 60, // 3 minute
         refetchOnMount: true,
-        refetchInterval: 10000,
         refetchIntervalInBackground: true,
       },
     ),

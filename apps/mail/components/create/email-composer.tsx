@@ -97,11 +97,11 @@ export function EmailComposer({
   const toInputRef = useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const [mode] = useQueryState('mode');
-  const [isComposeOpen] = useQueryState('isComposeOpen');
+  const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
   const { data: session } = useSession();
-  const [draftId] = useQueryState('draftId');
-  // const { data: draft } = useDraft(draftId ?? null);
+  const [urlDraftId] = useQueryState('draftId');
+  const [draftId, setDraftId] = useState<string | null>(urlDraftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
 
@@ -267,6 +267,7 @@ export function EmailComposer({
       setHasUnsavedChanges(false);
       editor.commands.clearContent(true);
       form.reset();
+      setIsComposeOpen(null);
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');
@@ -314,7 +315,7 @@ export function EmailComposer({
       as: url.pathname + url.search,
       url: url.pathname + url.search,
     };
-
+    setDraftId(draftId);
     window.history.replaceState(nextState, '', url);
   };
 
@@ -352,6 +353,12 @@ export function EmailComposer({
       setHasUnsavedChanges(false);
     }
   };
+
+  useEffect(() => {
+    if (urlDraftId !== draftId) {
+      setDraftId(urlDraftId ?? null);
+    }
+  }, [urlDraftId]);
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -862,7 +869,7 @@ export function EmailComposer({
                       <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
                     )}
                   </div>
-                  <div className="text-center text-sm leading-none text-black dark:text-white">
+                  <div className="text-center text-sm leading-none text-black dark:text-white hidden md:block">
                     Generate
                   </div>
                 </div>
@@ -872,7 +879,7 @@ export function EmailComposer({
               <TooltipTrigger asChild>
                 <button
                   disabled
-                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50"
+                  className="h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50 hidden md:flex"
                 >
                   <Smile className="h-3 w-3 fill-[#9A9A9A]" />
                   <span className="px-0.5 text-sm">Casual</span>
@@ -886,7 +893,7 @@ export function EmailComposer({
               <TooltipTrigger asChild>
                 <button
                   disabled
-                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50"
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50 hidden md:flex"
                 >
                   {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
                   {messageLength >= 50 && messageLength < 200 && (
