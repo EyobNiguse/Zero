@@ -1,3 +1,4 @@
+import { useAutumn, useCustomer } from 'autumn-js/next';
 import { useMemo } from 'react';
 
 type Feature = {
@@ -33,33 +34,49 @@ const FEATURE_IDS = {
 } as const;
 
 export const useBilling = () => {
+  const { customer, refetch } = useCustomer();
+  const { attach, track } = useAutumn();
+
   const customerFeatures = useMemo(() => {
-    return {
-      chatMessages: {
-        total: 100,
-        remaining: 75,
-        unlimited: false,
-        enabled: true,
+    if (!customer) return DEFAULT_FEATURES;
+
+    const features = customer.features.reduce(
+      (acc: Features, feature: Feature) => {
+        const id = feature.feature_id;
+        if (id === FEATURE_IDS.CHAT) {
+          acc.chatMessages = {
+            total: feature.included_usage || 0,
+            remaining: feature.balance || 0,
+            unlimited: feature.unlimited,
+            enabled: feature.unlimited || Number(feature.balance) > 0,
+          };
+        } else if (id === FEATURE_IDS.CONNECTIONS) {
+          acc.connections = {
+            total: feature.included_usage || 0,
+            remaining: feature.balance || 0,
+            unlimited: feature.unlimited,
+            enabled: feature.unlimited || Number(feature.balance) > 0,
+          };
+        } else if (id === FEATURE_IDS.BRAIN) {
+          acc.brainActivity = {
+            total: feature.included_usage || 0,
+            remaining: feature.balance || 0,
+            unlimited: feature.unlimited,
+            enabled: feature.unlimited || Number(feature.balance) > 0,
+          };
+        }
+        return acc;
       },
-      connections: {
-        total: 5,
-        remaining: 3,
-        unlimited: false,
-        enabled: true,
-      },
-      brainActivity: {
-        total: 1000,
-        remaining: 850,
-        unlimited: false,
-        enabled: true,
-      },
-    };
-  }, []);
+      { ...DEFAULT_FEATURES },
+    );
+
+    return features;
+  }, [customer]);
 
   return {
-    refetch: () => {},
-    attach: () => {},
-    track: () => {},
+    refetch,
+    attach,
+    track,
     ...customerFeatures,
   };
 };
