@@ -46,6 +46,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useInView, motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Command, Menu } from 'lucide-react';
@@ -60,7 +61,6 @@ import Footer from './footer';
 import Link from 'next/link';
 import React from 'react';
 import { z } from 'zod';
-import { useInView , motion} from 'motion/react';
 
 const firstRowQueries: string[] = [
   'Show recent design feedback',
@@ -135,7 +135,6 @@ export default function HomeContent() {
   const { setTheme } = useTheme();
   const ref = useRef(null);
 
-
   useEffect(() => {
     setTheme('dark');
   }, [setTheme]);
@@ -171,7 +170,7 @@ export default function HomeContent() {
   return (
     <main className="relative flex h-full flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
-        className="absolute -top-32 left-1/2 z-1 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
+        className="z-1 absolute -top-32 left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
         style={{ mixBlendMode: 'screen' }}
       />
       {/* Desktop Navigation - Hidden on mobile */}
@@ -212,14 +211,6 @@ export default function HomeContent() {
                       ))}
                     </ul>
                   </NavigationMenuContent>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link
-                    href="/pricing"
-                    className="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[state=open]:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:hover:bg-accent data-[state=open]:focus:bg-accent group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                  >
-                    Pricing
-                  </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
@@ -286,15 +277,23 @@ export default function HomeContent() {
         </Sheet>
       </div>
 
-      <section className="mt-32 flex flex-col items-center px-4 z-10">
+      <section className="z-10 mt-32 flex flex-col items-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="border-input/50 mb-6 inline-flex items-center gap-4 rounded-full border border-[#2A2A2A] bg-[#1E1E1E] px-4 py-1"
         >
-          
-          <span className="text-sm flex items-center gap-2 "><Image src="/yc-small.svg" alt="Y Combinator" className='rounded-[2px]' width={18} height={18} /> Backed by Y Combinator</span>
+          <span className="flex items-center gap-2 text-sm">
+            <Image
+              src="/yc-small.svg"
+              alt="Y Combinator"
+              className="rounded-[2px]"
+              width={18}
+              height={18}
+            />{' '}
+            Backed by Y Combinator
+          </span>
           {/* <Link
             href="https://x.com/zerodotemail"
             target="_blank"
@@ -304,7 +303,7 @@ export default function HomeContent() {
             <ArrowRight className="ml-1" />
           </Link> */}
         </motion.div>
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -314,7 +313,7 @@ export default function HomeContent() {
             AI Powered Email, Built to Save You Time
           </Balancer>
         </motion.h1>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
@@ -406,19 +405,25 @@ export default function HomeContent() {
         />
       </div>
 
-      <div className='w-full bg-[#313135] h-[1px] relative -top-3.5 hidden md:block' />
+      <div className="relative -top-3.5 hidden h-[1px] w-full bg-[#313135] md:block" />
 
       <div className="relative mt-52">
-        <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5 }} className="flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-center"
+        >
           <h1 className="text-lg font-light text-white/40 md:text-xl">
             Designed for power users who value time
           </h1>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5, delay: 0.2 }} className="mt-2 flex flex-col items-center justify-center md:mt-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-2 flex flex-col items-center justify-center md:mt-8"
+        >
           <h1 className="text-center text-4xl font-medium text-white md:text-6xl">
             Speed Is Everything
           </h1>
@@ -426,9 +431,12 @@ export default function HomeContent() {
             Reply in seconds
           </h1>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5, delay: 0.4 }} className="relative bottom-3 mx-12 flex items-center justify-center bg-[#0F0F0F] md:mx-0">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="relative bottom-3 mx-12 flex items-center justify-center bg-[#0F0F0F] md:mx-0"
+        >
           <div className="mx-auto inline-flex max-w-[600px] flex-col items-center justify-center overflow-hidden rounded-2xl bg-[#1A1A1A] shadow-md">
             <div className="inline-flex h-12 items-center justify-start gap-2 self-stretch border-b-[0.50px] p-4">
               <div className="text-base-gray-500/50 justify-start text-sm leading-none">To:</div>
@@ -576,11 +584,14 @@ export default function HomeContent() {
         </motion.div>
       </div>
 
-      <div  className="relative flex items-center justify-center mt-52 ">
+      <div className="relative mt-52 flex items-center justify-center">
         <div className="mx-auto grid max-w-[1250px] gap-12 md:grid-cols-2 lg:grid-cols-3">
-          <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5 }} className="flex flex-col">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col"
+          >
             <div className="relative h-96 w-full overflow-hidden rounded-2xl">
               <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl border border-[#252525] bg-neutral-800" />
               <div className="outline-tokens-stroke-light/5 absolute left-[39px] top-[34px] inline-flex h-[771px] w-72 flex-col items-start justify-start overflow-hidden rounded-lg bg-[#1A1A1A]">
@@ -723,9 +734,11 @@ export default function HomeContent() {
               </p>
             </div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
               <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl bg-[#2B2B2B]" />
               <div className="absolute left-[44px] top-0 h-[720px] w-[610px]">
@@ -954,9 +967,11 @@ export default function HomeContent() {
               </p>
             </div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="relative h-96 w-96 overflow-hidden rounded-2xl">
               <div className="absolute left-0 top-0 h-96 w-96 rounded-2xl bg-[#2B2B2B]" />
               <div className="absolute left-[34px] top-[34px] inline-flex w-[600px] flex-col items-start justify-start overflow-hidden rounded-xl bg-[#1A1A1A]">
@@ -1236,25 +1251,34 @@ export default function HomeContent() {
         </div>
       </div>
 
-      <div className="relative mt-52 ">
+      <div className="relative mt-52">
         <div className="z-1 relative">
-          <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5 }} className="flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center justify-center"
+          >
             <h1 className="text-lg font-light text-white/40 md:text-xl">
               AI email chat with natural language
             </h1>
           </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5, delay: 0.2 }} className="mt-2 flex flex-col items-center justify-center md:mt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-2 flex flex-col items-center justify-center md:mt-8"
+          >
             <h1 className="text-4xl font-medium text-white md:text-6xl">Ask away</h1>
             <h1 className="text-4xl font-medium text-white/40 md:text-6xl">Get your answers</h1>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 } }
-          transition={{ duration: 0.5, delay: 0.5 }} className="relative  flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="relative flex items-center justify-center"
+          >
             <div className="relative mx-auto flex h-[587px] w-full max-w-[894px] items-center justify-center rounded-xl">
               <div className="absolute left-0 top-[319px] mx-auto inline-flex w-full max-w-[894px] flex-col items-start justify-start overflow-hidden rounded-xl bg-zinc-900 opacity-30">
                 <div className="inline-flex items-center justify-start gap-1.5 self-stretch px-5 pb-4 pt-7">
@@ -1460,15 +1484,18 @@ export default function HomeContent() {
             alt="hero"
             width={1920}
             height={1080}
-            className="relative bottom-24 z-2 rotate-180  bg-transparent opacity-0"
+            className="z-2 relative bottom-24 rotate-180 bg-transparent opacity-0"
             style={{ clipPath: 'inset(45% 0 0 0)' }}
           />
         </div>
       </div>
 
-      <motion.div  initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 } }
-      transition={{ duration: 0.5 }} className="relative  hidden lg:block">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative hidden lg:block"
+      >
         <div className="mx-auto max-w-[920px] text-center text-4xl font-normal leading-[48px] text-white">
           <span className="text-[#B7B7B7]">Work smarter, not harder.</span>{' '}
           <span className="pr-8 text-white">Automate repetitive</span>{' '}
@@ -1507,7 +1534,7 @@ export default function HomeContent() {
         </div>
       </motion.div>
 
-      <div className="relative  flex items-center justify-center mt-52 ">
+      <div className="relative mt-52 flex items-center justify-center">
         <Footer />
       </div>
     </main>
