@@ -122,6 +122,8 @@ export function OnboardingDialog({
               <div className="bg-muted aspect-video w-full max-w-4xl overflow-hidden rounded-lg">
                 <Image
                   priority
+                  width={500}
+                  height={500}
                   src={steps[currentStep].video}
                   alt={steps[currentStep].title}
                   className="h-full w-full object-cover"
