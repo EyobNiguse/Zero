@@ -154,10 +154,10 @@ export function AIChat() {
   const refetchAll = useCallback(() => {
     refetchLabels();
     refetchStats();
-    refetchThread();
+    if (threadId) refetchThread();
     queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
     refetch();
-  }, [refetchLabels, refetchStats, refetchThread, queryClient, trpc.mail.get.queryKey]);
+  }, [threadId, queryClient, trpc.mail.get.queryKey]);
 
   useEffect(() => {
     if (prevStatusRef.current === 'streaming' && status === 'ready') {
