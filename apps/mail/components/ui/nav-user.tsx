@@ -221,7 +221,6 @@ export function NavUser() {
                       <div className="w-full">
                         <div className="text-sm font-medium">
                           {activeAccount.name || session.user.name || 'User'}
-                          {isPro && <BadgeCheck className="text-gold" />}
                         </div>
                         <div className="text-muted-foreground text-xs">{activeAccount.email}</div>
                       </div>
