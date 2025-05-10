@@ -1,9 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { CircleCheck, CircleX } from '@/components/icons/icons';
-import { useBilling } from '@/hooks/use-billing';
-import { PixelatedBackground } from '@/components/home/pixelated-bg';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -14,13 +10,17 @@ import {
   ListItem,
 } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { PixelatedBackground } from '@/components/home/pixelated-bg';
+import { CircleCheck, CircleX } from '@/components/icons/icons';
+import { TextShimmer } from '@/components/ui/text-shimmer';
 import { Separator } from '@/components/ui/separator';
+import { useBilling } from '@/hooks/use-billing';
+import { Button } from '@/components/ui/button';
+import { useCustomer } from 'autumn-js/next';
+import { useState, useMemo } from 'react';
+import { Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
-import { TextShimmer } from '@/components/ui/text-shimmer';
-import { useCustomer } from 'autumn-js/next';
 
 const resources = [
   {
@@ -143,11 +143,11 @@ export default function PricingPage() {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                <Link href="/pricing">
-              <Button variant="ghost" className="h-9">
-                Pricing
-              </Button>
-            </Link>
+                  <Link href="/pricing">
+                    <Button variant="ghost" className="h-9">
+                      Pricing
+                    </Button>
+                  </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
@@ -203,7 +203,14 @@ export default function PricingPage() {
                   href={resource.href}
                   className="flex items-center gap-2 font-medium"
                 >
-                  {resource.platform && <Image src={`/${resource.platform}.svg`} alt={resource.platform} width={20} height={20} />}
+                  {resource.platform && (
+                    <Image
+                      src={`/${resource.platform}.svg`}
+                      alt={resource.platform}
+                      width={20}
+                      height={20}
+                    />
+                  )}
                 </Link>
               ))}
             </div>
@@ -211,92 +218,92 @@ export default function PricingPage() {
         </Sheet>
       </div>
 
-      <div className="container mx-auto px-4 py-16 mt-40 h-screen">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-white">Simple, Transparent Pricing</h1>
-          <p className="text-muted-foreground text-lg">
-            Choose the plan that's right for you
-          </p>
+      <div className="container mx-auto mt-40 h-screen px-4 py-16">
+        <div className="mb-12 text-center">
+          <h1 className="mb-4 text-4xl font-bold text-white">Simple, Transparent Pricing</h1>
+          <p className="text-muted-foreground text-lg">Choose the plan that's right for you</p>
         </div>
 
-        <div className=" flex items-center justify-center gap-8 max-w-4xl mx-auto">
+        <div className="mx-auto flex max-w-4xl items-center justify-center gap-8">
           {/* Free Plan */}
-          <div className="flex flex-col w-full p-8 bg-[#141414] rounded-xl border relative">
-            <div className="text-3xl mb-4  text-center font-bold dark:text-white">Free <span className="text-lg font-medium"></span></div>
-            <ul className="text-left w-full mb-6 space-y-2 flex-grow">
+          <div className="relative flex w-full flex-col rounded-xl border bg-[#141414] p-8">
+            <div className="mb-4 text-center text-3xl font-bold dark:text-white">
+              Free <span className="text-lg font-medium"></span>
+            </div>
+            <ul className="mb-6 w-full flex-grow space-y-2 text-left">
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> Unlimited email connections
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Unlimited email connections
               </li>
-             
+
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> AI-powered chat with your inbox
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI-powered chat with your inbox
               </li>
-              
+
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> One-click AI email writing & replies
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleX className="w-4 h-4 fill-white opacity-50" /> Instant thread AI-generated summaries
-              </li>
-              <li className="flex items-center gap-2">
-              <CircleX className="w-4 h-4 fill-white opacity-50" />  Auto labeling
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> One-click AI email writing &
+                replies
               </li>
               <li className="flex items-center gap-2">
-              <CircleX className="w-4 h-4 fill-white opacity-50" /> Verified checkmark
+                <CircleX className="h-4 w-4 fill-white opacity-50" /> Instant thread AI-generated
+                summaries
               </li>
               <li className="flex items-center gap-2">
-                <CircleX className="w-4 h-4 fill-white opacity-50" /> Priority customer support
+                <CircleX className="h-4 w-4 fill-white opacity-50" /> Auto labeling
+              </li>
+              <li className="flex items-center gap-2">
+                <CircleX className="h-4 w-4 fill-white opacity-50" /> Verified checkmark
+              </li>
+              <li className="flex items-center gap-2">
+                <CircleX className="h-4 w-4 fill-white opacity-50" /> Priority customer support
               </li>
             </ul>
-            <Button 
+            <Button
               variant="outline"
               className="h-10 w-full"
               onClick={handleUpgrade}
               disabled={!isPro}
             >
-              {isPro ? "Downgrade" : "Current Plan"}
+              {isPro ? 'Downgrade' : 'Current Plan'}
             </Button>
           </div>
 
           {/* Pro Plan */}
-          <div className="flex flex-col w-full p-8 bg-[#141414] rounded-xl border relative">
-            <div className="text-3xl mb-4  text-center font-bold dark:text-white">$20 <span className="text-lg font-medium">/ mo</span></div>
-            <ul className="text-left w-full mb-6 space-y-2 flex-grow">
+          <div className="relative flex w-full flex-col rounded-xl border bg-[#141414] p-8">
+            <div className="mb-4 text-center text-3xl font-bold dark:text-white">
+              $20 <span className="text-lg font-medium">/ mo</span>
+            </div>
+            <ul className="mb-6 w-full flex-grow space-y-2 text-left">
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> Unlimited email connections
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Unlimited email connections
               </li>
-              
+
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> AI-powered chat with your inbox
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI-powered chat with your inbox
               </li>
-             
+
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> One-click AI email writing & replies
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> Instant thread AI-generated summaries
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> Auto labeling
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> One-click AI email writing &
+                replies
               </li>
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> Verified checkmark
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Instant thread AI-generated
+                summaries
               </li>
               <li className="flex items-center gap-2">
-                <CircleCheck className="w-4 h-4 fill-[#2FAD71]" /> Priority customer support
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Auto labeling
+              </li>
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Verified checkmark
+              </li>
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Priority customer support
               </li>
             </ul>
-            <Button 
-              className="h-10 w-full"
-              onClick={handleUpgrade}
-              disabled={isPro}
-            >
-              {isPro ? "Current Plan" : "Upgrade"}
+            <Button className="h-10 w-full" onClick={handleUpgrade} disabled={isPro}>
+              {isPro ? 'Current Plan' : 'Upgrade'}
             </Button>
           </div>
         </div>
-
-       
       </div>
     </main>
   );

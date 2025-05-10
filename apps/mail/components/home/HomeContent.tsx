@@ -211,6 +211,13 @@ export default function HomeContent() {
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
+                <NavigationMenuItem>
+                <Link href="/pricing">
+              <Button variant="ghost" className="h-9">
+                Pricing
+              </Button>
+            </Link>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
