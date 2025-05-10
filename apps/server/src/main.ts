@@ -53,8 +53,12 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
     );
   });
 
-const app = new Hono()
-  .get('/', (c) => c.json({ message: 'Zero Server is Up!' }))
-  .route('/api', api);
+const app = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
+  .route('/api', api)
+  .get('/health', (c) => c.json({ message: 'Zero Server is Up!' }))
+  .get('/:path{.+}', (c) => {
+    const path = c.req.param('path');
+    return c.redirect(`${c.env.NEXT_PUBLIC_APP_URL}/${path}`);
+  });
 
 export default app;

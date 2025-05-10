@@ -188,7 +188,7 @@ const MailDisplayLabels = ({ labels }: { labels: string[] }) => {
             break;
           case 'work':
             icon = <Briefcase className="h-3.5 w-3.5 text-white" />;
-            bgColor = 'bg-neutral-600';
+            bgColor = '';
             break;
           case 'forums':
             icon = <Users className="h-3.5 w-3.5 text-white" />;

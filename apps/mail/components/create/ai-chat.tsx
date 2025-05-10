@@ -137,6 +137,7 @@ export function AIChat() {
   const { refetch: refetchThread } = useThread(threadId);
   const { folder } = useParams<{ folder: string }>();
   const [searchValue] = useSearchValue();
+  const { attach } = useBilling();
 
   const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
     api: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,

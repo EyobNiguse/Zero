@@ -54,7 +54,7 @@ import { Input } from '@/components/ui/input';
 import { EditorView } from 'prosemirror-view';
 import { useTranslations } from 'next-intl';
 import { Markdown } from 'tiptap-markdown';
-import { useReducer, useRef } from 'react';
+import { useReducer, useRef, useEffect } from 'react';
 import { Slice } from 'prosemirror-model';
 import { useState } from 'react';
 import React from 'react';
