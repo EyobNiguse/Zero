@@ -437,7 +437,8 @@
           "selectAll": "Select All",
           "commandPalette": "Command Palette",
           "markAsRead": "Mark as Read",
-          "exitSelectionMode": "Exit Selection Mode"
+          "exitSelectionMode": "Exit Selection Mode",
+          "closeCompose": "Close Compose"
         }
       },
       "labels": {
