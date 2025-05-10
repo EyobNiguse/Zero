@@ -94,20 +94,6 @@ export function NavUser() {
     toast.success('Connection ID copied to clipboard');
   }, [session]);
 
-  const handleEnableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await EnableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain enabled successfully');
-  }, []);
-
-  const handleDisableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await DisableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain disabled');
-  }, []);
-
   const activeAccount = useMemo(() => {
     if (!session || !data) return null;
     return data.connections?.find((connection) => connection.id === session.connectionId);
@@ -176,7 +162,7 @@ export function NavUser() {
                         src={activeAccount?.picture || undefined}
                         alt={activeAccount?.name || activeAccount?.email}
                       />
-                      
+
                       <AvatarFallback className="rounded-[5px] text-[10px]">
                         {(activeAccount?.name || activeAccount?.email)
                           .split(' ')
@@ -531,22 +517,6 @@ export function NavUser() {
                       <p className="text-[13px] opacity-60">Clear Local Cache</p>
                     </div>
                   </DropdownMenuItem>
-                  {!brainState?.enabled ? (
-                    <DropdownMenuItem onClick={handleEnableBrain}>
-                      <div className="flex items-center gap-2">
-                        <BrainIcon size={16} className="opacity-60" />
-                        <p className="text-[13px] opacity-60">Enable Auto Labeling</p>
-                      </div>
-                    </DropdownMenuItem>
-                  ) : null}
-                  {brainState?.enabled ? (
-                    <DropdownMenuItem onClick={handleDisableBrain}>
-                      <div className="flex items-center gap-2">
-                        <BrainIcon size={16} className="opacity-60" />
-                        <p className="text-[13px] opacity-60">Disable Auto Labeling</p>
-                      </div>
-                    </DropdownMenuItem>
-                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

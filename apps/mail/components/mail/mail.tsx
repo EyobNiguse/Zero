@@ -86,10 +86,16 @@ export function MailLayout() {
   }, [session?.user, isPending]);
 
   const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
-
+  const trpc = useTRPC();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-
+  const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
+    trpc.brain.enableBrain.mutationOptions(),
+  );
+  const { mutateAsync: DisableBrain, isPending: isDisablingBrain } = useMutation(
+    trpc.brain.disableBrain.mutationOptions(),
+  );
   const [threadId, setThreadId] = useQueryState('threadId');
+  const { refetch: refetchBrainState } = useBrainState();
 
   useEffect(() => {
     if (threadId) {
@@ -114,6 +120,28 @@ export function MailLayout() {
     setThreadId(null);
     setActiveReplyId(null);
   }, [setThreadId]);
+
+  const handleEnableBrain = useCallback(async () => {
+    // This takes too long, not waiting
+    const enabled = await EnableBrain({});
+    await refetchBrainState();
+    if (enabled) toast.success('Brain enabled successfully');
+  }, []);
+
+  const handleDisableBrain = useCallback(async () => {
+    // This takes too long, not waiting
+    const enabled = await DisableBrain({});
+    await refetchBrainState();
+    if (enabled) toast.success('Brain disabled');
+  }, []);
+
+  const handleToggleAutolabeling = useCallback(() => {
+    if (brainState?.enabled) {
+      handleDisableBrain();
+    } else {
+      handleEnableBrain();
+    }
+  }, [brainState?.enabled]);
 
   // Add mailto protocol handler registration
   useEffect(() => {
@@ -183,16 +211,21 @@ export function MailLayout() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    {brainState?.enabled ? (
-                      <Button
-                        variant="outline"
-                        size={'sm'}
-                        className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
-                      >
-                        <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
-                        Auto Labeling
-                      </Button>
-                    ) : null}
+                    <Button
+                      disabled={isEnablingBrain || isDisablingBrain}
+                      onClick={handleToggleAutolabeling}
+                      variant="outline"
+                      size={'sm'}
+                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
+                    >
+                      <div
+                        className={cn(
+                          'h-2 w-2 animate-pulse rounded-full',
+                          brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
+                        )}
+                      />
+                      Auto Labeling
+                    </Button>
                     <Button
                       onClick={() => {
                         refetchThreads();
