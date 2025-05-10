@@ -47,6 +47,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { Command, RefreshCcw } from 'lucide-react';
+import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,6 @@ import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
-import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 
@@ -678,7 +678,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
             onClick={() => {
               setCategory(cat.id);
               setSearchValue({
-                value: cat.searchValue || '',
+                value: `${cat.searchValue} ${cleanSearchValue(searchValue.value).trim().length ? `AND ${cleanSearchValue(searchValue.value)}` : ''}`,
                 highlight: searchValue.highlight,
                 folder: '',
               });

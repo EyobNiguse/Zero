@@ -468,7 +468,7 @@ export class GoogleMailManager implements MailManager {
     return this.withErrorHandler(
       'listDrafts',
       async () => {
-        const { q: normalizedQ } = this.normalizeSearch('', q ?? '');
+        const { q: normalizedQ } = this.normalizeSearch('draft', q ?? '');
         const res = await this.gmail.users.drafts.list({
           userId: 'me',
           q: normalizedQ ? normalizedQ : undefined,
@@ -721,14 +721,20 @@ export class GoogleMailManager implements MailManager {
   private normalizeSearch(folder: string, q: string) {
     if (folder !== 'inbox') {
       q = cleanSearchValue(q);
+
       if (folder === 'bin') {
         return { folder: undefined, q: `in:trash ${q}` };
       }
       if (folder === 'archive') {
-        return { folder: undefined, q: `in:archive ${q}` };
+        return { folder: undefined, q: `in:archive AND (${q})` };
       }
-      return { folder, q: `in:${folder} ${q}` };
+      if (folder === 'draft') {
+        return { folder: undefined, q: `is:draft AND (${q})` };
+      }
+
+      return { folder, q: folder.trim().length ? `in:${folder} ${q}` : q };
     }
+
     return { folder, q };
   }
   private parse({

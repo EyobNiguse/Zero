@@ -8,7 +8,7 @@ import { useCustomer } from 'autumn-js/next';
 import confetti from 'canvas-confetti';
 import Image from 'next/image';
 
-const getSteps = (isPro: boolean) => [
+const steps = [
   {
     title: 'Welcome to Zero Email!',
     description: 'Your new intelligent email experience starts here.',
@@ -55,21 +55,6 @@ export function OnboardingDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const { attach } = useBilling();
-  const { customer } = useCustomer();
-
-  const isPro = useMemo(() => {
-    return (
-      customer &&
-      Array.isArray(customer.products) &&
-      customer.products.some(
-        (product: any) =>
-          product.id.includes('pro-example') || product.name.includes('pro-example'),
-      )
-    );
-  }, [customer]);
-
-  const steps = useMemo(() => getSteps(isPro), [isPro]);
 
   useEffect(() => {
     if (currentStep === steps.length - 1) {
