@@ -31,18 +31,14 @@ export const getActiveDriver = async (c: HonoContext) => {
   if (!activeConnection || !activeConnection.accessToken || !activeConnection.refreshToken)
     throw new Error('Invalid connection');
 
-  return createDriver(
-    activeConnection.providerId,
-    {
-      auth: {
-        accessToken: activeConnection.accessToken,
-        refreshToken: activeConnection.refreshToken,
-        email: activeConnection.email,
-      },
-      c,
+  return createDriver(activeConnection.providerId, {
+    auth: {
+      accessToken: activeConnection.accessToken,
+      refreshToken: activeConnection.refreshToken,
+      email: activeConnection.email,
     },
-    c.env,
-  );
+    c,
+  });
 };
 
 export const fromBase64Url = (str: string) => str.replace(/-/g, '+').replace(/_/g, '/');

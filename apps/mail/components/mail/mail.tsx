@@ -122,17 +122,25 @@ export function MailLayout() {
   }, [setThreadId]);
 
   const handleEnableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await EnableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain enabled successfully');
+    toast.promise(EnableBrain({}), {
+      loading: 'Enabling autolabeling...',
+      success: 'Autolabeling enabled successfully',
+      error: 'Failed to enable autolabeling',
+      finally: () => {
+        refetchBrainState();
+      },
+    });
   }, []);
 
   const handleDisableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await DisableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain disabled');
+    toast.promise(DisableBrain({}), {
+      loading: 'Disabling autolabeling...',
+      success: 'Autolabeling disabled successfully',
+      error: 'Failed to disable autolabeling',
+      finally: () => {
+        refetchBrainState();
+      },
+    });
   }, []);
 
   const handleToggleAutolabeling = useCallback(() => {

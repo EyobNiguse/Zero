@@ -34,7 +34,6 @@ export const brainRouter = router({
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
-      if (!ctx.brainServerAvailable) return false;
       return await enableBrainFunction(connection);
     }),
   disableBrain: activeConnectionProcedure
@@ -52,7 +51,6 @@ export const brainRouter = router({
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
-      if (!ctx.brainServerAvailable) return false;
       return await disableBrainFunction(connection);
     }),
 

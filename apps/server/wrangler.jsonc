@@ -6,6 +6,15 @@
   "main": "src/main.ts",
   "env": {
     "staging": {
+      "limits": {
+        "cpu_ms": 300000,
+      },
+      "services": [
+        {
+          "binding": "zero",
+          "service": "zero-worker",
+        },
+      ],
       "observability": {
         "enabled": true,
       },
