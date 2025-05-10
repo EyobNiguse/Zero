@@ -176,6 +176,7 @@ export function NavUser() {
                         src={activeAccount?.picture || undefined}
                         alt={activeAccount?.name || activeAccount?.email}
                       />
+                      
                       <AvatarFallback className="rounded-[5px] text-[10px]">
                         {(activeAccount?.name || activeAccount?.email)
                           .split(' ')
