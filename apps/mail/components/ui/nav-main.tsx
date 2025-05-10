@@ -342,7 +342,7 @@ export function NavMain({ items }: NavMainProps) {
                                   <FormLabel>Color</FormLabel>
                                   <FormControl>
                                     <div className="w-full">
-                                      <div className="grid grid-cols-7 gap-4 g-panelLight dark:bg-panelDark">
+                                      <div className="g-panelLight dark:bg-panelDark grid grid-cols-7 gap-4">
                                         {[
                                           // Row 1 - Grayscale
                                           '#000000',
@@ -495,7 +495,7 @@ export function NavMain({ items }: NavMainProps) {
                                   </span>
                                   <span className="truncate">{groupName}</span>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56">
+                                <DropdownMenuContent className="dark:bg-panelDark/10 bg-panelLight/10 flex w-56 gap-1 border-none backdrop-blur-sm">
                                   {labels.map((label) => {
                                     const folderParts = label.name.split('/').slice(1);
                                     return (
