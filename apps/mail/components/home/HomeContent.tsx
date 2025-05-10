@@ -179,7 +179,6 @@ export default function HomeContent() {
           <div className="flex items-center gap-6">
             <Link href="/" className="relative cursor-pointer">
               <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
-              <span className="absolute right-0 text-[10px]">beta</span>
             </Link>
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
@@ -211,6 +210,13 @@ export default function HomeContent() {
                       ))}
                     </ul>
                   </NavigationMenuContent>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                <Link href="/pricing">
+              <Button variant="ghost" className="h-9">
+                Pricing
+              </Button>
+            </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>

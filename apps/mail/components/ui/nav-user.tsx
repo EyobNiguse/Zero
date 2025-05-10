@@ -176,6 +176,7 @@ export function NavUser() {
                         src={activeAccount?.picture || undefined}
                         alt={activeAccount?.name || activeAccount?.email}
                       />
+                      
                       <AvatarFallback className="rounded-[5px] text-[10px]">
                         {(activeAccount?.name || activeAccount?.email)
                           .split(' ')
@@ -220,7 +221,6 @@ export function NavUser() {
                       <div className="w-full">
                         <div className="text-sm font-medium">
                           {activeAccount.name || session.user.name || 'User'}
-                          {isPro && <BadgeCheck className="text-gold" />}
                         </div>
                         <div className="text-muted-foreground text-xs">{activeAccount.email}</div>
                       </div>
