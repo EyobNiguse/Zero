@@ -10,20 +10,25 @@ export const chatHandler = async (c: HonoContext) => {
   const { session } = c.var;
   if (!session) return c.json({ error: 'Unauthorized' }, 401);
 
+  console.log('Checking chat permissions for user:', session.user.id);
   const canSendMessages = await Autumn.check({
     feature_id: 'chat-messages',
     customer_id: session.user.id,
   });
+  console.log('Autumn check result:', JSON.stringify(canSendMessages, null, 2));
 
   if (!canSendMessages.data) {
+    console.log('No data returned from Autumn check');
     return c.json({ error: 'Insufficient permissions' }, 403);
   }
 
-  if (!canSendMessages.data.balance && !canSendMessages.data.unlimited) {
+  if (canSendMessages.data.unlimited) {
+    console.log('User has unlimited access');
+  } else if (!canSendMessages.data.balance) {
+    console.log('No balance and not unlimited');
     return c.json({ error: 'Insufficient plan quota' }, 403);
-  }
-
-  if ((canSendMessages.data.balance ?? 0) <= 0) {
+  } else if (canSendMessages.data.balance <= 0) {
+    console.log('Balance is 0 or less');
     return c.json({ error: 'Insufficient plan balance' }, 403);
   }
 
