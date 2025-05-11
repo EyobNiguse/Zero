@@ -29,10 +29,11 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Command, RefreshCcw, Settings2Icon } from 'lucide-react';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
@@ -46,7 +47,6 @@ import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
-import { Command, RefreshCcw } from 'lucide-react';
 import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -56,8 +56,66 @@ import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
+import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+
+interface Tag {
+  id: string;
+  name: string;
+  text: string;
+}
+
+const AutoLabelingSettings = () => {
+  const trpc = useTRPC();
+  const { data: storedLabels } = useQuery(trpc.brain.getLabels.queryOptions());
+  const { mutateAsync: updateLabels, isPending } = useMutation(
+    trpc.brain.updateLabels.mutationOptions(),
+  );
+  const [labels, setLabels] = useState<Tag[]>([]);
+  const [activeTagIndex, setActiveTagIndex] = useState(0);
+
+  useEffect(() => {
+    if (storedLabels) {
+      setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
+    }
+  }, [storedLabels]);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size={'sm'} className="text-muted-foreground h-fit p-1">
+          <Settings2Icon className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent showOverlay>
+        <DialogHeader>
+          <DialogTitle>Autolabeling Settings</DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="mb-4">
+          These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
+          however you like.
+        </DialogDescription>
+        <TagInput
+          setTags={setLabels as any}
+          tags={labels}
+          activeTagIndex={activeTagIndex}
+          setActiveTagIndex={setActiveTagIndex as any}
+        />
+        <DialogFooter className="mt-4">
+          <Button
+            disabled={isPending}
+            onClick={() => {
+              updateLabels({ labels: labels.map((label) => label.id) });
+            }}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export function MailLayout() {
   const params = useParams<{ folder: string }>();
@@ -219,6 +277,7 @@ export function MailLayout() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
+                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}
