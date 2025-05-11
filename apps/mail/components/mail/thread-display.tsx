@@ -368,7 +368,7 @@ export function ThreadDisplay() {
                     Chat with Zero AI
                   </Button>
                   <Button onClick={() => setIsComposeOpen('true')} variant="outline">
-                    Write an email
+                    Send an email
                   </Button>
                   <Tooltip>
                     <TooltipTrigger asChild>
