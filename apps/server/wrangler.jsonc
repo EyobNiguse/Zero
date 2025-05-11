@@ -6,6 +6,29 @@
   "main": "src/main.ts",
   "env": {
     "staging": {
+      "limits": {
+        "cpu_ms": 300000,
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "DurableMailbox",
+            "name": "DURABLE_MAILBOX",
+          },
+        ],
+      },
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_classes": ["DurableMailbox"],
+        },
+      ],
+      "services": [
+        {
+          "binding": "zero",
+          "service": "zero-worker",
+        },
+      ],
       "observability": {
         "enabled": true,
       },

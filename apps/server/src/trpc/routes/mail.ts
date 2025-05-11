@@ -44,6 +44,7 @@ export const mailRouter = router({
     .query(async ({ ctx, input }) => {
       const { folder, max, cursor, q } = input;
       const { driver } = ctx;
+
       if (folder === FOLDERS.DRAFT) {
         const drafts = await driver.listDrafts({ q, maxResults: max, pageToken: cursor });
         return drafts;
