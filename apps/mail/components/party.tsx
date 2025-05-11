@@ -11,7 +11,7 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
 
   usePartySocket({
     party: 'durable-mailbox',
-    room: session?.activeConnection?.email ? `${session.activeConnection.email}` : 'general',
+    room: session?.activeConnection?.id ? `${session.activeConnection.id}:general` : 'general',
     prefix: 'zero',
     debug: true,
     maxRetries: 1,
