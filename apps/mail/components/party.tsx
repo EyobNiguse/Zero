@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useTRPC } from '@/providers/query-provider';
 import { usePartySocket } from 'partysocket/react';
+import { useThreads } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { useEffect } from 'react';
 
@@ -10,6 +11,7 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
   const trpc = useTRPC();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const [{ refetch: refetchThreads }] = useThreads();
   usePartySocket({
     party: 'durable-mailbox',
     room: session?.activeConnection?.id ? `${session.activeConnection.id}` : 'general',
@@ -20,13 +22,14 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
       token: headers['cookie'],
     },
     host: process.env.NEXT_PUBLIC_BACKEND_URL!,
-    onMessage: (message: MessageEvent<string>) => {
+    onMessage: async (message: MessageEvent<string>) => {
       const [threadId, type] = message.data.split(':');
       if (type === 'end') {
         console.log('invalidating thread', threadId);
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: trpc.mail.get.queryKey({ id: threadId }),
         });
+        await refetchThreads();
       }
       console.log('party message', threadId, type);
     },
