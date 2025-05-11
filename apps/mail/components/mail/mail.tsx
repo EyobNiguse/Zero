@@ -66,8 +66,27 @@ interface Tag {
   text: string;
 }
 
+const defaultLabels = [
+  'urgent',
+  'review',
+  'followup',
+  'decision',
+  'work',
+  'finance',
+  'legal',
+  'hiring',
+  'sales',
+  'product',
+  'support',
+  'vendors',
+  'marketing',
+  'meeting',
+  'investors',
+];
+
 const AutoLabelingSettings = () => {
   const trpc = useTRPC();
+  const [open, setOpen] = useState(false);
   const { data: storedLabels } = useQuery(trpc.brain.getLabels.queryOptions());
   const { mutateAsync: updateLabels, isPending } = useMutation(
     trpc.brain.updateLabels.mutationOptions(),
@@ -81,8 +100,12 @@ const AutoLabelingSettings = () => {
     }
   }, [storedLabels]);
 
+  const handleResetToDefault = useCallback(() => {
+    setLabels(defaultLabels.map((label) => ({ id: label, name: label, text: label })));
+  }, [storedLabels]);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size={'sm'} className="text-muted-foreground h-fit p-1">
           <Settings2Icon className="h-4 w-4" />
@@ -103,10 +126,16 @@ const AutoLabelingSettings = () => {
           setActiveTagIndex={setActiveTagIndex as any}
         />
         <DialogFooter className="mt-4">
+          <Button onClick={handleResetToDefault} variant="outline" size={'sm'}>
+            Use default labels
+          </Button>
           <Button
             disabled={isPending}
             onClick={() => {
-              updateLabels({ labels: labels.map((label) => label.id) });
+              updateLabels({ labels: labels.map((label) => label.id) }).then(() => {
+                setOpen(false);
+                toast.success('Labels updated successfully, Zero will start using them.');
+              });
             }}
           >
             Save
