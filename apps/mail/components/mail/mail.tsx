@@ -107,8 +107,8 @@ const AutoLabelingSettings = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size={'sm'} className="text-muted-foreground h-fit p-1">
-          <Settings2Icon className="h-4 w-4" />
+        <Button variant="ghost" className="md:h-fit md:px-2">
+          <Settings2Icon className="text-muted-foreground h-4 w-4 cursor-pointer" />
         </Button>
       </DialogTrigger>
       <DialogContent showOverlay>
@@ -306,7 +306,7 @@ export function MailLayout() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
+                    {true ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}

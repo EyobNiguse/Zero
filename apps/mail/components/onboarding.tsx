@@ -16,17 +16,17 @@ const steps = [
   },
   {
     title: 'Chat with your inbox',
-    description: 'Zero allows you to chat with your inbox and do tasks on your behalf.',
+    description: 'Zero allows you to chat with your inbox, and take actions on your behalf.',
     video: 'https://assets.0.email/step2.gif',
   },
   {
     title: 'AI Compose & Reply',
-    description: 'Our AI assistant allows you to write emails with a single click.',
+    description: 'Our AI assistant allows you to write emails that sound like you.',
     video: 'https://assets.0.email/step1.gif',
   },
   {
     title: 'Label your emails',
-    description: 'Zero helps you label your emails and helps you focus on what matters.',
+    description: 'Zero helps you label your emails to focus on what matters.',
     video: 'https://assets.0.email/step3.gif',
   },
   {
