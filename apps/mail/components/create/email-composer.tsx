@@ -375,11 +375,11 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'w-full max-w-[750px] max-h-[500px] rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#1A1A1A]',
+        'w-full max-w-[750px] max-h-[500px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#1A1A1A] hide-scrollbar',
         className,
       )}
     >
-      <div className="grow max-h-[350px] overflow-y-auto">
+      <div className="grow max-h-[350px] overflow-y-auto hide-scrollbar">
         {/* To, Cc, Bcc */}
         <div className="shrink-0 border-b border-[#E7E7E7] pb-2 dark:border-[#252525] overflow-y-auto">
           <div className="flex justify-between px-3 pt-3">
@@ -421,9 +421,13 @@ export function EmailComposer({
                     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                       e.preventDefault();
                       if (isValidEmail(e.currentTarget.value.trim())) {
-                        setValue('to', [...toEmails, e.currentTarget.value.trim()]);
-                        e.currentTarget.value = '';
-                        setHasUnsavedChanges(true);
+                        if(toEmails.includes(e.currentTarget.value.trim())) {
+                          toast.error('This email is already in the list');
+                        }else{
+                          setValue('to', [...toEmails, e.currentTarget.value.trim()]);
+                          e.currentTarget.value = '';
+                          setHasUnsavedChanges(true);
+                        }
                       } else {
                         toast.error('Please enter a valid email address');
                       }
@@ -433,9 +437,13 @@ export function EmailComposer({
                     ) {
                       e.preventDefault();
                       if (isValidEmail(e.currentTarget.value.trim())) {
-                        setValue('to', [...toEmails, e.currentTarget.value.trim()]);
-                        e.currentTarget.value = '';
-                        setHasUnsavedChanges(true);
+                        if(toEmails.includes(e.currentTarget.value.trim())) {
+                          toast.error('This email is already in the list');
+                        }else{
+                          setValue('to', [...toEmails, e.currentTarget.value.trim()]);
+                          e.currentTarget.value = '';
+                          setHasUnsavedChanges(true);
+                        }
                       } else {
                         toast.error('Please enter a valid email address');
                       }
@@ -451,9 +459,13 @@ export function EmailComposer({
                   onBlur={(e) => {
                     if (e.currentTarget.value.trim()) {
                       if (isValidEmail(e.currentTarget.value.trim())) {
-                        setValue('to', [...toEmails, e.currentTarget.value.trim()]);
-                        e.currentTarget.value = '';
-                        setHasUnsavedChanges(true);
+                        if(toEmails.includes(e.currentTarget.value.trim())) {
+                          toast.error('This email is already in the list');
+                        }else{
+                          setValue('to', [...toEmails, e.currentTarget.value.trim()]);
+                          e.currentTarget.value = '';
+                          setHasUnsavedChanges(true);
+                        }
                       } else {
                         toast.error('Please enter a valid email address');
                       }
@@ -530,18 +542,26 @@ export function EmailComposer({
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         e.preventDefault();
                         if (isValidEmail(e.currentTarget.value.trim())) {
-                          setValue('cc', [...(ccEmails || []), e.currentTarget.value.trim()]);
-                          e.currentTarget.value = '';
-                          setHasUnsavedChanges(true);
+                          if(ccEmails?.includes(e.currentTarget.value.trim())) {
+                            toast.error('This email is already in the list');
+                          }else{
+                            setValue('cc', [...(ccEmails || []), e.currentTarget.value.trim()]);
+                            e.currentTarget.value = '';
+                            setHasUnsavedChanges(true);
+                          }
                         } else {
                           toast.error('Please enter a valid email address');
                         }
                       } else if (e.key === ' ' && e.currentTarget.value.trim()) {
                         e.preventDefault();
                         if (isValidEmail(e.currentTarget.value.trim())) {
-                          setValue('cc', [...(ccEmails || []), e.currentTarget.value.trim()]);
-                          e.currentTarget.value = '';
-                          setHasUnsavedChanges(true);
+                          if(ccEmails?.includes(e.currentTarget.value.trim())) {
+                            toast.error('This email is already in the list');
+                          }else{
+                            setValue('cc', [...(ccEmails || []), e.currentTarget.value.trim()]);
+                            e.currentTarget.value = '';
+                            setHasUnsavedChanges(true);
+                          }
                         } else {
                           toast.error('Please enter a valid email address');
                         }
@@ -557,9 +577,13 @@ export function EmailComposer({
                     onBlur={(e) => {
                       if (e.currentTarget.value.trim()) {
                         if (isValidEmail(e.currentTarget.value.trim())) {
-                          setValue('cc', [...(ccEmails || []), e.currentTarget.value.trim()]);
-                          e.currentTarget.value = '';
-                          setHasUnsavedChanges(true);
+                          if(ccEmails?.includes(e.currentTarget.value.trim())) {
+                            toast.error('This email is already in the list');
+                          }else{
+                            setValue('cc', [...(ccEmails || []), e.currentTarget.value.trim()]);
+                            e.currentTarget.value = '';
+                            setHasUnsavedChanges(true);
+                          }
                         } else {
                           toast.error('Please enter a valid email address');
                         }
@@ -609,18 +633,26 @@ export function EmailComposer({
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         e.preventDefault();
                         if (isValidEmail(e.currentTarget.value.trim())) {
-                          setValue('bcc', [...(bccEmails || []), e.currentTarget.value.trim()]);
-                          e.currentTarget.value = '';
-                          setHasUnsavedChanges(true);
+                          if(bccEmails?.includes(e.currentTarget.value.trim())) {
+                            toast.error('This email is already in the list');
+                          } else{
+                            setValue('bcc', [...(bccEmails || []), e.currentTarget.value.trim()]);
+                            e.currentTarget.value = '';
+                            setHasUnsavedChanges(true);
+                          }
                         } else {
                           toast.error('Please enter a valid email address');
                         }
                       } else if (e.key === ' ' && e.currentTarget.value.trim()) {
                         e.preventDefault();
                         if (isValidEmail(e.currentTarget.value.trim())) {
-                          setValue('bcc', [...(bccEmails || []), e.currentTarget.value.trim()]);
-                          e.currentTarget.value = '';
-                          setHasUnsavedChanges(true);
+                          if(bccEmails?.includes(e.currentTarget.value.trim())) {
+                            toast.error('This email is already in the list');
+                          } else{
+                            setValue('bcc', [...(bccEmails || []), e.currentTarget.value.trim()]);
+                            e.currentTarget.value = '';
+                            setHasUnsavedChanges(true);
+                          }
                         } else {
                           toast.error('Please enter a valid email address');
                         }
@@ -636,9 +668,13 @@ export function EmailComposer({
                     onBlur={(e) => {
                       if (e.currentTarget.value.trim()) {
                         if (isValidEmail(e.currentTarget.value.trim())) {
-                          setValue('bcc', [...(bccEmails || []), e.currentTarget.value.trim()]);
-                          e.currentTarget.value = '';
-                          setHasUnsavedChanges(true);
+                          if(bccEmails?.includes(e.currentTarget.value.trim())) {
+                            toast.error('This email is already in the list');
+                          } else{
+                            setValue('bcc', [...(bccEmails || []), e.currentTarget.value.trim()]);
+                            e.currentTarget.value = '';
+                            setHasUnsavedChanges(true);
+                          }
                         } else {
                           toast.error('Please enter a valid email address');
                         }
@@ -666,7 +702,7 @@ export function EmailComposer({
         </div>
 
         {/* Message Content */}
-        <div className="grow overflow-y-auto max-h-[200px] self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
+        <div className="grow overflow-y-auto max-h-[220px] self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020] hide-scrollbar">
           <EditorContent editor={editor} />
         </div>
       </div>
