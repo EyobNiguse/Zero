@@ -1,11 +1,9 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useTRPC } from '@/providers/query-provider';
 import { usePartySocket } from 'partysocket/react';
 import { useThreads } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
-import { useEffect } from 'react';
 
 export const NotificationProvider = ({ headers }: { headers: Record<string, string> }) => {
   const trpc = useTRPC();
@@ -31,6 +29,7 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
           queryKey: trpc.mail.get.queryKey({ id: threadId }),
         });
         await refetchThreads();
+        console.warn('refetched threads');
       }
       console.warn('party message', threadId, type);
     },
