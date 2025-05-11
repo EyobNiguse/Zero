@@ -64,8 +64,10 @@ export const brainRouter = router({
     .query(async ({ input, ctx }) => {
       const { threadId } = input;
       return (await env.zero.getSummary({ type: 'thread', id: threadId })) as {
-        long: string;
-        short: string;
+        data: {
+          long: string;
+          short: string;
+        };
       };
     }),
   getState: activeConnectionProcedure.use(brainServerAvailableMiddleware).query(async ({ ctx }) => {
