@@ -23,6 +23,7 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
     },
     host: process.env.NEXT_PUBLIC_BACKEND_URL!,
     onMessage: async (message: MessageEvent<string>) => {
+      console.warn('party message', message);
       const [threadId, type] = message.data.split(':');
       if (type === 'end') {
         console.log('invalidating thread', threadId);
@@ -31,7 +32,7 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
         });
         await refetchThreads();
       }
-      console.log('party message', threadId, type);
+      console.warn('party message', threadId, type);
     },
   });
 
