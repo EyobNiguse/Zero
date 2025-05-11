@@ -86,11 +86,28 @@ export default class extends WorkerEntrypoint {
     return app.fetch(request);
   }
 
-  public notifyUser({ email }: { email: string }) {
-    const durableObject = env.DURABLE_MAILBOX.idFromString(`${email}:general`);
+  public async notifyUser({
+    connectionId,
+    threadId,
+    type,
+  }: {
+    connectionId: string;
+    threadId: string;
+    type: 'start' | 'end';
+  }) {
+    console.log(`Notifying user ${connectionId} for thread ${threadId} with type ${type}`);
+    const durableObject = env.DURABLE_MAILBOX.idFromName(`${connectionId}`);
     if (env.DURABLE_MAILBOX.get(durableObject)) {
       const stub = env.DURABLE_MAILBOX.get(durableObject);
-      if (stub) stub.broadcast(`HELLO ${email}`);
+      if (stub) {
+        console.log(`Broadcasting message for thread ${threadId} with type ${type}`);
+        await stub.broadcast(threadId + ':' + type);
+        console.log(`Successfully broadcasted message for thread ${threadId}`);
+      } else {
+        console.log(`No stub found for connection ${connectionId}`);
+      }
+    } else {
+      console.log(`No durable object found for connection ${connectionId}`);
     }
   }
 }
