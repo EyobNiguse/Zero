@@ -169,6 +169,7 @@ export function ThreadDisplay() {
   const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
   const trpc = useTRPC();
   const { mutateAsync: markAsRead } = useMutation(trpc.mail.markAsRead.mutationOptions());
+  const [, setIsComposeOpen] = useQueryState('isComposeOpen');
 
   const handlePrevious = useCallback(() => {
     if (!id || !items.length || focusedIndex === null) return;
@@ -348,7 +349,6 @@ export function ThreadDisplay() {
           isFullscreen ? 'fixed inset-0 z-50' : '',
         )}
       >
-        <div></div>
         {!id ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -361,8 +361,24 @@ export function ThreadDisplay() {
               <div className="mt-5">
                 <p className="text-lg">It's empty here</p>
                 <p className="text-md text-[#6D6D6D] dark:text-white/50">
-                  Choose an email to view details
+                  Choose an email to view details or
                 </p>
+                <div className="mt-4 flex gap-2">
+                  <Button onClick={toggleAISidebar} variant="outline">
+                    Chat with Zero AI
+                  </Button>
+                  <Button onClick={() => setIsComposeOpen('true')} variant="outline">
+                    Send an email
+                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button className="opacity-50" variant="outline">
+                        Label last 50 emails
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Coming soon</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
             </div>
             {!isSidebarOpen && (
