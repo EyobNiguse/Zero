@@ -16,7 +16,9 @@ import { getActiveDriver } from './driver/utils';
 import { APIError } from 'better-auth/api';
 import { redis, resend } from './services';
 import type { HonoContext } from '../ctx';
+import { env } from 'cloudflare:workers';
 import { createDriver } from './driver';
+import { createDb } from '@zero/db';
 import { eq } from 'drizzle-orm';
 
 const connectionHandlerHook = async (account: Account, c: HonoContext) => {
@@ -68,32 +70,7 @@ const connectionHandlerHook = async (account: Account, c: HonoContext) => {
 };
 
 export const createAuth = (c: HonoContext) => {
-  const cache = redis();
   return betterAuth({
-    database: drizzleAdapter(c.var.db, { provider: 'pg' }),
-    secondaryStorage: {
-      get: async (key: string) => {
-        return (await cache.get(key)) ?? null;
-      },
-      set: async (key: string, value: string, ttl?: number) => {
-        if (ttl) await cache.set(key, value, { ex: ttl });
-        else await cache.set(key, value);
-      },
-      delete: async (key: string) => {
-        await cache.del(key);
-      },
-    },
-    advanced: {
-      ipAddress: {
-        disableIpTracking: true,
-      },
-      crossSubDomainCookies: {
-        enabled: true,
-        domain: c.env.COOKIE_DOMAIN,
-      },
-    },
-    baseURL: c.env.NEXT_PUBLIC_BACKEND_URL,
-    trustedOrigins: [c.env.NEXT_PUBLIC_APP_URL, c.env.NEXT_PUBLIC_BACKEND_URL],
     user: {
       deleteUser: {
         enabled: true,
@@ -118,22 +95,6 @@ export const createAuth = (c: HonoContext) => {
             await tx.delete(userHotkeys).where(eq(userHotkeys.userId, user.id));
           });
         },
-      },
-    },
-    session: {
-      cookieCache: {
-        enabled: true,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      },
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
-      updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
-    },
-    socialProviders: getSocialProviders(c.env as unknown as Record<string, string>),
-    account: {
-      accountLinking: {
-        enabled: true,
-        allowDifferentEmails: true,
-        trustedProviders: ['google', 'microsoft'],
       },
     },
     databaseHooks: {
@@ -181,98 +142,6 @@ export const createAuth = (c: HonoContext) => {
         });
       },
     },
-    plugins: [
-      customSession(async ({ user, session }) => {
-        const foundUser = await c.var.db.query.user.findFirst({
-          where: eq(_user.id, user.id),
-        });
-
-        let activeConnection = null;
-
-        if (foundUser?.defaultConnectionId) {
-          // Get the active connection details
-          const [connectionDetails] = await c.var.db
-            .select()
-            .from(connection)
-            .where(eq(connection.id, foundUser.defaultConnectionId))
-            .limit(1);
-
-          if (connectionDetails) {
-            activeConnection = {
-              id: connectionDetails.id,
-              name: connectionDetails.name,
-              email: connectionDetails.email,
-              picture: connectionDetails.picture,
-            };
-          } else {
-            await c.var.db
-              .update(_user)
-              .set({
-                defaultConnectionId: null,
-              })
-              .where(eq(_user.id, user.id));
-          }
-        }
-
-        if (!foundUser?.defaultConnectionId) {
-          const [defaultConnection] = await c.var.db
-            .select()
-            .from(connection)
-            .where(eq(connection.userId, user.id))
-            .limit(1);
-
-          if (defaultConnection) {
-            activeConnection = {
-              id: defaultConnection.id,
-              name: defaultConnection.name,
-              email: defaultConnection.email,
-              picture: defaultConnection.picture,
-            };
-          }
-
-          if (!defaultConnection) {
-            // find the user account the user has
-            const [userAccount] = await c.var.db
-              .select()
-              .from(account)
-              .where(eq(account.userId, user.id))
-              .limit(1);
-            if (userAccount) {
-              const newConnectionId = crypto.randomUUID();
-              // create a new connection
-              const [newConnection] = await c.var.db.insert(connection).values({
-                id: newConnectionId,
-                userId: user.id,
-                email: user.email,
-                name: user.name,
-                picture: user.image,
-                accessToken: userAccount.accessToken,
-                refreshToken: userAccount.refreshToken,
-                scope: userAccount.scope,
-                providerId: userAccount.providerId,
-                expiresAt: new Date(
-                  Date.now() + (userAccount.accessTokenExpiresAt?.getTime() || 3600000),
-                ),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              } as typeof connection.$inferInsert);
-              // this type error is pissing me tf off
-              if (newConnection) {
-                //   void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
-                console.warn('Created new connection for user', user.email);
-              }
-            }
-          }
-        }
-
-        return {
-          connectionId: activeConnection?.id || null,
-          activeConnection,
-          user,
-          session,
-        };
-      }),
-    ],
     hooks: {
       after: createAuthMiddleware(async (ctx) => {
         // all hooks that run on sign-up routes
@@ -311,7 +180,152 @@ export const createAuth = (c: HonoContext) => {
         }
       }),
     },
+    ...createAuthConfig(),
   });
 };
 
+const createAuthConfig = () => {
+  const cache = redis();
+  const db = createDb(env.HYPERDRIVE.connectionString);
+  return {
+    database: drizzleAdapter(db, { provider: 'pg' }),
+    secondaryStorage: {
+      get: async (key: string) => {
+        return ((await cache.get(key)) as string) ?? null;
+      },
+      set: async (key: string, value: string, ttl?: number) => {
+        if (ttl) await cache.set(key, value, { ex: ttl });
+        else await cache.set(key, value);
+      },
+      delete: async (key: string) => {
+        await cache.del(key);
+      },
+    },
+    advanced: {
+      ipAddress: {
+        disableIpTracking: true,
+      },
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: env.COOKIE_DOMAIN,
+      },
+    },
+    baseURL: env.NEXT_PUBLIC_BACKEND_URL,
+    trustedOrigins: [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_BACKEND_URL],
+    session: {
+      cookieCache: {
+        enabled: true,
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      },
+      expiresIn: 60 * 60 * 24 * 7, // 7 days
+      updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
+    },
+    socialProviders: getSocialProviders(env as unknown as Record<string, string>),
+    account: {
+      accountLinking: {
+        enabled: true,
+        allowDifferentEmails: true,
+        trustedProviders: ['google', 'microsoft'],
+      },
+    },
+    plugins: [
+      customSession(async ({ user, session }) => {
+        const foundUser = await db.query.user.findFirst({
+          where: eq(_user.id, user.id),
+        });
+
+        let activeConnection = null;
+
+        if (foundUser?.defaultConnectionId) {
+          // Get the active connection details
+          const [connectionDetails] = await db
+            .select()
+            .from(connection)
+            .where(eq(connection.id, foundUser.defaultConnectionId))
+            .limit(1);
+
+          if (connectionDetails) {
+            activeConnection = {
+              id: connectionDetails.id,
+              name: connectionDetails.name,
+              email: connectionDetails.email,
+              picture: connectionDetails.picture,
+            };
+          } else {
+            await db
+              .update(_user)
+              .set({
+                defaultConnectionId: null,
+              })
+              .where(eq(_user.id, user.id));
+          }
+        }
+
+        if (!foundUser?.defaultConnectionId) {
+          const [defaultConnection] = await db
+            .select()
+            .from(connection)
+            .where(eq(connection.userId, user.id))
+            .limit(1);
+
+          if (defaultConnection) {
+            activeConnection = {
+              id: defaultConnection.id,
+              name: defaultConnection.name,
+              email: defaultConnection.email,
+              picture: defaultConnection.picture,
+            };
+          }
+
+          if (!defaultConnection) {
+            // find the user account the user has
+            const [userAccount] = await db
+              .select()
+              .from(account)
+              .where(eq(account.userId, user.id))
+              .limit(1);
+            if (userAccount) {
+              const newConnectionId = crypto.randomUUID();
+              // create a new connection
+              const [newConnection] = await db.insert(connection).values({
+                id: newConnectionId,
+                userId: user.id,
+                email: user.email,
+                name: user.name,
+                picture: user.image,
+                accessToken: userAccount.accessToken,
+                refreshToken: userAccount.refreshToken,
+                scope: userAccount.scope,
+                providerId: userAccount.providerId,
+                expiresAt: new Date(
+                  Date.now() + (userAccount.accessTokenExpiresAt?.getTime() || 3600000),
+                ),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              } as typeof connection.$inferInsert);
+              // this type error is pissing me tf off
+              if (newConnection) {
+                //   void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
+                console.warn('Created new connection for user', user.email);
+              }
+            }
+          }
+        }
+
+        return {
+          connectionId: activeConnection?.id || null,
+          activeConnection,
+          user,
+          session,
+        };
+      }),
+    ],
+  };
+};
+
+export const createSimpleAuth = () => {
+  return betterAuth(createAuthConfig());
+};
+
 export type Auth = ReturnType<typeof createAuth>;
+export type SimpleAuth = ReturnType<typeof createSimpleAuth>;

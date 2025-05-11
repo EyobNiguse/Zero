@@ -1,19 +1,24 @@
+import { env, WorkerEntrypoint } from 'cloudflare:workers';
 import { mailtoHandler } from './routes/mailto-handler';
 import type { HonoContext, HonoVariables } from './ctx';
+import { routePartykitRequest } from 'partyserver';
+import { partyserverMiddleware } from 'hono-party';
 import { trpcServer } from '@hono/trpc-server';
+import { DurableMailbox } from './lib/party';
 import { chatHandler } from './routes/chat';
-import { env } from 'cloudflare:workers';
 import { createAuth } from './lib/auth';
 import { createDb } from '@zero/db';
 import { appRouter } from './trpc';
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
 
+export { DurableMailbox };
+
 const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
   .use(
     '*',
     cors({
-      origin: (_, c: HonoContext) => c.env.NEXT_PUBLIC_APP_URL,
+      origin: (_, c: HonoContext) => env.NEXT_PUBLIC_APP_URL,
       credentials: true,
       allowHeaders: ['Content-Type', 'Authorization'],
     }),
@@ -56,9 +61,36 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
 const app = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
   .route('/api', api)
   .get('/health', (c) => c.json({ message: 'Zero Server is Up!' }))
-  .get('/:path{.+}', (c) => {
-    const path = c.req.param('path');
-    return c.redirect(`${c.env.NEXT_PUBLIC_APP_URL}/${path}`);
-  });
+  .get('/', (c) => {
+    return c.redirect(`${env.NEXT_PUBLIC_APP_URL}`);
+  })
+  .use(
+    '*',
+    partyserverMiddleware({
+      onError(error) {
+        console.log('Error in party middleware:', error);
+      },
+      options: {
+        prefix: 'zero',
+      },
+    }),
+  );
 
-export default app;
+export default class extends WorkerEntrypoint {
+  fetch(request: Request): Response | Promise<Response> {
+    if (request.url.includes('/zero/durable-mailbox')) {
+      return routePartykitRequest(request, env as any, {
+        prefix: 'zero',
+      }) as Promise<Response>;
+    }
+    return app.fetch(request);
+  }
+
+  public notifyUser({ email }: { email: string }) {
+    const durableObject = env.DURABLE_MAILBOX.idFromString(`${email}:general`);
+    if (env.DURABLE_MAILBOX.get(durableObject)) {
+      const stub = env.DURABLE_MAILBOX.get(durableObject);
+      if (stub) stub.broadcast(`HELLO ${email}`);
+    }
+  }
+}
