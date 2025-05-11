@@ -365,14 +365,19 @@ export function ThreadDisplay() {
                 </p>
                 <div className="mt-4 flex gap-2">
                   <Button onClick={toggleAISidebar} variant="outline">
-                    Chat with Zero
+                    Chat with Zero AI
                   </Button>
                   <Button onClick={() => setIsComposeOpen('true')} variant="outline">
                     Write an email
                   </Button>
-                  <Button disabled variant="outline">
-                    Label last 50 emails
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button className="opacity-50" variant="outline">
+                        Label last 50 emails
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Coming soon</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>

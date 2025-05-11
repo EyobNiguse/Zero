@@ -117,7 +117,8 @@ const AutoLabelingSettings = () => {
         </DialogHeader>
         <DialogDescription className="mb-4">
           These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
-          however you like.
+          however you like. Zero will create a new label in your account for each label you add - if
+          it does not exist already.
         </DialogDescription>
         <TagInput
           setTags={setLabels as any}
