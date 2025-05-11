@@ -29,10 +29,11 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Command, RefreshCcw, Settings2Icon } from 'lucide-react';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
@@ -46,7 +47,7 @@ import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
-import { Command, RefreshCcw } from 'lucide-react';
+import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -55,9 +56,96 @@ import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
-import { cn } from '@/lib/utils';
+import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+
+interface Tag {
+  id: string;
+  name: string;
+  text: string;
+}
+
+const defaultLabels = [
+  'urgent',
+  'review',
+  'followup',
+  'decision',
+  'work',
+  'finance',
+  'legal',
+  'hiring',
+  'sales',
+  'product',
+  'support',
+  'vendors',
+  'marketing',
+  'meeting',
+  'investors',
+];
+
+const AutoLabelingSettings = () => {
+  const trpc = useTRPC();
+  const [open, setOpen] = useState(false);
+  const { data: storedLabels } = useQuery(trpc.brain.getLabels.queryOptions());
+  const { mutateAsync: updateLabels, isPending } = useMutation(
+    trpc.brain.updateLabels.mutationOptions(),
+  );
+  const [labels, setLabels] = useState<Tag[]>([]);
+  const [activeTagIndex, setActiveTagIndex] = useState(0);
+
+  useEffect(() => {
+    if (storedLabels) {
+      setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
+    }
+  }, [storedLabels]);
+
+  const handleResetToDefault = useCallback(() => {
+    setLabels(defaultLabels.map((label) => ({ id: label, name: label, text: label })));
+  }, [storedLabels]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" className="md:h-fit md:px-2">
+          <Settings2Icon className="text-muted-foreground h-4 w-4 cursor-pointer" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent showOverlay>
+        <DialogHeader>
+          <DialogTitle>Autolabeling Settings</DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="mb-4">
+          These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
+          however you like. Zero will create a new label in your account for each label you add - if
+          it does not exist already.
+        </DialogDescription>
+        <TagInput
+          setTags={setLabels as any}
+          tags={labels}
+          activeTagIndex={activeTagIndex}
+          setActiveTagIndex={setActiveTagIndex as any}
+        />
+        <DialogFooter className="mt-4">
+          <Button onClick={handleResetToDefault} variant="outline" size={'sm'}>
+            Use default labels
+          </Button>
+          <Button
+            disabled={isPending}
+            onClick={() => {
+              updateLabels({ labels: labels.map((label) => label.id) }).then(() => {
+                setOpen(false);
+                toast.success('Labels updated successfully, Zero will start using them.');
+              });
+            }}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export function MailLayout() {
   const params = useParams<{ folder: string }>();
@@ -122,17 +210,25 @@ export function MailLayout() {
   }, [setThreadId]);
 
   const handleEnableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await EnableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain enabled successfully');
+    toast.promise(EnableBrain({}), {
+      loading: 'Enabling autolabeling...',
+      success: 'Autolabeling enabled successfully',
+      error: 'Failed to enable autolabeling',
+      finally: () => {
+        refetchBrainState();
+      },
+    });
   }, []);
 
   const handleDisableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await DisableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain disabled');
+    toast.promise(DisableBrain({}), {
+      loading: 'Disabling autolabeling...',
+      success: 'Autolabeling disabled successfully',
+      error: 'Failed to disable autolabeling',
+      finally: () => {
+        refetchBrainState();
+      },
+    });
   }, []);
 
   const handleToggleAutolabeling = useCallback(() => {
@@ -211,6 +307,7 @@ export function MailLayout() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
+                    {true ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}
@@ -670,7 +767,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
             onClick={() => {
               setCategory(cat.id);
               setSearchValue({
-                value: cat.searchValue || '',
+                value: `${cat.searchValue} ${cleanSearchValue(searchValue.value).trim().length ? `AND ${cleanSearchValue(searchValue.value)}` : ''}`,
                 highlight: searchValue.highlight,
                 folder: '',
               });

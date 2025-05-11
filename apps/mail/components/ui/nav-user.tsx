@@ -66,8 +66,6 @@ export function NavUser() {
     trpc.connections.setDefault.mutationOptions(),
   );
   const { openBillingPortal, customer: billingCustomer } = useBilling();
-  const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
-  const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();

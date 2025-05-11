@@ -590,7 +590,7 @@ const Thread = memo(
                     ) : (
                       <p
                         className={cn(
-                          'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[40ch]',
+                          'mt-1 line-clamp-1 max-w-[25ch] sm:max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[40ch]',
                         )}
                       >
                         {highlightText(latestMessage.subject, searchValue.highlight)}

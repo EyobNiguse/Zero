@@ -158,6 +158,7 @@ export function AIChat() {
     if (threadId) refetchThread();
     queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
     refetch();
+    console.log('refetching all');
   }, [threadId, queryClient, trpc.mail.get.queryKey]);
 
   useEffect(() => {
@@ -165,7 +166,7 @@ export function AIChat() {
       refetchAll();
     }
     prevStatusRef.current = status;
-  }, [status, refetchAll]);
+  }, [status]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {

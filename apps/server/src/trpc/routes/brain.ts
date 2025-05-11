@@ -34,7 +34,6 @@ export const brainRouter = router({
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
-      if (!ctx.brainServerAvailable) return false;
       return await enableBrainFunction(connection);
     }),
   disableBrain: activeConnectionProcedure
@@ -52,7 +51,6 @@ export const brainRouter = router({
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
-      if (!ctx.brainServerAvailable) return false;
       return await disableBrainFunction(connection);
     }),
 
@@ -78,4 +76,24 @@ export const brainRouter = router({
     const limit = await getConnectionLimit(connection.id);
     return { limit, enabled: true };
   }),
+  getLabels: activeConnectionProcedure
+    .use(brainServerAvailableMiddleware)
+    .output(z.array(z.string()))
+    .query(async ({ ctx }) => {
+      const connection = ctx.activeConnection;
+      const labels = await env.connection_labels.get(connection.id);
+      return labels?.split(',') ?? [];
+    }),
+  updateLabels: activeConnectionProcedure
+    .use(brainServerAvailableMiddleware)
+    .input(
+      z.object({
+        labels: z.array(z.string()),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const connection = ctx.activeConnection;
+      await env.connection_labels.put(connection.id, input.labels.join(','));
+      return { success: true };
+    }),
 });

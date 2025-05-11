@@ -99,14 +99,14 @@ export default function PricingPage() {
 
   return (
     <main className="relative flex h-screen flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
-      {/* <PixelatedBackground
-        className="z-1 absolute -top-32 left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
+      <PixelatedBackground
+        className="z-1 absolute -top-72 left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
         style={{ mixBlendMode: 'screen' }}
-      /> */}
+      />
 
       {/* Desktop Navigation - Hidden on mobile */}
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
-        <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
+        <nav className="border-input/50 flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t bg-[#1E1E1E] p-2 px-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="relative cursor-pointer">
               <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
@@ -218,57 +218,61 @@ export default function PricingPage() {
         </Sheet>
       </div>
 
-      <div className="container mx-auto mt-40 h-screen px-4 py-16">
+      <div className="container mx-auto mt-12 h-screen px-4 py-16 md:mt-24">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-white">Simple, Transparent Pricing</h1>
-          <p className="text-muted-foreground text-lg">Choose the plan that's right for you</p>
+          <h1 className="mb-2 text-4xl font-bold text-white md:text-6xl">Pricing</h1>
+          <p className="text-white/50 text-lg">Choose the plan that's right for you</p>
         </div>
 
-        <div className="mx-auto flex max-w-4xl items-center justify-center gap-8">
+        <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Free Plan */}
-          <div className="relative flex w-full flex-col rounded-xl border bg-[#141414] p-8">
+          <div className="relative flex flex-col rounded-xl border bg-[#121212] px-8 pt-8 pb-4 h-full">
+            <h1 className="mb-4 text-center text-lg font-normal text-white/50">Free</h1>
             <div className="mb-4 text-center text-3xl font-bold dark:text-white">
-              Free <span className="text-lg font-medium"></span>
+              $0 <span className="text-lg font-medium">/ mo</span>
             </div>
             <ul className="mb-6 w-full flex-grow space-y-2 text-left">
               <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Unlimited email connections
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> 1 email connection
               </li>
 
               <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI-powered chat with your inbox
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI chat <span className="text-white/50 text-xs">(25 per day)</span>
               </li>
 
               <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> One-click AI email writing &
-                replies
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI writing assistant
               </li>
               <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Auto labeling<span className="text-white/50 text-xs">(25 per day)</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" />
+                <span>AI thread summaries <span className="text-white/50 text-xs">(25 per day)</span></span>
+              </li>
+              {/* <li className="flex items-center gap-2">
                 <CircleX className="h-4 w-4 fill-white opacity-50" /> Instant thread AI-generated
                 summaries
               </li>
-              <li className="flex items-center gap-2">
-                <CircleX className="h-4 w-4 fill-white opacity-50" /> Auto labeling
-              </li>
+
               <li className="flex items-center gap-2">
                 <CircleX className="h-4 w-4 fill-white opacity-50" /> Verified checkmark
               </li>
               <li className="flex items-center gap-2">
                 <CircleX className="h-4 w-4 fill-white opacity-50" /> Priority customer support
-              </li>
+              </li> */}
             </ul>
-            <Button
-              variant="outline"
-              className="h-10 w-full"
-              onClick={handleUpgrade}
-              disabled={!isPro}
-            >
-              {isPro ? 'Downgrade' : 'Current Plan'}
-            </Button>
+            <Link href="/login">
+              <Button className="h-8 w-full" onClick={handleUpgrade}>
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Pro Plan */}
-          <div className="relative flex w-full flex-col rounded-xl border bg-[#141414] p-8">
+          <div className="relative flex flex-col rounded-xl border bg-[#121212] px-8 pt-8 pb-4 h-full">
+            <h1 className="mb-4 text-center text-lg font-normal text-white/50">Pro</h1>
+
             <div className="mb-4 text-center text-3xl font-bold dark:text-white">
               $20 <span className="text-lg font-medium">/ mo</span>
             </div>
@@ -278,30 +282,70 @@ export default function PricingPage() {
               </li>
 
               <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI-powered chat with your inbox
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI chat
               </li>
 
               <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> One-click AI email writing &
-                replies
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Instant thread AI-generated
-                summaries
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI writing assistant
               </li>
               <li className="flex items-center gap-2">
                 <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Auto labeling
               </li>
               <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI thread summaries
+              </li>
+
+              <li className="flex items-center gap-2">
                 <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Verified checkmark
               </li>
+              
+            </ul>
+            <Button className="h-8 w-full" onClick={handleUpgrade}>
+              Get Started
+            </Button>
+          </div>
+
+          {/* Enterprise Plan */}
+          <div className="relative flex flex-col rounded-xl border bg-[#121212] px-8 pt-8 pb-4 h-full">
+            <h1 className="mb-4 text-center text-lg font-normal text-white/50">Enterprise</h1>
+
+            <div className="mb-4 text-center text-3xl font-bold dark:text-white">Contact us</div>
+            <ul className="mb-6 w-full flex-grow space-y-2 text-left">
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Unlimited email connections
+              </li>
+
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI chat
+              </li>
+
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI writing assistant
+              </li>
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Auto labeling
+              </li>
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI thread summaries
+              </li>
+
+              <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Verified checkmark
+              </li>
+
+              {/* <li className="flex items-center gap-2">
+                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Management dashboard
+              </li> */}
+
               <li className="flex items-center gap-2">
                 <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Priority customer support
               </li>
             </ul>
-            <Button className="h-10 w-full" onClick={handleUpgrade} disabled={isPro}>
-              {isPro ? 'Current Plan' : 'Upgrade'}
-            </Button>
+            <Link href="https://cal.com/team/0/chat" target="_blank">
+              <Button className="h-8 w-full" onClick={handleUpgrade}>
+                Contact us
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
