@@ -43,8 +43,6 @@ export const makeQueryClient = (session: Session | null) =>
               },
             },
           });
-        } else if (err.message === 'Invalid tokens') {
-          window.location.href = `/settings/connections?disconnectedConnectionId=${session?.connectionId}`;
         } else toast.error(err.message || 'Something went wrong');
       },
     }),
@@ -91,7 +89,12 @@ export const trpcClient = createTRPCClient<AppRouter>({
       transformer: superjson,
       url: getUrl(),
       methodOverride: 'POST',
-      fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
+      fetch: (url, options) =>
+        fetch(url, { ...options, credentials: 'include' }).then((res) => {
+          const redirectPath = res.headers.get('X-Zero-Redirect');
+          if (redirectPath) window.location.href = redirectPath;
+          return res;
+        }),
     }),
   ],
 });

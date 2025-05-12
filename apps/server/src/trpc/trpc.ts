@@ -58,9 +58,14 @@ export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx,
       .set({ accessToken: null, refreshToken: null })
       .where(and(eq(connection.id, activeConnection.id)));
 
+    ctx.c.res.headers.set(
+      'X-Zero-Redirect',
+      `/settings/connections?disconnectedConnectionId=${activeConnection.id}`,
+    );
+
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: 'Invalid tokens',
+      message: 'Invalid authorization. Please reconnect the connection.',
       cause: res.error,
     });
   }
