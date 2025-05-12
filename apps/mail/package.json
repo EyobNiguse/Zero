@@ -166,7 +166,7 @@
     "@zero/tsconfig": "workspace:*",
     "cmd-ts": "^0.13.0",
     "dotenv": "16.4.7",
-    "drizzle-kit": "0.30.5",
+    "drizzle-kit": "0.31.1",
     "enquirer": "2.4.1",
     "eslint": "9.22.0",
     "eslint-config-next": "15.2.0",
