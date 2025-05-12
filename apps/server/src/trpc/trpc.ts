@@ -17,10 +17,13 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 export const privateProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  if (!ctx.session?.user)
+  if (!ctx.session?.user) {
+    ctx.c.header('X-Zero-Redirect', '/login');
     throw new TRPCError({
       code: 'UNAUTHORIZED',
+      message: 'You must be logged in to access this resource, redirecting to login...',
     });
+  }
   return next({ ctx: { ...ctx, session: ctx.session } });
 });
 
@@ -30,6 +33,7 @@ export const activeConnectionProcedure = privateProcedure.use(async ({ ctx, next
     return next({ ctx: { ...ctx, activeConnection } });
   } catch (err) {
     await ctx.c.var.auth.api.signOut({ headers: ctx.c.req.raw.headers });
+    ctx.c.header('X-Zero-Redirect', '/login');
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: err instanceof Error ? err.message : 'Failed to get active connection',
@@ -58,10 +62,16 @@ export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx,
       .set({ accessToken: null, refreshToken: null })
       .where(and(eq(connection.id, activeConnection.id)));
 
-    ctx.c.res.headers.set(
+    ctx.c.header(
       'X-Zero-Redirect',
       `/settings/connections?disconnectedConnectionId=${activeConnection.id}`,
     );
+
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'Connection expired. Please reconnect.',
+      cause: res.error,
+    });
   }
 
   return res;
