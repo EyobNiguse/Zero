@@ -293,10 +293,10 @@ export class GoogleMailManager implements MailManager {
               });
             }
 
-            const attachmentParts = message.payload?.parts 
-              ? this.findAttachments(message.payload.parts) 
+            const attachmentParts = message.payload?.parts
+              ? this.findAttachments(message.payload.parts)
               : [];
-            
+
             const attachments = await Promise.all(
               attachmentParts.map(async (part) => {
                 const attachmentId = part.body?.attachmentId;
@@ -320,7 +320,7 @@ export class GoogleMailManager implements MailManager {
                 } catch {
                   return null;
                 }
-              })
+              }),
             ).then((attachments) =>
               attachments.filter((a): a is NonNullable<typeof a> => a !== null),
             );
@@ -1036,33 +1036,31 @@ export class GoogleMailManager implements MailManager {
 
   private findAttachments(parts: any[]): any[] {
     let results: any[] = [];
-    
+
     for (const part of parts) {
       if (part.filename && part.filename.length > 0) {
         const contentDisposition =
-          part.headers?.find((h: any) => h.name?.toLowerCase() === 'content-disposition')
-            ?.value || '';
+          part.headers?.find((h: any) => h.name?.toLowerCase() === 'content-disposition')?.value ||
+          '';
         const isInline = contentDisposition.toLowerCase().includes('inline');
-        const hasContentId = part.headers?.some(
-          (h: any) => h.name?.toLowerCase() === 'content-id',
-        );
+        const hasContentId = part.headers?.some((h: any) => h.name?.toLowerCase() === 'content-id');
 
         if (!isInline || (isInline && !hasContentId)) {
           results.push(part);
         }
       }
-      
+
       if (part.parts && Array.isArray(part.parts)) {
         results = results.concat(this.findAttachments(part.parts));
       }
-      
+
       if (part.body?.attachmentId && part.mimeType === 'message/rfc822') {
         if (part.filename && part.filename.length > 0) {
           results.push(part);
         }
       }
     }
-    
+
     return results;
   }
 }

@@ -28,6 +28,7 @@ import {
 import { CircleAlertIcon, Inbox, ShieldAlertIcon, StopCircleIcon } from 'lucide-react';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
@@ -37,7 +38,6 @@ import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { MailDisplaySkeleton } from './mail-skeleton';
 import { useTRPC } from '@/providers/query-provider';
-import { useMutation } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useStats } from '@/hooks/use-stats';
@@ -168,7 +168,12 @@ export function ThreadDisplay() {
   const { resolvedTheme } = useTheme();
   const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
   const trpc = useTRPC();
-  const { mutateAsync: markAsRead } = useMutation(trpc.mail.markAsRead.mutationOptions());
+  const queryClient = useQueryClient();
+  const invalidateCount = () =>
+    queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
+  const { mutateAsync: markAsRead } = useMutation(
+    trpc.mail.markAsRead.mutationOptions({ onSuccess: () => invalidateCount() }),
+  );
   const [, setIsComposeOpen] = useQueryState('isComposeOpen');
 
   const handlePrevious = useCallback(() => {

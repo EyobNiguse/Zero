@@ -99,6 +99,10 @@ export function NavUser() {
 
   useEffect(() => setIsRendered(true), []);
 
+  const refetchBrainLabels = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: trpc.brain.getLabels.queryKey() });
+  }, [queryClient]);
+
   const handleAccountSwitch = (connectionId: string) => async () => {
     await setDefaultConnection({ connectionId });
     refetch();
@@ -106,6 +110,8 @@ export function NavUser() {
     refetchThreads();
     refetchLabels();
     refetchStats();
+    refetchBrainState();
+    refetchBrainLabels();
   };
 
   const handleLogout = async () => {
