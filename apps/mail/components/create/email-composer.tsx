@@ -421,7 +421,7 @@ export function EmailComposer({
         className,
       )}
     >
-      <div className="grow max-h-[350px] overflow-y-auto hide-scrollbar">
+      <div className="grow max-h-[370px] overflow-y-auto hide-scrollbar">
         {/* To, Cc, Bcc */}
         <div className="shrink-0 border-b border-[#E7E7E7] pb-2 dark:border-[#252525] overflow-y-auto">
           <div className="flex justify-between px-3 pt-3">
