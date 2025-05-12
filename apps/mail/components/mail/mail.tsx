@@ -111,6 +111,7 @@ const AutoLabelingSettings = () => {
 
   useEffect(() => {
     if (storedLabels) {
+      console.warn(storedLabels, 'storedLabels');
       setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
     }
   }, [storedLabels]);
@@ -150,7 +151,8 @@ const AutoLabelingSettings = () => {
           <Button
             disabled={isPending}
             onClick={() => {
-              updateLabels({ labels: labels.map((label) => label.id) }).then(() => {
+              console.warn(labels, 'labels');
+              updateLabels({ labels: labels.map((label) => label.name) }).then(() => {
                 setOpen(false);
                 toast.success('Labels updated successfully, Zero will start using them.');
               });
