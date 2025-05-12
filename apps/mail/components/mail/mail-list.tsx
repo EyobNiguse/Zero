@@ -13,6 +13,16 @@ import {
   User,
 } from '../icons/icons';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
+import {
   cn,
   FOLDERS,
   formatDate,
@@ -684,6 +694,8 @@ export function MailListDemo({
 }
 
 export const MailList = memo(({ isCompact }: MailListProps) => {
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletionProgress, setDeletionProgress] = useState(0);
   const { folder } = useParams<{ folder: string }>();
   const { data: session } = useSession();
   const t = useTranslations();
@@ -854,7 +866,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
     try {
       const result = await deleteAllSpam();
       if (result.success) {
-        toast.success(t('common.actions.deletedAllSpam', { count: result.count || 0 }));
+        toast.success(
+          t('common.actions.deletedAllSpam', {
+            count: result.count,
+          }),
+          {
+            duration: 5000, // Show toast longer for important operations
+          }
+        );
         void refetch();
       } else {
         toast.error(t('common.actions.errorDeletingSpam'));
@@ -887,13 +906,48 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={handleDeleteAllSpam}
+              onClick={() => setShowDeleteConfirmation(true)}
               disabled={isDeletingSpam || isLoading}
               className="flex items-center gap-2 border-[#FDE4E9] dark:border-[#411D23] hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] dark:hover:text-white"
             >
               <Trash className="h-4 w-4 fill-logout" />
               {isDeletingSpam ? t('common.actions.deletingAllSpam') : t('common.actions.deleteAllSpam')}
             </Button>
+            {isDeletingSpam && (
+              <div className="mt-2 px-4">
+                <Progress className="h-2" />
+                <p className="text-xs text-muted-foreground text-center mt-1">
+                  {t('common.actions.deletingAllSpam')}
+                </p>
+              </div>
+            )}
+            {showDeleteConfirmation && (
+              <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t('common.actions.confirmDeleteSpam')}</DialogTitle>
+                    <DialogDescription>
+                      {t('common.actions.confirmDeleteSpamDescription')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowDeleteConfirmation(false)}
+                    >
+                      {t('common.actions.cancel')}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={()=> {setShowDeleteConfirmation(false); handleDeleteAllSpam(); }}
+                      className="bg-logout hover:bg-logout/90 text-white"
+                    >
+                      {t('common.actions.confirmDelete')}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         )}
         <ScrollArea hideScrollbar className="hide-scrollbar h-full overflow-auto">
