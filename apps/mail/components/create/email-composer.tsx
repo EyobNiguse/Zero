@@ -106,6 +106,7 @@ export function EmailComposer({
   const [draftId, setDraftId] = useState<string | null>(urlDraftId ?? null);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
+  const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
   const [isAddingRecipients, setIsAddingRecipients] = useState(false);
   const [isAddingCcRecipients, setIsAddingCcRecipients] = useState(false);
   const [isAddingBccRecipients, setIsAddingBccRecipients] = useState(false);
@@ -138,7 +139,9 @@ export function EmailComposer({
   const trpc = useTRPC();
   const { mutateAsync: aiCompose } = useMutation(trpc.ai.compose.mutationOptions());
   const { mutateAsync: createDraft } = useMutation(trpc.drafts.create.mutationOptions());
-
+  const { mutateAsync: generateEmailSubject } = useMutation(
+    trpc.ai.generateEmailSubject.mutationOptions(),
+  );
   useEffect(() => {
     if (isComposeOpen === 'true' && toInputRef.current) {
       toInputRef.current.focus();
@@ -385,6 +388,13 @@ export function EmailComposer({
       setIsLoading(false);
       setHasUnsavedChanges(false);
     }
+  };
+
+  const handleGenerateSubject = async () => {
+    setIsGeneratingSubject(true);
+    const { subject } = await generateEmailSubject({ message: editor.getText() });
+    setValue('subject', subject);
+    setIsGeneratingSubject(false);
   };
 
   useEffect(() => {
@@ -823,22 +833,43 @@ export function EmailComposer({
           </div>
         </div>
 
-        {/* Subject */}
-        <div className="flex items-center gap-2 p-3">
-          <p className="text-sm font-medium text-[#8C8C8C]">Subject:</p>
-          <input
-            className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white/90"
-            placeholder="Re: Design review feedback"
-            value={subjectInput}
-            onChange={(e) => {
-              setValue('subject', e.target.value);
-              setHasUnsavedChanges(true);
-            }}
-          />
-        </div>
+      {/* Subject */}
+      <div className="flex items-center gap-2 p-3">
+        <p className="text-sm font-medium text-[#8C8C8C]">Subject:</p>
+        <input
+          className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white/90"
+          placeholder="Re: Design review feedback"
+          value={subjectInput}
+          onChange={(e) => {
+            setValue('subject', e.target.value);
+            setHasUnsavedChanges(true);
+          }}
+        />
+        <button
+          className=""
+          onClick={handleGenerateSubject}
+          disabled={isLoading || isGeneratingSubject}
+        >
+          <div className="flex items-center justify-center gap-2.5 pl-0.5">
+            <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
+              {isGeneratingSubject ? (
+                <Loader className="h-3.5 w-3.5 animate-spin fill-black dark:fill-white" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+              )}
+            </div>
+          </div>
+        </button>
+      </div>
 
-        {/* Message Content */}
-        <div className="grow overflow-y-auto max-h-[220px] self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020] hide-scrollbar">
+      {/* Message Content */}
+      <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
+        <div
+          className={cn(
+            'flex flex-col gap-2.5 self-stretch',
+            aiGeneratedMessage !== null ? 'blur-sm' : '',
+          )}
+        >
           <EditorContent editor={editor} />
         </div>
       </div>
@@ -1000,87 +1031,87 @@ export function EmailComposer({
           </div>
         </div>
 
-        <div className="flex items-start justify-start gap-2">
-          <div className="relative">
-            <AnimatePresence>
-              {aiGeneratedMessage !== null ? (
-                <ContentPreview
-                  content={aiGeneratedMessage}
-                  onAccept={() => {
-                    editor.commands.setContent({
-                      type: 'doc',
-                      content: aiGeneratedMessage.split(/\r?\n/).map((line) => {
-                        return {
-                          type: 'paragraph',
-                          content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
-                        };
-                      }),
-                    });
-                    setAiGeneratedMessage(null);
-                  }}
-                  onReject={() => {
-                    setAiGeneratedMessage(null);
-                  }}
-                />
-              ) : null}
-            </AnimatePresence>
-            <button
-              className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
-              onClick={async () => {
-                if (!toEmails.length || !subjectInput.trim()) {
-                  toast.error('Please enter a recipient and subject');
-                  return;
-                }
-                setAiGeneratedMessage(null);
-                await handleAiGenerate();
-              }}
-              disabled={isLoading || aiIsLoading}
-            >
-              <div className="flex items-center justify-center gap-2.5 pl-0.5">
-                <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
-                  {aiIsLoading ? (
-                    <Loader className="h-3.5 w-3.5 animate-spin fill-black dark:fill-white" />
-                  ) : (
-                    <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+          <div className="flex items-start justify-start gap-2">
+            <div className="relative">
+              <AnimatePresence>
+                {aiGeneratedMessage !== null ? (
+                  <ContentPreview
+                    content={aiGeneratedMessage}
+                    onAccept={() => {
+                      editor.commands.setContent({
+                        type: 'doc',
+                        content: aiGeneratedMessage.split(/\r?\n/).map((line) => {
+                          return {
+                            type: 'paragraph',
+                            content: line.trim().length === 0 ? [] : [{ type: 'text', text: line }],
+                          };
+                        }),
+                      });
+                      setAiGeneratedMessage(null);
+                    }}
+                    onReject={() => {
+                      setAiGeneratedMessage(null);
+                    }}
+                  />
+                ) : null}
+              </AnimatePresence>
+              <button
+                className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
+                onClick={async () => {
+                  if (!subjectInput.trim()) {
+                    await handleGenerateSubject();
+                  }
+                  setAiGeneratedMessage(null);
+                  await handleAiGenerate();
+                }}
+                disabled={isLoading || aiIsLoading}
+              >
+                <div className="flex items-center justify-center gap-2.5 pl-0.5">
+                  <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
+                    {aiIsLoading ? (
+                      <Loader className="h-3.5 w-3.5 animate-spin fill-black dark:fill-white" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 fill-black dark:fill-white" />
+                    )}
+                  </div>
+                  <div className="hidden text-center text-sm leading-none text-black md:block dark:text-white">
+                    Generate
+                  </div>
+                </div>
+              </button>
+            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  disabled
+                  className="hidden h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50 md:flex"
+                >
+                  <Smile className="h-3 w-3 fill-[#9A9A9A]" />
+                  <span className="px-0.5 text-sm">Casual</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon...</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  disabled
+                  className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50 md:flex"
+                >
+                  {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                  {messageLength >= 50 && messageLength < 200 && (
+                    <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
                   )}
-                </div>
-                <div className="hidden text-center text-sm leading-none text-black md:block dark:text-white">
-                  Generate
-                </div>
-              </div>
-            </button>
+                  {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon...</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                disabled
-                className="hidden h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50 md:flex"
-              >
-                <Smile className="h-3 w-3 fill-[#9A9A9A]" />
-                <span className="px-0.5 text-sm">Casual</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Coming soon...</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                disabled
-                className="flex hidden h-7 items-center gap-0.5 overflow-hidden rounded-md bg-white/5 px-1.5 shadow-sm hover:bg-white/10 disabled:opacity-50 md:flex"
-              >
-                {messageLength < 50 && <ShortStack className="h-3 w-3 fill-[#9A9A9A]" />}
-                {messageLength >= 50 && messageLength < 200 && (
-                  <MediumStack className="h-3 w-3 fill-[#9A9A9A]" />
-                )}
-                {messageLength >= 200 && <LongStack className="h-3 w-3 fill-[#9A9A9A]" />}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Coming soon...</p>
-            </TooltipContent>
-          </Tooltip>
         </div>
       </div>
     </div>
@@ -1143,7 +1174,7 @@ const ContentPreview = ({
     initial="initial"
     animate="animate"
     exit="exit"
-    className="absolute bottom-full right-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white shadow-md dark:bg-black"
+    className="dark:bg-subtleBlack absolute bottom-full right-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white p-1 shadow-md"
   >
     <div
       className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 text-sm"
