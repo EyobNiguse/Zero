@@ -20,7 +20,8 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
     cors({
       origin: (_, c: HonoContext) => env.NEXT_PUBLIC_APP_URL,
       credentials: true,
-      allowHeaders: ['Content-Type', 'Authorization'],
+      allowHeaders: ['Content-Type', 'Authorization', 'X-Zero-Redirect'],
+      exposeHeaders: ['X-Zero-Redirect'],
     }),
   )
   .use('*', async (c, next) => {

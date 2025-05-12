@@ -62,12 +62,6 @@ export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx,
       'X-Zero-Redirect',
       `/settings/connections?disconnectedConnectionId=${activeConnection.id}`,
     );
-
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: 'Invalid authorization. Please reconnect the connection.',
-      cause: res.error,
-    });
   }
 
   return res;
