@@ -883,6 +883,10 @@ export function EmailComposer({
               <button
                 className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
                 onClick={async () => {
+                  if (!editor.getText().trim().length && !subjectInput.trim().length) {
+                    toast.error('Please enter a subject or a message');
+                    return;
+                  }
                   if (!subjectInput.trim()) {
                     await handleGenerateSubject();
                   }
