@@ -1,10 +1,11 @@
 import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
 import { Ratelimit, type RatelimitConfig } from '@upstash/ratelimit';
 import type { HonoContext, HonoVariables } from '../ctx';
-import { StandardizedError } from '../lib/driver/utils';
 import { initTRPC, TRPCError } from '@trpc/server';
+import { connection } from '@zero/db/schema';
 import { env } from 'cloudflare:workers';
 import { redis } from '../lib/services';
+import { eq, and } from 'drizzle-orm';
 import superjson from 'superjson';
 type TrpcContext = {
   c: HonoContext;
@@ -46,6 +47,20 @@ export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx,
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: 'Required scopes missing',
+      cause: res.error,
+    });
+  }
+
+  if (!res.ok && res.error.message === 'invalid_grant') {
+    // Remove the access token and refresh token
+    await ctx.c.var.db
+      .update(connection)
+      .set({ accessToken: null, refreshToken: null })
+      .where(and(eq(connection.id, activeConnection.id)));
+
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'Invalid tokens',
       cause: res.error,
     });
   }

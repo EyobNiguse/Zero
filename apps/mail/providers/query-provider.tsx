@@ -43,6 +43,8 @@ export const makeQueryClient = (session: Session | null) =>
               },
             },
           });
+        } else if (err.message === 'Invalid tokens') {
+          window.location.href = `/settings/connections?disconnectedConnectionId=${session?.connectionId}`;
         } else toast.error(err.message || 'Something went wrong');
       },
     }),
