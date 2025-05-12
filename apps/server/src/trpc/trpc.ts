@@ -20,7 +20,6 @@ export const privateProcedure = publicProcedure.use(async ({ ctx, next }) => {
   if (!ctx.session?.user) {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
-      message: 'You must be logged in to access this resource, redirecting to login...',
     });
   }
 
