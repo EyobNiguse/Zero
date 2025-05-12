@@ -530,15 +530,36 @@ export function EmailComposer({
                   className="flex flex-1 items-center cursor-pointer text-sm text-black dark:text-white"
                 >
                   {toEmails.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 items-center">
                       {toEmails.slice(0, 3).map((email, index) => (
-                        <span key={index} className="inline-flex items-center">
-                          {index > 0 && <span className="mx-1 text-[#8C8C8C]">•</span>}
-                          <span className="truncate max-w-[150px]">{email}</span>
+                        <div
+                        key={index}
+                        className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-1 py-0.5 pr-2 dark:border-[#2B2B2B]"
+                      >
+                        <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                              {email.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {email}
                         </span>
+                        <button
+                          onClick={() => {
+                            setValue(
+                              'to',
+                              toEmails.filter((_, i) => i !== index),
+                            );
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="text-white/50 hover:text-white/90"
+                        >
+                          <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
+                        </button>
+                        </div>
                       ))}
                       {toEmails.length > 3 && (
-                        <span className="ml-1 text-[#8C8C8C]">
+                        <span className="ml-1 text-center text-[#8C8C8C]">
                           +{toEmails.length - 3} more
                         </span>
                       )}
@@ -683,15 +704,36 @@ export function EmailComposer({
                     className="flex flex-1 items-center cursor-pointer min-h-[30px] text-sm text-black dark:text-white"
                   >
                     {ccEmails && ccEmails.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1 items-center">
                         {ccEmails.slice(0, 3).map((email, index) => (
-                          <span key={index} className="inline-flex items-center">
-                            {index > 0 && <span className="mx-1 text-[#8C8C8C]">•</span>}
-                            <span className="truncate max-w-[150px]">{email}</span>
+                          <div
+                          key={index}
+                          className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-1 py-0.5 pr-2 dark:border-[#2B2B2B]"
+                        >
+                          <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
+                            <Avatar className="h-5 w-5">
+                              <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                                {email.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {email}
                           </span>
+                          <button
+                            onClick={() => {
+                              setValue(
+                                'cc',
+                                ccEmails.filter((_, i) => i !== index),
+                              );
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="text-white/50 hover:text-white/90"
+                          >
+                            <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
+                          </button>
+                          </div>
                         ))}
                         {ccEmails.length > 3 && (
-                          <span className="ml-1 text-[#8C8C8C]">
+                          <span className="ml-1 text-center text-[#8C8C8C]">
                             +{ccEmails.length - 3} more
                           </span>
                         )}
@@ -809,15 +851,36 @@ export function EmailComposer({
                     className="flex flex-1 items-center cursor-pointer min-h-[30px] text-sm text-black dark:text-white"
                   >
                     {bccEmails && bccEmails.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1 items-center">
                         {bccEmails.slice(0, 3).map((email, index) => (
-                          <span key={index} className="inline-flex items-center">
-                            {index > 0 && <span className="mx-1 text-[#8C8C8C]">•</span>}
-                            <span className="truncate max-w-[150px]">{email}</span>
+                          <div
+                          key={index}
+                          className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-1 py-0.5 pr-2 dark:border-[#2B2B2B]"
+                        >
+                          <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
+                            <Avatar className="h-5 w-5">
+                              <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                                {email.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {email}
                           </span>
+                          <button
+                            onClick={() => {
+                              setValue(
+                                'bcc',
+                                bccEmails.filter((_, i) => i !== index),
+                              );
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="text-white/50 hover:text-white/90"
+                          >
+                            <X className="mt-0.5 h-3.5 w-3.5 fill-black dark:fill-[#9A9A9A]" />
+                          </button>
+                          </div>
                         ))}
                         {bccEmails.length > 3 && (
-                          <span className="ml-1 text-[#8C8C8C]">
+                          <span className="ml-1 text-center text-[#8C8C8C]">
                             +{bccEmails.length - 3} more
                           </span>
                         )}
