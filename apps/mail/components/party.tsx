@@ -1,10 +1,12 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTRPC } from '@/providers/query-provider';
+import { useDebounce } from '@/hooks/use-debounce';
 import { usePartySocket } from 'partysocket/react';
 import { useThreads } from '@/hooks/use-threads';
 import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
+import { useState } from 'react';
 
 export const NotificationProvider = ({ headers }: { headers: Record<string, string> }) => {
   const trpc = useTRPC();
@@ -12,7 +14,10 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
   const { refetch: refetchLabels } = useLabels();
   const queryClient = useQueryClient();
   const [{ refetch: refetchThreads }] = useThreads();
-  const [lastUpdated, setLastUpdated] = useState<number>(0);
+
+  const debouncedRefetchLabels = useDebounce(refetchLabels, 10 * 1000);
+  const debouncedRefetchThreads = useDebounce(refetchThreads, 10 * 1000);
+
   usePartySocket({
     party: 'durable-mailbox',
     room: session?.activeConnection?.id ? `${session.activeConnection.id}` : 'general',
@@ -27,18 +32,16 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
       console.warn('party message', message);
       const [threadId, type] = message.data.split(':');
       if (type === 'end') {
-        if (Date.now() - lastUpdated > 30000) {
-          console.log('invalidating thread', threadId);
-          await refetchLabels();
-          await queryClient.invalidateQueries({
-            queryKey: trpc.mail.get.queryKey({ id: threadId }),
-          });
-          await refetchThreads();
-          setLastUpdated(Date.now());
-          console.warn('refetched threads');
-        }
+        await debouncedRefetchLabels();
+        await queryClient.invalidateQueries({
+          queryKey: trpc.mail.get.queryKey({ id: threadId }),
+        });
+        await debouncedRefetchThreads();
+        console.warn('refetched threads');
+      } else if (type === 'start') {
+        await debouncedRefetchThreads();
+        console.warn('refetched threads');
       }
-      console.warn('party message', threadId, type);
     },
   });
 
