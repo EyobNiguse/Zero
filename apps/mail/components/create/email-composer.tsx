@@ -374,7 +374,6 @@ export function EmailComposer({
         id: draftId,
       };
 
-      console.log("DRAFTDATA", draftData);
 
       const response = await createDraft(draftData);
 
