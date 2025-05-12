@@ -531,7 +531,7 @@ export function NavUser() {
                 <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
               )}
             </div>
-            <div className="max-w-[150px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
+            <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}
             </div>
           </div>
