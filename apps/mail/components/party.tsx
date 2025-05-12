@@ -6,7 +6,9 @@ import { usePartySocket } from 'partysocket/react';
 import { useThreads } from '@/hooks/use-threads';
 import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
-import { useState } from 'react';
+import { useCallback } from 'react';
+
+const DEBOUNCE_DELAY = 1000; // 1 second is more appropriate for real-time notifications
 
 export const NotificationProvider = ({ headers }: { headers: Record<string, string> }) => {
   const trpc = useTRPC();
@@ -15,8 +17,16 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
   const queryClient = useQueryClient();
   const [{ refetch: refetchThreads }] = useThreads();
 
-  const debouncedRefetchLabels = useDebounce(refetchLabels, 10 * 1000);
-  const debouncedRefetchThreads = useDebounce(refetchThreads, 10 * 1000);
+  const handleRefetchLabels = useCallback(async () => {
+    await refetchLabels();
+  }, [refetchLabels]);
+
+  const handleRefetchThreads = useCallback(async () => {
+    await refetchThreads();
+  }, [refetchThreads]);
+
+  const debouncedRefetchLabels = useDebounce(handleRefetchLabels, DEBOUNCE_DELAY);
+  const debouncedRefetchThreads = useDebounce(handleRefetchThreads, DEBOUNCE_DELAY);
 
   usePartySocket({
     party: 'durable-mailbox',
@@ -32,14 +42,14 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
       console.warn('party message', message);
       const [threadId, type] = message.data.split(':');
       if (type === 'end') {
-        await debouncedRefetchLabels();
+        debouncedRefetchLabels();
         await queryClient.invalidateQueries({
           queryKey: trpc.mail.get.queryKey({ id: threadId }),
         });
-        await debouncedRefetchThreads();
+        debouncedRefetchThreads();
         console.warn('refetched threads');
       } else if (type === 'start') {
-        await debouncedRefetchThreads();
+        debouncedRefetchThreads();
         console.warn('refetched threads');
       }
     },
