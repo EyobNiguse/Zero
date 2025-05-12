@@ -1,7 +1,7 @@
 import { activeDriverProcedure, createRateLimiterMiddleware, router } from '../trpc';
 import { updateWritingStyleMatrix } from '../../services/writing-style-service';
 import { deserializeFiles, serializedFileSchema } from '../../lib/schemas';
-import { defaultPageSize, FOLDERS } from '../../lib/utils';
+import { defaultPageSize, FOLDERS, LABELS } from '../../lib/utils';
 import { Ratelimit } from '@upstash/ratelimit';
 import { z } from 'zod';
 
@@ -178,6 +178,55 @@ export const mailRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { driver } = ctx;
       return driver.modifyLabels(input.ids, { addLabels: [], removeLabels: ['STARRED'] });
+    }),
+  deleteAllSpam: activeDriverProcedure
+    .mutation(async ({ ctx }) => {
+      const { driver } = ctx;
+      let totalDeleted = 0;
+      let hasMoreSpam = true;
+      let pageToken: string | number | null | undefined = undefined;
+      
+      try {
+        while (hasMoreSpam) {
+          const spamThreads = await driver.list({
+            folder: FOLDERS.SPAM,
+            maxResults: 500,
+            pageToken: pageToken
+          });
+          
+          if (!spamThreads.threads || spamThreads.threads.length === 0) {
+            hasMoreSpam = false;
+            break;
+          }
+          
+          const threadIds = spamThreads.threads.map(thread => thread.id);
+          await driver.modifyLabels(threadIds, { 
+            addLabels: [LABELS.TRASH], 
+            removeLabels: [LABELS.SPAM, LABELS.INBOX] 
+          });
+          
+          totalDeleted += threadIds.length;
+          pageToken = spamThreads.nextPageToken;
+          
+          if (!pageToken) {
+            hasMoreSpam = false;
+          }
+        }
+        
+        return { 
+          success: true, 
+          message: `Deleted ${totalDeleted} spam emails`, 
+          count: totalDeleted 
+        };
+      } catch (error) {
+        console.error('Error deleting spam emails:', error);
+        return { 
+          success: false, 
+          message: 'Failed to delete spam emails',
+          error: String(error),
+          count: totalDeleted
+        };
+      }
     }),
   send: activeDriverProcedure
     .input(

@@ -30,6 +30,7 @@ import {
   useState,
 } from 'react';
 import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
+import type { DeleteAllSpamResponse } from '../../../server/src/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { Briefcase, Check, Star, StickyNote, Users } from 'lucide-react';
@@ -789,7 +790,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       switch (getSelectMode()) {
         case 'mass': {
           const newSelected = mail.bulkSelected.includes(itemId)
-            ? mail.bulkSelected.filter((id) => id !== itemId)
+            ? mail.bulkSelected.filter((id: string) => id !== itemId)
             : [...mail.bulkSelected, itemId];
           return setMail({ ...mail, bulkSelected: newSelected });
         }
@@ -844,6 +845,28 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const { resolvedTheme } = useTheme();
 
+  const trpc = useTRPC();
+  const { mutateAsync: deleteAllSpam, isPending: isDeletingSpam } = useMutation<DeleteAllSpamResponse>(
+    trpc.mail.deleteAllSpam.mutationOptions()
+  );
+
+  const handleDeleteAllSpam = useCallback(async () => {
+    try {
+      const result = await deleteAllSpam();
+      if (result.success) {
+        toast.success(t('common.actions.deletedAllSpam', { count: result.count || 0 }));
+        void refetch();
+      } else {
+        toast.error(t('common.actions.errorDeletingSpam'));
+      }
+    } catch (error) {
+      console.error('Error deleting spam:', error);
+      toast.error(t('common.actions.errorDeletingSpam'));
+    }
+  }, [deleteAllSpam, refetch, t]);
+
+  const isSpamFolder = folder === FOLDERS.SPAM;
+
   return (
     <>
       <div
@@ -859,6 +882,20 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           disableScope('mail-list');
         }}
       >
+        {isSpamFolder && items.length > 0 && (
+          <div className="flex justify-end px-4 py-2 sticky top-0 z-10 bg-background">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleDeleteAllSpam}
+              disabled={isDeletingSpam || isLoading}
+              className="flex items-center gap-2 border-[#FDE4E9] dark:border-[#411D23] hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] dark:hover:text-white"
+            >
+              <Trash className="h-4 w-4 fill-logout" />
+              {isDeletingSpam ? t('common.actions.deletingAllSpam') : t('common.actions.deleteAllSpam')}
+            </Button>
+          </div>
+        )}
         <ScrollArea hideScrollbar className="hide-scrollbar h-full overflow-auto">
           {isLoading ? (
             <div className="flex h-32 items-center justify-center">

@@ -137,5 +137,11 @@ export interface IOutgoingMessage {
   threadId?: string;
   fromEmail?: string;
 }
+export interface DeleteAllSpamResponse {
+  success: boolean;
+  message: string;
+  count?: number;
+  error?: string;
+}
 
 export type AppContext = Context<{ Bindings: Env }>;
