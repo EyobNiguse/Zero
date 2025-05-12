@@ -326,7 +326,7 @@ export function MailLayout() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    {true ? <AutoLabelingSettings /> : null}
+                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}
