@@ -871,7 +871,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             count: result.count,
           }),
           {
-            duration: 5000, // Show toast longer for important operations
+            duration: 500,
           }
         );
         void refetch();
@@ -903,6 +903,15 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       >
         {isSpamFolder && items.length > 0 && (
           <div className="flex justify-end px-4 py-2 sticky top-0 z-10 bg-background">
+            {isDeletingSpam && (
+              <div className="flex flex-col items-center gap-2">
+                <Progress value={deletionProgress} />
+                <span className="text-xs text-muted-foreground">
+                  {t('common.actions.deletingAllSpam')}
+                </span>
+              </div>
+            )}
+            {!isDeletingSpam && (
             <Button 
               variant="outline" 
               size="sm"
@@ -911,16 +920,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               className="flex items-center gap-2 border-[#FDE4E9] dark:border-[#411D23] hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] dark:hover:text-white"
             >
               <Trash className="h-4 w-4 fill-logout" />
-              {isDeletingSpam ? t('common.actions.deletingAllSpam') : t('common.actions.deleteAllSpam')}
+              {t('common.actions.deleteAllSpam')}
             </Button>
-            {isDeletingSpam && (
-              <div className="mt-2 px-4">
-                <Progress className="h-2" />
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  {t('common.actions.deletingAllSpam')}
-                </p>
-              </div>
-            )}
+        )}
             {showDeleteConfirmation && (
               <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
                 <DialogContent>
