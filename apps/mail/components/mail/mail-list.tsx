@@ -176,7 +176,12 @@ const Thread = memo(
     const [threadId] = useQueryState('threadId');
     const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
     const { refetch: refetchStats } = useStats();
-    const { data: getThreadData, isLoading, isGroupThread } = useThread(demo ? null : message.id);
+    const {
+      data: getThreadData,
+      isLoading,
+      isGroupThread,
+      refetch: refetchThread,
+    } = useThread(demo ? null : message.id);
     const [isStarred, setIsStarred] = useState(false);
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -204,7 +209,7 @@ const Thread = memo(
           toast.success(t('common.actions.removedFromFavorites'));
         }
         await toggleStar({ ids: [message.id] });
-        refetchThreads();
+        await refetchThread();
       },
       [getThreadData, message.id, isStarred, refetchThreads, t],
     );
