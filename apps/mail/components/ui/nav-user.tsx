@@ -82,8 +82,6 @@ export function NavUser() {
     queryClient.clear();
     await idbClear();
     toast.success('Cache cleared successfully');
-    // Reload the page after clearing the cache
-    setTimeout(() => window.location.reload(), 500);
   }, []);
 
   const { customer } = useCustomer();
@@ -119,9 +117,9 @@ export function NavUser() {
       loading: 'Signing out...',
       success: () => 'Signed out successfully!',
       error: 'Error signing out',
-      finally() {
-        handleClearCache();
-        router.push('/login');
+      async finally() {
+        await handleClearCache();
+        window.location.href = '/login';
       },
     });
   };
