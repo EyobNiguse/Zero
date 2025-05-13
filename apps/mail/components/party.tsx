@@ -1,14 +1,13 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTRPC } from '@/providers/query-provider';
-import { useDebounce } from '@/hooks/use-debounce';
 import { usePartySocket } from 'partysocket/react';
 import { useThreads } from '@/hooks/use-threads';
 import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
-import { useCallback } from 'react';
+import { funnel } from 'remeda';
 
-const DEBOUNCE_DELAY = 1000; // 1 second is more appropriate for real-time notifications
+const DEBOUNCE_DELAY = 10_000; // 10 seconds is appropriate for real-time notifications
 
 export const NotificationProvider = ({ headers }: { headers: Record<string, string> }) => {
   const trpc = useTRPC();
@@ -17,16 +16,16 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
   const queryClient = useQueryClient();
   const [{ refetch: refetchThreads }] = useThreads();
 
-  const handleRefetchLabels = useCallback(async () => {
-    await refetchLabels();
-  }, [refetchLabels]);
+  //   const handleRefetchLabels = useCallback(async () => {
+  //     await refetchLabels();
+  //   }, [refetchLabels]);
 
-  const handleRefetchThreads = useCallback(async () => {
-    await refetchThreads();
-  }, [refetchThreads]);
+  //   const handleRefetchThreads = useCallback(async () => {
+  //     await refetchThreads();
+  //   }, [refetchThreads]);
 
-  const debouncedRefetchLabels = useDebounce(handleRefetchLabels, DEBOUNCE_DELAY);
-  const debouncedRefetchThreads = useDebounce(handleRefetchThreads, DEBOUNCE_DELAY);
+  const labelsDebouncer = funnel(refetchLabels, { minQuietPeriodMs: DEBOUNCE_DELAY });
+  const threadsDebouncer = funnel(refetchThreads, { minQuietPeriodMs: DEBOUNCE_DELAY });
 
   usePartySocket({
     party: 'durable-mailbox',
@@ -42,14 +41,14 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
       console.warn('party message', message);
       const [threadId, type] = message.data.split(':');
       if (type === 'end') {
-        debouncedRefetchLabels();
+        labelsDebouncer.call();
         await queryClient.invalidateQueries({
           queryKey: trpc.mail.get.queryKey({ id: threadId }),
         });
-        debouncedRefetchThreads();
+        threadsDebouncer.call();
         console.warn('refetched threads');
       } else if (type === 'start') {
-        debouncedRefetchThreads();
+        threadsDebouncer.call();
         console.warn('refetched threads');
       }
     },
