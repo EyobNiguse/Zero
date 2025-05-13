@@ -301,6 +301,8 @@ export function MailLayout() {
                   <div>
                     <SidebarToggle className="h-fit px-2" />
                   </div>
+                 
+                  <div className="flex items-center gap-2">
                   <div>
                     {mail.bulkSelected.length > 0 ? (
                       <div>
@@ -323,7 +325,6 @@ export function MailLayout() {
                       </div>
                     ) : null}
                   </div>
-                  <div className="flex items-center gap-2">
                     {true ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}

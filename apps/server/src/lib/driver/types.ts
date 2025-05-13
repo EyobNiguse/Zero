@@ -1,3 +1,4 @@
+
 import type { IOutgoingMessage, ParsedMessage, Label, DeleteAllSpamResponse } from '../../types';
 import type { CreateDraftData } from '../schemas';
 import type { HonoContext } from '../../ctx';
@@ -32,7 +33,6 @@ export type ManagerConfig = {
     refreshToken: string;
     email: string;
   };
-  c?: HonoContext;
 };
 
 export interface MailManager {
