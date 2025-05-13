@@ -1,4 +1,3 @@
-
 import type { IOutgoingMessage, ParsedMessage, Label, DeleteAllSpamResponse } from '../../types';
 import type { CreateDraftData } from '../schemas';
 import type { HonoContext } from '../../ctx';
