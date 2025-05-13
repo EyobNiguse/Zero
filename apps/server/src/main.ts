@@ -21,6 +21,7 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
       origin: () => env.NEXT_PUBLIC_APP_URL,
       credentials: true,
       allowHeaders: ['Content-Type', 'Authorization'],
+      exposeHeaders: ['X-Zero-Redirect'],
     }),
   )
   .use('*', async (c, next) => {

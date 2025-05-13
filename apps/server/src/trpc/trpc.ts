@@ -1,10 +1,11 @@
 import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
 import { Ratelimit, type RatelimitConfig } from '@upstash/ratelimit';
 import type { HonoContext, HonoVariables } from '../ctx';
-import { StandardizedError } from '../lib/driver/utils';
 import { initTRPC, TRPCError } from '@trpc/server';
+import { connection } from '@zero/db/schema';
 import { env } from 'cloudflare:workers';
 import { redis } from '../lib/services';
+import { eq, and } from 'drizzle-orm';
 import superjson from 'superjson';
 type TrpcContext = {
   c: HonoContext;
@@ -16,10 +17,12 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 export const privateProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  if (!ctx.session?.user)
+  if (!ctx.session?.user) {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
     });
+  }
+
   return next({ ctx: { ...ctx, session: ctx.session } });
 });
 
@@ -46,6 +49,25 @@ export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx,
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: 'Required scopes missing',
+      cause: res.error,
+    });
+  }
+
+  if (!res.ok && res.error.message === 'invalid_grant') {
+    // Remove the access token and refresh token
+    await ctx.c.var.db
+      .update(connection)
+      .set({ accessToken: null, refreshToken: null })
+      .where(and(eq(connection.id, activeConnection.id)));
+
+    ctx.c.header(
+      'X-Zero-Redirect',
+      `/settings/connections?disconnectedConnectionId=${activeConnection.id}`,
+    );
+
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'Connection expired. Please reconnect.',
       cause: res.error,
     });
   }

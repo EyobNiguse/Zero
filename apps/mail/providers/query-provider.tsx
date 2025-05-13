@@ -39,6 +39,7 @@ export const makeQueryClient = (session: Session | null) =>
           signOut({
             fetchOptions: {
               onSuccess: () => {
+                if (window.location.href.includes('/login')) return;
                 window.location.href = '/login?error=required_scopes_missing';
               },
             },
@@ -89,7 +90,17 @@ export const trpcClient = createTRPCClient<AppRouter>({
       transformer: superjson,
       url: getUrl(),
       methodOverride: 'POST',
-      fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
+      fetch: (url, options) =>
+        fetch(url, { ...options, credentials: 'include' }).then((res) => {
+          const currentPath = new URL(window.location.href).pathname;
+          const redirectPath = res.headers.get('X-Zero-Redirect');
+
+          if (!!redirectPath && redirectPath !== currentPath) {
+            window.location.href = redirectPath;
+          }
+
+          return res;
+        }),
     }),
   ],
 });

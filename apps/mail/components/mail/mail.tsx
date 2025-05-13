@@ -111,6 +111,7 @@ const AutoLabelingSettings = () => {
 
   useEffect(() => {
     if (storedLabels) {
+      console.warn(storedLabels, 'storedLabels');
       setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
     }
   }, [storedLabels]);
@@ -150,7 +151,8 @@ const AutoLabelingSettings = () => {
           <Button
             disabled={isPending}
             onClick={() => {
-              updateLabels({ labels: labels.map((label) => label.id) }).then(() => {
+              console.warn(labels, 'labels');
+              updateLabels({ labels: labels.map((label) => label.name) }).then(() => {
                 setOpen(false);
                 toast.success('Labels updated successfully, Zero will start using them.');
               });
@@ -324,7 +326,7 @@ export function MailLayout() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    {true ? <AutoLabelingSettings /> : null}
+                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}
@@ -423,13 +425,20 @@ function BulkSelectActions() {
   const [{ refetch: refetchThreads }] = useThreads();
   const { refetch: refetchStats } = useStats();
   const trpc = useTRPC();
-  const { mutateAsync: markAsRead } = useMutation(trpc.mail.markAsRead.mutationOptions());
-  const { mutateAsync: markAsImportant } = useMutation(trpc.mail.markAsImportant.mutationOptions());
+  const queryClient = useQueryClient();
+  const invalidateCount = () =>
+    queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
+
+  const { mutateAsync: markAsRead } = useMutation(
+    trpc.mail.markAsRead.mutationOptions({ onSuccess: () => invalidateCount() }),
+  );
+  const { mutateAsync: markAsImportant } = useMutation(
+    trpc.mail.markAsImportant.mutationOptions({ onSuccess: () => invalidateCount() }),
+  );
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
-  const queryClient = useQueryClient();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
