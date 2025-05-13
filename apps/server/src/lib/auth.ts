@@ -12,6 +12,7 @@ import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { getBrowserTimezone, isValidTimezone } from './timezones';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
+import { getContext } from 'hono/context-storage';
 import { getActiveDriver } from './driver/utils';
 import { APIError } from 'better-auth/api';
 import { redis, resend } from './services';
@@ -21,7 +22,9 @@ import { createDriver } from './driver';
 import { createDb } from '@zero/db';
 import { eq } from 'drizzle-orm';
 
-const connectionHandlerHook = async (account: Account, c: HonoContext) => {
+const connectionHandlerHook = async (account: Account) => {
+  const c = getContext<HonoContext>();
+
   if (!account.accessToken || !account.refreshToken) {
     console.error('Missing Access/Refresh Tokens', { account });
     throw new APIError('EXPECTATION_FAILED', { message: 'Missing Access/Refresh Tokens' });
@@ -29,8 +32,8 @@ const connectionHandlerHook = async (account: Account, c: HonoContext) => {
 
   const driver = createDriver(account.providerId, {
     auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
-    c,
   });
+
   const userInfo = await driver.getUserInfo().catch(() => {
     throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
   });
@@ -52,7 +55,7 @@ const connectionHandlerHook = async (account: Account, c: HonoContext) => {
   await c.var.db
     .insert(connection)
     .values({
-      providerId: account.providerId,
+      providerId: account.providerId as 'google' | 'microsoft',
       id: crypto.randomUUID(),
       email: userInfo.address,
       userId: account.userId,
@@ -69,14 +72,16 @@ const connectionHandlerHook = async (account: Account, c: HonoContext) => {
     });
 };
 
-export const createAuth = (c: HonoContext) => {
+export const createAuth = () => {
+  const c = getContext<HonoContext>();
+
   return betterAuth({
     user: {
       deleteUser: {
         enabled: true,
         beforeDelete: async (user, request) => {
           if (!request) throw new APIError('BAD_REQUEST', { message: 'Request object is missing' });
-          const driver = await getActiveDriver(c);
+          const driver = await getActiveDriver();
           const refreshToken = (
             await c.var.db.select().from(connection).where(eq(connection.userId, user.id)).limit(1)
           )[0]?.refreshToken;
@@ -100,10 +105,10 @@ export const createAuth = (c: HonoContext) => {
     databaseHooks: {
       account: {
         create: {
-          after: (account) => connectionHandlerHook(account, c),
+          after: connectionHandlerHook,
         },
         update: {
-          after: (account) => connectionHandlerHook(account, c),
+          after: connectionHandlerHook,
         },
       },
     },

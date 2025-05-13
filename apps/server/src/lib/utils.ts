@@ -1,7 +1,6 @@
 import { isToday, isThisMonth, differenceInCalendarMonths } from 'date-fns';
 import { getBrowserTimezone } from './timezones';
 import { formatInTimeZone } from 'date-fns-tz';
-import { filterSuggestions } from './filter';
 import type { JSONContent } from 'novel';
 import type { Sender } from '../types';
 

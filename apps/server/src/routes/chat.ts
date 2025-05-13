@@ -1,4 +1,5 @@
 import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
+import { getContext } from 'hono/context-storage';
 import { AiChatPrompt } from '../lib/prompts';
 import type { HonoContext } from '../ctx';
 import { openai } from '@ai-sdk/openai';
@@ -6,7 +7,9 @@ import { Autumn } from 'autumn-js';
 import { streamText } from 'ai';
 import { z } from 'zod';
 
-export const chatHandler = async (c: HonoContext) => {
+export const chatHandler = async () => {
+  const c = getContext<HonoContext>();
+
   const { session } = c.var;
   if (!session) return c.json({ error: 'Unauthorized' }, 401);
 
@@ -32,8 +35,8 @@ export const chatHandler = async (c: HonoContext) => {
     return c.json({ error: 'Insufficient plan balance' }, 403);
   }
 
-  const driver = await getActiveConnection(c)
-    .then((conn) => connectionToDriver(conn, c))
+  const driver = await getActiveConnection()
+    .then(connectionToDriver)
     .catch((err) => {
       console.error('Error in getActiveConnection:', err);
       throw c.json({ error: 'Failed to get active connection' }, 500);
