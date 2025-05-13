@@ -6,9 +6,11 @@ import { connection } from '@zero/db/schema';
 import { env } from 'cloudflare:workers';
 import { redis } from '../lib/services';
 import { eq, and } from 'drizzle-orm';
+import type { Context } from 'hono';
 import superjson from 'superjson';
+
 type TrpcContext = {
-  c: HonoContext;
+  c: Context<HonoContext>;
 } & HonoVariables;
 
 const t = initTRPC.context<TrpcContext>().create({ transformer: superjson });
@@ -28,7 +30,7 @@ export const privateProcedure = publicProcedure.use(async ({ ctx, next }) => {
 
 export const activeConnectionProcedure = privateProcedure.use(async ({ ctx, next }) => {
   try {
-    const activeConnection = await getActiveConnection(ctx.c);
+    const activeConnection = await getActiveConnection();
     return next({ ctx: { ...ctx, activeConnection } });
   } catch (err) {
     await ctx.c.var.auth.api.signOut({ headers: ctx.c.req.raw.headers });
@@ -41,7 +43,7 @@ export const activeConnectionProcedure = privateProcedure.use(async ({ ctx, next
 
 export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx, next }) => {
   const { activeConnection } = ctx;
-  const driver = connectionToDriver(activeConnection, ctx.c);
+  const driver = connectionToDriver(activeConnection);
   const res = await next({ ctx: { ...ctx, driver } });
 
   // This is for when the user has not granted the required scopes for GMail
@@ -84,7 +86,7 @@ export const brainServerAvailableMiddleware = t.middleware(async ({ next, ctx })
   });
 });
 
-export const processIP = (c: HonoContext) => {
+export const processIP = (c: Context<HonoContext>) => {
   const cfIP = c.req.header('CF-Connecting-IP');
   const ip = c.req.header('x-forwarded-for');
   if (!ip && !cfIP && env.NODE_ENV === 'production') {

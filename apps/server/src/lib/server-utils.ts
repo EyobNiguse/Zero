@@ -1,9 +1,11 @@
+import { getContext } from 'hono/context-storage';
 import { connection } from '@zero/db/schema';
 import type { HonoContext } from '../ctx';
 import { createDriver } from './driver';
 import { and, eq } from 'drizzle-orm';
 
-export const getActiveConnection = async (c: HonoContext) => {
+export const getActiveConnection = async () => {
+  const c = getContext<HonoContext>();
   const { session, db } = c.var;
   if (!session?.user) throw new Error('Session Not Found');
   if (!session.activeConnection?.id) {
