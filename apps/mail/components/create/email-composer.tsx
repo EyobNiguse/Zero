@@ -938,14 +938,14 @@ export function EmailComposer({
       </div>
 
       {/* Message Content */}
-      <div className="grow overflow-y-auto min-h-[200px] max-h-[300px] self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020] hide-scrollbar">
+      <div className="grow overflow-y-auto h-[300px] self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div
           className={cn(
-            'flex flex-col gap-2.5 self-stretch',
+            'h-full w-full',
             aiGeneratedMessage !== null ? 'blur-sm' : '',
           )}
         >
-          <EditorContent editor={editor} />
+          <EditorContent editor={editor} className="h-full w-full" />
         </div>
       </div>
     </div>
