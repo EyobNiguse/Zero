@@ -70,18 +70,6 @@ const aboutLinks = [
 export default function PricingPage() {
   const [open, setOpen] = useState(false);
   const { attach } = useBilling();
-  const { customer } = useCustomer();
-
-  const isPro = useMemo(() => {
-    return (
-      customer &&
-      Array.isArray(customer.products) &&
-      customer.products.some(
-        (product: any) =>
-          product.id.includes('pro-example') || product.name.includes('pro-example'),
-      )
-    );
-  }, [customer]);
 
   const handleUpgrade = async () => {
     if (attach) {

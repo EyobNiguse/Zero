@@ -84,7 +84,6 @@ export function NavUser() {
     toast.success('Cache cleared successfully');
   }, []);
 
-  const { customer } = useCustomer();
   const handleCopyConnectionId = useCallback(async () => {
     await navigator.clipboard.writeText(session?.connectionId || '');
     toast.success('Connection ID copied to clipboard');
@@ -137,14 +136,14 @@ export function NavUser() {
 
   const isPro = useMemo(() => {
     return (
-      customer &&
-      Array.isArray(customer.products) &&
-      customer.products.some(
+      billingCustomer &&
+      Array.isArray(billingCustomer.products) &&
+      billingCustomer.products.some(
         (product: any) =>
           product.id.includes('pro-example') || product.name.includes('pro-example'),
       )
     );
-  }, [customer]);
+  }, [billingCustomer]);
 
   if (!isRendered) return null;
   if (!session) return null;
