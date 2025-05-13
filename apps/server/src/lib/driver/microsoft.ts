@@ -171,21 +171,39 @@ export class OutlookMailManager implements MailManager {
     return this.withErrorHandler(
       'count',
       async () => {
-        const mailFolders: MailFolder[] = (await this.graphClient.api('/me/mailfolders').get())
-          .value;
-
-        const counts = mailFolders
-          .filter((folder) =>
-            ['inbox', 'sentitems', 'drafts', 'deleteditems', 'archive'].includes(
-              folder.id?.toLowerCase() || '',
-            ),
-          )
-          .map((folder) => ({
-            label: folder.displayName || folder.id || '',
-            count: folder.unreadItemCount ?? undefined,
-          }));
-
-        return counts;
+        const userLabels = await this.graphClient.api('/me/mailfolders').get();
+        
+        if (!userLabels.value) {
+          return [];
+        }
+        
+        return Promise.all(
+          userLabels.value.map(async (folder: MailFolder) => {
+            try {
+              const res = await this.graphClient.api(`/me/mailfolders/${folder.id}`).get();
+              
+              let normalizedLabel = res.displayName || res.id || '';
+              
+              if (res.id?.toLowerCase() === 'inbox') normalizedLabel = 'Inbox';
+              else if (res.id?.toLowerCase() === 'sentitems') normalizedLabel = 'Sent';
+              else if (res.id?.toLowerCase() === 'drafts') normalizedLabel = 'Drafts';
+              else if (res.id?.toLowerCase() === 'deleteditems') normalizedLabel = 'Bin';
+              else if (res.id?.toLowerCase() === 'archive') normalizedLabel = 'Archive';
+              else if (res.id?.toLowerCase() === 'junkemail') normalizedLabel = 'Spam';
+              
+              return {
+                label: normalizedLabel,
+                count: Number(res.unreadItemCount) ?? undefined,
+              };
+            } catch (error) {
+              console.error(`Error getting counts for folder ${folder.id}:`, error);
+              return {
+                label: folder.displayName || folder.id || '',
+                count: undefined,
+              };
+            }
+          }),
+        );
       },
       { email: this.config.auth?.email },
     );
