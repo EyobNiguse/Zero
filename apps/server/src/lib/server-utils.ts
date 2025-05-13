@@ -13,10 +13,6 @@ export const getActiveConnection = async (c: HonoContext) => {
     if (!activeConnection)
       throw new Error(`Active connection not found for user ${session.user.id}`);
 
-    if (!activeConnection.refreshToken || !activeConnection.accessToken)
-      throw new Error(
-        'Active Connection is not properly authorized, please reconnect the connection',
-      );
     return activeConnection;
   }
 
@@ -29,24 +25,20 @@ export const getActiveConnection = async (c: HonoContext) => {
 
   if (!activeConnection) throw new Error('Active connection not found');
 
-  if (!activeConnection.refreshToken || !activeConnection.accessToken)
-    throw new Error(
-      'Active Connection is not properly authorized, please reconnect the connection',
-    );
   return activeConnection;
 };
 
-export const connectionToDriver = (
-  activeConnection: typeof connection.$inferSelect,
-  c: HonoContext,
-) => {
-  const driver = createDriver(activeConnection.providerId, {
+export const connectionToDriver = (activeConnection: typeof connection.$inferSelect) => {
+  if (!activeConnection.accessToken || !activeConnection.refreshToken) {
+    throw new Error('Invalid connection');
+  }
+
+  return createDriver(activeConnection.providerId, {
     auth: {
       accessToken: activeConnection.accessToken,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      refreshToken: activeConnection.refreshToken!,
+
+      refreshToken: activeConnection.refreshToken,
       email: activeConnection.email,
     },
   });
-  return driver;
 };
