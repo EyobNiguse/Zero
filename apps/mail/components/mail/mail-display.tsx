@@ -818,7 +818,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
                     <div className="justify-start text-sm leading-none text-black dark:text-white">
-                      Reply
+                      {t('common.mail.reply')}
                     </div>
                   </div>
                 </button>
@@ -833,7 +833,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <ReplyAll className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
                     <div className="justify-start text-sm leading-none text-black dark:text-white">
-                      Reply All
+                      {t('common.mail.replyAll')}
                     </div>
                   </div>
                 </button>
@@ -848,7 +848,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <Forward className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
                   <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
                     <div className="justify-start text-sm leading-none text-black dark:text-white">
-                      Forward
+                      {t('common.mail.forward')}
                     </div>
                   </div>
                 </button>
