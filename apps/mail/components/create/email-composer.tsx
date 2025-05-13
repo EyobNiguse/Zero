@@ -452,7 +452,7 @@ export function EmailComposer({
               }, 0)
             }}  className="flex items-center gap-2 w-full">
               <p className="text-sm font-medium text-[#8C8C8C]">To:</p>
-              {isAddingRecipients ? (
+              {isAddingRecipients || toEmails.length === 0 ? (
                 <div ref={toWrapperRef} className="flex flex-wrap items-center gap-2">
                   {toEmails.map((email, index) => (
                     <div
@@ -548,7 +548,7 @@ export function EmailComposer({
                 <div
                   className="flex flex-1 items-center min-h-6 cursor-pointer text-sm text-black dark:text-white"
                 >
-                  {toEmails.length > 0 ? (
+                  {toEmails.length > 0 &&
                     <div className="flex flex-wrap gap-1 items-center">
                       {toEmails.slice(0, 3).map((email, index) => (
                         <div
@@ -583,9 +583,7 @@ export function EmailComposer({
                         </span>
                       )}
                     </div>
-                  ) : (
-                    <span className="text-[#797979]">Click to add recipients</span>
-                  )}
+                  }
                 </div>
               )}
             </div>
@@ -629,7 +627,7 @@ export function EmailComposer({
                 }, 0)
               }} className="flex items-center gap-2 px-3">
                 <p className="text-sm font-medium text-[#8C8C8C]">Cc:</p>
-                {isAddingCcRecipients ? (
+                {isAddingCcRecipients || (ccEmails && ccEmails.length === 0)? (
                   <div ref={ccWrapperRef} className="flex flex-1 flex-wrap items-center gap-2">
                     {ccEmails?.map((email, index) => (
                       <div
@@ -722,7 +720,7 @@ export function EmailComposer({
                   <div
                     className="flex flex-1 items-center cursor-pointer min-h-6 text-sm text-black dark:text-white"
                   >
-                    {ccEmails && ccEmails.length > 0 ? (
+                    {ccEmails && ccEmails.length > 0 &&
                       <div className="flex flex-wrap gap-1 items-center">
                         {ccEmails.slice(0, 3).map((email, index) => (
                           <div
@@ -757,9 +755,7 @@ export function EmailComposer({
                           </span>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-[#797979]">Click to add CC recipients</span>
-                    )}
+                    }
                   </div>
                 )}
               </div>
@@ -776,7 +772,7 @@ export function EmailComposer({
                 }, 0)
               }} className="flex items-center gap-2 px-3">
                 <p className="text-sm font-medium text-[#8C8C8C]">Bcc:</p>
-                {isAddingBccRecipients ? (
+                {isAddingBccRecipients || (bccEmails && bccEmails.length === 0)? (
                   <div ref={bccWrapperRef} className="flex flex-1 flex-wrap items-center gap-2">
                     {bccEmails?.map((email, index) => (
                       <div
@@ -869,7 +865,7 @@ export function EmailComposer({
                   <div
                     className="flex flex-1 items-center cursor-pointer min-h-6 text-sm text-black dark:text-white"
                   >
-                    {bccEmails && bccEmails.length > 0 ? (
+                    {bccEmails && bccEmails.length > 0 && 
                       <div className="flex flex-wrap gap-1 items-center">
                         {bccEmails.slice(0, 3).map((email, index) => (
                           <div
@@ -904,9 +900,7 @@ export function EmailComposer({
                           </span>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-[#797979]">Click to add BCC recipients</span>
-                    )}
+                    }
                   </div>
                 )}
               </div>
