@@ -172,15 +172,23 @@ const Thread = memo(
     const [searchValue, setSearchValue] = useSearchValue();
     const t = useTranslations();
     const { folder } = useParams<{ folder: string }>();
-    const [{ refetch: refetchThreads }] = useThreads();
+    const [{ refetch: refetchThreads }, threads] = useThreads();
     const [threadId] = useQueryState('threadId');
     const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
     const { refetch: refetchStats } = useStats();
-    const { data: getThreadData, isLoading, isGroupThread } = useThread(demo ? null : message.id);
+    const {
+      data: getThreadData,
+      isLoading,
+      isGroupThread,
+      refetch: refetchThread,
+    } = useThread(demo ? null : message.id);
     const [isStarred, setIsStarred] = useState(false);
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
+    const [id, setThreadId] = useQueryState('threadId');
+    const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
+    const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
 
     useEffect(() => {
       if (getThreadData?.latest?.tags) {
@@ -201,9 +209,24 @@ const Thread = memo(
           toast.success(t('common.actions.removedFromFavorites'));
         }
         await toggleStar({ ids: [message.id] });
-        refetchThreads();
+        await refetchThread();
       },
       [getThreadData, message.id, isStarred, refetchThreads, t],
+    );
+
+    const handleNext = useCallback(
+      (id: string) => {
+        if (!id || !threads.length || focusedIndex === null) return setThreadId(null);
+        if (focusedIndex < threads.length - 1) {
+          const nextThread = threads[focusedIndex];
+          if (nextThread) {
+            setThreadId(nextThread.id);
+            setActiveReplyId(null);
+            setFocusedIndex(focusedIndex);
+          }
+        }
+      },
+      [threads, id, focusedIndex],
     );
 
     const moveThreadTo = useCallback(
@@ -215,7 +238,7 @@ const Thread = memo(
           destination,
         });
         setBackgroundQueue({ type: 'add', threadId: `thread:${message.id}` });
-
+        handleNext(message.id);
         toast.success(
           destination === 'inbox'
             ? t('common.actions.movedToInbox')
@@ -590,7 +613,7 @@ const Thread = memo(
                     ) : (
                       <p
                         className={cn(
-                          'mt-1 line-clamp-1 max-w-[25ch] sm:max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[40ch]',
+                          'mt-1 line-clamp-1 w-full text-sm text-[#8C8C8C] min-w-0',
                         )}
                       >
                         {highlightText(latestMessage.subject, searchValue.highlight)}
@@ -1035,7 +1058,7 @@ function getLabelIcon(label: string) {
     case 'notes':
       return <StickyNote className="h-3.5 w-3.5" />;
     case 'starred':
-      return <Star className="h-3.5 w-3.5" />;
+      return <Star className="h-3.5 w-3.5 fill-yellow-400 stroke-yellow-400" />;
     default:
       return null;
   }
