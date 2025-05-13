@@ -172,6 +172,9 @@ export class OutlookMailManager implements MailManager {
       'count',
       async () => {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> a6fa624f (update count function to get the correct counts)
         const userLabels = await this.graphClient.api('/me/mailfolders').get();
         
         if (!userLabels.value) {
@@ -205,6 +208,7 @@ export class OutlookMailManager implements MailManager {
             }
           }),
         );
+<<<<<<< HEAD
       },
       { email: this.config.auth?.email },
     );
@@ -518,6 +522,8 @@ export class OutlookMailManager implements MailManager {
           }));
 
         return counts;
+=======
+>>>>>>> a6fa624f (update count function to get the correct counts)
       },
       { email: this.config.auth?.email },
     );
