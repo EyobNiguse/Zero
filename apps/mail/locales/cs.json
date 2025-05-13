@@ -367,7 +367,9 @@
         "addEmail": "Přidat propojení",
         "connectEmail": "Připojit email",
         "connectEmailDescription": "Vyberte poskytovatele emailu, kterýho chcete připojit",
-        "moreComingSoon": "Více již brzy"
+        "moreComingSoon": "Více již brzy",
+        "reconnect": "Znovu připojit",
+        "disconnected": "Odpojeno"
       },
       "security": {
         "title": "Zabezpečení",

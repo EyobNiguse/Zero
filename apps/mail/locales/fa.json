@@ -367,7 +367,9 @@
         "addEmail": "افزودن اتصال",
         "connectEmail": "اتصال ایمیل",
         "connectEmailDescription": "یک سرویس‌دهنده ایمیل برای اتصال انتخاب کنید",
-        "moreComingSoon": "به زودی موارد بیشتری اضافه می‌شود"
+        "moreComingSoon": "به زودی موارد بیشتری اضافه می‌شود",
+        "reconnect": "اتصال مجدد",
+        "disconnected": "قطع شده"
       },
       "security": {
         "title": "امنیت",

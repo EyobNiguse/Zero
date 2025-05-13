@@ -367,7 +367,9 @@
         "addEmail": "Thêm kết nối",
         "connectEmail": "Kết nối email",
         "connectEmailDescription": "Chọn nhà cung cấp email để kết nối",
-        "moreComingSoon": "Sẽ có thêm tùy chọn sớm"
+        "moreComingSoon": "Sẽ có thêm tùy chọn sớm",
+        "reconnect": "Kết nối lại",
+        "disconnected": "Đã ngắt kết nối"
       },
       "security": {
         "title": "Bảo mật",

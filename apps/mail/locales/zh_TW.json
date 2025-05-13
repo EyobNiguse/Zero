@@ -367,7 +367,9 @@
         "addEmail": "新增連接",
         "connectEmail": "連接電子郵件",
         "connectEmailDescription": "選擇要連接的電子郵件提供者",
-        "moreComingSoon": "更多即將推出"
+        "moreComingSoon": "更多即將推出",
+        "reconnect": "重新連線",
+        "disconnected": "已中斷連線"
       },
       "security": {
         "title": "安全性",

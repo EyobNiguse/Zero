@@ -367,7 +367,9 @@
         "addEmail": "接続を追加",
         "connectEmail": "メールアドレスの接続",
         "connectEmailDescription": "接続するメールプロバイダを選択してください",
-        "moreComingSoon": "近日追加予定"
+        "moreComingSoon": "近日追加予定",
+        "reconnect": "再接続",
+        "disconnected": "切断済み"
       },
       "security": {
         "title": "セキュリティ",

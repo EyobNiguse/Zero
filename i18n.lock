@@ -315,6 +315,8 @@ checksums:
     pages/settings/connections/connectEmail: dea62d12c923908e9bee484c0b720b33
     pages/settings/connections/connectEmailDescription: b5383f2bb1c90ffdfec05601a5d56e2c
     pages/settings/connections/moreComingSoon: 86b93377c3ac8b265cb42333db3abeab
+    pages/settings/connections/reconnect: 8992a0f250278c116cb26be448b68ba2
+    pages/settings/connections/disconnected: d9d377835b64c098c5ac32efcebc093d
     pages/settings/security/title: 4b34923fef858a2b9a4a914c3e822889
     pages/settings/security/description: e54112d11a6dea5459db28e83b119c38
     pages/settings/security/twoFactorAuth: 8bc1572b5995cc2b222f381d0f75d873

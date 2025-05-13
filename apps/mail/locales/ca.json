@@ -367,7 +367,9 @@
         "addEmail": "Afegeix una connexió",
         "connectEmail": "Connecta el correu electrònic\n\n\n\n\n\n\n\n",
         "connectEmailDescription": "Selecciona un proveïdor de correu per connectar",
-        "moreComingSoon": "Pròximament més"
+        "moreComingSoon": "Pròximament més",
+        "reconnect": "Reconnecta",
+        "disconnected": "Desconnectat"
       },
       "security": {
         "title": "Seguretat",
