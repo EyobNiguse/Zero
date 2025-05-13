@@ -133,13 +133,6 @@ export function CreateEmail({
   };
 
   useEffect(() => {
-    if (!dialogOpen) {
-      router.push('/mail');
-    }
-  }, [dialogOpen, router]);
-
-  // If propDraftId is provided, update the URL query parameter
-  useEffect(() => {
     if (propDraftId && !draftId) {
       setDraftId(propDraftId);
     }
@@ -155,9 +148,16 @@ export function CreateEmail({
   // Cast draft to our extended type that includes CC and BCC
   const typedDraft = draft as unknown as DraftType;
 
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      router.push('/mail');
+    }
+  };
+
   return (
     <>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
         <div className="flex min-h-screen flex-col items-center justify-center gap-1">
           <div className="flex w-[750px] justify-start">
             <DialogClose asChild className="flex">
