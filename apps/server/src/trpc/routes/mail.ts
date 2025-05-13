@@ -205,7 +205,7 @@ export const mailRouter = router({
       const afterTask = async () => {
         try {
           console.warn('Saving writing style matrix...');
-          await updateWritingStyleMatrix(activeConnection.id, input.message, ctx.c);
+          await updateWritingStyleMatrix(activeConnection.id, input.message);
           console.warn('Saved writing style matrix.');
         } catch (error) {
           console.error('Failed to save writing style matrix', error);

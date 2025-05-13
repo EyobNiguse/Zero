@@ -35,7 +35,6 @@ export const compose = activeConnectionProcedure
     const { prompt, threadMessages, cc, emailSubject, to } = input;
     const writingStyleMatrix = await getWritingStyleMatrixForConnectionId({
       connectionId: activeConnection.id,
-      c: ctx.c,
     });
 
     console.log('writing', writingStyleMatrix);
@@ -117,7 +116,6 @@ export const generateEmailSubject = activeConnectionProcedure
 
     const writingStyleMatrix = await getWritingStyleMatrixForConnectionId({
       connectionId: activeConnection.id,
-      c: ctx.c,
     });
 
     const subject = await generateSubject(message, writingStyleMatrix?.style as WritingStyleMatrix);

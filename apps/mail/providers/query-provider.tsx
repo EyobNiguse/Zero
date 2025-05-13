@@ -66,14 +66,28 @@ export const makeQueryClient = (session: Session | null) =>
     },
   });
 
-let browserQueryClient: QueryClient | undefined = undefined;
+let browserQueryClient = {
+  queryClient: undefined,
+  session: null,
+} as {
+  queryClient: QueryClient | undefined;
+  session: Session | null;
+};
 
 const getQueryClient = (session: Session | null) => {
   if (typeof window === 'undefined') {
     return makeQueryClient(session);
   } else {
-    if (!browserQueryClient) browserQueryClient = makeQueryClient(session);
-    return browserQueryClient;
+    if (
+      !browserQueryClient.queryClient ||
+      !browserQueryClient.session ||
+      browserQueryClient.session.user.id !== session?.user.id ||
+      browserQueryClient.session.connectionId !== session?.connectionId
+    ) {
+      browserQueryClient.queryClient = makeQueryClient(session);
+      browserQueryClient.session = session;
+    }
+    return browserQueryClient.queryClient;
   }
 };
 
