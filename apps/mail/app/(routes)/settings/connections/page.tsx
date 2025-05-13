@@ -134,7 +134,7 @@ export default function ConnectionsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    {data.disconnectedIds.includes(connection.id) ? (
+                    {data.disconnectedIds?.includes(connection.id) ? (
                       <>
                         <div>
                           <Badge variant="destructive">

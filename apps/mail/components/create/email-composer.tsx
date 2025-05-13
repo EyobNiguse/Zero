@@ -325,7 +325,7 @@ export function EmailComposer({
       });
 
       setAiGeneratedMessage(result.newBody);
-      toast.success('Email generated successfully');
+      // toast.success('Email generated successfully');
     } catch (error) {
       console.error('Error generating AI email:', error);
       toast.error('Failed to generate email');
@@ -412,6 +412,25 @@ export function EmailComposer({
 
     return () => clearTimeout(autoSaveTimer);
   }, [hasUnsavedChanges, saveDraft]);
+
+  useEffect(() => {
+    const handlePasteFiles = (event: ClipboardEvent) => {
+      const clipboardData = event.clipboardData;
+      if (!clipboardData || !clipboardData.files.length) return;
+      
+      const pastedFiles = Array.from(clipboardData.files);
+      if (pastedFiles.length > 0) {
+        event.preventDefault();
+        handleAttachment(pastedFiles);
+        toast.success(`${pluralize('file', pastedFiles.length, true)} attached`);
+      }
+    };
+
+    document.addEventListener('paste', handlePasteFiles);
+    return () => {
+      document.removeEventListener('paste', handlePasteFiles);
+    };
+  }, [handleAttachment]);
 
   return (
     <div
@@ -928,13 +947,12 @@ export function EmailComposer({
       <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div
           className={cn(
-            'flex flex-col gap-2.5 self-stretch',
+            'flex flex-col gap-2.5 self-stretch max-h-[calc(100vh-350px)] min-h-[200px] overflow-y-auto',
             aiGeneratedMessage !== null ? 'blur-sm' : '',
           )}
         >
-          <EditorContent editor={editor} />
+          <EditorContent editor={editor} className="prose dark:prose-invert prose-headings:font-title focus:outline-none max-w-full" />
         </div>
-      </div>
 
       {/* Bottom Actions */}
       <div className="inline-flex w-full items-center rounded-b-2xl justify-between self-stretch bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
@@ -993,30 +1011,50 @@ export function EmailComposer({
                   </button>
                 </PopoverTrigger>
 
-                <PopoverContent
-                  className="z-[100] w-[340px] rounded-lg p-0 shadow-lg dark:bg-[#202020]"
-                  align="start"
-                  sideOffset={6}
-                >
-                  <div className="flex flex-col">
-                    <div className="border-b border-[#E7E7E7] p-3 dark:border-[#2B2B2B]">
-                      <h4 className="text-sm font-semibold text-black dark:text-white/90">
-                        Attachments
-                      </h4>
-                      <p className="text-xs text-[#6D6D6D] dark:text-[#9B9B9B]">
-                        {pluralize('file', attachments.length, true)}
-                      </p>
-                    </div>
-                    <div className="max-h-[250px] flex-1 space-y-0.5 overflow-y-auto p-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                      {attachments.map((file: File, index: number) => {
-                        const nameParts = file.name.split('.');
-                        const extension = nameParts.length > 1 ? nameParts.pop() : undefined;
-                        const nameWithoutExt = nameParts.join('.');
-                        const maxNameLength = 22;
-                        const truncatedName =
-                          nameWithoutExt.length > maxNameLength
-                            ? `${nameWithoutExt.slice(0, maxNameLength)}…`
-                            : nameWithoutExt;
+                  <PopoverContent
+                    className="z-[100] w-[340px] rounded-lg p-0 shadow-lg dark:bg-[#202020]"
+                    align="start"
+                    sideOffset={6}
+                  >
+                    <div className="flex flex-col">
+                      <div className="border-b border-[#E7E7E7] p-3 dark:border-[#2B2B2B]">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-semibold text-black dark:text-white/90">
+                              Attachments
+                            </h4>
+                            <p className="text-xs text-[#6D6D6D] dark:text-[#9B9B9B]">
+                              {pluralize('file', attachments.length, true)}
+                            </p>
+                          </div>
+                          {attachments && attachments.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setValue('attachments', [], { shouldDirty: true });
+                                setHasUnsavedChanges(true);
+                                toast.success('All attachments removed');
+                              }}
+                              className="flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                              aria-label="Remove all attachments"
+                            >
+                              <XIcon className="h-3 w-3 stroke-red-500 dark:stroke-red-400" />
+                              <span>Remove All</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="max-h-[250px] flex-1 space-y-0.5 overflow-y-auto p-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        {attachments.map((file: File, index: number) => {
+                          const nameParts = file.name.split('.');
+                          const extension = nameParts.length > 1 ? nameParts.pop() : undefined;
+                          const nameWithoutExt = nameParts.join('.');
+                          const maxNameLength = 22;
+                          const truncatedName =
+                            nameWithoutExt.length > maxNameLength
+                              ? `${nameWithoutExt.slice(0, maxNameLength)}…`
+                              : nameWithoutExt;
 
                         return (
                           <div
@@ -1181,6 +1219,7 @@ export function EmailComposer({
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -1293,3 +1332,4 @@ const ContentPreview = ({
     </div>
   </motion.div>
 );
+

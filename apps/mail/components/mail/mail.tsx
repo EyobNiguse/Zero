@@ -301,6 +301,8 @@ export function MailLayout() {
                   <div>
                     <SidebarToggle className="h-fit px-2" />
                   </div>
+                 
+                  <div className="flex items-center gap-2">
                   <div>
                     {mail.bulkSelected.length > 0 ? (
                       <div>
@@ -323,7 +325,6 @@ export function MailLayout() {
                       </div>
                     ) : null}
                   </div>
-                  <div className="flex items-center gap-2">
                     {true ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
@@ -423,20 +424,13 @@ function BulkSelectActions() {
   const [{ refetch: refetchThreads }] = useThreads();
   const { refetch: refetchStats } = useStats();
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const invalidateCount = () =>
-    queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
-
-  const { mutateAsync: markAsRead } = useMutation(
-    trpc.mail.markAsRead.mutationOptions({ onSuccess: () => invalidateCount() }),
-  );
-  const { mutateAsync: markAsImportant } = useMutation(
-    trpc.mail.markAsImportant.mutationOptions({ onSuccess: () => invalidateCount() }),
-  );
+  const { mutateAsync: markAsRead } = useMutation(trpc.mail.markAsRead.mutationOptions());
+  const { mutateAsync: markAsImportant } = useMutation(trpc.mail.markAsImportant.mutationOptions());
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
+  const queryClient = useQueryClient();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
