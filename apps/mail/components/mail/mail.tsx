@@ -150,7 +150,7 @@ const AutoLabelingSettings = () => {
           <Button
             disabled={isPending}
             onClick={() => {
-              updateLabels({ labels: labels.map((label) => label.id) }).then(() => {
+              updateLabels({ labels: labels.map((label) => label.text) }).then(() => {
                 setOpen(false);
                 toast.success('Labels updated successfully, Zero will start using them.');
               });
