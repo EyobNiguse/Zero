@@ -181,7 +181,7 @@ export function CommandPalette({ children }: { children: React.ReactNode }) {
           ))}
           <CommandSeparator />
           <CommandGroup heading={t('common.commandPalette.groups.help')}>
-            <CommandItem onSelect={() => runCommand(() => console.log('Help with shortcuts'))}>
+            {/* <CommandItem onSelect={() => runCommand(() => console.log('Help with shortcuts'))}>
               <CircleHelp size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
               <span>{t('common.commandPalette.commands.helpWithShortcuts')}</span>
               <CommandShortcut>
@@ -189,7 +189,7 @@ export function CommandPalette({ children }: { children: React.ReactNode }) {
                   .find((s: { action: string; keys: string[] }) => s.action === 'helpWithShortcuts')
                   ?.keys.join(' ')}
               </CommandShortcut>
-            </CommandItem>
+            </CommandItem> */}
             <CommandItem
               onSelect={() =>
                 runCommand(() => window.open('https://github.com/Mail-0/Zero', '_blank'))
