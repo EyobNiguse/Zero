@@ -51,17 +51,13 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 
 export function NavUser() {
-  const { data: session, refetch } = useSession();
-  const router = useRouter();
+  const { data: session, refetch: refetchSession } = useSession();
   const { data, refetch: refetchConnections } = useConnections();
   const [isRendered, setIsRendered] = useState(false);
   const { theme, setTheme } = useTheme();
   const t = useTranslations();
   const { state } = useSidebar();
   const trpc = useTRPC();
-  const { refetch: refetchStats } = useStats();
-  const [{ refetch: refetchThreads }] = useThreads();
-  const { refetch: refetchLabels } = useLabels();
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
@@ -97,19 +93,12 @@ export function NavUser() {
 
   useEffect(() => setIsRendered(true), []);
 
-  const refetchBrainLabels = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: trpc.brain.getLabels.queryKey() });
-  }, [queryClient]);
-
   const handleAccountSwitch = (connectionId: string) => async () => {
     await setDefaultConnection({ connectionId });
-    refetch();
-    refetchConnections();
-    refetchThreads();
-    refetchLabels();
-    refetchStats();
-    refetchBrainState();
-    refetchBrainLabels();
+    await refetchConnections();
+    refetchSession();
+    // TODO: fix this cache issue, for now this is a quick fix to hard refresh the page
+    window.location.href = pathname;
   };
 
   const handleLogout = async () => {
