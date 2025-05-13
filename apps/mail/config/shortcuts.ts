@@ -79,13 +79,13 @@ const navigation: Shortcut[] = [
     description: 'Go to sent mail',
     scope: 'navigation',
   },
-  {
-    keys: ['g', 's'],
-    action: 'goToSpam',
-    type: 'combination',
-    description: 'Go to spam',
-    scope: 'navigation',
-  },
+  // {
+  //   keys: ['g', 's'],
+  //   action: 'goToSpam',
+  //   type: 'combination',
+  //   description: 'Go to spam',
+  //   scope: 'navigation',
+  // },
   {
     keys: ['g', 'a'],
     action: 'goToArchive',
