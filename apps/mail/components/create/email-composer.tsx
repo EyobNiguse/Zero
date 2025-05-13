@@ -546,7 +546,7 @@ export function EmailComposer({
                 </div>
               ) : (
                 <div
-                  className="flex flex-1 items-center cursor-pointer text-sm text-black dark:text-white"
+                  className="flex flex-1 items-center min-h-6 cursor-pointer text-sm text-black dark:text-white"
                 >
                   {toEmails.length > 0 ? (
                     <div className="flex flex-wrap gap-1 items-center">
@@ -584,7 +584,7 @@ export function EmailComposer({
                       )}
                     </div>
                   ) : (
-                    <span className="text-[#797979] italic">Click to add recipients</span>
+                    <span className="text-[#797979]">Click to add recipients</span>
                   )}
                 </div>
               )}
@@ -720,7 +720,7 @@ export function EmailComposer({
                   </div>
                 ) : (
                   <div
-                    className="flex flex-1 items-center cursor-pointer min-h-[30px] text-sm text-black dark:text-white"
+                    className="flex flex-1 items-center cursor-pointer min-h-6 text-sm text-black dark:text-white"
                   >
                     {ccEmails && ccEmails.length > 0 ? (
                       <div className="flex flex-wrap gap-1 items-center">
@@ -758,7 +758,7 @@ export function EmailComposer({
                         )}
                       </div>
                     ) : (
-                      <span className="text-[#797979] italic">Click to add CC recipients</span>
+                      <span className="text-[#797979]">Click to add CC recipients</span>
                     )}
                   </div>
                 )}
@@ -867,7 +867,7 @@ export function EmailComposer({
                   </div>
                 ) : (
                   <div
-                    className="flex flex-1 items-center cursor-pointer min-h-[30px] text-sm text-black dark:text-white"
+                    className="flex flex-1 items-center cursor-pointer min-h-6 text-sm text-black dark:text-white"
                   >
                     {bccEmails && bccEmails.length > 0 ? (
                       <div className="flex flex-wrap gap-1 items-center">
@@ -905,7 +905,7 @@ export function EmailComposer({
                         )}
                       </div>
                     ) : (
-                      <span className="text-[#797979] italic">Click to add BCC recipients</span>
+                      <span className="text-[#797979]">Click to add BCC recipients</span>
                     )}
                   </div>
                 )}
