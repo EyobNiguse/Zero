@@ -367,7 +367,9 @@
         "addEmail": "Kapcsolat hozzáadása",
         "connectEmail": "E-mail összekapcsolása",
         "connectEmailDescription": "Válassz egy e-mail szolgáltatót a kapcsolódáshoz",
-        "moreComingSoon": "Hamarosan több is érkezik"
+        "moreComingSoon": "Hamarosan több is érkezik",
+        "reconnect": "Újracsatlakozás",
+        "disconnected": "Lecsatlakoztatva"
       },
       "security": {
         "title": "Biztonság",

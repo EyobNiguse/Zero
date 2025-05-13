@@ -367,7 +367,9 @@
         "addEmail": "添加连接",
         "connectEmail": "连接邮箱",
         "connectEmailDescription": "选择要连接的邮箱提供商",
-        "moreComingSoon": "更多即将推出"
+        "moreComingSoon": "更多即将推出",
+        "reconnect": "重新连接",
+        "disconnected": "已断开连接"
       },
       "security": {
         "title": "安全",

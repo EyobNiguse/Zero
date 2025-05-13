@@ -367,7 +367,9 @@
         "addEmail": "Adicionar Conexão",
         "connectEmail": "Conectar E-mail",
         "connectEmailDescription": "Selecione um provedor de e-mail para se conectar",
-        "moreComingSoon": "Mais em breve"
+        "moreComingSoon": "Mais em breve",
+        "reconnect": "Reconectar",
+        "disconnected": "Desconectado"
       },
       "security": {
         "title": "Segurança",

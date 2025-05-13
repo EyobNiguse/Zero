@@ -367,7 +367,9 @@
         "addEmail": "إضافة اتصال",
         "connectEmail": "ربط البريد الإلكتروني",
         "connectEmailDescription": "اختر مزود بريد إلكتروني للاتصال",
-        "moreComingSoon": "المزيد قريبًا"
+        "moreComingSoon": "المزيد قريبًا",
+        "reconnect": "إعادة الاتصال",
+        "disconnected": "تم قطع الاتصال"
       },
       "security": {
         "title": "الأمان",

@@ -367,7 +367,9 @@
         "addEmail": "कनेक्शन जोड़ें",
         "connectEmail": "ईमेल जोड़ें",
         "connectEmailDescription": "कनेक्ट करने के लिए एक ईमेल प्रोवाइडर चुनें",
-        "moreComingSoon": "अधिक जल्द ही आ रहा"
+        "moreComingSoon": "अधिक जल्द ही आ रहा",
+        "reconnect": "पुनः कनेक्ट करें",
+        "disconnected": "डिस्कनेक्ट किया गया"
       },
       "security": {
         "title": "सुरक्षा",

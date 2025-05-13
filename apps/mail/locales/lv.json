@@ -367,7 +367,9 @@
         "addEmail": "Pievienot savienojumu",
         "connectEmail": "Savienot e-pastu",
         "connectEmailDescription": "Izvēlēties e-pasta pakalpojumu sniedzēju, lai izveidotu savienojumu",
-        "moreComingSoon": "Drīzumā būs pieejams vairāk"
+        "moreComingSoon": "Drīzumā būs pieejams vairāk",
+        "reconnect": "Savienoties atkārtoti",
+        "disconnected": "Atvienots"
       },
       "security": {
         "title": "Drošība",
