@@ -66,9 +66,9 @@ export default function Footer() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex w-fit flex-col items-center justify-center pt-4"
               >
-                <Liank href="/login">
+                <a href="/login">
                   <Button className="h-8">Get Started</Button>
-                </Liank>
+                </a>
               </motion.div>
             </div>
           </div>
