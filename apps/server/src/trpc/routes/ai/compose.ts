@@ -9,6 +9,89 @@ import { openai } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { z } from 'zod';
 
+type ComposeEmailInput = {
+  prompt: string;
+  emailSubject?: string;
+  to?: string[];
+  cc?: string[];
+  threadMessages?: Array<{
+    from: string;
+    to: string[];
+    cc?: string[];
+    subject: string;
+    body: string;
+  }>;
+  username: string;
+  connectionId: string;
+};
+
+export async function composeEmail(input: ComposeEmailInput) {
+  const { prompt, threadMessages = [], cc, emailSubject, to, username, connectionId } = input;
+
+  const writingStyleMatrix = await getWritingStyleMatrixForConnectionId({
+    connectionId,
+  });
+
+  const systemPrompt = StyledEmailAssistantSystemPrompt();
+  const userPrompt = EmailAssistantPrompt({
+    currentSubject: emailSubject,
+    recipients: [...(to ?? []), ...(cc ?? [])],
+    prompt,
+    username,
+    styleProfile: writingStyleMatrix?.style as WritingStyleMatrix,
+  });
+
+  const threadUserMessages = threadMessages.map((message) => ({
+    role: 'user' as const,
+    content: MessagePrompt({
+      ...message,
+      body: stripHtml(message.body).result,
+    }),
+  }));
+
+  const { text } = await generateText({
+    model: openai('gpt-4o'),
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt,
+      },
+      ...(threadMessages.length > 0
+        ? [
+            {
+              role: 'user',
+              content: "I'm going to give you the current email thread replies one by one.",
+            } as const,
+            {
+              role: 'assistant',
+              content: 'Got it. Please proceed with the thread replies.',
+            } as const,
+            ...threadUserMessages,
+            {
+              role: 'user',
+              content: 'Now, I will give you the prompt to write the email.',
+            } as const,
+          ]
+        : []),
+      {
+        role: 'user',
+        content: 'Now, I will give you the prompt to write the email.',
+      },
+      {
+        role: 'user',
+        content: userPrompt,
+      },
+    ],
+    maxTokens: 1_000,
+    temperature: 0.35,
+    frequencyPenalty: 0.2,
+    presencePenalty: 0.1,
+    maxRetries: 1,
+  });
+
+  return text;
+}
+
 export const compose = activeConnectionProcedure
   .input(
     z.object({
@@ -32,76 +115,14 @@ export const compose = activeConnectionProcedure
   )
   .mutation(async ({ ctx, input }) => {
     const { session, activeConnection } = ctx;
-    const { prompt, threadMessages, cc, emailSubject, to } = input;
-    const writingStyleMatrix = await getWritingStyleMatrixForConnectionId({
+
+    const newBody = await composeEmail({
+      ...input,
+      username: session.user.name,
       connectionId: activeConnection.id,
     });
 
-    console.log('writing', writingStyleMatrix);
-
-    const systemPrompt = StyledEmailAssistantSystemPrompt();
-
-    const userPrompt = EmailAssistantPrompt({
-      currentSubject: emailSubject,
-      recipients: [...(to ?? []), ...(cc ?? [])],
-      prompt,
-      username: session.user.name,
-      styleProfile: writingStyleMatrix?.style as WritingStyleMatrix,
-    });
-
-    const threadUserMessages = threadMessages.map((message) => {
-      return {
-        role: 'user',
-        content: MessagePrompt({
-          ...message,
-          body: stripHtml(message.body).result,
-        }),
-      } as const;
-    });
-
-    const { text } = await generateText({
-      model: openai('gpt-4o'),
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        ...(threadMessages.length > 0
-          ? [
-              {
-                role: 'user',
-                content: "I'm going to give you the current email thread replies one by one.",
-              } as const,
-              {
-                role: 'assistant',
-                content: 'Got it. Please proceed with the thread replies.',
-              } as const,
-              ...threadUserMessages,
-              {
-                role: 'user',
-                content: 'Now, I will give you the prompt to write the email.',
-              } as const,
-            ]
-          : []),
-        {
-          role: 'user',
-          content: 'Now, I will give you the prompt to write the email.',
-        },
-        {
-          role: 'user',
-          content: userPrompt,
-        },
-      ],
-      maxTokens: 1_000,
-      temperature: 0.35, // controlled creativity
-      frequencyPenalty: 0.2, // dampen phrase repetition
-      presencePenalty: 0.1, // nudge the model to add fresh info
-      maxRetries: 1,
-    });
-
-    return {
-      newBody: text,
-    };
+    return { newBody };
   });
 
 export const generateEmailSubject = activeConnectionProcedure

@@ -334,7 +334,7 @@ export function MailLayout() {
                         </div>
                       ) : null}
                     </div>
-                    {true ? <AutoLabelingSettings /> : null}
+                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}
