@@ -7,6 +7,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import { useTRPC } from '@/providers/query-provider';
 import { Markdown } from '@react-email/components';
 import { CurvedArrow, Stop } from '../icons/icons';
+import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
@@ -162,17 +163,19 @@ export function AIChat() {
     async onToolCall({ toolCall }) {
       console.warn('toolCall', toolCall);
       switch (toolCall.toolName) {
-        case 'createLabel':
+        case Tools.CreateLabel:
+        case Tools.DeleteLabel:
           await refetchLabels();
           break;
-        case 'sendEmail':
+        case Tools.SendEmail:
           await queryClient.invalidateQueries({
             queryKey: trpc.mail.listThreads.queryKey({ folder: 'sent' }),
           });
           break;
-        case 'markThreadsRead':
-        case 'markThreadsUnread':
-        case 'modifyLabels':
+        case Tools.MarkThreadsRead:
+        case Tools.MarkThreadsUnread:
+        case Tools.ModifyLabels:
+        case Tools.BulkDelete:
           console.log('modifyLabels', toolCall.args);
           await refetchLabels();
           await Promise.all(
