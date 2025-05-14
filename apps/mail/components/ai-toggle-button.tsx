@@ -1,7 +1,6 @@
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { useAISidebar } from './ui/ai-sidebar';
 import { Button } from './ui/button';
-import Image from 'next/image';
 
 // AI Toggle Button Component
 const AIToggleButton = () => {
@@ -24,14 +23,14 @@ const AIToggleButton = () => {
               }}
             >
               <div className="flex items-center justify-center">
-                <Image
+                <img
                   src="/black-icon.svg"
                   alt="AI Assistant"
                   width={22}
                   height={22}
                   className="block dark:hidden"
                 />
-                <Image
+                <img
                   src="/white-icon.svg"
                   alt="AI Assistant"
                   width={22}

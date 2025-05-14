@@ -1,11 +1,8 @@
-'use client';
-
 import { LinkedIn, Twitter, Discord } from '../icons/icons';
 import { motion, useInView } from 'motion/react';
 import { Button } from '../ui/button';
-import Image from 'next/image';
+import { Link } from 'react-router';
 import { useRef } from 'react';
-import Link from 'next/link';
 
 const socialLinks = [
   {
@@ -83,12 +80,12 @@ export default function Footer() {
           <div className="inline-flex flex-col items-start justify-between self-stretch">
             <div className="inline-flex w-8 items-center justify-start gap-3">
               <a href="/">
-                <Image src="/white-icon.svg" alt="logo" width={100} height={100} />
+                <img src="/white-icon.svg" alt="logo" width={100} height={100} />
               </a>
             </div>
             <div className="inline-flex items-center justify-start gap-4">
               {socialLinks.map((social) => (
-                <Link
+                <a
                   key={social.name}
                   href={social.href}
                   target="_blank"
@@ -98,7 +95,7 @@ export default function Footer() {
                   <div className="relative h-3.5 w-3.5 overflow-hidden">
                     <social.icon className="absolute h-3.5 w-3.5 fill-white" />
                   </div>
-                </Link>
+                </a>
               ))}
             </div>
             <div className="flex items-center justify-start gap-3">
@@ -107,7 +104,7 @@ export default function Footer() {
               </div>
               <a href="https://www.ycombinator.com" target="_blank" rel="noopener noreferrer">
                 <div className="relative w-36 overflow-hidden">
-                  <Image
+                  <img
                     src="/yc.svg"
                     className="bg-transparent"
                     alt="logo"
@@ -124,7 +121,7 @@ export default function Footer() {
                 Product
               </div>
               <div className="flex flex-col items-start justify-start gap-4 self-stretch">
-                <Link
+                <a
                   href="https://x.com/nizzyabi/status/1918064165530550286"
                   className="w-full"
                   target="_blank"
@@ -132,8 +129,8 @@ export default function Footer() {
                   <div className="justify-start self-stretch text-base leading-none text-white opacity-80 transition-opacity hover:opacity-100">
                     Product
                   </div>
-                </Link>
-                <Link
+                </a>
+                <a
                   href="https://x.com/nizzyabi/status/1918051282881069229"
                   className="w-full"
                   target="_blank"
@@ -141,8 +138,8 @@ export default function Footer() {
                   <div className="justify-start self-stretch text-base leading-none text-white opacity-80 transition-opacity hover:opacity-100">
                     Zero AI
                   </div>
-                </Link>
-                <Link
+                </a>
+                <a
                   href="https://x.com/nizzyabi/status/1919292505260249486"
                   className="w-full"
                   target="_blank"
@@ -150,7 +147,7 @@ export default function Footer() {
                   <div className="justify-start self-stretch text-base leading-none text-white opacity-80 transition-opacity hover:opacity-100">
                     Shortcuts
                   </div>
-                </Link>
+                </a>
               </div>
             </div>
             <div className="inline-flex flex-col items-start justify-start gap-5">
@@ -185,7 +182,7 @@ export default function Footer() {
             </div>
             <div className="flex items-center justify-start gap-4">
               <Link
-                href="/about"
+                to="/about"
                 className="justify-start text-sm font-normal leading-tight text-white/70 opacity-80 transition-opacity hover:opacity-100"
               >
                 About
@@ -193,14 +190,14 @@ export default function Footer() {
               <div className="h-5 w-0 outline outline-1 outline-offset-[-0.50px] outline-white/20" />
 
               <Link
-                href="/terms"
+                to="/terms"
                 className="justify-start text-sm font-normal leading-tight text-white/70 opacity-80 transition-opacity hover:opacity-100"
               >
                 Terms & Conditions
               </Link>
               <div className="h-5 w-0 outline outline-1 outline-offset-[-0.50px] outline-white/20" />
               <Link
-                href="/privacy"
+                to="/privacy"
                 className="justify-start text-sm font-normal leading-tight text-white/70 opacity-80 transition-opacity hover:opacity-100"
               >
                 Privacy Policy

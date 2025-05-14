@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { signOut } from '@/lib/auth-client';
 import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
-import Error from 'next/error';
 
 export default function ErrorPage({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {

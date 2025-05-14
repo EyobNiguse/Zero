@@ -1,8 +1,8 @@
+import { contextStorage, getContext } from 'hono/context-storage';
 import { env, WorkerEntrypoint } from 'cloudflare:workers';
-import { mailtoHandler } from './routes/mailto-handler';
-import { contextStorage } from 'hono/context-storage';
 import { routePartykitRequest } from 'partyserver';
 import { trpcServer } from '@hono/trpc-server';
+import { autumnHandler } from 'autumn-js/hono';
 import { DurableMailbox } from './lib/party';
 import { chatHandler } from './routes/chat';
 import type { HonoContext } from './ctx';
@@ -23,8 +23,23 @@ const api = new Hono<HonoContext>()
     c.set('session', session);
     await next();
   })
+  .use(
+    '/autumn/*',
+    autumnHandler({
+      identify: async () => {
+        const { session } = getContext<HonoContext>().var;
+        if (!session) return null;
+        return {
+          customerId: session.user.id,
+          customerData: {
+            name: session.user.name,
+            email: session.user.email,
+          },
+        };
+      },
+    }),
+  )
   .post('/chat', chatHandler)
-  .get('/mailto-handler', mailtoHandler)
   .on(['GET', 'POST'], '/auth/*', (c) => c.var.auth.handler(c.req.raw))
   .use(
     trpcServer({
@@ -53,7 +68,7 @@ const app = new Hono<HonoContext>()
   .use(
     '*',
     cors({
-      origin: () => env.NEXT_PUBLIC_APP_URL,
+      origin: () => env.VITE_PUBLIC_APP_URL,
       credentials: true,
       allowHeaders: ['Content-Type', 'Authorization'],
       exposeHeaders: ['X-Zero-Redirect'],
@@ -62,7 +77,7 @@ const app = new Hono<HonoContext>()
   .route('/api', api)
   .get('/health', (c) => c.json({ message: 'Zero Server is Up!' }))
   .get('/', (c) => {
-    return c.redirect(`${env.NEXT_PUBLIC_APP_URL}`);
+    return c.redirect(`${env.VITE_PUBLIC_APP_URL}`);
   });
 
 export default class extends WorkerEntrypoint<typeof env> {

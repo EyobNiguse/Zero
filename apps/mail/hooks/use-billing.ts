@@ -1,4 +1,4 @@
-import { useAutumn, useCustomer } from 'autumn-js/next';
+import { useAutumn, useCustomer } from 'autumn-js/react';
 import { useMemo } from 'react';
 
 type Feature = {
