@@ -2,6 +2,7 @@ import { connectionToDriver, getActiveConnection } from '../../lib/server-utils'
 import { composeEmail } from '../../trpc/routes/ai/compose';
 import type { MailManager } from '../../lib/driver/types';
 import { colors } from '../../lib/prompts';
+import { Tools } from '../../types';
 import { tool } from 'ai';
 import { z } from 'zod';
 
@@ -374,21 +375,60 @@ const createLabel = tool({
   }),
   execute: async ({ name, backgroundColor, textColor }) => {
     const mailManager = await getMailManager();
-    return await mailManager.createLabel({ name, color: { backgroundColor, textColor } });
+    await mailManager.createLabel({ name, color: { backgroundColor, textColor } });
+    return { name, backgroundColor, textColor, success: true };
+  },
+});
+
+const bulkDelete = tool({
+  description: 'Move multiple emails to trash by adding the TRASH label',
+  parameters: z.object({
+    threadIds: z.array(z.string()).describe('Array of email IDs to move to trash'),
+  }),
+  execute: async ({ threadIds }) => {
+    const mailManager = await getMailManager();
+    await mailManager.modifyLabels(threadIds, { addLabels: ['TRASH'], removeLabels: [] });
+    return { threadIds, success: true };
+  },
+});
+
+const bulkArchive = tool({
+  description: 'Move multiple emails to the archive by removing the INBOX label',
+  parameters: z.object({
+    threadIds: z.array(z.string()).describe('Array of email IDs to move to archive'),
+  }),
+  execute: async ({ threadIds }) => {
+    const mailManager = await getMailManager();
+    await mailManager.modifyLabels(threadIds, { addLabels: [], removeLabels: ['INBOX'] });
+    return { threadIds, success: true };
+  },
+});
+
+const deleteLabel = tool({
+  description: "Delete a label from the user's account",
+  parameters: z.object({
+    id: z.string().describe('The ID of the label to delete'),
+  }),
+  execute: async ({ id }) => {
+    const mailManager = await getMailManager();
+    await mailManager.deleteLabel(id);
+    return { id, success: true };
   },
 });
 
 export const tools = {
-  getThread: getEmail,
-  composeEmail: composeEmailTool,
-  listThreads: listEmails,
-  deleteEmail,
-  markThreadsRead: markAsRead,
-  markThreadsUnread: markAsUnread,
-  modifyLabels,
-  getUserLabels,
-  sendEmail,
-  createLabel,
+  [Tools.GetThread]: getEmail,
+  [Tools.ComposeEmail]: composeEmailTool,
+  [Tools.ListThreads]: listEmails,
+  [Tools.MarkThreadsRead]: markAsRead,
+  [Tools.MarkThreadsUnread]: markAsUnread,
+  [Tools.ModifyLabels]: modifyLabels,
+  [Tools.GetUserLabels]: getUserLabels,
+  [Tools.SendEmail]: sendEmail,
+  [Tools.CreateLabel]: createLabel,
+  [Tools.BulkDelete]: bulkDelete,
+  [Tools.BulkArchive]: bulkArchive,
+  [Tools.DeleteLabel]: deleteLabel,
 };
 
 // export const executions = {
