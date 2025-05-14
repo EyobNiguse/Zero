@@ -176,7 +176,12 @@ const Thread = memo(
     const [threadId] = useQueryState('threadId');
     const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
     const { refetch: refetchStats } = useStats();
-    const { data: getThreadData, isLoading, isGroupThread } = useThread(demo ? null : message.id);
+    const {
+      data: getThreadData,
+      isLoading,
+      isGroupThread,
+      refetch: refetchThread,
+    } = useThread(demo ? null : message.id);
     const [isStarred, setIsStarred] = useState(false);
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -204,7 +209,7 @@ const Thread = memo(
           toast.success(t('common.actions.removedFromFavorites'));
         }
         await toggleStar({ ids: [message.id] });
-        refetchThreads();
+        await refetchThread();
       },
       [getThreadData, message.id, isStarred, refetchThreads, t],
     );
@@ -608,7 +613,7 @@ const Thread = memo(
                     ) : (
                       <p
                         className={cn(
-                          'mt-1 line-clamp-1 max-w-[25ch] text-sm text-[#8C8C8C] sm:max-w-[50ch] md:max-w-[40ch]',
+                          'mt-1 line-clamp-1 w-full text-sm text-[#8C8C8C] min-w-0',
                         )}
                       >
                         {highlightText(latestMessage.subject, searchValue.highlight)}
@@ -886,7 +891,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" id="mail-list-scroll">
               {items
                 .filter((data) => data.id)
                 .map((data, index) => {

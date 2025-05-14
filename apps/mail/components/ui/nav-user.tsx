@@ -82,11 +82,8 @@ export function NavUser() {
     queryClient.clear();
     await idbClear();
     toast.success('Cache cleared successfully');
-    // Reload the page after clearing the cache
-    setTimeout(() => window.location.reload(), 500);
   }, []);
 
-  const { customer } = useCustomer();
   const handleCopyConnectionId = useCallback(async () => {
     await navigator.clipboard.writeText(session?.connectionId || '');
     toast.success('Connection ID copied to clipboard');
@@ -119,9 +116,9 @@ export function NavUser() {
       loading: 'Signing out...',
       success: () => 'Signed out successfully!',
       error: 'Error signing out',
-      finally() {
-        handleClearCache();
-        router.push('/login');
+      async finally() {
+        await handleClearCache();
+        window.location.href = '/login';
       },
     });
   };
@@ -139,14 +136,14 @@ export function NavUser() {
 
   const isPro = useMemo(() => {
     return (
-      customer &&
-      Array.isArray(customer.products) &&
-      customer.products.some(
+      billingCustomer &&
+      Array.isArray(billingCustomer.products) &&
+      billingCustomer.products.some(
         (product: any) =>
           product.id.includes('pro-example') || product.name.includes('pro-example'),
       )
     );
-  }, [customer]);
+  }, [billingCustomer]);
 
   if (!isRendered) return null;
   if (!session) return null;
@@ -274,12 +271,12 @@ export function NavUser() {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={getSettingsHref()} className="cursor-pointer">
+                      <a href={getSettingsHref()} className="cursor-pointer">
                         <div className="flex items-center gap-2">
                           <Settings size={16} className="opacity-60" />
                           <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
                         </div>
-                      </Link>
+                      </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <a href="https://discord.gg/0email" target="_blank" className="w-full">

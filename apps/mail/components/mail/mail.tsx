@@ -111,7 +111,6 @@ const AutoLabelingSettings = () => {
 
   useEffect(() => {
     if (storedLabels) {
-      console.warn(storedLabels, 'storedLabels');
       setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
     }
   }, [storedLabels]);
@@ -151,8 +150,7 @@ const AutoLabelingSettings = () => {
           <Button
             disabled={isPending}
             onClick={() => {
-              console.warn(labels, 'labels');
-              updateLabels({ labels: labels.map((label) => label.name) }).then(() => {
+              updateLabels({ labels: labels.map((label) => label.text) }).then(() => {
                 setOpen(false);
                 toast.success('Labels updated successfully, Zero will start using them.');
               });
@@ -303,29 +301,30 @@ export function MailLayout() {
                   <div>
                     <SidebarToggle className="h-fit px-2" />
                   </div>
-                  <div>
-                    {mail.bulkSelected.length > 0 ? (
-                      <div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => {
-                                setMail({ ...mail, bulkSelected: [] });
-                              }}
-                              className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
-                            >
-                              <X className="h-3 w-3 fill-[#A0A0A0]" />
-                              <span>esc</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t('common.actions.exitSelectionModeEsc')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    ) : null}
-                  </div>
+
                   <div className="flex items-center gap-2">
+                    <div>
+                      {mail.bulkSelected.length > 0 ? (
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  setMail({ ...mail, bulkSelected: [] });
+                                }}
+                                className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
+                              >
+                                <X className="h-3 w-3 fill-[#A0A0A0]" />
+                                <span>esc</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t('common.actions.exitSelectionModeEsc')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      ) : null}
+                    </div>
                     {brainState?.enabled ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
@@ -425,20 +424,13 @@ function BulkSelectActions() {
   const [{ refetch: refetchThreads }] = useThreads();
   const { refetch: refetchStats } = useStats();
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const invalidateCount = () =>
-    queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
-
-  const { mutateAsync: markAsRead } = useMutation(
-    trpc.mail.markAsRead.mutationOptions({ onSuccess: () => invalidateCount() }),
-  );
-  const { mutateAsync: markAsImportant } = useMutation(
-    trpc.mail.markAsImportant.mutationOptions({ onSuccess: () => invalidateCount() }),
-  );
+  const { mutateAsync: markAsRead } = useMutation(trpc.mail.markAsRead.mutationOptions());
+  const { mutateAsync: markAsImportant } = useMutation(trpc.mail.markAsImportant.mutationOptions());
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
+  const queryClient = useQueryClient();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);

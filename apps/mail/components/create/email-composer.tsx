@@ -295,7 +295,7 @@ export function EmailComposer({
       });
 
       setAiGeneratedMessage(result.newBody);
-      toast.success('Email generated successfully');
+      // toast.success('Email generated successfully');
     } catch (error) {
       console.error('Error generating AI email:', error);
       toast.error('Failed to generate email');
@@ -711,11 +711,11 @@ export function EmailComposer({
       <div className="relative -bottom-1 flex flex-col items-start justify-start gap-2 self-stretch border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div
           className={cn(
-            'flex flex-col gap-2.5 self-stretch',
+            'flex flex-col gap-2.5 self-stretch max-h-[calc(100vh-350px)] min-h-[200px] overflow-y-auto',
             aiGeneratedMessage !== null ? 'blur-sm' : '',
           )}
         >
-          <EditorContent editor={editor} />
+          <EditorContent editor={editor} className="prose dark:prose-invert prose-headings:font-title focus:outline-none max-w-full" />
         </div>
 
         {/* Bottom Actions */}
