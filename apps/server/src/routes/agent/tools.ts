@@ -71,16 +71,9 @@ import { z } from 'zod';
 //   }
 // }
 
-let mailManagerInstance: any = null;
-
 const getMailManager: () => Promise<MailManager> = async () => {
-  if (mailManagerInstance) {
-    return mailManagerInstance;
-  }
-
   const activeConnection = await getActiveConnection();
-  mailManagerInstance = connectionToDriver(activeConnection);
-  return mailManagerInstance;
+  return connectionToDriver(activeConnection);
 };
 
 const getEmail = tool({
