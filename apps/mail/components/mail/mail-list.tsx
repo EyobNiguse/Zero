@@ -769,10 +769,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const isKeyPressed = useKeyState();
 
   const getSelectMode = useCallback((): MailSelectMode => {
-    // Check for Alt key using both 'Alt' and 'AltLeft'/'AltRight' for better browser compatibility
     const isAltPressed = isKeyPressed('Alt') || isKeyPressed('AltLeft') || isKeyPressed('AltRight');
 
-    // Check for Shift key using both 'Shift' and 'ShiftLeft'/'ShiftRight'
     const isShiftPressed =
       isKeyPressed('Shift') || isKeyPressed('ShiftLeft') || isKeyPressed('ShiftRight');
 
@@ -780,7 +778,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       return 'mass';
     }
 
-    // Check for Alt+Shift combination first (higher priority)
     if (isAltPressed && isShiftPressed) {
       console.log('Select All Below mode activated'); // Debug log
       return 'selectAllBelow';
@@ -811,7 +808,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           return setMail({ ...mail, bulkSelected: newSelected });
         }
         case 'selectAllBelow': {
-          // Find the index of the clicked item
           const clickedIndex = items.findIndex((item) => item.id === itemId);
           console.log(
             'SelectAllBelow - clicked index:',
@@ -820,7 +816,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
             items.length,
           );
 
-          // Select all items from the clicked one to the end of the list
           if (clickedIndex !== -1) {
             const itemsBelow = items.slice(clickedIndex);
             const idsBelow = itemsBelow.map((item) => item.id);
@@ -831,7 +826,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           return setMail({ ...mail, bulkSelected: [itemId] });
         }
         case 'range': {
-          // For future implementation of range selection
           console.log('Range selection mode - not fully implemented');
           return setMail({ ...mail, bulkSelected: [itemId] });
         }
@@ -848,7 +842,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const handleMailClick = useCallback(
     (message: ParsedMessage) => () => {
-      // Log the current selection mode for debugging
       const mode = getSelectMode();
       console.log('Mail click with mode:', mode);
 
@@ -862,7 +855,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       const clickedIndex = items.findIndex((item) => item.id === messageThreadId);
       setFocusedIndex(clickedIndex);
 
-      // Update URL param without navigation
       void setThreadId(messageThreadId);
       void setDraftId(null);
       void setActiveReplyId(null);
@@ -872,10 +864,8 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const isFiltering = searchValue.value.trim().length > 0;
 
-  // Add effect to handle search loading state
   useEffect(() => {
     if (isFiltering && !isLoading) {
-      // Reset the search value when loading is complete
       setSearchValue({
         ...searchValue,
         isLoading: false,
