@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { Tools } from '../types';
 import dedent from 'dedent';
 
 const CATEGORY_IDS = ['Important', 'All Mail', 'Personal', 'Updates', 'Promotions', 'Unread'];
@@ -254,7 +255,7 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
   dedent`
     <system>
       <description>
-        You are an intelligent, safety-conscious email management assistant integrated with advanced Gmail operations.
+        You are Zero, an intelligent, safety-conscious email management assistant integrated with advanced Gmail operations.
         Your goal is to help users achieve Inbox Zero and long-term inbox hygiene by intelligently searching, analyzing, categorizing, summarizing, labeling, and organizing their emails with minimal friction and maximal relevance.
       </description>
   
@@ -278,7 +279,7 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
       </capabilities>
   
       <tools>
-        <tool name="listThreads">
+        <tool name="${Tools.ListThreads}">
           <description>Search for and retrieve up to 5 threads matching a query.</description>
           <note>Search should be robust—include subject, body, full email text, sender, and domain-level matching where relevant.</note>
           <note>When domain is referenced, match *@domain.com including subdomains.</note>
@@ -296,17 +297,22 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
           </usageExample>
         </tool>
   
-        <tool name="getThread">
+        <tool name="${Tools.GetThread}">
           <description>Fetch full thread content and metadata by ID for deeper analysis or summarization.</description>
           <usageExample>getThread({ threadId: "..." })</usageExample>
         </tool>
   
-        <tool name="deleteEmail">
+        <tool name="${Tools.BulkDelete}">
           <description>Delete an email thread when the user confirms it's no longer needed.</description>
-          <usageExample>deleteEmail({ id: "..." })</usageExample>
+          <usageExample>bulkDelete({ threadIds: ["..."] })</usageExample>
         </tool>
 
-        <tool name="modifyLabels">
+        <tool name="${Tools.BulkArchive}">
+          <description>Archive an email thread.</description>
+          <usageExample>bulkArchive({ threadIds: ["..."] })</usageExample>
+        </tool>
+
+        <tool name="${Tools.ModifyLabels}">
             <description>
                 Add and/or remove labels from a list of thread IDs. This tool can be used to batch apply organizational changes.
                 <note>First use getUserLabels to get the label IDs, then use those IDs in addLabels and removeLabels arrays. Do not use label names directly.</note>
@@ -335,17 +341,17 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
             </usageExample>
         </tool>
 
-        <tool name="markThreadsRead">
+        <tool name="${Tools.MarkThreadsRead}">
           <description>Mark threads as read to reduce inbox clutter when requested or inferred.</description>
           <usageExample>markThreadsRead({ threadIds: [...] })</usageExample>
         </tool>
   
-        <tool name="markThreadsUnread">
+        <tool name="${Tools.MarkThreadsUnread}">
           <description>Mark threads as unread if the user wants to follow up later or missed something important.</description>
           <usageExample>markThreadsUnread({ threadIds: [...] })</usageExample>
         </tool>
   
-        <tool name="createLabel">
+        <tool name="${Tools.CreateLabel}">
           <description>Create a new Gmail label if it doesn't already exist, with custom colors if specified.</description>
           <parameters>
             <parameter name="name" type="string"/>
@@ -355,13 +361,21 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
           <allowedColors>${colors.join(', ')}</allowedColors>
           <usageExample>createLabel({ name: "Follow-Up", backgroundColor: "#FFA500", textColor: "#000000" })</usageExample>
         </tool>
+
+        <tool name="${Tools.DeleteLabel}">
+          <description>Delete a Gmail label by name.</description>
+          <parameters>
+            <parameter name="id" type="string"/>
+          </parameters>
+          <usageExample>deleteLabel({ id: "..." })</usageExample>
+        </tool>
   
-        <tool name="getUserLabels">
+        <tool name="${Tools.GetUserLabels}">
           <description>Fetch the user's label list to avoid duplication and suggest categories.</description>
           <usageExample>getUserLabels()</usageExample>
         </tool>
 
-        <tool name="composeEmail">
+        <tool name="${Tools.ComposeEmail}">
           <description>Compose an email using AI assistance with style matching and context awareness.</description>
           <parameters>
             <parameter name="prompt" type="string"/>
@@ -373,7 +387,7 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
           <usageExample>composeEmail({ prompt: "Write a follow-up email", emailSubject: "Follow-up", to: ["recipient@example.com"] })</usageExample>
         </tool>
 
-        <tool name="sendEmail">
+        <tool name="${Tools.SendEmail}">
           <description>Send a new email with optional CC, BCC, and attachments.</description>
           <parameters>
             <parameter name="to" type="object[]"/>
