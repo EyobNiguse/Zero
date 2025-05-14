@@ -70,18 +70,6 @@ const aboutLinks = [
 export default function PricingPage() {
   const [open, setOpen] = useState(false);
   const { attach } = useBilling();
-  const { customer } = useCustomer();
-
-  const isPro = useMemo(() => {
-    return (
-      customer &&
-      Array.isArray(customer.products) &&
-      customer.products.some(
-        (product: any) =>
-          product.id.includes('pro-example') || product.name.includes('pro-example'),
-      )
-    );
-  }, [customer]);
 
   const handleUpgrade = async () => {
     if (attach) {
@@ -108,9 +96,9 @@ export default function PricingPage() {
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
         <nav className="border-input/50 flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t bg-[#1E1E1E] p-2 px-4">
           <div className="flex items-center gap-6">
-            <Link href="/" className="relative cursor-pointer">
+            <a href="/" className="relative cursor-pointer">
               <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
-            </Link>
+            </a>
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
                 <NavigationMenuItem>
@@ -143,24 +131,24 @@ export default function PricingPage() {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="/pricing">
+                  <a href="/pricing">
                     <Button variant="ghost" className="h-9">
                       Pricing
                     </Button>
-                  </Link>
+                  </a>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
           <div className="flex gap-2">
-            <Link href="/login">
+            <a href="/login">
               <Button variant="ghost" className="h-8">
                 Sign in
               </Button>
-            </Link>
-            <Link target="_blank" href="https://cal.com/team/0">
+            </a>
+            <a target="_blank" href="https://cal.com/team/0">
               <Button className="h-8 font-medium">Contact Us</Button>
-            </Link>
+            </a>
           </div>
         </nav>
       </header>
@@ -178,22 +166,22 @@ export default function PricingPage() {
               <SheetTitle>
                 <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
               </SheetTitle>
-              <Link href="/login">
+              <a href="/login">
                 <Button className="w-full">Sign in</Button>
-              </Link>
+              </a>
             </SheetHeader>
             <div className="mt-8 flex flex-col space-y-3">
               <div className="space-y-3">
                 <h4 className="text-muted-foreground text-sm font-medium">Company</h4>
                 {aboutLinks.map((link) => (
-                  <Link key={link.title} href={link.href} className="block font-medium">
+                  <a key={link.title} href={link.href} className="block font-medium">
                     {link.title}
-                  </Link>
+                  </a>
                 ))}
               </div>
-              <Link target="_blank" href="https://cal.com/team/0" className="font-medium">
+              <a target="_blank" href="https://cal.com/team/0" className="font-medium">
                 Contact Us
-              </Link>
+              </a>
             </div>
             <Separator className="mt-8" />
             <div className="mt-8 flex flex-row items-center justify-center gap-4">
@@ -266,9 +254,9 @@ export default function PricingPage() {
                 <CircleX className="h-4 w-4 fill-white opacity-50" /> Priority customer support
               </li> */}
             </ul>
-            <Link href="/login">
+            <a href="/login">
               <Button className="h-8 w-full">Get Started</Button>
-            </Link>
+            </a>
           </div>
 
           {/* Pro Plan */}
@@ -342,11 +330,11 @@ export default function PricingPage() {
                 <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Priority customer support
               </li>
             </ul>
-            <Link href="https://cal.com/team/0/chat" target="_blank">
+            <a href="https://cal.com/team/0/chat" target="_blank">
               <Button className="h-8 w-full" onClick={handleUpgrade}>
                 Contact us
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
       </div>
