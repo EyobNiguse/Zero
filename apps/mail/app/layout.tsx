@@ -1,11 +1,9 @@
 import { ClientProviders } from '@/providers/client-providers';
 import { ServerProviders } from '@/providers/server-providers';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { headers as nextHeaders } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { siteConfig } from '@/lib/site-config';
 import type { PropsWithChildren } from 'react';
-import { getLocale } from 'next-intl/server';
 import type { Viewport } from 'next';
 import { cn } from '@/lib/utils';
 import Script from 'next/script';
