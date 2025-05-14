@@ -37,6 +37,7 @@ type CommandItem = {
   onClick?: () => unknown;
   shortcut?: string;
   isBackButton?: boolean;
+  disabled?: boolean;
 };
 
 const CommandPaletteContext = React.createContext<CommandPaletteContext | null>(null);
@@ -86,6 +87,7 @@ export function CommandPalette({ children }: { children: React.ReactNode }) {
     mailCommands.push({
       title: 'common.commandPalette.commands.composeMessage',
       icon: Pencil2,
+      shortcut: 'c',
       onClick: () => {
         setIsComposeOpen('true');
       },
@@ -96,12 +98,14 @@ export function CommandPalette({ children }: { children: React.ReactNode }) {
 
       section?.sections.forEach((group) => {
         group.items.forEach((navItem) => {
+          if (navItem.disabled) return;
           const item: CommandItem = {
             title: navItem.title,
             icon: navItem.icon,
             url: navItem.url,
             shortcut: navItem.shortcut,
             isBackButton: navItem.isBackButton,
+            disabled: navItem.disabled,
           };
 
           if (sectionKey === 'mail') {

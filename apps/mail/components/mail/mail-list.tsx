@@ -611,11 +611,7 @@ const Thread = memo(
                         {latestMessage.to.map((e) => e.email).join(', ')}
                       </p>
                     ) : (
-                      <p
-                        className={cn(
-                          'mt-1 line-clamp-1 w-full text-sm text-[#8C8C8C] min-w-0',
-                        )}
-                      >
+                      <p className={cn('mt-1 line-clamp-1 w-full min-w-0 text-sm text-[#8C8C8C]')}>
                         {highlightText(latestMessage.subject, searchValue.highlight)}
                       </p>
                     )}
@@ -773,15 +769,27 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const isKeyPressed = useKeyState();
 
   const getSelectMode = useCallback((): MailSelectMode => {
+    // Check for Alt key using both 'Alt' and 'AltLeft'/'AltRight' for better browser compatibility
+    const isAltPressed = isKeyPressed('Alt') || isKeyPressed('AltLeft') || isKeyPressed('AltRight');
+
+    // Check for Shift key using both 'Shift' and 'ShiftLeft'/'ShiftRight'
+    const isShiftPressed =
+      isKeyPressed('Shift') || isKeyPressed('ShiftLeft') || isKeyPressed('ShiftRight');
+
     if (isKeyPressed('Control') || isKeyPressed('Meta')) {
       return 'mass';
     }
-    if (isKeyPressed('Shift')) {
-      return 'range';
-    }
-    if (isKeyPressed('Alt') && isKeyPressed('Shift')) {
+
+    // Check for Alt+Shift combination first (higher priority)
+    if (isAltPressed && isShiftPressed) {
+      console.log('Select All Below mode activated'); // Debug log
       return 'selectAllBelow';
     }
+
+    if (isShiftPressed) {
+      return 'range';
+    }
+
     return 'single';
   }, [isKeyPressed]);
 
@@ -791,26 +799,63 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const handleSelectMail = useCallback(
     (message: ParsedMessage) => {
       const itemId = message.threadId ?? message.id;
-      switch (getSelectMode()) {
+      const currentMode = getSelectMode();
+      console.log('Selection mode:', currentMode, 'for item:', itemId);
+
+      switch (currentMode) {
         case 'mass': {
           const newSelected = mail.bulkSelected.includes(itemId)
             ? mail.bulkSelected.filter((id) => id !== itemId)
             : [...mail.bulkSelected, itemId];
+          console.log('Mass selection mode - selected items:', newSelected.length);
           return setMail({ ...mail, bulkSelected: newSelected });
         }
+        case 'selectAllBelow': {
+          // Find the index of the clicked item
+          const clickedIndex = items.findIndex((item) => item.id === itemId);
+          console.log(
+            'SelectAllBelow - clicked index:',
+            clickedIndex,
+            'total items:',
+            items.length,
+          );
+
+          // Select all items from the clicked one to the end of the list
+          if (clickedIndex !== -1) {
+            const itemsBelow = items.slice(clickedIndex);
+            const idsBelow = itemsBelow.map((item) => item.id);
+            console.log('Selecting all items below - count:', idsBelow.length);
+            return setMail({ ...mail, bulkSelected: idsBelow });
+          }
+          console.log('Item not found in list, selecting just this item');
+          return setMail({ ...mail, bulkSelected: [itemId] });
+        }
+        case 'range': {
+          // For future implementation of range selection
+          console.log('Range selection mode - not fully implemented');
+          return setMail({ ...mail, bulkSelected: [itemId] });
+        }
+        default: {
+          console.log('Single selection mode');
+          return setMail({ ...mail, bulkSelected: [itemId] });
+        }
       }
-      setMail({ ...mail, bulkSelected: [message.threadId ?? message.id] });
     },
-    [mail, setMail, getSelectMode],
+    [mail, setMail, getSelectMode, items],
   );
 
   const [, setFocusedIndex] = useAtom(focusedIndexAtom);
 
   const handleMailClick = useCallback(
     (message: ParsedMessage) => () => {
-      if (getSelectMode() !== 'single') {
+      // Log the current selection mode for debugging
+      const mode = getSelectMode();
+      console.log('Mail click with mode:', mode);
+
+      if (mode !== 'single') {
         return handleSelectMail(message);
       }
+
       handleMouseEnter(message.id);
 
       const messageThreadId = message.threadId ?? message.id;
@@ -822,7 +867,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       void setDraftId(null);
       void setActiveReplyId(null);
     },
-    [mail, items, setFocusedIndex],
+    [mail, items, setFocusedIndex, getSelectMode, handleSelectMail],
   );
 
   const isFiltering = searchValue.value.trim().length > 0;

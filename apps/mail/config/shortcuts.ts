@@ -79,13 +79,13 @@ const navigation: Shortcut[] = [
     description: 'Go to sent mail',
     scope: 'navigation',
   },
-  // {
-  //   keys: ['g', 's'],
-  //   action: 'goToSpam',
-  //   type: 'combination',
-  //   description: 'Go to spam',
-  //   scope: 'navigation',
-  // },
+  {
+    keys: ['g', 's'],
+    action: 'goToSettings',
+    type: 'combination',
+    description: 'Go to general settings',
+    scope: 'navigation',
+  },
   {
     keys: ['g', 'a'],
     action: 'goToArchive',
@@ -228,6 +228,48 @@ const mailListShortcuts: Shortcut[] = [
   //   description: 'Scroll up',
   //   scope: 'mail-list',
   // },
+  {
+    keys: ['1'],
+    action: 'showImportant',
+    type: 'single',
+    description: 'Show important',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['2'],
+    action: 'showAllMail',
+    type: 'single',
+    description: 'Show all mail',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['3'],
+    action: 'showPersonal',
+    type: 'single',
+    description: 'Show personal',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['4'],
+    action: 'showUpdates',
+    type: 'single',
+    description: 'Show updates',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['5'],
+    action: 'showPromotions',
+    type: 'single',
+    description: 'Show promotions',
+    scope: 'mail-list',
+  },
+  {
+    keys: ['6'],
+    action: 'showUnread',
+    type: 'single',
+    description: 'Show unread',
+    scope: 'mail-list',
+  },
 ];
 
 const composeShortcuts: Shortcut[] = [

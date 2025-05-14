@@ -7,8 +7,10 @@ import { useMail } from '@/components/mail/use-mail';
 import { useTRPC } from '@/providers/query-provider';
 import { useShortcuts } from './use-hotkey-utils';
 import { useThreads } from '@/hooks/use-threads';
+import { usePathname } from 'next/navigation';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
+import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 
 export function MailListHotkeys() {
@@ -20,6 +22,8 @@ export function MailListHotkeys() {
   const hoveredEmailId = useRef<string | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const [, setCategory] = useQueryState('category');
+  const pathname = usePathname();
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
@@ -175,6 +179,12 @@ export function MailListHotkeys() {
   //   }
   // }, []);
 
+  const switchMailListCategory = (category: string | null) => {
+    if (pathname?.includes('/mail/inbox')) {
+      setCategory(category);
+    }
+  };
+
   const handlers = {
     markAsRead,
     markAsUnread,
@@ -184,6 +194,24 @@ export function MailListHotkeys() {
     // muteThread,
     // scrollDown,
     // scrollUp,
+    showImportant: () => {
+      switchMailListCategory(null);
+    },
+    showAllMail: () => {
+      switchMailListCategory('All Mail');
+    },
+    showPersonal: () => {
+      switchMailListCategory('Personal');
+    },
+    showUpdates: () => {
+      switchMailListCategory('Updates');
+    },
+    showPromotions: () => {
+      switchMailListCategory('Promotions');
+    },
+    showUnread: () => {
+      switchMailListCategory('Unread');
+    },
   };
 
   const mailListShortcuts = keyboardShortcuts.filter((shortcut) => shortcut.scope === scope);
