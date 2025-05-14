@@ -7,6 +7,7 @@ export const shortcutSchema = z.object({
   description: z.string(),
   scope: z.string(),
   preventDefault: z.boolean().optional(),
+  ignore: z.boolean().optional(),
 });
 
 export type Shortcut = z.infer<typeof shortcutSchema>;
@@ -157,6 +158,48 @@ const mailListShortcuts: Shortcut[] = [
     scope: 'mail-list',
   },
   // {
+  //   keys: ['i'],
+  //   action: 'markAsImportant',
+  //   type: 'single',
+  //   description: 'Mark as important',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: ['a'],
+  //   action: 'bulkArchive',
+  //   type: 'single',
+  //   description: 'Bulk archive',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: ['d'],
+  //   action: 'bulkDelete',
+  //   type: 'single',
+  //   description: 'Bulk delete',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: ['s'],
+  //   action: 'bulkStar',
+  //   type: 'single',
+  //   description: 'Bulk star',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: ['u'],
+  //   action: 'bulkUnstar',
+  //   type: 'single',
+  //   description: 'Bulk unstar',
+  //   scope: 'mail-list',
+  // },
+  // {
+  //   keys: [''],
+  //   action: 'exitSelectionMode',
+  //   type: 'single',
+  //   description: 'Exit selection mode',
+  //   scope: 'mail-list',
+  // },
+  // {
   //   keys: ['m'],
   //   action: 'muteThread',
   //   type: 'single',
@@ -206,14 +249,14 @@ const mailListShortcuts: Shortcut[] = [
   //   description: 'Delete email',
   //   scope: 'mail-list',
   // },
-  // {
-  //   keys: ['mod', 'a'],
-  //   action: 'selectAll',
-  //   type: 'combination',
-  //   description: 'Select all emails',
-  //   scope: 'mail-list',
-  //   preventDefault: true,
-  // },
+  {
+    keys: ['mod', 'a'],
+    action: 'selectAll',
+    type: 'combination',
+    description: 'Select all emails',
+    scope: 'mail-list',
+    preventDefault: true,
+  },
   // {
   //   keys: ['j'],
   //   action: 'scrollDown',
@@ -269,6 +312,14 @@ const mailListShortcuts: Shortcut[] = [
     type: 'single',
     description: 'Show unread',
     scope: 'mail-list',
+  },
+  {
+    keys: ['alt', 'shift', 'click'],
+    action: 'selectUnderCursor',
+    type: 'combination',
+    description: 'Select under cursor',
+    scope: 'mail-list',
+    ignore: true,
   },
 ];
 

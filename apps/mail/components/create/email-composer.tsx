@@ -21,6 +21,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRef, useState, useEffect } from 'react';
 import { cn, formatFileSize } from '@/lib/utils';
 import { useThread } from '@/hooks/use-threads';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { Input } from '@/components/ui/input';
@@ -400,6 +401,18 @@ export function EmailComposer({
       document.removeEventListener('paste', handlePasteFiles);
     };
   }, [handleAttachment]);
+
+  // useHotkeys('meta+y', async (e) => {
+  //   if (!editor.getText().trim().length && !subjectInput.trim().length) {
+  //     toast.error('Please enter a subject or a message');
+  //     return;
+  //   }
+  //   if (!subjectInput.trim()) {
+  //     await handleGenerateSubject();
+  //   }
+  //   setAiGeneratedMessage(null);
+  //   await handleAiGenerate();
+  // });
 
   return (
     <div

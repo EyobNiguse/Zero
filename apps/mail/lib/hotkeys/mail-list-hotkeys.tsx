@@ -1,12 +1,15 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchValue } from '@/hooks/use-search-value';
 import { keyboardShortcuts } from '@/config/shortcuts';
 import { useCallback, useEffect, useRef } from 'react';
 import { useMail } from '@/components/mail/use-mail';
 import { useTRPC } from '@/providers/query-provider';
+import { Categories } from '@/components/mail/mail';
 import { useShortcuts } from './use-hotkey-utils';
 import { useThreads } from '@/hooks/use-threads';
+import { cleanSearchValue } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
@@ -22,7 +25,9 @@ export function MailListHotkeys() {
   const hoveredEmailId = useRef<string | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const categories = Categories();
   const [, setCategory] = useQueryState('category');
+  const [searchValue, setSearchValue] = useSearchValue();
   const pathname = usePathname();
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
@@ -181,7 +186,22 @@ export function MailListHotkeys() {
 
   const switchMailListCategory = (category: string | null) => {
     if (pathname?.includes('/mail/inbox')) {
-      setCategory(category);
+      const cat = categories.find((cat) => cat.id === category);
+      if (!cat) {
+        setCategory(null);
+        setSearchValue({
+          value: '',
+          highlight: searchValue.highlight,
+          folder: '',
+        });
+        return;
+      }
+      setCategory(cat.id);
+      setSearchValue({
+        value: `${cat.searchValue} ${cleanSearchValue(searchValue.value).trim().length ? `AND ${cleanSearchValue(searchValue.value)}` : ''}`,
+        highlight: searchValue.highlight,
+        folder: '',
+      });
     }
   };
 
