@@ -301,31 +301,31 @@ export function MailLayout() {
                   <div>
                     <SidebarToggle className="h-fit px-2" />
                   </div>
-                 
+
                   <div className="flex items-center gap-2">
-                  <div>
-                    {mail.bulkSelected.length > 0 ? (
-                      <div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => {
-                                setMail({ ...mail, bulkSelected: [] });
-                              }}
-                              className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
-                            >
-                              <X className="h-3 w-3 fill-[#A0A0A0]" />
-                              <span>esc</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t('common.actions.exitSelectionModeEsc')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    ) : null}
-                  </div>
-                    {true ? <AutoLabelingSettings /> : null}
+                    <div>
+                      {mail.bulkSelected.length > 0 ? (
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  setMail({ ...mail, bulkSelected: [] });
+                                }}
+                                className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
+                              >
+                                <X className="h-3 w-3 fill-[#A0A0A0]" />
+                                <span>esc</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t('common.actions.exitSelectionModeEsc')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      ) : null}
+                    </div>
+                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}
