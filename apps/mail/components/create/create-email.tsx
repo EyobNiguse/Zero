@@ -63,12 +63,12 @@ export function CreateEmail({
     error: draftError,
   } = useDraft(draftId ?? propDraftId ?? null);
   const t = useTranslations();
-  const [dialogOpen, setDialogOpen] = useState(true);
   const router = useRouter();
   const { enableScope, disableScope } = useHotkeysContext();
   const [isDraftFailed, setIsDraftFailed] = useState(false);
   const trpc = useTRPC();
   const { mutateAsync: sendEmail } = useMutation(trpc.mail.send.mutationOptions());
+  const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
 
   // If there was an error loading the draft, set the failed state
   useEffect(() => {
@@ -149,15 +149,12 @@ export function CreateEmail({
   const typedDraft = draft as unknown as DraftType;
 
   const handleDialogClose = (open: boolean) => {
-    setDialogOpen(open);
-    if (!open) {
-      router.push('/mail');
-    }
+    setIsComposeOpen(open ? 'true' : null);
   };
 
   return (
     <>
-      <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
+      <Dialog open={!!isComposeOpen} onOpenChange={handleDialogClose}>
         <div className="flex min-h-screen flex-col items-center justify-center gap-1">
           <div className="flex w-[750px] justify-start">
             <DialogClose asChild className="flex">
