@@ -271,12 +271,12 @@ export function NavUser() {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={getSettingsHref()} className="cursor-pointer">
+                      <a href={getSettingsHref()} className="cursor-pointer">
                         <div className="flex items-center gap-2">
                           <Settings size={16} className="opacity-60" />
                           <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
                         </div>
-                      </Link>
+                      </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <a href="https://discord.gg/0email" target="_blank" className="w-full">
