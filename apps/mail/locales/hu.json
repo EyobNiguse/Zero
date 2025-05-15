@@ -417,9 +417,9 @@
           "reply": "Válasz",
           "replyAll": "Válasz mindenkinek",
           "forward": "Továbbítás",
-          "drafts": "Piszkozatok",
-          "inbox": "Beérkező levelek",
-          "sentMail": "Elküldött levelek",
+          "drafts": "Ugrás a piszkozatokhoz",
+          "inbox": "Ugrás a beérkező levelekhez",
+          "sentMail": "Ugrás az elküldött levelekhez",
           "delete": "Törlés",
           "search": "Keresés",
           "markAsUnread": "Megjelölés olvasatlanként",
@@ -440,7 +440,12 @@
           "commandPalette": "Parancspaletta",
           "markAsRead": "Megjelölés olvasottként",
           "exitSelectionMode": "Kilépés a kijelölési módból",
-          "closeCompose": "Szerkesztés bezárása"
+          "closeCompose": "Levélírás bezárása",
+          "goToSpam": "Ugrás a spamhez",
+          "goToArchive": "Ugrás az archívumhoz",
+          "goToBin": "Ugrás a lomtárhoz",
+          "scrollDown": "Görgetés lefelé a levéllistában",
+          "scrollUp": "Görgetés felfelé a levéllistában"
         }
       },
       "labels": {

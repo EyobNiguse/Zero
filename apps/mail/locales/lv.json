@@ -417,9 +417,9 @@
           "reply": "Atbildēt",
           "replyAll": "Atbildēt Visiem",
           "forward": "Pārsūtīt",
-          "drafts": "Melnraksti",
-          "inbox": "Iesūtne",
-          "sentMail": "Nosūtītie e-pasti",
+          "drafts": "Doties uz melnrakstiem",
+          "inbox": "Doties uz iesūtni",
+          "sentMail": "Doties uz nosūtītajām vēstulēm",
           "delete": "Dzēst",
           "search": "Meklēt",
           "markAsUnread": "Atzīmēt kā nelasītu",
@@ -440,7 +440,12 @@
           "commandPalette": "Komandu palete",
           "markAsRead": "Atzīmēt kā lasītu",
           "exitSelectionMode": "Iziet no atlases režīma",
-          "closeCompose": "Aizvērt rakstīšanu"
+          "closeCompose": "Aizvērt rakstīšanu",
+          "goToSpam": "Doties uz mēstulēm",
+          "goToArchive": "Doties uz arhīvu",
+          "goToBin": "Doties uz miskasti",
+          "scrollDown": "Ritināt uz leju vēstuļu sarakstā",
+          "scrollUp": "Ritināt uz augšu vēstuļu sarakstā"
         }
       },
       "labels": {
