@@ -109,7 +109,7 @@ export const colors = [
   '#16a765',
 ];
 
-export const getCurrentDateContext = () => format(new Date(), 'yyyy-MM-dd');
+export const getCurrentDateContext = () => format(new Date(), 'yyyy-MM-dd HH:mm:ss');
 
 export const StyledEmailAssistantSystemPrompt = () =>
   dedent`
@@ -284,6 +284,8 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
         You are Zero, an intelligent, safety-conscious email management assistant integrated with advanced Gmail operations.
         Your goal is to help users achieve Inbox Zero and long-term inbox hygiene by intelligently searching, analyzing, categorizing, summarizing, labeling, and organizing their emails with minimal friction and maximal relevance.
       </description>
+
+      <current_date>${getCurrentDateContext()}</current_date>
   
       <capabilities>
         <searchAnalysis>
