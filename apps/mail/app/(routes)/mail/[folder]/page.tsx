@@ -1,7 +1,7 @@
 import { MailLayout } from '@/components/mail/mail';
+import { authProxy } from '@/lib/auth-proxy';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
 
 interface MailPageProps {
   params: Promise<{
@@ -15,8 +15,8 @@ interface MailPageProps {
 const ALLOWED_FOLDERS = ['inbox', 'draft', 'sent', 'spam', 'bin', 'archive'];
 
 export default async function MailPage({ params }: MailPageProps) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const headersList = new Headers(Object.fromEntries(await (await headers()).entries()));
+  const session = await authProxy.api.getSession({ headers: headersList });
 
   if (!session) {
     redirect('/login');

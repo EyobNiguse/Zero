@@ -7,6 +7,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import { useTRPC } from '@/providers/query-provider';
 import { Markdown } from '@react-email/components';
 import { CurvedArrow, Stop } from '../icons/icons';
+import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
@@ -16,12 +17,14 @@ import { useStats } from '@/hooks/use-stats';
 import { useParams } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
+import { Button } from '../ui/button';
 import { format } from 'date-fns-tz';
 import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { useState } from 'react';
 import VoiceChat from './voice';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
@@ -136,33 +139,58 @@ export function AIChat() {
   const { refetch: refetchThread } = useThread(threadId);
   const { folder } = useParams<{ folder: string }>();
   const [searchValue] = useSearchValue();
+  const { attach, track, refetch: refetchBilling } = useBilling();
 
   const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
-    api: '/api/chat',
+    api: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+    fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
     maxSteps: 5,
     body: {
       threadId: threadId ?? undefined,
       currentFolder: folder ?? undefined,
       currentFilter: searchValue.value ?? undefined,
     },
+    onError(error) {
+      console.error('Error in useChat', error);
+      toast.error('Error, please try again later');
+    },
+    onResponse: (response) => {
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+    },
+    onFinish: () => {},
+    async onToolCall({ toolCall }) {
+      console.warn('toolCall', toolCall);
+      switch (toolCall.toolName) {
+        case Tools.CreateLabel:
+        case Tools.DeleteLabel:
+          await refetchLabels();
+          break;
+        case Tools.SendEmail:
+          await queryClient.invalidateQueries({
+            queryKey: trpc.mail.listThreads.queryKey({ folder: 'sent' }),
+          });
+          break;
+        case Tools.MarkThreadsRead:
+        case Tools.MarkThreadsUnread:
+        case Tools.ModifyLabels:
+        case Tools.BulkDelete:
+          console.log('modifyLabels', toolCall.args);
+          await refetchLabels();
+          await Promise.all(
+            (toolCall.args as { threadIds: string[] }).threadIds.map((id) =>
+              queryClient.invalidateQueries({
+                queryKey: trpc.mail.get.queryKey({ id }),
+              }),
+            ),
+          );
+          break;
+      }
+      await track({ featureId: 'chat-messages', value: 1 });
+      await refetchBilling();
+    },
   });
-
-  const prevStatusRef = useRef(status);
-
-  const refetchAll = useCallback(() => {
-    refetchLabels();
-    refetchStats();
-    refetchThread();
-    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
-    refetch();
-  }, [refetchLabels, refetchStats, refetchThread, queryClient, trpc.mail.get.queryKey]);
-
-  useEffect(() => {
-    if (prevStatusRef.current === 'streaming' && status === 'ready') {
-      refetchAll();
-    }
-    prevStatusRef.current = status;
-  }, [status, refetchAll]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -174,13 +202,33 @@ export function AIChat() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  const handleUpgrade = async () => {
+    if (attach) {
+      return attach({
+        productId: 'pro-example',
+        successUrl: `${window.location.origin}/mail/inbox?success=true`,
+      })
+        .catch((error: Error) => {
+          console.error('Failed to upgrade:', error);
+        })
+        .then(() => {
+          console.log('Upgraded successfully');
+        });
+    }
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p>No more</p>
+              <TextShimmer className="text-center text-xl font-medium">
+                Upgrade to Zero Pro for unlimited AI chats
+              </TextShimmer>
+              <Button onClick={handleUpgrade} className="mt-2 h-8 w-52">
+                Upgrade
+              </Button>
             </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -229,7 +277,7 @@ export function AIChat() {
                         'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
                         message.role === 'user'
                           ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
-                          : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]',
+                          : 'overflow-wrap-anywhere dark:bg-sidebar mr-auto break-words border bg-[#f0f0f0] p-2',
                       )}
                     >
                       {textParts.map((part) => (
@@ -273,7 +321,7 @@ export function AIChat() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask AI to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-16 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
                   />
                   {status === 'ready' ? (
                     <button

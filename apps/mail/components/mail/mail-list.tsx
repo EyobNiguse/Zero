@@ -172,42 +172,62 @@ const Thread = memo(
     const [searchValue, setSearchValue] = useSearchValue();
     const t = useTranslations();
     const { folder } = useParams<{ folder: string }>();
-    const [{ refetch: refetchThreads }] = useThreads();
+    const [{ refetch: refetchThreads }, threads] = useThreads();
     const [threadId] = useQueryState('threadId');
-    const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const isHovering = useRef<boolean>(false);
-    const hasPrefetched = useRef<boolean>(false);
-    const isMobile = useIsMobile();
     const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
     const { refetch: refetchStats } = useStats();
-    const { data: getThreadData, isLoading, isGroupThread } = useThread(demo ? null : message.id);
-    const [isHovered, setIsHovered] = useState(false);
+    const {
+      data: getThreadData,
+      isLoading,
+      isGroupThread,
+      refetch: refetchThread,
+    } = useThread(demo ? null : message.id);
     const [isStarred, setIsStarred] = useState(false);
-    const queryClient = useQueryClient();
     const trpc = useTRPC();
-
+    const queryClient = useQueryClient();
     const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
+    const [id, setThreadId] = useQueryState('threadId');
+    const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
+    const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
 
-    // Set initial star state based on email data
     useEffect(() => {
       if (getThreadData?.latest?.tags) {
         setIsStarred(getThreadData.latest.tags.some((tag) => tag.name === 'STARRED'));
       }
     }, [getThreadData?.latest?.tags]);
 
-    const handleToggleStar = useCallback(async () => {
-      if (!getThreadData || !message.id) return;
+    const handleToggleStar = useCallback(
+      async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!getThreadData || !message.id) return;
 
-      const newStarredState = !isStarred;
-      setIsStarred(newStarredState);
-      if (newStarredState) {
-        toast.success(t('common.actions.addedToFavorites'));
-      } else {
-        toast.success(t('common.actions.removedFromFavorites'));
-      }
-      await toggleStar({ ids: [message.id] });
-      refetchThreads();
-    }, [getThreadData, message.id, isStarred, refetchThreads, t]);
+        const newStarredState = !isStarred;
+        setIsStarred(newStarredState);
+        if (newStarredState) {
+          toast.success(t('common.actions.addedToFavorites'));
+        } else {
+          toast.success(t('common.actions.removedFromFavorites'));
+        }
+        await toggleStar({ ids: [message.id] });
+        await refetchThread();
+      },
+      [getThreadData, message.id, isStarred, refetchThreads, t],
+    );
+
+    const handleNext = useCallback(
+      (id: string) => {
+        if (!id || !threads.length || focusedIndex === null) return setThreadId(null);
+        if (focusedIndex < threads.length - 1) {
+          const nextThread = threads[focusedIndex];
+          if (nextThread) {
+            setThreadId(nextThread.id);
+            setActiveReplyId(null);
+            setFocusedIndex(focusedIndex);
+          }
+        }
+      },
+      [threads, id, focusedIndex],
+    );
 
     const moveThreadTo = useCallback(
       async (destination: ThreadDestination) => {
@@ -218,7 +238,7 @@ const Thread = memo(
           destination,
         });
         setBackgroundQueue({ type: 'add', threadId: `thread:${message.id}` });
-
+        handleNext(message.id);
         toast.success(
           destination === 'inbox'
             ? t('common.actions.movedToInbox')
@@ -231,7 +251,13 @@ const Thread = memo(
         toast.promise(promise, {
           error: t('common.actions.failedToMove'),
           finally: async () => {
-            await Promise.all([refetchStats(), refetchThreads()]);
+            await Promise.all([
+              refetchStats(),
+              refetchThreads(),
+              queryClient.invalidateQueries({
+                queryKey: trpc.mail.get.queryKey({ id: message.id }),
+              }),
+            ]);
           },
         });
       },
@@ -289,55 +315,6 @@ const Thread = memo(
       return latestMessage.sender.name.trim().replace(/^['"]|['"]$/g, '');
     }, [latestMessage?.sender?.name]);
 
-    const handleMouseEnter = () => {
-      if (demo || !latestMessage) return;
-      isHovering.current = true;
-      setIsHovered(true);
-
-      // Prefetch only in single select mode
-      if (selectMode === 'single' && sessionData?.userId && !hasPrefetched.current) {
-        // Clear any existing timeout
-        if (hoverTimeoutRef.current) {
-          clearTimeout(hoverTimeoutRef.current);
-        }
-
-        // Set new timeout for prefetch
-        hoverTimeoutRef.current = setTimeout(() => {
-          if (isHovering.current) {
-            const messageId = latestMessage.threadId ?? message.id;
-            console.log(
-              `🕒 Hover threshold reached for email ${messageId}, initiating prefetch...`,
-            );
-            void queryClient.prefetchQuery(trpc.mail.get.queryOptions({ id: messageId }));
-            hasPrefetched.current = true;
-          }
-        }, HOVER_DELAY);
-      }
-    };
-
-    const handleMouseLeave = () => {
-      isHovering.current = false;
-      setIsHovered(false);
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-      window.dispatchEvent(new CustomEvent('emailHover', { detail: { id: null } }));
-    };
-
-    // Reset prefetch flag when message changes
-    useEffect(() => {
-      hasPrefetched.current = false;
-    }, [message.id]);
-
-    // Cleanup timeout on unmount
-    useEffect(() => {
-      return () => {
-        if (hoverTimeoutRef.current) {
-          clearTimeout(hoverTimeoutRef.current);
-        }
-      };
-    }, []);
-
     if (!demo && (isLoading || !latestMessage || !getThreadData)) return null;
 
     const demoContent =
@@ -345,8 +322,6 @@ const Thread = memo(
         <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? message.id}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
             key={latestMessage.threadId ?? message.id}
             className={cn(
               'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
@@ -452,8 +427,6 @@ const Thread = memo(
         <div className={'select-none'} onClick={onClick ? onClick(latestMessage) : undefined}>
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
               'hover:bg-offsetLight hover:bg-primary/5 group relative mx-1 flex cursor-pointer flex-col items-start rounded-lg border-transparent py-2 text-left text-sm transition-all hover:opacity-100',
@@ -461,72 +434,76 @@ const Thread = memo(
                 'border-border bg-primary/5 opacity-100',
               isKeyboardFocused && 'ring-primary/50',
               'relative',
+              'group',
             )}
           >
-            {/* Quick Action Row */}
-            {isHovered && !isMobile && (
-              <div
-                className={cn(
-                  'absolute right-2 z-[25] flex -translate-y-1/2 items-center gap-1 rounded-xl border bg-white p-1 shadow-sm dark:bg-[#1A1A1A]',
-                  index === 0 ? 'top-4' : 'top-[-1]',
-                )}
-              >
+            <div
+              className={cn(
+                'absolute right-2 z-[25] flex -translate-y-1/2 items-center gap-1 rounded-xl border bg-white p-1 opacity-0 shadow-sm group-hover:opacity-100 dark:bg-[#1A1A1A]',
+                index === 0 ? 'top-4' : 'top-[-1]',
+              )}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 overflow-visible [&_svg]:size-3.5"
+                    onClick={handleToggleStar}
+                  >
+                    <Star2
+                      className={cn(
+                        'h-4 w-4',
+                        isStarred
+                          ? 'fill-yellow-400 stroke-yellow-400'
+                          : 'fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]',
+                      )}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                  {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 [&_svg]:size-3.5"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      moveThreadTo('archive');
+                    }}
+                  >
+                    <Archive2 className="fill-[#9D9D9D]" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                  {t('common.threadDisplay.archive')}
+                </TooltipContent>
+              </Tooltip>
+              {!isFolderBin ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 overflow-visible [&_svg]:size-3.5"
-                      onClick={handleToggleStar}
+                      className="h-6 w-6 hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] [&_svg]:size-3.5"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        moveThreadTo('bin');
+                      }}
                     >
-                      <Star2
-                        className={cn(
-                          'h-4 w-4',
-                          isStarred
-                            ? 'fill-yellow-400 stroke-yellow-400'
-                            : 'fill-transparent stroke-[#9D9D9D] dark:stroke-[#9D9D9D]',
-                        )}
-                      />
+                      <Trash className="fill-[#F43F5E]" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
-                    {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
+                    {t('common.actions.Bin')}
                   </TooltipContent>
                 </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 [&_svg]:size-3.5"
-                      onClick={() => moveThreadTo('archive')}
-                    >
-                      <Archive2 className="fill-[#9D9D9D]" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
-                    {t('common.threadDisplay.archive')}
-                  </TooltipContent>
-                </Tooltip>
-                {!isFolderBin ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-[#FDE4E9] dark:hover:bg-[#411D23] [&_svg]:size-3.5"
-                        onClick={() => moveThreadTo('bin')}
-                      >
-                        <Trash className="fill-[#F43F5E]" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
-                      {t('common.actions.Bin')}
-                    </TooltipContent>
-                  </Tooltip>
-                ) : null}
-              </div>
-            )}
+              ) : null}
+            </div>
 
             <div className="flex w-full items-center justify-between gap-4 px-4">
               <div>
@@ -634,11 +611,7 @@ const Thread = memo(
                         {latestMessage.to.map((e) => e.email).join(', ')}
                       </p>
                     ) : (
-                      <p
-                        className={cn(
-                          'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[40ch]',
-                        )}
-                      >
+                      <p className={cn('mt-1 line-clamp-1 w-full min-w-0 text-sm text-[#8C8C8C]')}>
                         {highlightText(latestMessage.subject, searchValue.highlight)}
                       </p>
                     )}
@@ -914,7 +887,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" id="mail-list-scroll">
               {items
                 .filter((data) => data.id)
                 .map((data, index) => {
@@ -1081,7 +1054,7 @@ function getLabelIcon(label: string) {
     case 'notes':
       return <StickyNote className="h-3.5 w-3.5" />;
     case 'starred':
-      return <Star className="h-3.5 w-3.5" />;
+      return <Star className="h-3.5 w-3.5 fill-yellow-400 stroke-yellow-400" />;
     default:
       return null;
   }

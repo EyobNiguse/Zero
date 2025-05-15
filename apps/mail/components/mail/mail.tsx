@@ -27,11 +27,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
+import { Command, RefreshCcw, Settings2Icon } from 'lucide-react';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
@@ -43,9 +45,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
+import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -53,11 +55,114 @@ import { useSession } from '@/lib/auth-client';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
-import { Command } from 'lucide-react';
 import { useQueryState } from 'nuqs';
-import { cn } from '@/lib/utils';
+import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+
+interface Tag {
+  id: string;
+  name: string;
+  text: string;
+}
+
+export const defaultLabels = [
+  {
+    name: 'to respond',
+    usecase: 'emails you need to respond to. NOT sales, marketing, or promotions.',
+  },
+  {
+    name: 'FYI',
+    usecase:
+      'emails that are not important, but you should know about. NOT sales, marketing, or promotions.',
+  },
+  {
+    name: 'comment',
+    usecase:
+      'Team chats in tools like Google Docs, Slack, etc. NOT marketing, sales, or promotions.',
+  },
+  {
+    name: 'notification',
+    usecase: 'Automated updates from services you use. NOT sales, marketing, or promotions.',
+  },
+  {
+    name: 'promotion',
+    usecase: 'Sales, marketing, cold emails, special offers or promotions. NOT to respond to.',
+  },
+  {
+    name: 'meeting',
+    usecase: 'Calendar events, invites, etc. NOT sales, marketing, or promotions.',
+  },
+  {
+    name: 'billing',
+    usecase: 'Billing notifications. NOT sales, marketing, or promotions.',
+  },
+];
+
+const AutoLabelingSettings = () => {
+  const trpc = useTRPC();
+  const [open, setOpen] = useState(false);
+  const { data: storedLabels } = useQuery(trpc.brain.getLabels.queryOptions());
+  const { mutateAsync: updateLabels, isPending } = useMutation(
+    trpc.brain.updateLabels.mutationOptions(),
+  );
+  const [labels, setLabels] = useState<Tag[]>([]);
+  const [activeTagIndex, setActiveTagIndex] = useState(0);
+
+  useEffect(() => {
+    if (storedLabels) {
+      setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
+    }
+  }, [storedLabels]);
+
+  const handleResetToDefault = useCallback(() => {
+    setLabels(
+      defaultLabels.map((label) => ({ id: label.name, name: label.name, text: label.name })),
+    );
+  }, [storedLabels]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" className="md:h-fit md:px-2">
+          <Settings2Icon className="text-muted-foreground h-4 w-4 cursor-pointer" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent showOverlay>
+        <DialogHeader>
+          <DialogTitle>Autolabeling Settings</DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="mb-4">
+          These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
+          however you like. Zero will create a new label in your account for each label you add - if
+          it does not exist already.
+        </DialogDescription>
+        <TagInput
+          setTags={setLabels as any}
+          tags={labels}
+          activeTagIndex={activeTagIndex}
+          setActiveTagIndex={setActiveTagIndex as any}
+        />
+        <DialogFooter className="mt-4">
+          <Button onClick={handleResetToDefault} variant="outline" size={'sm'}>
+            Use default labels
+          </Button>
+          <Button
+            disabled={isPending}
+            onClick={() => {
+              updateLabels({ labels: labels.map((label) => label.text) }).then(() => {
+                setOpen(false);
+                toast.success('Labels updated successfully, Zero will start using them.');
+              });
+            }}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export function MailLayout() {
   const params = useParams<{ folder: string }>();
@@ -85,11 +190,17 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const [{ isLoading, isFetching }] = useThreads();
-
+  const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
+  const trpc = useTRPC();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-
+  const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
+    trpc.brain.enableBrain.mutationOptions(),
+  );
+  const { mutateAsync: DisableBrain, isPending: isDisablingBrain } = useMutation(
+    trpc.brain.disableBrain.mutationOptions(),
+  );
   const [threadId, setThreadId] = useQueryState('threadId');
+  const { refetch: refetchBrainState } = useBrainState();
 
   useEffect(() => {
     if (threadId) {
@@ -115,6 +226,36 @@ export function MailLayout() {
     setActiveReplyId(null);
   }, [setThreadId]);
 
+  const handleEnableBrain = useCallback(async () => {
+    toast.promise(EnableBrain({}), {
+      loading: 'Enabling autolabeling...',
+      success: 'Autolabeling enabled successfully',
+      error: 'Failed to enable autolabeling',
+      finally: async () => {
+        await refetchBrainState();
+      },
+    });
+  }, []);
+
+  const handleDisableBrain = useCallback(async () => {
+    toast.promise(DisableBrain({}), {
+      loading: 'Disabling autolabeling...',
+      success: 'Autolabeling disabled successfully',
+      error: 'Failed to disable autolabeling',
+      finally: async () => {
+        await refetchBrainState();
+      },
+    });
+  }, []);
+
+  const handleToggleAutolabeling = useCallback(() => {
+    if (brainState?.enabled) {
+      handleDisableBrain();
+    } else {
+      handleEnableBrain();
+    }
+  }, [brainState?.enabled]);
+
   // Add mailto protocol handler registration
   useEffect(() => {
     // Register as a mailto protocol handler if browser supports it
@@ -127,10 +268,7 @@ export function MailLayout() {
         // 2. Create a draft with these values
         // 3. Redirect to the compose page with just the draft ID
         // This ensures we don't keep the email content in the URL
-        navigator.registerProtocolHandler(
-          'mailto',
-          `${window.location.origin}/api/mailto-handler?mailto=%s`,
-        );
+        navigator.registerProtocolHandler('mailto', `/api/mailto-handler?mailto=%s`);
       } catch (error) {
         console.error('Failed to register protocol handler:', error);
       }
@@ -145,15 +283,15 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-1 overflow-hidden"
+          className="rounded-inherit overflow-hidden"
         >
-          <div
-            className={cn(
-              'w-full border-none !bg-transparent lg:w-fit',
-              threadId ? 'md:hidden lg:block' : '',
-            )}
+          <ResizablePanel
+            defaultSize={40}
+            minSize={40}
+            maxSize={50}
+            className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
           >
-            <div className="bg-panelLight dark:bg-panelDark h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex md:h-[calc(100dvh-0.5rem)] md:rounded-2xl md:border md:shadow-sm lg:w-screen lg:max-w-[415px] xl:max-w-[500px] dark:border-[#252525]">
+            <div className="w-full md:h-[calc(100dvh-0.5rem)]">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -163,38 +301,56 @@ export function MailLayout() {
                   <div>
                     <SidebarToggle className="h-fit px-2" />
                   </div>
-                  <div>
-                    {mail.bulkSelected.length > 0 ? (
-                      <div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => {
-                                setMail({ ...mail, bulkSelected: [] });
-                              }}
-                              className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
-                            >
-                              <X className="h-3 w-3 fill-[#A0A0A0]" />
-                              <span>esc</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t('common.actions.exitSelectionModeEsc')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    ) : null}
-                  </div>
-                  {brainState?.enabled ? (
+
+                  <div className="flex items-center gap-2">
+                    <div>
+                      {mail.bulkSelected.length > 0 ? (
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  setMail({ ...mail, bulkSelected: [] });
+                                }}
+                                className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
+                              >
+                                <X className="h-3 w-3 fill-[#A0A0A0]" />
+                                <span>esc</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t('common.actions.exitSelectionModeEsc')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      ) : null}
+                    </div>
+                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
                     <Button
+                      disabled={isEnablingBrain || isDisablingBrain}
+                      onClick={handleToggleAutolabeling}
                       variant="outline"
                       size={'sm'}
                       className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
                     >
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                      <div
+                        className={cn(
+                          'h-2 w-2 animate-pulse rounded-full',
+                          brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
+                        )}
+                      />
                       Auto Labeling
                     </Button>
-                  ) : null}
+                    <Button
+                      onClick={() => {
+                        refetchThreads();
+                      }}
+                      variant="ghost"
+                      className="md:h-fit md:px-2"
+                    >
+                      <RefreshCcw className="text-muted-foreground h-4 w-4 cursor-pointer" />
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="p-2 px-[22px]">
@@ -216,11 +372,11 @@ export function MailLayout() {
                 <MailList isCompact={true} />
               </div>
             </div>
-          </div>
-
+          </ResizablePanel>
+          <ResizableHandle className="mr-0.5 opacity-0" />
           {isDesktop && (
             <ResizablePanel
-              className={`bg-panelLight dark:bg-panelDark ${threadId ? 'mr-1' : 'lg:mr-1'} w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+              className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
               defaultSize={30}
               minSize={30}
             >
@@ -274,6 +430,7 @@ function BulkSelectActions() {
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
+  const queryClient = useQueryClient();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
@@ -310,6 +467,11 @@ function BulkSelectActions() {
     if (threadId && mail.bulkSelected.includes(threadId)) setThreadId(null);
     refetchThreads();
     refetchStats();
+    await Promise.all(
+      mail.bulkSelected.map((threadId) =>
+        queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: threadId }) }),
+      ),
+    );
     setMail({ ...mail, bulkSelected: [] });
   }, [mail, setMail, refetchThreads, refetchStats, threadId, setThreadId]);
 
@@ -623,7 +785,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
             onClick={() => {
               setCategory(cat.id);
               setSearchValue({
-                value: cat.searchValue || '',
+                value: `${cat.searchValue} ${cleanSearchValue(searchValue.value).trim().length ? `AND ${cleanSearchValue(searchValue.value)}` : ''}`,
                 highlight: searchValue.highlight,
                 folder: '',
               });

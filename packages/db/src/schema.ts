@@ -7,7 +7,6 @@ import {
   jsonb,
   primaryKey,
 } from 'drizzle-orm/pg-core';
-import type { WritingStyleMatrix } from '@zero/mail/services/writing-style-service';
 import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { unique } from 'drizzle-orm/pg-core';
 
@@ -93,10 +92,10 @@ export const connection = createTable(
     email: text('email').notNull(),
     name: text('name'),
     picture: text('picture'),
-    accessToken: text('access_token').notNull(),
+    accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
     scope: text('scope').notNull(),
-    providerId: text('provider_id').notNull(),
+    providerId: text('provider_id').$type<'google' | 'microsoft'>().notNull(),
     expiresAt: timestamp('expires_at').notNull(),
     createdAt: timestamp('created_at').notNull(),
     updatedAt: timestamp('updated_at').notNull(),
@@ -148,7 +147,9 @@ export const writingStyleMatrix = createTable(
       .notNull()
       .references(() => connection.id, { onDelete: 'cascade' }),
     numMessages: integer().notNull(),
-    style: jsonb().$type<WritingStyleMatrix>().notNull(),
+    // TODO: way too much pain to get this type to work,
+    // revisit later
+    style: jsonb().$type<unknown>().notNull(),
     updatedAt: timestamp()
       .defaultNow()
       .notNull()

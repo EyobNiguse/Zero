@@ -6,12 +6,12 @@ import {
 } from '@tanstack/react-query-persist-client';
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client';
 import { QueryCache, QueryClient, hashKey } from '@tanstack/react-query';
+import { useSession, type Session, signOut } from '@/lib/auth-client';
 import { createTRPCContext } from '@trpc/tanstack-react-query';
-import { useSession, type Session } from '@/lib/auth-client';
+import type { AppRouter } from '@zero/server/trpc';
 import { CACHE_BURST_KEY } from '@/lib/constants';
 import type { PropsWithChildren } from 'react';
 import { get, set, del } from 'idb-keyval';
-import type { AppRouter } from '@/trpc';
 import superjson from 'superjson';
 import { toast } from 'sonner';
 
@@ -35,7 +35,16 @@ export const makeQueryClient = (session: Session | null) =>
       onError: (err, { meta }) => {
         if (meta && meta.noGlobalError === true) return;
         if (meta && typeof meta.customError === 'string') toast.error(meta.customError);
-        else toast.error(err.message || 'Something went wrong');
+        else if (err.message === 'Required scopes missing') {
+          signOut({
+            fetchOptions: {
+              onSuccess: () => {
+                if (window.location.href.includes('/login')) return;
+                window.location.href = '/login?error=required_scopes_missing';
+              },
+            },
+          });
+        } else toast.error(err.message || 'Something went wrong');
       },
     }),
     defaultOptions: {
@@ -44,7 +53,9 @@ export const makeQueryClient = (session: Session | null) =>
         refetchOnWindowFocus: false,
         queryKeyHashFn: (queryKey) =>
           hashKey([
-            session ? { userId: session.user.id, connectionId: session.connectionId } : undefined,
+            session
+              ? { userId: session.user.id, connectionId: session.connectionId }
+              : { userId: null, connectionId: null },
             ...queryKey,
           ]),
         gcTime: 1000 * 60 * 60 * 24,
@@ -55,20 +66,33 @@ export const makeQueryClient = (session: Session | null) =>
     },
   });
 
-let browserQueryClient: QueryClient | undefined = undefined;
+let browserQueryClient = {
+  queryClient: undefined,
+  session: null,
+} as {
+  queryClient: QueryClient | undefined;
+  session: Session | null;
+};
 
 const getQueryClient = (session: Session | null) => {
   if (typeof window === 'undefined') {
     return makeQueryClient(session);
   } else {
-    if (!browserQueryClient) browserQueryClient = makeQueryClient(session);
-    return browserQueryClient;
+    if (
+      !browserQueryClient.queryClient ||
+      !browserQueryClient.session ||
+      browserQueryClient.session.user.id !== session?.user.id ||
+      browserQueryClient.session.connectionId !== session?.connectionId
+    ) {
+      browserQueryClient.queryClient = makeQueryClient(session);
+      browserQueryClient.session = session;
+    }
+    return browserQueryClient.queryClient;
   }
 };
 
 const getUrl = () => {
-  if (typeof window === 'undefined') return process.env.NEXT_PUBLIC_APP_URL + '/api/trpc';
-  return window.location.origin + '/api/trpc';
+  return process.env.NEXT_PUBLIC_BACKEND_URL + '/api/trpc';
 };
 
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
@@ -80,6 +104,17 @@ export const trpcClient = createTRPCClient<AppRouter>({
       transformer: superjson,
       url: getUrl(),
       methodOverride: 'POST',
+      fetch: (url, options) =>
+        fetch(url, { ...options, credentials: 'include' }).then((res) => {
+          const currentPath = new URL(window.location.href).pathname;
+          const redirectPath = res.headers.get('X-Zero-Redirect');
+
+          if (!!redirectPath && redirectPath !== currentPath) {
+            window.location.href = redirectPath;
+          }
+
+          return res;
+        }),
     }),
   ],
 });

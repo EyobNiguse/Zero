@@ -1,13 +1,6 @@
 'use client';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   HelpCircle,
   LogIn,
   LogOut,
@@ -16,7 +9,16 @@ import {
   Plus,
   BrainIcon,
   CopyCheckIcon,
+  BadgeCheck,
+  BanknoteIcon,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,11 +32,14 @@ import { AddConnectionDialog } from '../connection/add';
 import { useTRPC } from '@/providers/query-provider';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
-import { useBilling } from '@/hooks/use-billing';
 import { useThreads } from '@/hooks/use-threads';
+import { useBilling } from '@/hooks/use-billing';
 import { SunIcon } from '../icons/animated/sun';
+import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
+import { useStats } from '@/hooks/use-stats';
+import { useCustomer } from 'autumn-js/next';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
@@ -54,13 +59,13 @@ export function NavUser() {
   const t = useTranslations();
   const { state } = useSidebar();
   const trpc = useTRPC();
+  const { refetch: refetchStats } = useStats();
   const [{ refetch: refetchThreads }] = useThreads();
+  const { refetch: refetchLabels } = useLabels();
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
-  const { mutateAsync: EnableBrain } = useMutation(trpc.brain.enableBrain.mutationOptions());
-  const { mutateAsync: DisableBrain } = useMutation(trpc.brain.disableBrain.mutationOptions());
-  const { chatMessages } = useBilling();
+  const { openBillingPortal, customer: billingCustomer } = useBilling();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -77,28 +82,12 @@ export function NavUser() {
     queryClient.clear();
     await idbClear();
     toast.success('Cache cleared successfully');
-    // Reload the page after clearing the cache
-    setTimeout(() => window.location.reload(), 500);
   }, []);
 
   const handleCopyConnectionId = useCallback(async () => {
     await navigator.clipboard.writeText(session?.connectionId || '');
     toast.success('Connection ID copied to clipboard');
   }, [session]);
-
-  const handleEnableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await EnableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain enabled successfully');
-  }, []);
-
-  const handleDisableBrain = useCallback(async () => {
-    // This takes too long, not waiting
-    const enabled = await DisableBrain({});
-    await refetchBrainState();
-    if (enabled) toast.success('Brain disabled');
-  }, []);
 
   const activeAccount = useMemo(() => {
     if (!session || !data) return null;
@@ -107,22 +96,31 @@ export function NavUser() {
 
   useEffect(() => setIsRendered(true), []);
 
+  const refetchBrainLabels = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: trpc.brain.getLabels.queryKey() });
+  }, [queryClient]);
+
   const handleAccountSwitch = (connectionId: string) => async () => {
     await setDefaultConnection({ connectionId });
     refetch();
     refetchConnections();
     refetchThreads();
+    refetchLabels();
+    refetchStats();
+    refetchBrainState();
+    refetchBrainLabels();
   };
 
   const handleLogout = async () => {
-    toast.promise(
-      signOut().then(() => router.push('/login')),
-      {
-        loading: 'Signing out...',
-        success: () => 'Signed out successfully!',
-        error: 'Error signing out',
+    toast.promise(signOut(), {
+      loading: 'Signing out...',
+      success: () => 'Signed out successfully!',
+      error: 'Error signing out',
+      async finally() {
+        await handleClearCache();
+        window.location.href = '/login';
       },
-    );
+    });
   };
 
   const { data: brainState, refetch: refetchBrainState } = useBrainState();
@@ -135,6 +133,17 @@ export function NavUser() {
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
+
+  const isPro = useMemo(() => {
+    return (
+      billingCustomer &&
+      Array.isArray(billingCustomer.products) &&
+      billingCustomer.products.some(
+        (product: any) =>
+          product.id.includes('pro-example') || product.name.includes('pro-example'),
+      )
+    );
+  }, [billingCustomer]);
 
   if (!isRendered) return null;
   if (!session) return null;
@@ -154,6 +163,7 @@ export function NavUser() {
                         src={activeAccount?.picture || undefined}
                         alt={activeAccount?.name || activeAccount?.email}
                       />
+
                       <AvatarFallback className="rounded-[5px] text-[10px]">
                         {(activeAccount?.name || activeAccount?.email)
                           .split(' ')
@@ -261,12 +271,12 @@ export function NavUser() {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={getSettingsHref()} className="cursor-pointer">
+                      <a href={getSettingsHref()} className="cursor-pointer">
                         <div className="flex items-center gap-2">
                           <Settings size={16} className="opacity-60" />
                           <p className="text-[13px] opacity-60">{t('common.actions.settings')}</p>
                         </div>
-                      </Link>
+                      </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <a href="https://discord.gg/0email" target="_blank" className="w-full">
@@ -448,6 +458,14 @@ export function NavUser() {
                   sideOffset={8}
                 >
                   <div className="space-y-1">
+                    {billingCustomer?.stripe_id ? (
+                      <DropdownMenuItem onClick={openBillingPortal}>
+                        <div className="flex items-center gap-2">
+                          <BanknoteIcon size={16} className="opacity-60" />
+                          <p className="text-[13px] opacity-60">Billing</p>
+                        </div>
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
                       <div className="flex w-full items-center gap-2">
                         {theme === 'dark' ? (
@@ -500,63 +518,28 @@ export function NavUser() {
                       <p className="text-[13px] opacity-60">Clear Local Cache</p>
                     </div>
                   </DropdownMenuItem>
-                  {!brainState?.enabled ? (
-                    <DropdownMenuItem onClick={handleEnableBrain}>
-                      <div className="flex items-center gap-2">
-                        <BrainIcon size={16} className="opacity-60" />
-                        <p className="text-[13px] opacity-60">Enable Auto Labeling</p>
-                      </div>
-                    </DropdownMenuItem>
-                  ) : null}
-                  {brainState?.enabled ? (
-                    <DropdownMenuItem onClick={handleDisableBrain}>
-                      <div className="flex items-center gap-2">
-                        <BrainIcon size={16} className="opacity-60" />
-                        <p className="text-[13px] opacity-60">Disable Auto Labeling</p>
-                      </div>
-                    </DropdownMenuItem>
-                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         )}
       </div>
-      {state === 'collapsed' && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="mt-2">
-              <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent className="text-xs">
-            <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-            <p>Upgrade for unlimited messages!</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
-            <div className="text-[13px] leading-none text-black dark:text-white">
+            <div className="flex items-center gap-0.5 text-[13px] leading-none text-black dark:text-white">
               {activeAccount?.name || session.user.name || 'User'}
+              {isPro && (
+                <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+              )}
             </div>
-            <div className="max-w-[150px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
+            <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}
             </div>
           </div>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="ml-2">
-                <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="text-xs">
-              <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-              <p>Upgrade for unlimited messages!</p>
-            </TooltipContent>
-          </Tooltip>
+          <div className="ml-2">{/* Gauge component removed */}</div>
         </div>
       )}
 

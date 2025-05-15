@@ -39,6 +39,7 @@ export const AddConnectionDialog = ({
     if (attach) {
       return attach({
         productId: 'pro-example',
+        successUrl: `${window.location.origin}/mail/inbox?success=true`,
       })
         .catch((error: Error) => {
           console.error('Failed to upgrade:', error);
@@ -109,7 +110,7 @@ export const AddConnectionDialog = ({
                 onClick={async () =>
                   await authClient.linkSocial({
                     provider: provider.providerId,
-                    callbackURL: pathname,
+                    callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
                   })
                 }
               >

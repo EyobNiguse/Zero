@@ -19,9 +19,9 @@ export const Gauge = ({
 
   const sizes = {
     small: {
-      width: "30",
-      height: "30",
-      textSize: "text-[10px]",
+      width: "20",
+      height: "20",
+      textSize: "text-[8px]",
     },
     medium: {
       width: "72",

@@ -35,10 +35,11 @@ const FEATURE_IDS = {
 
 export const useBilling = () => {
   const { customer, refetch } = useCustomer();
-  const { attach, track } = useAutumn();
+  const { attach, track, openBillingPortal } = useAutumn();
 
   const customerFeatures = useMemo(() => {
-    if (!customer) return DEFAULT_FEATURES;
+    if (!customer || !customer.features || !Array.isArray(customer.features))
+      return DEFAULT_FEATURES;
 
     const features = customer.features.reduce(
       (acc: Features, feature: Feature) => {
@@ -74,9 +75,11 @@ export const useBilling = () => {
   }, [customer]);
 
   return {
+    customer,
     refetch,
     attach,
     track,
+    openBillingPortal,
     ...customerFeatures,
   };
 };
