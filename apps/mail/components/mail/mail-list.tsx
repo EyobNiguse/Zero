@@ -611,11 +611,7 @@ const Thread = memo(
                         {latestMessage.to.map((e) => e.email).join(', ')}
                       </p>
                     ) : (
-                      <p
-                        className={cn(
-                          'mt-1 line-clamp-1 w-full text-sm text-[#8C8C8C] min-w-0',
-                        )}
-                      >
+                      <p className={cn('mt-1 line-clamp-1 w-full min-w-0 text-sm text-[#8C8C8C]')}>
                         {highlightText(latestMessage.subject, searchValue.highlight)}
                       </p>
                     )}
