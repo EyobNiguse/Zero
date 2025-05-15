@@ -161,9 +161,12 @@ export class GoogleMailManager implements MailManager {
               userId: 'me',
               id: label.id ?? undefined,
             });
+            const count = label.name === 'TRASH' 
+                          ? Number(res.data.threadsTotal) 
+                          : Number(res.data.threadsUnread);
             return {
               label: res.data.name ?? res.data.id ?? '',
-              count: Number(res.data.threadsUnread) ?? undefined,
+              count: count ?? undefined,
             };
           }),
         );
