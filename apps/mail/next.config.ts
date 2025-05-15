@@ -64,8 +64,8 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: 'zero-email-inc',
-  project: '0email-web',
+  org: 'zero-7y',
+  project: 'nextjs',
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
