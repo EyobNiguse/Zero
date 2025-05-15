@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint . --cache --cache-location ./node_modules/.cache/eslint",
     "scripts": "bun run ./scripts/run.ts",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org zero-email-inc --project 0email-web ./.next && sentry-cli sourcemaps upload --org zero-email-inc --project 0email-web ./.next"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org zero-7y --project nextjs ./.next && sentry-cli sourcemaps upload --org zero-7y --project nextjs ./.next"
   },
   "dependencies": {
     "@11labs/react": "^0.1.3",
