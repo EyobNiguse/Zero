@@ -1,11 +1,28 @@
-import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
+import { AiChatPrompt, GmailSearchAssistantSystemPrompt } from '../lib/prompts';
+import { getActiveConnection } from '../lib/server-utils';
+import { streamText, generateObject, tool } from 'ai';
 import { getContext } from 'hono/context-storage';
-import { AiChatPrompt } from '../lib/prompts';
 import type { HonoContext } from '../ctx';
 import { openai } from '@ai-sdk/openai';
 import { tools } from './agent/tools';
 import { Autumn } from 'autumn-js';
-import { streamText } from 'ai';
+import { z } from 'zod';
+
+const buildGmailSearchQuery = tool({
+  description: 'Build a Gmail search query',
+  parameters: z.object({
+    query: z.string().describe('The search query to build'),
+  }),
+  execute: async ({ query }) => {
+    const result = await generateObject({
+      model: openai('gpt-4o'),
+      system: GmailSearchAssistantSystemPrompt(),
+      prompt: query,
+      schema: z.string(),
+    });
+    return result.object;
+  },
+});
 
 export const chatHandler = async () => {
   const c = getContext<HonoContext>();
@@ -51,7 +68,10 @@ export const chatHandler = async () => {
     model: openai('gpt-4o'),
     system: AiChatPrompt(threadId, currentFolder, currentFilter),
     messages,
-    tools,
+    tools: {
+      ...tools,
+      buildGmailSearchQuery,
+    },
     onError: (error) => {
       console.error('Error in streamText:', error);
       //   throw c.json({ error: 'Failed to stream text' }, 500);
