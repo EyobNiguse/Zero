@@ -80,60 +80,121 @@ export default function ConnectionsPage() {
             </div>
           ) : data?.connections?.length ? (
             <div className="lg: grid gap-4 sm:grid-cols-1 md:grid-cols-2">
-              {data.connections.map((connection) => (
-                <div
-                  key={connection.id}
-                  className="bg-popover flex items-center justify-between rounded-lg border p-4"
-                >
-                  <div className="flex min-w-0 items-center gap-4">
-                    {connection.picture ? (
-                      <Image
-                        src={connection.picture}
-                        alt=""
-                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                        width={48}
-                        height={48}
-                      />
-                    ) : (
-                      <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg">
-                        <svg viewBox="0 0 24 24" className="text-primary h-6 w-6">
-                          <path fill="currentColor" d={emailProviders[0]!.icon} />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <span className="truncate text-sm font-medium">{connection.name}</span>
-                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                        <Tooltip
-                          delayDuration={0}
-                          open={openTooltip === connection.id}
-                          onOpenChange={(open) => {
-                            if (window.innerWidth <= 768) {
-                              setOpenTooltip(open ? connection.id : null);
-                            }
-                          }}
-                        >
-                          <TooltipTrigger asChild>
-                            <span
-                              className="max-w-[180px] cursor-default truncate sm:max-w-[240px] md:max-w-[300px]"
-                              onClick={() => {
-                                if (window.innerWidth <= 768) {
-                                  setOpenTooltip(
-                                    openTooltip === connection.id ? null : connection.id,
-                                  );
-                                }
-                              }}
-                            >
-                              {connection.email}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" align="start" className="select-all">
-                            <div className="font-mono">{connection.email}</div>
-                          </TooltipContent>
-                        </Tooltip>
+              {data.connections.map((connection) => {
+                const Icon = emailProviders.find(
+                  (p) => p.providerId === connection.providerId,
+                )?.icon;
+                return (
+                  <div
+                    key={connection.id}
+                    className="bg-popover flex items-center justify-between rounded-lg border p-4"
+                  >
+                    <div className="flex min-w-0 items-center gap-4">
+                      {connection.picture ? (
+                        <Image
+                          src={connection.picture}
+                          alt=""
+                          className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                          width={48}
+                          height={48}
+                        />
+                      ) : (
+                        <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg">
+                          {Icon && <Icon className="size-6" />}
+                        </div>
+                      )}
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="truncate text-sm font-medium">{connection.name}</span>
+                        <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                          <Tooltip
+                            delayDuration={0}
+                            open={openTooltip === connection.id}
+                            onOpenChange={(open) => {
+                              if (window.innerWidth <= 768) {
+                                setOpenTooltip(open ? connection.id : null);
+                              }
+                            }}
+                          >
+                            <TooltipTrigger asChild>
+                              <span
+                                className="max-w-[180px] cursor-default truncate sm:max-w-[240px] md:max-w-[300px]"
+                                onClick={() => {
+                                  if (window.innerWidth <= 768) {
+                                    setOpenTooltip(
+                                      openTooltip === connection.id ? null : connection.id,
+                                    );
+                                  }
+                                }}
+                              >
+                                {connection.email}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" align="start" className="select-all">
+                              <div className="font-mono">{connection.email}</div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-4">
+                      {data.disconnectedIds?.includes(connection.id) ? (
+                        <>
+                          <div>
+                            <Badge variant="destructive">
+                              {t('pages.settings.connections.disconnected')}
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={async () => {
+                              await authClient.linkSocial({
+                                provider: connection.providerId,
+                                callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/settings/connections`,
+                              });
+                            }}
+                          >
+                            <Unplug className="size-4" />
+                            {t('pages.settings.connections.reconnect')}
+                          </Button>
+                        </>
+                      ) : null}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-primary ml-4 shrink-0"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>
+                              {t('pages.settings.connections.disconnectTitle')}
+                            </DialogTitle>
+                            <DialogDescription>
+                              {t('pages.settings.connections.disconnectDescription')}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="flex justify-end gap-4">
+                            <DialogClose asChild>
+                              <Button variant="outline">
+                                {t('pages.settings.connections.cancel')}
+                              </Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button onClick={() => disconnectAccount(connection.id)}>
+                                {t('pages.settings.connections.remove')}
+                              </Button>
+                            </DialogClose>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
+<<<<<<< HEAD
                   <div className="flex items-center gap-4">
                     {data.disconnectedIds?.includes(connection.id) ? (
                       <>
@@ -193,6 +254,10 @@ export default function ConnectionsPage() {
                   </div>
                 </div>
               ))}
+=======
+                );
+              })}
+>>>>>>> 0a89356c (fix icons in connections page)
             </div>
           ) : null}
 
