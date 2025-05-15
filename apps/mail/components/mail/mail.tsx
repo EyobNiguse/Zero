@@ -231,8 +231,8 @@ export function MailLayout() {
       loading: 'Enabling autolabeling...',
       success: 'Autolabeling enabled successfully',
       error: 'Failed to enable autolabeling',
-      finally: () => {
-        refetchBrainState();
+      finally: async () => {
+        await refetchBrainState();
       },
     });
   }, []);
@@ -242,8 +242,8 @@ export function MailLayout() {
       loading: 'Disabling autolabeling...',
       success: 'Autolabeling disabled successfully',
       error: 'Failed to disable autolabeling',
-      finally: () => {
-        refetchBrainState();
+      finally: async () => {
+        await refetchBrainState();
       },
     });
   }, []);
