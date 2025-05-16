@@ -12,7 +12,6 @@ import {
   Trash,
   User,
 } from '../icons/icons';
-import { useAISidebar } from '@/components/ui/ai-sidebar';
 import {
   cn,
   FOLDERS,
@@ -42,6 +41,7 @@ import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
+import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
@@ -426,6 +426,7 @@ const Thread = memo(
     const content =
       latestMessage && getThreadData ? (
         <div
+          onTouchEnd={onClick ? onClick(latestMessage) : undefined}
           className={'hover:bg-offsetLight hover:bg-primary/5 select-none border-b md:border-none'}
           onClick={onClick ? onClick(latestMessage) : undefined}
         >
@@ -572,11 +573,7 @@ const Thread = memo(
                             {highlightText(latestMessage.subject, searchValue.highlight)}
                           </span>
                         ) : (
-                          <span
-                            className={cn(
-                              'overflow-hidden line-clamp-1 text-sm',
-                            )}
-                          >
+                          <span className={cn('line-clamp-1 overflow-hidden text-sm')}>
                             {highlightText(
                               cleanNameDisplay(latestMessage.sender.name) || '',
                               searchValue.highlight,
@@ -651,7 +648,7 @@ const Thread = memo(
               </div>
             </div>
             {threadLabels && (
-              <div className="flex w-full items-center justify-between gap-1 px-4 ml-[47px]">
+              <div className="ml-[47px] flex w-full items-center justify-between gap-1 px-4">
                 {!isFolderSent ? (
                   <span className="mt-0.5 items-center space-x-2">
                     <RenderLabels labels={threadLabels} />
@@ -1010,7 +1007,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           <div className="h-4" />
         )}
       </div>
-      
+
       {/* Toggle AI Assistant Button - Only visible on md or smaller screens */}
       <AIToggleButton />
     </>
@@ -1020,15 +1017,15 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 // AI Toggle Button Component
 const AIToggleButton = () => {
   const { toggleOpen: toggleAISidebar, open: isSidebarOpen } = useAISidebar();
-  
+
   return (
     !isSidebarOpen && (
-      <div className="fixed bottom-4 right-4 block lg:hidden z-50">
+      <div className="fixed bottom-4 right-4 z-50 block lg:hidden">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              className="h-12 w-12 rounded-full p-0 bg-transparent dark:bg-transparent"
+              className="h-12 w-12 rounded-full bg-transparent p-0 dark:bg-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleAISidebar();

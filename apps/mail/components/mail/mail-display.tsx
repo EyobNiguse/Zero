@@ -755,14 +755,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
             <div className="h-fit w-full p-0">
               {emailData?.decodedBody ? (
                 <MailIframe html={emailData?.decodedBody} senderEmail={emailData.sender.email} />
-              ) : (
-                <div
-                  className="flex h-[500px] w-full items-center justify-center"
-                  style={{ minHeight: '500px' }}
-                >
-                  <div className="bg-secondary h-32 w-32 animate-pulse rounded-full" />
-                </div>
-              )}
+              ) : null}
               {emailData?.attachments && emailData?.attachments.length > 0 ? (
                 <div className="mb-4 flex flex-wrap items-center gap-2 px-4 pt-4">
                   {emailData?.attachments.map((attachment, index) => (
