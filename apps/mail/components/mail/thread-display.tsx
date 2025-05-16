@@ -369,7 +369,7 @@ export function ThreadDisplay() {
                 <p className="text-md text-[#6D6D6D] dark:text-white/50">
                   Choose an email to view details or
                 </p>
-                <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-2">
                   <Button onClick={toggleAISidebar} variant="outline">
                     Chat with Zero AI
                   </Button>
@@ -634,8 +634,8 @@ export function ThreadDisplay() {
                   ))}
                 </div>
               </ScrollArea>
-              {!isSidebarOpen && (
-                <div className="fixed bottom-4 right-4 hidden md:block">
+              
+                <div className="fixed bottom-4 right-4">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -662,7 +662,7 @@ export function ThreadDisplay() {
                     <TooltipContent>Toggle AI Assistant</TooltipContent>
                   </Tooltip>
                 </div>
-              )}
+             
             </div>
           </>
         )}

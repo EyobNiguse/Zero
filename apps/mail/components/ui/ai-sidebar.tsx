@@ -10,7 +10,7 @@ import {
 } from './dialog';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { useState, useEffect, useContext, createContext, useCallback, useMemo } from 'react';
+import { useState, useEffect, useContext, createContext, useCallback, useMemo, useRef } from 'react';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
 import { useEditor } from '@/components/providers/editor-provider';
@@ -21,7 +21,7 @@ import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Gauge } from '@/components/ui/gauge';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useCustomer } from 'autumn-js/next';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
@@ -121,6 +121,30 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
 
   // Only show on /mail pages
   const isMailPage = pathname?.startsWith('/mail');
+  const searchParams = useSearchParams();
+  const previousPathRef = useRef(pathname);
+  const previousSearchParamsRef = useRef(searchParams.toString());
+  
+  // Close the popup when URL changes in any way (path or search params)
+  useEffect(() => {
+    const currentPath = pathname;
+    const currentSearchParams = searchParams.toString();
+    
+    // Check if we're on small screens and if the URL has changed in any way
+    if (open && 
+        (previousPathRef.current !== currentPath || 
+         previousSearchParamsRef.current !== currentSearchParams)) {
+      // Only close if we're on small screens (sm or smaller)
+      if (typeof window !== 'undefined' && window.innerWidth < 640) {
+        setOpen(false);
+      }
+    }
+    
+    // Update refs with current values
+    previousPathRef.current = currentPath;
+    previousSearchParamsRef.current = currentSearchParams;
+  }, [pathname, searchParams, open, setOpen]);
+  
   if (!isMailPage) {
     return <>{children}</>;
   }
@@ -140,7 +164,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
               defaultSize={20}
               minSize={20}
               maxSize={35}
-              className="bg-panelLight dark:bg-panelDark mr-1.5 mt-1 h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525] hidden lg:block"
+              className="bg-panelLight dark:bg-panelDark mr-1.5 mt-1 h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525] hidden xl:block"
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
@@ -267,11 +291,17 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                 </div>
               </div>
             </ResizablePanel>
-            {/* Mobile popup - only visible on md and smaller screens */}
-            <div className="fixed bottom-4 right-4 z-50 flex flex-col lg:hidden">
+            {/* Mobile popup - only visible on smaller screens */}
+            <div className="fixed z-50 xl:hidden backdrop-blur-sm
+                        inset-0 flex items-center justify-center p-4
+                        sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0">
               {/* Chat popup container */}
-              <div className="bg-panelLight dark:bg-panelDark w-full max-w-[500px] rounded-2xl border border-[#E7E7E7] shadow-lg dark:border-[#252525] overflow-hidden">
-                <div className="flex h-[500px] max-h-[80vh] flex-col">
+              <div className="bg-panelLight dark:bg-panelDark overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg dark:border-[#252525]
+                          w-full max-w-[800px]
+                          sm:max-w-[500px]">
+                <div className="flex flex-col
+                            h-[90vh] w-full
+                            sm:h-[500px] sm:max-h-[80vh]">
                   <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-1 py-2 pb-1 dark:border-[#252525]">
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>

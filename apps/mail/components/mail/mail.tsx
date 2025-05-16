@@ -381,7 +381,11 @@ export function MailLayout() {
 
           {isDesktop && (
             <ResizablePanel
-              className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+              className={cn(
+                'bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
+                // Only show on md screens and larger when there is a threadId
+                !threadId && 'hidden lg:block'
+              )}
               defaultSize={30}
               minSize={30}
             >

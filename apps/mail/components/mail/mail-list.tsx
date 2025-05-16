@@ -12,6 +12,7 @@ import {
   Trash,
   User,
 } from '../icons/icons';
+import { useAISidebar } from '@/components/ui/ai-sidebar';
 import {
   cn,
   FOLDERS,
@@ -970,9 +971,54 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           <div className="h-4" />
         )}
       </div>
+      
+      {/* Toggle AI Assistant Button - Only visible on md or smaller screens */}
+      <AIToggleButton />
     </>
   );
 });
+
+// AI Toggle Button Component
+const AIToggleButton = () => {
+  const { toggleOpen: toggleAISidebar, open: isSidebarOpen } = useAISidebar();
+  
+  return (
+    !isSidebarOpen && (
+      <div className="fixed bottom-4 right-4 block lg:hidden z-50">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-12 w-12 rounded-full p-0 bg-transparent dark:bg-transparent"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAISidebar();
+              }}
+            >
+              <div className="flex items-center justify-center">
+                <Image
+                  src="/black-icon.svg"
+                  alt="AI Assistant"
+                  width={22}
+                  height={22}
+                  className="block dark:hidden"
+                />
+                <Image
+                  src="/white-icon.svg"
+                  alt="AI Assistant"
+                  width={22}
+                  height={22}
+                  className="hidden dark:block"
+                />
+              </div>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Toggle AI Assistant</TooltipContent>
+        </Tooltip>
+      </div>
+    )
+  );
+};
 
 MailList.displayName = 'MailList';
 
