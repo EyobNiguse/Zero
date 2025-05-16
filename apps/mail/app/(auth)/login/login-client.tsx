@@ -8,9 +8,9 @@ import { Google } from '@/components/icons/icons';
 import { Button } from '@/components/ui/button';
 import { TriangleAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { env } from '@/lib/env';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { env } from '@/lib/env';
 
 interface EnvVarStatus {
   name: string;
@@ -68,7 +68,6 @@ const getProviderIcon = (providerId: string, className?: string): ReactNode => {
 
 function LoginClientContent({ providers, isProd }: LoginClientProps) {
   const router = useRouter();
-  const { data: session, isPending } = useSession();
   const [expandedProviders, setExpandedProviders] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -97,14 +96,6 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
       [providerId]: !prev[providerId],
     }));
   };
-
-  useEffect(() => {
-    if (!isPending && session?.connectionId) {
-      router.push('/mail');
-    }
-  }, [session, isPending, router]);
-
-  if (isPending || (session && session.connectionId)) return null;
 
   const displayProviders = isProd ? providers.filter((p) => p.enabled || p.isCustom) : providers;
 

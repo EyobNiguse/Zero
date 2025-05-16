@@ -117,7 +117,6 @@ export function NavUser() {
       success: () => 'Signed out successfully!',
       error: 'Error signing out',
       async finally() {
-        await handleClearCache();
         window.location.href = '/login';
       },
     });
@@ -348,7 +347,7 @@ export function NavUser() {
               ) : (
                 <div className="flex cursor-pointer items-center">
                   <div className="relative">
-                    <div className="size-7 rounded-[5px] bg-muted animate-pulse" />
+                    <div className="bg-muted size-7 animate-pulse rounded-[5px]" />
                   </div>
                 </div>
               )}
