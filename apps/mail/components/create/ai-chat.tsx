@@ -126,7 +126,25 @@ const ExampleQueries = ({ onQueryClick }: { onQueryClick: (query: string) => voi
   );
 };
 
-export function AIChat() {
+export interface AIChatProps {
+  messages?: any[];
+  input?: string;
+  setInput?: (input: string) => void;
+  error?: Error;
+  handleSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
+  status?: string;
+  stop?: () => void;
+}
+
+export function AIChat({
+  messages: externalMessages,
+  input: externalInput,
+  setInput: externalSetInput,
+  error: externalError,
+  handleSubmit: externalHandleSubmit,
+  status: externalStatus,
+  stop: externalStop,
+}: AIChatProps = {}) {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -142,7 +160,16 @@ export function AIChat() {
   const [searchValue] = useSearchValue();
   const { attach, track, refetch: refetchBilling } = useBilling();
 
-  const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
+  // Use internal chat state if external state is not provided
+  const { 
+    messages: internalMessages, 
+    input: internalInput, 
+    setInput: internalSetInput, 
+    error: internalError, 
+    handleSubmit: internalHandleSubmit, 
+    status: internalStatus, 
+    stop: internalStop 
+  } = useChat({
     api: `${env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
     fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
     maxSteps: 5,
@@ -193,6 +220,15 @@ export function AIChat() {
     },
   });
 
+  // Use external state if provided, otherwise use internal state
+  const messages = externalMessages || internalMessages;
+  const input = externalInput !== undefined ? externalInput : internalInput;
+  const setInput = externalSetInput || internalSetInput;
+  const error = externalError || internalError;
+  const handleSubmit = externalHandleSubmit || internalHandleSubmit;
+  const status = externalStatus || internalStatus;
+  const stop = externalStop || internalStop;
+
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -217,6 +253,8 @@ export function AIChat() {
         });
     }
   };
+
+  // Already defined above
 
   return (
     <div className="flex h-full flex-col">

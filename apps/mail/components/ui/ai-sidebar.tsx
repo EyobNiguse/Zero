@@ -15,19 +15,22 @@ import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants'
 import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
 import { useEditor } from '@/components/providers/editor-provider';
 import { AIChat } from '@/components/create/ai-chat';
+import { useChat } from '@ai-sdk/react';
 import { X, Paper } from '@/components/icons/icons';
 import { GitBranchPlus, Plus } from 'lucide-react';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Gauge } from '@/components/ui/gauge';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useParams } from 'next/navigation';
 import { useCustomer } from 'autumn-js/next';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
+import { env } from '@/lib/env';
+import { toast } from 'sonner';
 
 interface AISidebarProps {
   className?: string;
@@ -79,7 +82,31 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { open, setOpen } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
   const pathname = usePathname();
+  const params = useSearchParams();
+  const { folder } = useParams<{ folder: string }>();
   const { chatMessages, attach, customer } = useBilling();
+  
+  // Initialize shared chat state that will be used by both desktop and mobile views
+  // This ensures conversation continuity when switching between viewport sizes
+  const chatState = useChat({
+    api: `${env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+    fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
+    maxSteps: 5,
+    body: {
+      threadId: params.get('threadId') ?? undefined,
+      currentFolder: folder ?? undefined,
+      currentFilter: params.get('q') ?? undefined,
+    },
+    onError(error) {
+      console.error('Error in useChat', error);
+      toast.error('Error, please try again later');
+    },
+    onResponse: (response) => {
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+    },
+  });
 
   const isPro = useMemo(() => {
     return (
@@ -286,7 +313,11 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                     </div>
                   </div>
                   <div className="b relative flex-1 overflow-hidden">
-                    <AIChat key={resetKey} />
+                    <AIChat 
+                      key={resetKey} 
+                      {...chatState} 
+                      // Pass the chat state to preserve conversation when switching between desktop/mobile
+                    />
                   </div>
                 </div>
               </div>
@@ -420,7 +451,11 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                     </div>
                   </div>
                   <div className="relative flex-1 overflow-hidden">
-                    <AIChat key={resetKey} />
+                    <AIChat 
+                      key={resetKey} 
+                      {...chatState} 
+                      // Pass the same chat state to ensure conversation continuity with desktop view
+                    />
                   </div>
                 </div>
               </div>
