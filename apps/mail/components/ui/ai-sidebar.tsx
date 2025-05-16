@@ -191,15 +191,16 @@ export function AISidebar({ className }: AISidebarProps) {
     open && (
       <>
         {/* Desktop sidebar - only visible on lg screens */}
+        <ResizableHandle className="opacity-0" />
         <ResizablePanel
           defaultSize={20}
           minSize={20}
           maxSize={35}
-          className="bg-panelLight dark:bg-panelDark mr-1.5 mt-1 hidden h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm xl:block dark:border-[#252525]"
+          className="bg-panelLight dark:bg-panelDark mr-1 hidden h-[calc(98vh+17px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm xl:block dark:border-[#252525]"
         >
-          <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
+          <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>
             <div className="flex h-full flex-col">
-              <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-2.5 pt-[17.6px] dark:border-[#252525]">
+              <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>

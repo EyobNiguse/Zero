@@ -824,7 +824,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <kbd
                     className={cn(
                       'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
-                      '-me-1 ms-auto inline-flex max-h-full items-center',
+                      '-me-1 ms-auto hidden md:inline-flex max-h-full items-center',
                     )}
                   >
                     r
@@ -847,7 +847,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <kbd
                     className={cn(
                       'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
-                      '-me-1 ms-auto inline-flex max-h-full items-center',
+                      '-me-1 ms-auto md:inline-flex max-h-full items-center hidden',
                     )}
                   >
                     a
@@ -870,7 +870,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <kbd
                     className={cn(
                       'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
-                      '-me-1 ms-auto inline-flex max-h-full items-center',
+                      '-me-1 ms-auto hidden md:inline-flex max-h-full items-center',
                     )}
                   >
                     f
