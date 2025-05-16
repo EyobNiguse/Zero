@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { CircleAlertIcon, Inbox, ShieldAlertIcon, StopCircleIcon } from 'lucide-react';
+import { CircleAlertIcon, Inbox, ShieldAlertIcon, SidebarOpen, StopCircleIcon } from 'lucide-react';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -369,7 +369,7 @@ export function ThreadDisplay() {
                 <p className="text-md text-[#6D6D6D] dark:text-white/50">
                   Choose an email to view details or
                 </p>
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-2">
                   <Button onClick={toggleAISidebar} variant="outline">
                     Chat with Zero AI
                   </Button>
@@ -388,7 +388,7 @@ export function ThreadDisplay() {
               </div>
             </div>
             {!isSidebarOpen && (
-              <div className="fixed bottom-4 right-4 hidden md:block">
+              <div className="fixed bottom-5 right-5 hidden md:block">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -399,15 +399,15 @@ export function ThreadDisplay() {
                       <Image
                         src="/black-icon.svg"
                         alt="AI Assistant"
-                        width={20}
-                        height={20}
+                        width={22}
+                        height={22}
                         className="block dark:hidden"
                       />
                       <Image
                         src="/white-icon.svg"
                         alt="AI Assistant"
-                        width={20}
-                        height={20}
+                        width={22}
+                        height={22}
                         className="hidden dark:block"
                       />
                     </Button>
@@ -632,10 +632,8 @@ export function ThreadDisplay() {
                       )}
                     </div>
                   ))}
-                </div>
-              </ScrollArea>
-              {!isSidebarOpen && (
-                <div className="fixed bottom-4 right-4 hidden md:block">
+                 
+                  <div className="fixed bottom-5 right-5">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -646,15 +644,15 @@ export function ThreadDisplay() {
                         <Image
                           src="/black-icon.svg"
                           alt="AI Assistant"
-                          width={20}
-                          height={20}
+                          width={22}
+                          height={22}
                           className="block dark:hidden"
                         />
                         <Image
                           src="/white-icon.svg"
                           alt="AI Assistant"
-                          width={20}
-                          height={20}
+                          width={22}
+                          height={22}
                           className="hidden dark:block"
                         />
                       </Button>
@@ -662,7 +660,12 @@ export function ThreadDisplay() {
                     <TooltipContent>Toggle AI Assistant</TooltipContent>
                   </Tooltip>
                 </div>
-              )}
+         
+                </div>
+              </ScrollArea>
+              
+                
+             
             </div>
           </>
         )}

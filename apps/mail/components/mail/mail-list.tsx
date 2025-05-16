@@ -12,6 +12,7 @@ import {
   Trash,
   User,
 } from '../icons/icons';
+import { useAISidebar } from '@/components/ui/ai-sidebar';
 import {
   cn,
   FOLDERS,
@@ -424,12 +425,15 @@ const Thread = memo(
 
     const content =
       latestMessage && getThreadData ? (
-        <div className={'select-none'} onClick={onClick ? onClick(latestMessage) : undefined}>
+        <div
+          className={'hover:bg-offsetLight hover:bg-primary/5 select-none border-b md:border-none'}
+          onClick={onClick ? onClick(latestMessage) : undefined}
+        >
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative mx-1 flex cursor-pointer flex-col items-start rounded-lg border-transparent py-2 text-left text-sm transition-all hover:opacity-100',
+              'group relative mx-1 flex cursor-pointer flex-col items-start rounded-lg py-2 text-left text-sm transition-all hover:opacity-100',
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
               isKeyboardFocused && 'ring-primary/50',
@@ -560,22 +564,30 @@ const Thread = memo(
                         )}
                       >
                         {isFolderSent ? (
-                          <span className={cn('truncate text-sm md:max-w-[15ch] xl:max-w-[25ch]')}>
+                          <span
+                            className={cn(
+                              'overflow-hidden truncate text-sm md:max-w-[15ch] xl:max-w-[25ch]',
+                            )}
+                          >
                             {highlightText(latestMessage.subject, searchValue.highlight)}
                           </span>
                         ) : (
-                          <span className={cn('truncate text-sm md:max-w-[15ch] xl:max-w-[25ch]')}>
+                          <span
+                            className={cn(
+                              'overflow-hidden line-clamp-1 text-sm',
+                            )}
+                          >
                             {highlightText(
                               cleanNameDisplay(latestMessage.sender.name) || '',
                               searchValue.highlight,
                             )}
                           </span>
                         )}{' '}
-                        {!isFolderSent ? (
-                          <span className="flex items-center space-x-2">
+                        {/* {!isFolderSent ? (
+                          <span className="hidden items-center space-x-2 md:flex">
                             <RenderLabels labels={threadLabels} />
                           </span>
-                        ) : null}
+                        ) : null} */}
                       </span>
                       {getThreadData.totalReplies > 1 ? (
                         <Tooltip>
@@ -605,17 +617,23 @@ const Thread = memo(
                     {isFolderSent ? (
                       <p
                         className={cn(
-                          'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[25ch]',
+                          'mt-1 line-clamp-1 max-w-[50ch] overflow-hidden text-sm text-[#8C8C8C] md:max-w-[25ch]',
                         )}
                       >
                         {latestMessage.to.map((e) => e.email).join(', ')}
                       </p>
                     ) : (
-                      <p className={cn('mt-1 line-clamp-1 w-full min-w-0 text-sm text-[#8C8C8C]')}>
+                      <p
+                        className={cn(
+                          'mt-1 line-clamp-1 w-full min-w-0 overflow-hidden text-sm text-[#8C8C8C]',
+                        )}
+                      >
                         {highlightText(latestMessage.subject, searchValue.highlight)}
                       </p>
                     )}
-                    {getThreadData.labels ? <MailLabels labels={getThreadData.labels} /> : null}
+                    <div className="hidden md:flex">
+                      {getThreadData.labels ? <MailLabels labels={getThreadData.labels} /> : null}
+                    </div>
                   </div>
                   {emailContent && (
                     <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
@@ -632,6 +650,16 @@ const Thread = memo(
                 </div>
               </div>
             </div>
+            {threadLabels && (
+              <div className="flex w-full items-center justify-between gap-1 px-4 ml-[47px]">
+                {!isFolderSent ? (
+                  <span className="mt-0.5 items-center space-x-2">
+                    <RenderLabels labels={threadLabels} />
+                  </span>
+                ) : null}
+                {/* {getThreadData.labels ? <MailLabels labels={getThreadData.labels} /> : null} */}
+              </div>
+            )}
           </div>
         </div>
       ) : null;
@@ -926,7 +954,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-2" id="mail-list-scroll">
+            <div className="flex flex-col md:gap-2" id="mail-list-scroll">
               {items
                 .filter((data) => data.id)
                 .map((data, index) => {
@@ -982,9 +1010,54 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           <div className="h-4" />
         )}
       </div>
+      
+      {/* Toggle AI Assistant Button - Only visible on md or smaller screens */}
+      <AIToggleButton />
     </>
   );
 });
+
+// AI Toggle Button Component
+const AIToggleButton = () => {
+  const { toggleOpen: toggleAISidebar, open: isSidebarOpen } = useAISidebar();
+  
+  return (
+    !isSidebarOpen && (
+      <div className="fixed bottom-4 right-4 block lg:hidden z-50">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-12 w-12 rounded-full p-0 bg-transparent dark:bg-transparent"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAISidebar();
+              }}
+            >
+              <div className="flex items-center justify-center">
+                <Image
+                  src="/black-icon.svg"
+                  alt="AI Assistant"
+                  width={22}
+                  height={22}
+                  className="block dark:hidden"
+                />
+                <Image
+                  src="/white-icon.svg"
+                  alt="AI Assistant"
+                  width={22}
+                  height={22}
+                  className="hidden dark:block"
+                />
+              </div>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Toggle AI Assistant</TooltipContent>
+        </Tooltip>
+      </div>
+    )
+  );
+};
 
 MailList.displayName = 'MailList';
 
