@@ -3,21 +3,20 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-      args:
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-zerodotemail}
-        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-my-better-auth-secret}
-        BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-        BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-http://localhost:3000}
-        GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-        GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-        REDIS_URL: http://upstash-proxy:80
-        REDIS_TOKEN: ${REDIS_TOKEN:-upstash-local-token}
-        RESEND_API_KEY: ${RESEND_API_KEY}
-        OPENAI_API_KEY: ${OPENAI_API_KEY}
-        AI_SYSTEM_PROMPT: ${AI_SYSTEM_PROMPT}
-        GROQ_API_KEY: ${GROQ_API_KEY}
-        GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_GENERATIVE_AI_API_KEY}
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://cf-worker.example}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-zerodotemail}
+      REDIS_URL: ${REDIS_URL}
+      REDIS_TOKEN: ${REDIS_TOKEN:-upstash-local-token}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      AI_SYSTEM_PROMPT: ${AI_SYSTEM_PROMPT}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      NEXT_PUBLIC_ELEVENLABS_AGENT_ID: ${NEXT_PUBLIC_ELEVENLABS_AGENT_ID}
+      NEXT_PUBLIC_IMAGE_PROXY: ${NEXT_PUBLIC_IMAGE_PROXY}
+      NEXT_PUBLIC_POSTHOG_KEY: ${NEXT_PUBLIC_POSTHOG_KEY}
+      NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST}
+      NEXT_PUBLIC_IMAGE_API_URL: ${NEXT_PUBLIC_IMAGE_API_URL}
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +42,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-zerodotemail}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     command: ['bun', 'run', 'db:migrate']
     restart: 'no'
 

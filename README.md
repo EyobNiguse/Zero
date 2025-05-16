@@ -81,7 +81,7 @@ You can set up Zero in two ways:
      ```
    - Configure your environment variables (see below)
    - Setup cloudflare with `bun run cf-install`, you will need to run this everytime there is a `.env` change
-   - Start the database with the provided docker compose setup: `bun docker:up`
+   - Start the database with the provided docker compose setup: `bun docker:db:up`
    - Initialize the database: `bun db:push`
 
 3. **Start the App**
