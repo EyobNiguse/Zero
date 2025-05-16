@@ -22,6 +22,7 @@ import { format } from 'date-fns-tz';
 import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { useState } from 'react';
+import { env } from '@/lib/env';
 import VoiceChat from './voice';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -142,7 +143,7 @@ export function AIChat() {
   const { attach, track, refetch: refetchBilling } = useBilling();
 
   const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
-    api: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+    api: `${env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
     fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
     maxSteps: 5,
     body: {
