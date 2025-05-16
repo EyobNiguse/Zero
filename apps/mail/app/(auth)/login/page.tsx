@@ -22,7 +22,7 @@ export default function LoginPage() {
       return {
         id: provider.id,
         name: provider.name,
-        enabled: isProviderEnabled(provider, env as Record<string, string>),
+        enabled: isProviderEnabled(provider, env as unknown as Record<string, string>),
         required: provider.required,
         envVarInfo: provider.envVarInfo,
         envVarStatus,
