@@ -29,16 +29,16 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { ChevronLeft, Command, RefreshCcw, Settings2Icon } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
-import { ChevronLeft, Command, RefreshCcw, Settings2Icon } from 'lucide-react';
+import AISidebar, { useAISidebar } from '@/components/ui/ai-sidebar';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
@@ -290,7 +290,7 @@ export function MailLayout() {
             minSize={40}
             maxSize={50}
             className={cn(
-              `bg-panelLight dark:bg-panelDark w-fit md:rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`,
+              `bg-panelLight dark:bg-panelDark w-fit border border-[#E7E7E7] shadow-sm md:rounded-2xl lg:flex lg:shadow-sm dark:border-[#252525]`,
               isDesktop && threadId && 'hidden lg:block',
             )}
           >
@@ -377,14 +377,14 @@ export function MailLayout() {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle className="mr-0.5 opacity-0 hidden md:block" />
+          <ResizableHandle className="mr-0.5 hidden opacity-0 md:block" />
 
           {isDesktop && (
             <ResizablePanel
               className={cn(
                 'bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
                 // Only show on md screens and larger when there is a threadId
-                !threadId && 'hidden lg:block'
+                !threadId && 'hidden lg:block',
               )}
               defaultSize={30}
               minSize={30}
@@ -397,7 +397,7 @@ export function MailLayout() {
 
           {/* Mobile Thread View */}
           {isMobile && threadId && (
-            <div className="fixed inset-0 z-50 bg-panelLight dark:bg-panelDark">
+            <div className="bg-panelLight dark:bg-panelDark fixed inset-0 z-50">
               <div className="flex h-full flex-col">
                 <div className="h-full overflow-y-auto outline-none">
                   <ThreadDisplay />
@@ -405,6 +405,8 @@ export function MailLayout() {
               </div>
             </div>
           )}
+
+          <AISidebar />
         </ResizablePanelGroup>
       </div>
     </TooltipProvider>

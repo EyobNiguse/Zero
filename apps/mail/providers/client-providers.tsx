@@ -18,24 +18,22 @@ export function ClientProviders({ children }: PropsWithChildren) {
 
   return (
     <NuqsAdapter>
-      <AISidebarProvider>
-        <JotaiProvider>
-          <ThemeProvider
-            attribute="class"
-            enableSystem
-            disableTransitionOnChange
-            defaultTheme={theme}
-          >
-            <SidebarProvider>
-              <PostHogProvider>
-                {children}
-                <CustomToaster />
-                <Analytics />
-              </PostHogProvider>
-            </SidebarProvider>
-          </ThemeProvider>
-        </JotaiProvider>
-      </AISidebarProvider>
+      <JotaiProvider>
+        <ThemeProvider
+          attribute="class"
+          enableSystem
+          disableTransitionOnChange
+          defaultTheme={theme}
+        >
+          <SidebarProvider>
+            <PostHogProvider>
+              {children}
+              <CustomToaster />
+              <Analytics />
+            </PostHogProvider>
+          </SidebarProvider>
+        </ThemeProvider>
+      </JotaiProvider>
     </NuqsAdapter>
   );
 }
