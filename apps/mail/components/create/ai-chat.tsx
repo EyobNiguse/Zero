@@ -126,25 +126,40 @@ const ExampleQueries = ({ onQueryClick }: { onQueryClick: (query: string) => voi
   );
 };
 
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'data' | 'system';
+  parts: Array<{
+    type: string;
+    text?: string;
+    toolInvocation?: {
+      toolName: string;
+      result?: {
+        threads?: Array<{ id: string; title: string; snippet: string }>;
+      };
+    };
+  }>;
+}
+
 export interface AIChatProps {
-  messages?: any[];
-  input?: string;
-  setInput?: (input: string) => void;
+  messages: Message[];
+  input: string;
+  setInput: (input: string) => void;
   error?: Error;
-  handleSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
-  status?: string;
-  stop?: () => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  status: string;
+  stop: () => void;
 }
 
 export function AIChat({
-  messages: externalMessages,
-  input: externalInput,
-  setInput: externalSetInput,
-  error: externalError,
-  handleSubmit: externalHandleSubmit,
-  status: externalStatus,
-  stop: externalStop,
-}: AIChatProps = {}) {
+  messages,
+  input,
+  setInput,
+  error,
+  handleSubmit,
+  status,
+  stop,
+}: AIChatProps): React.ReactElement {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -220,15 +235,6 @@ export function AIChat({
     },
   });
 
-  // Use external state if provided, otherwise use internal state
-  const messages = externalMessages || internalMessages;
-  const input = externalInput !== undefined ? externalInput : internalInput;
-  const setInput = externalSetInput || internalSetInput;
-  const error = externalError || internalError;
-  const handleSubmit = externalHandleSubmit || internalHandleSubmit;
-  const status = externalStatus || internalStatus;
-  const stop = externalStop || internalStop;
-
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -301,14 +307,18 @@ export function AIChat({
 
                   {/* Threads below the bubble */}
                   {toolParts.map((part, idx) =>
-                    'result' in part.toolInvocation && 'threads' in part.toolInvocation.result ? (
-                      <RenderThreads threads={part.toolInvocation.result.threads} key={idx} />
-                    ) : 'result' in part.toolInvocation ? (
-                      <span className="text-muted-foreground flex gap-1 text-xs">
+                    part.toolInvocation && 'result' in part.toolInvocation && 
+                    part.toolInvocation.result && 'threads' in part.toolInvocation.result ? (
+                      <RenderThreads 
+                        threads={part.toolInvocation.result.threads ?? []} 
+                        key={idx} 
+                      />
+                    ) : part.toolInvocation && 'result' in part.toolInvocation ? (
+                      <span key={idx} className="text-muted-foreground flex gap-1 text-xs">
                         <CheckCircle2 className="h-4 w-4" />
                         Used tool: {part.toolInvocation.toolName}
                       </span>
-                    ) : null,
+                    ) : null
                   )}
                   {textParts.length > 0 && (
                     <div
@@ -320,7 +330,7 @@ export function AIChat({
                       )}
                     >
                       {textParts.map((part) => (
-                        <Markdown key={part.text}>{part.text}</Markdown>
+                        part.text && <Markdown key={part.text}>{part.text || ' '}</Markdown>
                       ))}
                     </div>
                   )}
