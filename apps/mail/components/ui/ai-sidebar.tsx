@@ -8,29 +8,42 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './dialog';
+import {
+  useState,
+  useEffect,
+  useContext,
+  createContext,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { useState, useEffect, useContext, createContext, useCallback, useMemo, useRef } from 'react';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
-import { useEditor } from '@/components/providers/editor-provider';
+import { usePathname, useSearchParams, useParams } from 'next/navigation';
+import { useSearchValue } from '@/hooks/use-search-value';
+import { useQueryClient } from '@tanstack/react-query';
 import { AIChat } from '@/components/create/ai-chat';
-import { useChat } from '@ai-sdk/react';
+import { useTRPC } from '@/providers/query-provider';
 import { X, Paper } from '@/components/icons/icons';
 import { GitBranchPlus, Plus } from 'lucide-react';
+import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { useLabels } from '@/hooks/use-labels';
 import { Gauge } from '@/components/ui/gauge';
-import { usePathname, useSearchParams, useParams } from 'next/navigation';
 import { useCustomer } from 'autumn-js/next';
+import { useChat } from '@ai-sdk/react';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
+import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import Image from 'next/image';
 import { env } from '@/lib/env';
+import Image from 'next/image';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface AISidebarProps {
   className?: string;
@@ -82,10 +95,14 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { open, setOpen } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
   const pathname = usePathname();
-  const params = useSearchParams();
+  const { attach, customer, chatMessages, track, refetch: refetchBilling } = useBilling();
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  const [threadId] = useQueryState('threadId');
   const { folder } = useParams<{ folder: string }>();
-  const { chatMessages, attach, customer } = useBilling();
-  
+  const { refetch: refetchLabels } = useLabels();
+  const [searchValue] = useSearchValue();
+
   // Initialize shared chat state that will be used by both desktop and mobile views
   // This ensures conversation continuity when switching between viewport sizes
   const chatState = useChat({
@@ -93,9 +110,9 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
     fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
     maxSteps: 5,
     body: {
-      threadId: params.get('threadId') ?? undefined,
+      threadId: threadId ?? undefined,
       currentFolder: folder ?? undefined,
-      currentFilter: params.get('q') ?? undefined,
+      currentFilter: searchValue.value ?? undefined,
     },
     onError(error) {
       console.error('Error in useChat', error);
@@ -105,6 +122,37 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
+    },
+    onFinish: () => {},
+    async onToolCall({ toolCall }) {
+      console.warn('toolCall', toolCall);
+      switch (toolCall.toolName) {
+        case Tools.CreateLabel:
+        case Tools.DeleteLabel:
+          await refetchLabels();
+          break;
+        case Tools.SendEmail:
+          await queryClient.invalidateQueries({
+            queryKey: trpc.mail.listThreads.queryKey({ folder: 'sent' }),
+          });
+          break;
+        case Tools.MarkThreadsRead:
+        case Tools.MarkThreadsUnread:
+        case Tools.ModifyLabels:
+        case Tools.BulkDelete:
+          console.log('modifyLabels', toolCall.args);
+          await refetchLabels();
+          await Promise.all(
+            (toolCall.args as { threadIds: string[] }).threadIds.map((id) =>
+              queryClient.invalidateQueries({
+                queryKey: trpc.mail.get.queryKey({ id }),
+              }),
+            ),
+          );
+          break;
+      }
+      await track({ featureId: 'chat-messages', value: 1 });
+      await refetchBilling();
     },
   });
 
@@ -151,27 +199,29 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const searchParams = useSearchParams();
   const previousPathRef = useRef(pathname);
   const previousSearchParamsRef = useRef(searchParams.toString());
-  
+
   // Close the popup when URL changes in any way (path or search params)
   useEffect(() => {
     const currentPath = pathname;
     const currentSearchParams = searchParams.toString();
-    
+
     // Check if we're on small screens and if the URL has changed in any way
-    if (open && 
-        (previousPathRef.current !== currentPath || 
-         previousSearchParamsRef.current !== currentSearchParams)) {
+    if (
+      open &&
+      (previousPathRef.current !== currentPath ||
+        previousSearchParamsRef.current !== currentSearchParams)
+    ) {
       // Only close if we're on small screens (sm or smaller)
       if (typeof window !== 'undefined' && window.innerWidth < 640) {
         setOpen(false);
       }
     }
-    
+
     // Update refs with current values
     previousPathRef.current = currentPath;
     previousSearchParamsRef.current = currentSearchParams;
   }, [pathname, searchParams, open, setOpen]);
-  
+
   if (!isMailPage) {
     return <>{children}</>;
   }
@@ -191,7 +241,7 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
               defaultSize={20}
               minSize={20}
               maxSize={35}
-              className="bg-panelLight dark:bg-panelDark mr-1.5 mt-1 h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525] hidden xl:block"
+              className="bg-panelLight dark:bg-panelDark mr-1.5 mt-1 hidden h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm xl:block dark:border-[#252525]"
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
@@ -313,9 +363,9 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                     </div>
                   </div>
                   <div className="b relative flex-1 overflow-hidden">
-                    <AIChat 
-                      key={resetKey} 
-                      {...chatState} 
+                    <AIChat
+                      key={resetKey}
+                      {...chatState}
                       // Pass the chat state to preserve conversation when switching between desktop/mobile
                     />
                   </div>
@@ -323,16 +373,10 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
               </div>
             </ResizablePanel>
             {/* Mobile popup - only visible on smaller screens */}
-            <div className="fixed z-50 xl:hidden backdrop-blur-sm
-                        inset-0 flex items-center justify-center p-4
-                        sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0 xl:hidden">
               {/* Chat popup container */}
-              <div className="bg-panelLight dark:bg-panelDark overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg dark:border-[#252525]
-                          w-full max-w-[800px]
-                          sm:max-w-[500px]">
-                <div className="flex flex-col
-                            h-[90vh] w-full
-                            sm:h-[500px] sm:max-h-[80vh]">
+              <div className="bg-panelLight dark:bg-panelDark w-full max-w-[800px] overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg sm:max-w-[500px] dark:border-[#252525]">
+                <div className="flex h-[90vh] w-full flex-col sm:h-[500px] sm:max-h-[80vh]">
                   <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-1 py-2 pb-1 dark:border-[#252525]">
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
@@ -451,9 +495,9 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                     </div>
                   </div>
                   <div className="relative flex-1 overflow-hidden">
-                    <AIChat 
-                      key={resetKey} 
-                      {...chatState} 
+                    <AIChat
+                      key={resetKey}
+                      {...chatState}
                       // Pass the same chat state to ensure conversation continuity with desktop view
                     />
                   </div>

@@ -164,76 +164,8 @@ export function AIChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { refetch, chatMessages } = useBilling();
   const [threadId] = useQueryState('threadId');
-  const { refetch: refetchLabels } = useLabels();
-  const { refetch: refetchStats } = useStats();
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const { refetch: refetchThread } = useThread(threadId);
-  const { folder } = useParams<{ folder: string }>();
-  const [searchValue] = useSearchValue();
-  const { attach, track, refetch: refetchBilling } = useBilling();
-
-  // Use internal chat state if external state is not provided
-  const { 
-    messages: internalMessages, 
-    input: internalInput, 
-    setInput: internalSetInput, 
-    error: internalError, 
-    handleSubmit: internalHandleSubmit, 
-    status: internalStatus, 
-    stop: internalStop 
-  } = useChat({
-    api: `${env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
-    fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
-    maxSteps: 5,
-    body: {
-      threadId: threadId ?? undefined,
-      currentFolder: folder ?? undefined,
-      currentFilter: searchValue.value ?? undefined,
-    },
-    onError(error) {
-      console.error('Error in useChat', error);
-      toast.error('Error, please try again later');
-    },
-    onResponse: (response) => {
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-    },
-    onFinish: () => {},
-    async onToolCall({ toolCall }) {
-      console.warn('toolCall', toolCall);
-      switch (toolCall.toolName) {
-        case Tools.CreateLabel:
-        case Tools.DeleteLabel:
-          await refetchLabels();
-          break;
-        case Tools.SendEmail:
-          await queryClient.invalidateQueries({
-            queryKey: trpc.mail.listThreads.queryKey({ folder: 'sent' }),
-          });
-          break;
-        case Tools.MarkThreadsRead:
-        case Tools.MarkThreadsUnread:
-        case Tools.ModifyLabels:
-        case Tools.BulkDelete:
-          console.log('modifyLabels', toolCall.args);
-          await refetchLabels();
-          await Promise.all(
-            (toolCall.args as { threadIds: string[] }).threadIds.map((id) =>
-              queryClient.invalidateQueries({
-                queryKey: trpc.mail.get.queryKey({ id }),
-              }),
-            ),
-          );
-          break;
-      }
-      await track({ featureId: 'chat-messages', value: 1 });
-      await refetchBilling();
-    },
-  });
+  const { attach, chatMessages } = useBilling();
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -307,18 +239,17 @@ export function AIChat({
 
                   {/* Threads below the bubble */}
                   {toolParts.map((part, idx) =>
-                    part.toolInvocation && 'result' in part.toolInvocation && 
-                    part.toolInvocation.result && 'threads' in part.toolInvocation.result ? (
-                      <RenderThreads 
-                        threads={part.toolInvocation.result.threads ?? []} 
-                        key={idx} 
-                      />
+                    part.toolInvocation &&
+                    'result' in part.toolInvocation &&
+                    part.toolInvocation.result &&
+                    'threads' in part.toolInvocation.result ? (
+                      <RenderThreads threads={part.toolInvocation.result.threads ?? []} key={idx} />
                     ) : part.toolInvocation && 'result' in part.toolInvocation ? (
                       <span key={idx} className="text-muted-foreground flex gap-1 text-xs">
                         <CheckCircle2 className="h-4 w-4" />
                         Used tool: {part.toolInvocation.toolName}
                       </span>
-                    ) : null
+                    ) : null,
                   )}
                   {textParts.length > 0 && (
                     <div
@@ -329,9 +260,10 @@ export function AIChat({
                           : 'overflow-wrap-anywhere dark:bg-sidebar mr-auto break-words border bg-[#f0f0f0] p-2',
                       )}
                     >
-                      {textParts.map((part) => (
-                        part.text && <Markdown key={part.text}>{part.text || ' '}</Markdown>
-                      ))}
+                      {textParts.map(
+                        (part) =>
+                          part.text && <Markdown key={part.text}>{part.text || ' '}</Markdown>,
+                      )}
                     </div>
                   )}
                 </div>
