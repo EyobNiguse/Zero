@@ -1020,12 +1020,13 @@ const AIToggleButton = () => {
 
   return (
     !isSidebarOpen && (
-      <div className="fixed bottom-4 right-4 z-50 block lg:hidden">
+      <div className="fixed bottom-4 right-4 z-50">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="ghost"
-              className="h-12 w-12 rounded-full bg-transparent p-0 dark:bg-transparent"
+              variant="outline"
+              size="icon"
+              className="dark:bg-sidebar h-12 w-12 rounded-full"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleAISidebar();
