@@ -49,6 +49,7 @@ import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
+import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
@@ -407,6 +408,7 @@ export function MailLayout() {
           )}
 
           <AISidebar />
+          <AIToggleButton />
         </ResizablePanelGroup>
       </div>
     </TooltipProvider>

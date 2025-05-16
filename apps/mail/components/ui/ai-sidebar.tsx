@@ -161,32 +161,6 @@ export function AISidebar({ className }: AISidebarProps) {
     setResetKey((prev) => prev + 1);
   }, []);
 
-  const searchParams = useSearchParams();
-  const previousPathRef = useRef(pathname);
-  const previousSearchParamsRef = useRef(searchParams.toString());
-
-  // Close the popup when URL changes in any way (path or search params)
-  useEffect(() => {
-    const currentPath = pathname;
-    const currentSearchParams = searchParams.toString();
-
-    // Check if we're on small screens and if the URL has changed in any way
-    if (
-      open &&
-      (previousPathRef.current !== currentPath ||
-        previousSearchParamsRef.current !== currentSearchParams)
-    ) {
-      // Only close if we're on small screens (sm or smaller)
-      if (typeof window !== 'undefined' && window.innerWidth < 640) {
-        setOpen(false);
-      }
-    }
-
-    // Update refs with current values
-    previousPathRef.current = currentPath;
-    previousSearchParamsRef.current = currentSearchParams;
-  }, [pathname, searchParams, open, setOpen]);
-
   return (
     open && (
       <>

@@ -30,9 +30,16 @@ import { toast } from 'sonner';
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
   const { data: getThread } = useThread(thread.id);
+  const [, setAiSidebarOpen] = useQueryState('aiSidebar');
+
+  const handleClick = () => {
+    setThreadId(thread.id);
+    setAiSidebarOpen(null);
+  };
+
   return getThread?.latest ? (
     <div
-      onClick={() => setThreadId(thread.id)}
+      onClick={handleClick}
       key={thread.id}
       className="hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer rounded-lg"
     >

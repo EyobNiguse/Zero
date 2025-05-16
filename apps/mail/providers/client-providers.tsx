@@ -1,6 +1,5 @@
 'use client';
 
-import { AISidebarProvider } from '@/components/ui/ai-sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { PostHogProvider } from '@/lib/posthog-provider';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
