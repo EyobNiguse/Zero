@@ -369,7 +369,7 @@ export function ThreadDisplay() {
                 <p className="text-md text-[#6D6D6D] dark:text-white/50">
                   Choose an email to view details or
                 </p>
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-2">
                   <Button onClick={toggleAISidebar} variant="outline">
                     Chat with Zero AI
                   </Button>

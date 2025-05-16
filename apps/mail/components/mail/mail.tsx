@@ -33,7 +33,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
-import { Command, RefreshCcw, Settings2Icon } from 'lucide-react';
+import { ChevronLeft, Command, RefreshCcw, Settings2Icon } from 'lucide-react';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
@@ -289,7 +289,10 @@ export function MailLayout() {
             defaultSize={40}
             minSize={40}
             maxSize={50}
-            className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+            className={cn(
+              `bg-panelLight dark:bg-panelDark w-fit md:rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`,
+              isDesktop && threadId && 'hidden lg:block',
+            )}
           >
             <div className="w-full md:h-[calc(100dvh-0.5rem)]">
               <div
@@ -373,7 +376,9 @@ export function MailLayout() {
               </div>
             </div>
           </ResizablePanel>
-          <ResizableHandle className="mr-0.5 opacity-0" />
+
+          <ResizableHandle className="mr-0.5 opacity-0 hidden md:block" />
+
           {isDesktop && (
             <ResizablePanel
               className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
@@ -386,25 +391,15 @@ export function MailLayout() {
             </ResizablePanel>
           )}
 
-          {/* Mobile Drawer */}
-          {isMobile && (
-            <Drawer
-              open={!!threadId}
-              onOpenChange={(isOpen) => {
-                if (!isOpen) handleClose();
-              }}
-            >
-              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-3rem)] p-0">
-                <DrawerHeader className="sr-only">
-                  <DrawerTitle>Email Details</DrawerTitle>
-                </DrawerHeader>
-                <div className="flex h-full flex-col">
-                  <div className="h-full overflow-y-auto outline-none">
-                    {threadId ? <ThreadDisplay /> : null}
-                  </div>
+          {/* Mobile Thread View */}
+          {isMobile && threadId && (
+            <div className="fixed inset-0 z-50 bg-panelLight dark:bg-panelDark">
+              <div className="flex h-full flex-col">
+                <div className="h-full overflow-y-auto outline-none">
+                  <ThreadDisplay />
                 </div>
-              </DrawerContent>
-            </Drawer>
+              </div>
+            </div>
           )}
         </ResizablePanelGroup>
       </div>
