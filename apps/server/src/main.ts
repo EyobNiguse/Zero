@@ -1,40 +1,30 @@
 import { env, WorkerEntrypoint } from 'cloudflare:workers';
 import { mailtoHandler } from './routes/mailto-handler';
+import { contextStorage } from 'hono/context-storage';
 import { routePartykitRequest } from 'partyserver';
-import { partyserverMiddleware } from 'hono-party';
 import { trpcServer } from '@hono/trpc-server';
 import { DurableMailbox } from './lib/party';
 import { chatHandler } from './routes/chat';
-import type { HonoVariables } from './ctx';
+import type { HonoContext } from './ctx';
 import { createAuth } from './lib/auth';
 import { createDb } from '@zero/db';
 import { appRouter } from './trpc';
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
 
-export { DurableMailbox };
-
-const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
-  .use(
-    '*',
-    cors({
-      origin: () => env.NEXT_PUBLIC_APP_URL,
-      credentials: true,
-      allowHeaders: ['Content-Type', 'Authorization'],
-      exposeHeaders: ['X-Zero-Redirect'],
-    }),
-  )
+const api = new Hono<HonoContext>()
+  .use(contextStorage())
   .use('*', async (c, next) => {
     const db = createDb(env.HYPERDRIVE.connectionString);
     c.set('db', db);
-    const auth = createAuth(c);
+    const auth = createAuth();
     c.set('auth', auth);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     c.set('session', session);
     await next();
   })
-  .post('/chat', async (c) => chatHandler(c))
-  .get('/mailto-handler', async (c) => mailtoHandler(c))
+  .post('/chat', chatHandler)
+  .get('/mailto-handler', mailtoHandler)
   .on(['GET', 'POST'], '/auth/*', (c) => c.var.auth.handler(c.req.raw))
   .use(
     trpcServer({
@@ -59,30 +49,29 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
     );
   });
 
-const app = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
+const app = new Hono<HonoContext>()
+  .use(
+    '*',
+    cors({
+      origin: () => env.NEXT_PUBLIC_APP_URL,
+      credentials: true,
+      allowHeaders: ['Content-Type', 'Authorization'],
+      exposeHeaders: ['X-Zero-Redirect'],
+    }),
+  )
   .route('/api', api)
   .get('/health', (c) => c.json({ message: 'Zero Server is Up!' }))
   .get('/', (c) => {
     return c.redirect(`${env.NEXT_PUBLIC_APP_URL}`);
-  })
-  .use(
-    '*',
-    partyserverMiddleware({
-      onError(error) {
-        console.log('Error in party middleware:', error);
-      },
-      options: {
-        prefix: 'zero',
-      },
-    }),
-  );
+  });
 
 export default class extends WorkerEntrypoint<typeof env> {
-  fetch(request: Request): Response | Promise<Response> {
+  async fetch(request: Request): Promise<Response> {
     if (request.url.includes('/zero/durable-mailbox')) {
-      return routePartykitRequest(request, env as unknown as Record<string, unknown>, {
+      const res = await routePartykitRequest(request, env as unknown as Record<string, unknown>, {
         prefix: 'zero',
-      }) as Promise<Response>;
+      });
+      if (res) return res;
     }
     return app.fetch(request, this.env, this.ctx);
   }
@@ -112,3 +101,5 @@ export default class extends WorkerEntrypoint<typeof env> {
     }
   }
 }
+
+export { DurableMailbox };

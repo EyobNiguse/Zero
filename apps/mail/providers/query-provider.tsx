@@ -13,6 +13,7 @@ import { CACHE_BURST_KEY } from '@/lib/constants';
 import type { PropsWithChildren } from 'react';
 import { get, set, del } from 'idb-keyval';
 import superjson from 'superjson';
+import { env } from '@/lib/env';
 import { toast } from 'sonner';
 
 function createIDBPersister(idbValidKey: IDBValidKey = 'zero-query-cache') {
@@ -66,19 +67,33 @@ export const makeQueryClient = (session: Session | null) =>
     },
   });
 
-let browserQueryClient: QueryClient | undefined = undefined;
+let browserQueryClient = {
+  queryClient: undefined,
+  session: null,
+} as {
+  queryClient: QueryClient | undefined;
+  session: Session | null;
+};
 
 const getQueryClient = (session: Session | null) => {
   if (typeof window === 'undefined') {
     return makeQueryClient(session);
   } else {
-    if (!browserQueryClient) browserQueryClient = makeQueryClient(session);
-    return browserQueryClient;
+    if (
+      !browserQueryClient.queryClient ||
+      !browserQueryClient.session ||
+      browserQueryClient.session.user.id !== session?.user.id ||
+      browserQueryClient.session.connectionId !== session?.connectionId
+    ) {
+      browserQueryClient.queryClient = makeQueryClient(session);
+      browserQueryClient.session = session;
+    }
+    return browserQueryClient.queryClient;
   }
 };
 
 const getUrl = () => {
-  return process.env.NEXT_PUBLIC_BACKEND_URL + '/api/trpc';
+  return env.NEXT_PUBLIC_BACKEND_URL + '/api/trpc';
 };
 
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();

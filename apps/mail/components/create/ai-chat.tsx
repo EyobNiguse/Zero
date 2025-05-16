@@ -7,6 +7,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import { useTRPC } from '@/providers/query-provider';
 import { Markdown } from '@react-email/components';
 import { CurvedArrow, Stop } from '../icons/icons';
+import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
@@ -21,15 +22,24 @@ import { format } from 'date-fns-tz';
 import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { useState } from 'react';
+import { env } from '@/lib/env';
 import VoiceChat from './voice';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
   const { data: getThread } = useThread(thread.id);
+  const [, setAiSidebarOpen] = useQueryState('aiSidebar');
+
+  const handleClick = () => {
+    setThreadId(thread.id);
+    setAiSidebarOpen(null);
+  };
+
   return getThread?.latest ? (
     <div
-      onClick={() => setThreadId(thread.id)}
+      onClick={handleClick}
       key={thread.id}
       className="hover:bg-offsetLight/30 dark:hover:bg-offsetDark/30 cursor-pointer rounded-lg"
     >
@@ -123,50 +133,46 @@ const ExampleQueries = ({ onQueryClick }: { onQueryClick: (query: string) => voi
   );
 };
 
-export function AIChat() {
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'data' | 'system';
+  parts: Array<{
+    type: string;
+    text?: string;
+    toolInvocation?: {
+      toolName: string;
+      result?: {
+        threads?: Array<{ id: string; title: string; snippet: string }>;
+      };
+    };
+  }>;
+}
+
+export interface AIChatProps {
+  messages: Message[];
+  input: string;
+  setInput: (input: string) => void;
+  error?: Error;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  status: string;
+  stop: () => void;
+}
+
+export function AIChat({
+  messages,
+  input,
+  setInput,
+  error,
+  handleSubmit,
+  status,
+  stop,
+}: AIChatProps): React.ReactElement {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { refetch, chatMessages } = useBilling();
   const [threadId] = useQueryState('threadId');
-  const { refetch: refetchLabels } = useLabels();
-  const { refetch: refetchStats } = useStats();
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const { refetch: refetchThread } = useThread(threadId);
-  const { folder } = useParams<{ folder: string }>();
-  const [searchValue] = useSearchValue();
-  const { attach } = useBilling();
-
-  const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
-    api: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
-    fetch: (url, options) => fetch(url, { ...options, method: 'POST', credentials: 'include' }),
-    maxSteps: 5,
-    body: {
-      threadId: threadId ?? undefined,
-      currentFolder: folder ?? undefined,
-      currentFilter: searchValue.value ?? undefined,
-    },
-  });
-
-  const prevStatusRef = useRef(status);
-
-  const refetchAll = useCallback(() => {
-    refetchLabels();
-    refetchStats();
-    if (threadId) refetchThread();
-    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
-    refetch();
-    console.log('refetching all');
-  }, [threadId, queryClient, trpc.mail.get.queryKey]);
-
-  useEffect(() => {
-    if (prevStatusRef.current === 'streaming' && status === 'ready') {
-      refetchAll();
-    }
-    prevStatusRef.current = status;
-  }, [status]);
+  const { attach, chatMessages } = useBilling();
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -192,6 +198,8 @@ export function AIChat() {
         });
     }
   };
+
+  // Already defined above
 
   return (
     <div className="flex h-full flex-col">
@@ -238,10 +246,13 @@ export function AIChat() {
 
                   {/* Threads below the bubble */}
                   {toolParts.map((part, idx) =>
-                    'result' in part.toolInvocation && 'threads' in part.toolInvocation.result ? (
-                      <RenderThreads threads={part.toolInvocation.result.threads} key={idx} />
-                    ) : 'result' in part.toolInvocation ? (
-                      <span className="text-muted-foreground flex gap-1 text-xs">
+                    part.toolInvocation &&
+                    'result' in part.toolInvocation &&
+                    part.toolInvocation.result &&
+                    'threads' in part.toolInvocation.result ? (
+                      <RenderThreads threads={part.toolInvocation.result.threads ?? []} key={idx} />
+                    ) : part.toolInvocation && 'result' in part.toolInvocation ? (
+                      <span key={idx} className="text-muted-foreground flex gap-1 text-xs">
                         <CheckCircle2 className="h-4 w-4" />
                         Used tool: {part.toolInvocation.toolName}
                       </span>
@@ -253,12 +264,13 @@ export function AIChat() {
                         'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
                         message.role === 'user'
                           ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
-                          : 'overflow-wrap-anywhere mr-auto break-words bg-[#f0f0f0] p-2 dark:bg-[#313131]',
+                          : 'overflow-wrap-anywhere dark:bg-sidebar mr-auto break-words border bg-[#f0f0f0] p-2',
                       )}
                     >
-                      {textParts.map((part) => (
-                        <Markdown key={part.text}>{part.text}</Markdown>
-                      ))}
+                      {textParts.map(
+                        (part) =>
+                          part.text && <Markdown key={part.text}>{part.text || ' '}</Markdown>,
+                      )}
                     </div>
                   )}
                 </div>

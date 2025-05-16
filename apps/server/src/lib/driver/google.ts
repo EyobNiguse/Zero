@@ -161,9 +161,12 @@ export class GoogleMailManager implements MailManager {
               userId: 'me',
               id: label.id ?? undefined,
             });
+            const count = label.name === 'TRASH' 
+                          ? Number(res.data.threadsTotal) 
+                          : Number(res.data.threadsUnread);
             return {
               label: res.data.name ?? res.data.id ?? '',
-              count: Number(res.data.threadsUnread) ?? undefined,
+              count: count ?? undefined,
             };
           }),
         );
@@ -1008,7 +1011,7 @@ export class GoogleMailManager implements MailManager {
           isFatal,
         },
       );
-      if (isFatal && this.config.c) await deleteActiveConnection(this.config.c);
+      if (isFatal) await deleteActiveConnection();
       throw new StandardizedError(error, operation, context);
     }
   }
@@ -1029,7 +1032,7 @@ export class GoogleMailManager implements MailManager {
         stack: error.stack,
         isFatal,
       });
-      if (isFatal && this.config.c) void deleteActiveConnection(this.config.c);
+      if (isFatal) void deleteActiveConnection();
       throw new StandardizedError(error, operation, context);
     }
   }
