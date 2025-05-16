@@ -445,7 +445,15 @@
           "goToArchive": "Go to Archive",
           "goToBin": "Go to Bin",
           "scrollDown": "Scroll down in mail list",
-          "scrollUp": "Scroll up in mail list"
+          "scrollUp": "Scroll up in mail list",
+          "goToSettings": "Go to Settings",
+          "showImportant": "Show important",
+          "showAllMail": "Show all mail",
+          "showPersonal": "Show personal",
+          "showUpdates": "Show updates",
+          "showPromotions": "Show promotions",
+          "showUnread": "Show unread",
+          "selectUnderCursor": "Select under cursor"
         }
       },
       "labels": {

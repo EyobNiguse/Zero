@@ -10,7 +10,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import Link from 'next/link';
+import { env } from '@/lib/env';
 
 interface EnvVarStatus {
   name: string;
@@ -121,7 +121,7 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
       toast.promise(
         signIn.social({
           provider: provider.id as any,
-          callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+          callbackURL: `${env.NEXT_PUBLIC_APP_URL}/mail`,
         }),
         {
           error: 'Login redirect failed',

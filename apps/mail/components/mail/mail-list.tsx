@@ -797,15 +797,24 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const isKeyPressed = useKeyState();
 
   const getSelectMode = useCallback((): MailSelectMode => {
+    const isAltPressed = isKeyPressed('Alt') || isKeyPressed('AltLeft') || isKeyPressed('AltRight');
+
+    const isShiftPressed =
+      isKeyPressed('Shift') || isKeyPressed('ShiftLeft') || isKeyPressed('ShiftRight');
+
     if (isKeyPressed('Control') || isKeyPressed('Meta')) {
       return 'mass';
     }
-    if (isKeyPressed('Shift')) {
-      return 'range';
-    }
-    if (isKeyPressed('Alt') && isKeyPressed('Shift')) {
+
+    if (isAltPressed && isShiftPressed) {
+      console.log('Select All Below mode activated'); // Debug log
       return 'selectAllBelow';
     }
+
+    if (isShiftPressed) {
+      return 'range';
+    }
+
     return 'single';
   }, [isKeyPressed]);
 
@@ -815,46 +824,76 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const handleSelectMail = useCallback(
     (message: ParsedMessage) => {
       const itemId = message.threadId ?? message.id;
-      switch (getSelectMode()) {
+      const currentMode = getSelectMode();
+      console.log('Selection mode:', currentMode, 'for item:', itemId);
+
+      switch (currentMode) {
         case 'mass': {
           const newSelected = mail.bulkSelected.includes(itemId)
             ? mail.bulkSelected.filter((id) => id !== itemId)
             : [...mail.bulkSelected, itemId];
+          console.log('Mass selection mode - selected items:', newSelected.length);
           return setMail({ ...mail, bulkSelected: newSelected });
         }
+        case 'selectAllBelow': {
+          const clickedIndex = items.findIndex((item) => item.id === itemId);
+          console.log(
+            'SelectAllBelow - clicked index:',
+            clickedIndex,
+            'total items:',
+            items.length,
+          );
+
+          if (clickedIndex !== -1) {
+            const itemsBelow = items.slice(clickedIndex);
+            const idsBelow = itemsBelow.map((item) => item.id);
+            console.log('Selecting all items below - count:', idsBelow.length);
+            return setMail({ ...mail, bulkSelected: idsBelow });
+          }
+          console.log('Item not found in list, selecting just this item');
+          return setMail({ ...mail, bulkSelected: [itemId] });
+        }
+        case 'range': {
+          console.log('Range selection mode - not fully implemented');
+          return setMail({ ...mail, bulkSelected: [itemId] });
+        }
+        default: {
+          console.log('Single selection mode');
+          return setMail({ ...mail, bulkSelected: [itemId] });
+        }
       }
-      setMail({ ...mail, bulkSelected: [message.threadId ?? message.id] });
     },
-    [mail, setMail, getSelectMode],
+    [mail, setMail, getSelectMode, items],
   );
 
   const [, setFocusedIndex] = useAtom(focusedIndexAtom);
 
   const handleMailClick = useCallback(
     (message: ParsedMessage) => () => {
-      if (getSelectMode() !== 'single') {
+      const mode = getSelectMode();
+      console.log('Mail click with mode:', mode);
+
+      if (mode !== 'single') {
         return handleSelectMail(message);
       }
+
       handleMouseEnter(message.id);
 
       const messageThreadId = message.threadId ?? message.id;
       const clickedIndex = items.findIndex((item) => item.id === messageThreadId);
       setFocusedIndex(clickedIndex);
 
-      // Update URL param without navigation
       void setThreadId(messageThreadId);
       void setDraftId(null);
       void setActiveReplyId(null);
     },
-    [mail, items, setFocusedIndex],
+    [mail, items, setFocusedIndex, getSelectMode, handleSelectMail],
   );
 
   const isFiltering = searchValue.value.trim().length > 0;
 
-  // Add effect to handle search loading state
   useEffect(() => {
     if (isFiltering && !isLoading) {
-      // Reset the search value when loading is complete
       setSearchValue({
         ...searchValue,
         isLoading: false,
@@ -1160,6 +1199,6 @@ function getDefaultBadgeStyle(label: string): ComponentProps<typeof Badge>['vari
 // Helper function to clean name display
 const cleanNameDisplay = (name?: string) => {
   if (!name) return '';
-  const match = name.match(/^[^a-zA-Z0-9.]*(.*?)[^a-zA-Z0-9.]*$/);
+  const match = name.match(/^[^\p{L}\p{N}.]*(.*?)[^\p{L}\p{N}.]*$/u);
   return match ? match[1] : name;
 };

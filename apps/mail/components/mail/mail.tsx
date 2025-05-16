@@ -809,7 +809,15 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
         </TooltipTrigger>
         {!isSelected && (
           <TooltipContent side="top" className={`${idx === 0 ? 'ml-4' : ''}`}>
-            <span>{cat.name}</span>
+            <span className="mr-2">{cat.name}</span>
+            <kbd
+              className={cn(
+                'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
+                '-me-1 ms-auto inline-flex max-h-full items-center',
+              )}
+            >
+              {idx ? idx + 1 : ''}
+            </kbd>
           </TooltipContent>
         )}
       </Tooltip>
