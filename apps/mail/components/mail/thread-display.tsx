@@ -369,7 +369,7 @@ export function ThreadDisplay() {
                 <p className="text-md text-[#6D6D6D] dark:text-white/50">
                   Choose an email to view details or
                 </p>
-                <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-1 gap-2 xl:grid-cols-3">
                   <Button onClick={toggleAISidebar} variant="outline">
                     Chat with Zero AI
                   </Button>
@@ -387,35 +387,6 @@ export function ThreadDisplay() {
                 </div>
               </div>
             </div>
-            {!isSidebarOpen && (
-              <div className="fixed bottom-5 right-5 hidden md:block">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="h-10 w-10 rounded-md p-0"
-                      onClick={toggleAISidebar}
-                    >
-                      <Image
-                        src="/black-icon.svg"
-                        alt="AI Assistant"
-                        width={22}
-                        height={22}
-                        className="block dark:hidden"
-                      />
-                      <Image
-                        src="/white-icon.svg"
-                        alt="AI Assistant"
-                        width={22}
-                        height={22}
-                        className="hidden dark:block"
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Toggle AI Assistant</TooltipContent>
-                </Tooltip>
-              </div>
-            )}
           </div>
         ) : !emailData || isLoading ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -632,40 +603,8 @@ export function ThreadDisplay() {
                       )}
                     </div>
                   ))}
-                 
-                  <div className="fixed bottom-5 right-5">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-10 w-10 rounded-md p-0"
-                        onClick={toggleAISidebar}
-                      >
-                        <Image
-                          src="/black-icon.svg"
-                          alt="AI Assistant"
-                          width={22}
-                          height={22}
-                          className="block dark:hidden"
-                        />
-                        <Image
-                          src="/white-icon.svg"
-                          alt="AI Assistant"
-                          width={22}
-                          height={22}
-                          className="hidden dark:block"
-                        />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Toggle AI Assistant</TooltipContent>
-                  </Tooltip>
-                </div>
-         
                 </div>
               </ScrollArea>
-              
-                
-             
             </div>
           </>
         )}
