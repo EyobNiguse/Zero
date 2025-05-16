@@ -821,6 +821,14 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                       Reply
                     </div>
                   </div>
+                  <kbd
+                    className={cn(
+                      'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
+                      '-me-1 ms-auto inline-flex max-h-full items-center',
+                    )}
+                  >
+                    r
+                  </kbd>
                 </button>
                 <button
                   onClick={(e) => {
@@ -836,6 +844,14 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                       Reply All
                     </div>
                   </div>
+                  <kbd
+                    className={cn(
+                      'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
+                      '-me-1 ms-auto inline-flex max-h-full items-center',
+                    )}
+                  >
+                    a
+                  </kbd>
                 </button>
                 <button
                   onClick={(e) => {
@@ -851,6 +867,14 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                       Forward
                     </div>
                   </div>
+                  <kbd
+                    className={cn(
+                      'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
+                      '-me-1 ms-auto inline-flex max-h-full items-center',
+                    )}
+                  >
+                    f
+                  </kbd>
                 </button>
               </div>
             </div>
