@@ -59,6 +59,7 @@ import { useQueryState } from 'nuqs';
 import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+import AIToggleButton from '../ai-toggle-button';
 
 interface Tag {
   id: string;
@@ -407,6 +408,7 @@ export function MailLayout() {
           )}
 
           <AISidebar />
+          <AIToggleButton />
         </ResizablePanelGroup>
       </div>
     </TooltipProvider>
