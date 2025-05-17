@@ -448,11 +448,11 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'w-full max-w-[750px] max-h-[550px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#1A1A1A] hide-scrollbar',
+        'w-full max-w-[750px] max-h-[500px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#202020] hide-scrollbar',
         className,
       )}
     >
-      <div className="grow max-h-[500px] overflow-y-auto hide-scrollbar">
+      <div className="grow max-h-[500px] overflow-y-auto hide-scrollbar dark:bg-[#1A1A1A]">
         {/* To, Cc, Bcc */}
         <div className="shrink-0 border-b border-[#E7E7E7] pb-2 dark:border-[#252525] overflow-y-auto">
           <div className="flex justify-between px-3 pt-3">
@@ -975,8 +975,7 @@ export function EmailComposer({
             >
               <div className="flex items-center justify-center gap-2.5 pl-0.5">
                 <div className="text-center text-sm leading-none text-white dark:text-black">
-                  <span className="hidden md:block">Send email</span>
-                  <span className="block md:hidden">Send</span>
+                  <span className="">Send </span>
                 </div>
               </div>
               <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
@@ -989,7 +988,7 @@ export function EmailComposer({
               onClick={() => fileInputRef.current?.click()}
             >
               <Plus className="h-3 w-3 fill-[#9A9A9A]" />
-              <span className="hidden px-0.5 text-sm md:block">Add files</span>
+              <span className="hidden px-0.5 text-sm md:block">Add</span>
             </button>
             <Input
               type="file"
@@ -1163,7 +1162,7 @@ export function EmailComposer({
                 </div>
               </button>
             </div>
-            <Tooltip>
+            {/* <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   disabled
@@ -1193,7 +1192,7 @@ export function EmailComposer({
               <TooltipContent>
                 <p>Coming soon...</p>
               </TooltipContent>
-            </Tooltip>
+            </Tooltip> */}
           </div>
         </div>
     </div>
