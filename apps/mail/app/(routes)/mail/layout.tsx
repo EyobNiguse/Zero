@@ -11,6 +11,7 @@ export default async function MailLayout({ children }: { children: React.ReactNo
       <div className="bg-lightBackground dark:bg-darkBackground w-full">{children}</div>
       <OnboardingWrapper />
       <NotificationProvider headers={Object.fromEntries(headersList.entries())} />
+      
     </HotkeyProviderWrapper>
   );
 }

@@ -44,7 +44,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { PricingDialog } from './pricing-dialog';
-import { Paper } from '../icons/icons';
+import { ArrowsPointingIn, ArrowsPointingOut, Paper, Phone } from '../icons/icons';
 
 interface AISidebarProps {
   className?: string;
@@ -91,7 +91,7 @@ function AISidebar({ className }: AISidebarProps) {
   const { attach, customer, chatMessages, track, refetch: refetchBilling } = useBilling();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const [threadId] = useQueryState('threadId');
+  const [threadId, setThreadId] = useQueryState('threadId');
   const { folder } = useParams<{ folder: string }>();
   const { refetch: refetchLabels } = useLabels();
   const [searchValue] = useSearchValue();
@@ -173,8 +173,13 @@ function AISidebar({ className }: AISidebarProps) {
   });
 
   const handleNewChat = useCallback(() => {
+    // Reset threadId query parameter
+    setThreadId(null);
+    // Reset chat state by forcing a remount of AIChat component
     setResetKey((prev) => prev + 1);
-  }, []);
+    // Reset chat messages by setting them to empty
+    chatState.setMessages([]);
+  }, [setThreadId, chatState]);
 
   return (
     <>
@@ -202,7 +207,7 @@ function AISidebar({ className }: AISidebarProps) {
                         variant="ghost"
                         className="md:h-fit md:px-2"
                       >
-                        <X className="dark:fill-iconDark fill-iconLight" />
+                        <X className="dark:text-iconDark text-iconLight" />
                         <span className="sr-only">Close chat</span>
                       </Button>
                     </TooltipTrigger>
@@ -215,15 +220,16 @@ function AISidebar({ className }: AISidebarProps) {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          onClick={toggleViewMode}
+                        onClick={() => setIsFullScreen(!isFullScreen)}
+                          // onClick={toggleViewMode}
                           variant="ghost"
                           className="hidden md:flex md:h-fit md:px-2 [&>svg]:size-2"
                         >
-                          <Expand className="dark:fill-iconDark fill-iconLight" />
+                          <Expand className="dark:text-iconDark text-iconLight" />
                           <span className="sr-only">Toggle view mode</span>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Go to popup view</TooltipContent>
+                      <TooltipContent>Go to full screen</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
@@ -231,19 +237,19 @@ function AISidebar({ className }: AISidebarProps) {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          onClick={() => setIsFullScreen(!isFullScreen)}
+                          onClick={toggleViewMode}
                           variant="ghost"
                           className="md:h-fit md:px-2"
                         >
                           {isFullScreen ? (
                             <LucideMinimize2 className="dark:fill-iconDark fill-iconLight" />
                           ) : (
-                            <LucideMaximize2 className="dark:fill-iconDark fill-iconLight" />
+                            <Phone className="dark:fill-iconDark fill-iconLight" />
                           )}
-                          <span className="sr-only">Toggle fullscreen</span>
+                          <span className="sr-only"></span>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Toggle fullscreen</TooltipContent>
+                      <TooltipContent>Change Mode</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
@@ -364,7 +370,7 @@ function AISidebar({ className }: AISidebarProps) {
           <div className={cn(
             "bg-panelLight dark:bg-panelDark w-full overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg dark:border-[#252525]",
             "md:hidden", // Hide on md+ screens by default
-            viewMode === 'popup' && !isFullScreen && "md:block max-w-[900px] sm:max-w-[600px]", // Show on md+ screens when in popup mode
+            viewMode === 'popup' && !isFullScreen && "md:block w-[600px] max-w-[90vw] sm:w-[400px]", // Show on md+ screens when in popup mode
             isFullScreen && "!block !max-w-none !rounded-none !border-none" // Full screen mode
           )}>
             <div className={cn("flex w-full flex-col",
@@ -379,7 +385,7 @@ function AISidebar({ className }: AISidebarProps) {
                         variant="ghost"
                         className="md:h-fit md:px-2"
                       >
-                        <X className="dark:fill-iconDark fill-iconLight" />
+                        <X className="dark:text-iconDark text-iconLight" />
                         <span className="sr-only">Close chat</span>
                       </Button>
                     </TooltipTrigger>
@@ -388,43 +394,41 @@ function AISidebar({ className }: AISidebarProps) {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={toggleViewMode}
-                          variant="ghost"
-                          className="hidden md:flex md:h-fit md:px-2"
-                        >
-                          <Expand className="dark:fill-iconDark fill-iconLight" />
-
-                          <span className="sr-only">Toggle view mode</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Toggle between sidebar and popup</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider delayDuration={0}>
+                  {isFullScreen && (<TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           onClick={() => setIsFullScreen(!isFullScreen)}
                           variant="ghost"
-                          className="md:h-fit md:px-2"
+                          className="hidden md:flex md:h-fit md:px-2"
                         >
-                          {isFullScreen ? (
-                            <LucideMinimize2 className="dark:fill-iconDark fill-iconLight" />
-                          ) : (
-                            <LucideMaximize2 className="dark:fill-iconDark fill-iconLight" />
-                          )}
-                          <span className="sr-only">Toggle fullscreen</span>
+                          <ArrowsPointingIn className="dark:fill-iconDark fill-iconLight" />
+
+                          <span className="sr-only">Toggle view mode</span>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Toggle fullscreen</TooltipContent>
+                      <TooltipContent>Remove full screen</TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
-
+                  </TooltipProvider>)}
+                  {!isFullScreen && (
+                  <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={toggleViewMode}
+                        variant="ghost"
+                        className="md:h-fit md:px-2"
+                      >
+                        
+                          <Expand className="dark:text-iconDark text-iconLight" />
+                        
+                        <span className="sr-only"></span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Change Mode</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                  )}
                   {!isPro && (
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
