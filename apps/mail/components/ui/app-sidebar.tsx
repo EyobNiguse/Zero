@@ -78,9 +78,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Sidebar
         collapsible="icon"
         {...props}
-        className={`top-2.5 flex h-screen select-none flex-col items-center ${state === 'collapsed' ? '' : ''} pb-2`}
+        className={`bg-lightBackground dark:bg-darkBackground flex h-screen select-none flex-col items-center  ${state === 'collapsed' ? '' : ''} pb-2`}
       >
-          <SidebarHeader className={`flex flex-col gap-2  ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}>
+          <SidebarHeader className={`flex flex-col gap-2 relative top-2.5 ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}>
             {session && <NavUser />}
             <AnimatePresence mode="wait">
               {showComposeButton && (
