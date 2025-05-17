@@ -23,9 +23,11 @@ import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { useState } from 'react';
 import { env } from '@/lib/env';
-import VoiceChat from './voice';
-import Image from 'next/image';
 import { toast } from 'sonner';
+import Image from 'next/image';
+import { PricingDialog } from '../ui/pricing-dialog';
+import VoiceChat from './voice';
+import { useAIFullScreen } from '../ui/ai-sidebar';
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
@@ -156,6 +158,7 @@ export interface AIChatProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   status: string;
   stop: () => void;
+  className?: string;
 }
 
 export function AIChat({
@@ -166,13 +169,16 @@ export function AIChat({
   handleSubmit,
   status,
   stop,
+  className,
 }: AIChatProps): React.ReactElement {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [threadId] = useQueryState('threadId');
   const { attach, chatMessages } = useBilling();
+  const { isFullScreen } = useAIFullScreen();
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -202,7 +208,7 @@ export function AIChat({
   // Already defined above
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={cn('flex h-full flex-col ', isFullScreen ? 'max-w-xl mx-auto' : '')}>
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
@@ -210,9 +216,10 @@ export function AIChat({
               <TextShimmer className="text-center text-xl font-medium">
                 Upgrade to Zero Pro for unlimited AI chats
               </TextShimmer>
-              <Button onClick={handleUpgrade} className="mt-2 h-8 w-52">
+              <Button onClick={() => setShowPricing(true)} className="mt-2 h-8 w-52">
                 Upgrade
               </Button>
+              <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
             </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -295,7 +302,7 @@ export function AIChat({
       </div>
 
       {/* Fixed input at bottom */}
-      <div className="mb-4 flex-shrink-0 px-4">
+      <div className={cn("mb-4 flex-shrink-0 px-4", isFullScreen ? 'px-0' : '')}>
         <div className="bg-offsetLight border-border/50 relative rounded-lg dark:bg-[#141414]">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
@@ -309,7 +316,7 @@ export function AIChat({
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask AI to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
                   />
                   {status === 'ready' ? (
                     <button

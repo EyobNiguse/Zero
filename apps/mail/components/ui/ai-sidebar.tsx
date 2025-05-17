@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { useQueryState } from 'nuqs';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
 import { usePathname, useSearchParams, useParams } from 'next/navigation';
@@ -26,8 +27,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { useQueryClient } from '@tanstack/react-query';
 import { AIChat } from '@/components/create/ai-chat';
 import { useTRPC } from '@/providers/query-provider';
-import { X, Paper } from '@/components/icons/icons';
-import { GitBranchPlus, Plus } from 'lucide-react';
+import { X, FileText, Expand, Plus, GitBranchPlus, Maximize2 as LucideMaximize2, Minimize2 as LucideMinimize2 } from 'lucide-react';
 import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
@@ -38,29 +38,55 @@ import { useCustomer } from 'autumn-js/next';
 import { useChat } from '@ai-sdk/react';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
-import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import { env } from '@/lib/env';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { PricingDialog } from './pricing-dialog';
+import { Paper } from '../icons/icons';
 
 interface AISidebarProps {
   className?: string;
 }
 
-export function useAISidebar() {
-  const [open, setOpen] = useQueryState('aiSidebar');
-  return {
-    open: !!open,
-    setOpen: (open: boolean) => setOpen(open ? 'true' : null),
-    toggleOpen: () => setOpen((prev) => (prev === 'true' ? null : 'true')),
+type ViewMode = 'sidebar' | 'popup' | 'fullscreen';
+
+export function useAIFullScreen() {
+  const [isFullScreenQuery, setIsFullScreen] = useQueryState('isFullScreen');
+  const toggleFullScreen = useCallback(
+    async (value: boolean) => {
+      await setIsFullScreen(value ? 'true' : null);
+    },
+    [setIsFullScreen]
+  );
+  return { 
+    isFullScreen: isFullScreenQuery ? isFullScreenQuery === 'true' : false, 
+    setIsFullScreen: toggleFullScreen
   };
 }
 
-export function AISidebar({ className }: AISidebarProps) {
-  const { open, setOpen } = useAISidebar();
+export function useAISidebar() {
+  const [open, setOpen] = useQueryState('aiSidebar');
+  const [viewMode, setViewMode] = useState<ViewMode>('sidebar');
+  const { isFullScreen, setIsFullScreen } = useAIFullScreen();
+
+  return {
+    open: !!open,
+    viewMode,
+    setViewMode,
+    setOpen: (open: boolean) => setOpen(open ? 'true' : null),
+    toggleOpen: () => setOpen((prev) => (prev === 'true' ? null : 'true')),
+    toggleViewMode: () => setViewMode((prev: ViewMode) => prev === 'sidebar' ? 'popup' : 'sidebar'),
+    isFullScreen,
+    setIsFullScreen
+  };
+}
+
+function AISidebar({ className }: AISidebarProps) {
+  const { open, setOpen, viewMode, isFullScreen, setIsFullScreen, toggleViewMode } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
+  const [showPricing, setShowPricing] = useState(false);
   const pathname = usePathname();
   const { attach, customer, chatMessages, track, refetch: refetchBilling } = useBilling();
   const queryClient = useQueryClient();
@@ -134,19 +160,8 @@ export function AISidebar({ className }: AISidebarProps) {
     );
   }, [customer]);
 
-  const handleUpgrade = async () => {
-    if (attach) {
-      return attach({
-        productId: 'pro-example',
-        successUrl: `${window.location.origin}/mail/inbox?success=true`,
-      })
-        .catch((error: Error) => {
-          console.error('Failed to upgrade:', error);
-        })
-        .then(() => {
-          console.log('Upgraded successfully');
-        });
-    }
+  const handleUpgrade = () => {
+    setShowPricing(true);
   };
 
   useHotkeys('Meta+0', () => {
@@ -162,16 +177,20 @@ export function AISidebar({ className }: AISidebarProps) {
   }, []);
 
   return (
-    open && (
-      <>
-        {/* Desktop sidebar - only visible on lg screens */}
-        <ResizableHandle className="opacity-0" />
-        <ResizablePanel
-          defaultSize={20}
-          minSize={20}
-          maxSize={35}
-          className="bg-panelLight dark:bg-panelDark mr-1 hidden h-[calc(98vh+17px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm xl:block dark:border-[#252525]"
-        >
+    <>
+      <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
+      {open && (
+        <>
+          {/* Desktop view - visible on md and larger screens */}
+        {viewMode === 'sidebar' && !isFullScreen ? (
+          <>
+            <ResizableHandle className="opacity-0" />
+            <ResizablePanel
+              defaultSize={20}
+              minSize={20}
+              maxSize={35}
+              className="bg-panelLight dark:bg-panelDark mr-1 hidden h-[calc(98vh+17px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm md:block dark:border-[#252525]"
+            >
           <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>
             <div className="flex h-full flex-col">
               <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
@@ -192,6 +211,42 @@ export function AISidebar({ className }: AISidebarProps) {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={toggleViewMode}
+                          variant="ghost"
+                          className="hidden md:flex md:h-fit md:px-2 [&>svg]:size-2"
+                        >
+                          <Expand className="dark:fill-iconDark fill-iconLight" />
+                          <span className="sr-only">Toggle view mode</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Go to popup view</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setIsFullScreen(!isFullScreen)}
+                          variant="ghost"
+                          className="md:h-fit md:px-2"
+                        >
+                          {isFullScreen ? (
+                            <LucideMinimize2 className="dark:fill-iconDark fill-iconLight" />
+                          ) : (
+                            <LucideMaximize2 className="dark:fill-iconDark fill-iconLight" />
+                          )}
+                          <span className="sr-only">Toggle fullscreen</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Toggle fullscreen</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
                   {!isPro && (
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
@@ -295,11 +350,26 @@ export function AISidebar({ className }: AISidebarProps) {
             </div>
           </div>
         </ResizablePanel>
-        {/* Mobile popup - only visible on smaller screens */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0 xl:hidden">
-          {/* Chat popup container */}
-          <div className="bg-panelLight dark:bg-panelDark w-full max-w-[800px] overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg sm:max-w-[500px] dark:border-[#252525]">
-            <div className="flex h-[90vh] w-full flex-col sm:h-[500px] sm:max-h-[80vh]">
+        </>
+        ) : null}
+
+        {/* Popup view - visible on small screens or when popup mode is selected */}
+        <div className={cn(
+          "fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0 transition-opacity bg-transparent duration-150 opacity-40 hover:opacity-100",
+          "md:hidden", // Hide on md+ screens by default
+          viewMode === 'popup' && !isFullScreen && "md:flex", // Show on md+ screens when in popup mode
+          isFullScreen && "!flex !inset-0 !opacity-100 !p-0 !backdrop-blur-none" // Full screen mode
+        )}>
+          {/* Chat popup container - only visible on small screens or when popup mode is selected */}
+          <div className={cn(
+            "bg-panelLight dark:bg-panelDark w-full overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg dark:border-[#252525]",
+            "md:hidden", // Hide on md+ screens by default
+            viewMode === 'popup' && !isFullScreen && "md:block max-w-[900px] sm:max-w-[600px]", // Show on md+ screens when in popup mode
+            isFullScreen && "!block !max-w-none !rounded-none !border-none" // Full screen mode
+          )}>
+            <div className={cn("flex w-full flex-col",
+              isFullScreen ? "h-screen" : "h-[90vh] sm:h-[600px] sm:max-h-[85vh]"
+            )}>
               <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-1 py-2 pb-1 dark:border-[#252525]">
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
@@ -318,6 +388,43 @@ export function AISidebar({ className }: AISidebarProps) {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={toggleViewMode}
+                          variant="ghost"
+                          className="hidden md:flex md:h-fit md:px-2"
+                        >
+                          <Expand className="dark:fill-iconDark fill-iconLight" />
+
+                          <span className="sr-only">Toggle view mode</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Toggle between sidebar and popup</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setIsFullScreen(!isFullScreen)}
+                          variant="ghost"
+                          className="md:h-fit md:px-2"
+                        >
+                          {isFullScreen ? (
+                            <LucideMinimize2 className="dark:fill-iconDark fill-iconLight" />
+                          ) : (
+                            <LucideMaximize2 className="dark:fill-iconDark fill-iconLight" />
+                          )}
+                          <span className="sr-only">Toggle fullscreen</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Toggle fullscreen</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
                   {!isPro && (
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
@@ -415,14 +522,15 @@ export function AISidebar({ className }: AISidebarProps) {
                 <AIChat
                   key={resetKey}
                   {...chatState}
-                  // Pass the same chat state to ensure conversation continuity with desktop view
+                
                 />
               </div>
             </div>
           </div>
         </div>
-      </>
-    )
+        </>
+      )}
+    </>
   );
 }
 
