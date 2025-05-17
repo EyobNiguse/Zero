@@ -474,6 +474,21 @@ export function ThreadDisplay() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMode('replyAll');
+                    setActiveReplyId(emailData?.latest?.id ?? '');
+                  }}
+                  className="inline-flex h-7 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-1.5 dark:border-none dark:bg-[#313131]"
+                >
+                  <Reply className="fill-[#6D6D6D] dark:fill-[#9B9B9B]" />
+                  <div className="flex items-center justify-center gap-2.5 pl-0.5 pr-1">
+                    <div className="justify-start text-sm leading-none text-black dark:text-white">
+                      Reply
+                    </div>
+                  </div>
+                </button>
                 <NotesPanel threadId={id} />
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
