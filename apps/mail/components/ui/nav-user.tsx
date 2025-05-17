@@ -205,8 +205,11 @@ export function NavUser() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="w-full">
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium flex items-center justify-center gap-0.5">
                           {activeAccount.name || session.user.name || 'User'}
+                          {isPro && (
+                            <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+                          )}
                         </div>
                         <div className="text-muted-foreground text-xs">{activeAccount.email}</div>
                       </div>
