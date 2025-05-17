@@ -203,7 +203,10 @@ function AISidebar({ className }: AISidebarProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          setOpen(false);
+                          setIsFullScreen(false);
+                        }}
                         variant="ghost"
                         className="md:h-fit md:px-2"
                       >
@@ -381,7 +384,10 @@ function AISidebar({ className }: AISidebarProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          setOpen(false);
+                          setIsFullScreen(false);
+                        }}
                         variant="ghost"
                         className="md:h-fit md:px-2"
                       >

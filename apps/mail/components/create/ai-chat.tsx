@@ -33,10 +33,13 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
   const [, setThreadId] = useQueryState('threadId');
   const { data: getThread } = useThread(thread.id);
   const [, setAiSidebarOpen] = useQueryState('aiSidebar');
+  const [, setIsFullScreen] = useQueryState('isFullScreen');
 
   const handleClick = () => {
     setThreadId(thread.id);
     setAiSidebarOpen(null);
+    // Reset fullscreen state when clicking on a thread
+    setIsFullScreen(null);
   };
 
   return getThread?.latest ? (
@@ -258,11 +261,6 @@ export function AIChat({
                     part.toolInvocation.result &&
                     'threads' in part.toolInvocation.result ? (
                       <RenderThreads threads={part.toolInvocation.result.threads ?? []} key={idx} />
-                    ) : part.toolInvocation && 'result' in part.toolInvocation ? (
-                      <span key={idx} className="text-muted-foreground flex gap-1 text-xs">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Used tool: {part.toolInvocation.toolName}
-                      </span>
                     ) : null,
                   )}
                   {textParts.length > 0 && (
