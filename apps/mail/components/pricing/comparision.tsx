@@ -1,53 +1,71 @@
-import { Check, Plus, PurpleThickCheck, ThickCheck } from "../icons/icons"
+import { Check, Plus, PurpleThickCheck, ThickCheck } from '../icons/icons';
+import { useBilling } from '@/hooks/use-billing';
+import Image from 'next/image';
 
 export default function Comparision() {
+  const { attach } = useBilling();
+
+  const handleUpgrade = async () => {
+    if (attach) {
+      try {
+        await attach({
+          productId: 'pro-example',
+          successUrl: `${window.location.origin}/mail/inbox?success=true`,
+          authUrl: `${window.location.origin}/login?redirect=/pricing`,
+        });
+      } catch (error) {
+        console.error('Failed to upgrade:', error);
+      }
+    }
+  };
   return (
-    <div className="mx-auto relative flex max-w-[1500px] flex-col items-center justify-center">
-        <Plus className="mb-4 h-3 w-3 absolute top-[-6px] left-[-5px] fill-white" />
-        <Plus className="mb-4 h-3 w-3 absolute bottom-[-21px] left-[-5px] fill-white" />
-        <Plus className="mb-4 h-3 w-3 absolute top-[-6px] right-[-5px] fill-white" />
-        <Plus className="mb-4 h-3 w-3 absolute bottom-[-21px] right-[-5px] fill-white" />
-      <div className="inline-flex items-start justify-start self-stretch border ">
+    <div className="relative mx-auto hidden max-w-[1200px] flex-col items-center justify-center md:flex">
+      <Plus className="absolute left-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
+      <Plus className="absolute bottom-[-21px] left-[-5px] mb-4 h-3 w-3 fill-white" />
+      <Plus className="absolute right-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
+      <Plus className="absolute bottom-[-21px] right-[-5px] mb-4 h-3 w-3 fill-white" />
+      <div className="inline-flex items-start justify-start self-stretch border">
         <div className="inline-flex flex-1 flex-col items-start justify-start">
-          <div className="flex h-52 flex-col items-start justify-start gap-5 self-stretch border-b border-white/5 p-8">
+          <div className="flex h-52 flex-col items-start justify-start gap-2 self-stretch border-b border-white/5 p-8">
             <div className="flex flex-col items-start justify-start gap-2">
               <div className="justify-center text-lg font-semibold leading-7 text-white">
                 Compare Features
               </div>
             </div>
+            <p className="text-sm text-white/70">Checkout what you get in each of our plans</p>
           </div>
           <div className="flex flex-col items-start justify-start self-stretch pb-6">
             <div className="inline-flex h-16 items-center justify-start gap-[5px] self-stretch px-8">
-              <div className="justify-center text-lg leading-normal text-white">
-                Feature
-              </div>
-              <div className="h-5 w-5 relative top-[5px]">
-                <p className=" bg-white/50 rounded-full h-3 w-3 text-[11px] relative text-black flex items-center justify-center font-medium">?</p>
+              <div className="justify-center text-lg leading-normal text-white">Feature</div>
+              <div className="relative top-[5px] h-5 w-5">
+                <p className="relative flex h-3 w-3 items-center justify-center rounded-full bg-white/50 text-[11px] font-medium text-black">
+                  ?
+                </p>
               </div>
             </div>
             <div className="flex flex-col items-start justify-start self-stretch">
               <div className="flex flex-col items-start justify-center gap-1 self-stretch px-8 py-[15.5px]">
                 <div className="inline-flex h-6 items-center justify-start self-stretch">
-                  <div className="justify-center  text-sm leading-tight text-white/70">
+                  <div className="justify-center text-sm leading-tight text-white/70">
                     Email Connections{' '}
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-start justify-center gap-1 self-stretch  px-8 py-[15.5px]">
+              <div className="flex flex-col items-start justify-center gap-1 self-stretch px-8 py-[15.5px]">
                 <div className="inline-flex h-6 items-center justify-start self-stretch">
                   <div className="justify-center text-sm leading-tight text-white/70">
                     AI-powered Chat with Inbox{' '}
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-start justify-center gap-1 self-stretch  px-8 py-[15.5px]">
+              <div className="flex flex-col items-start justify-center gap-1 self-stretch px-8 py-[15.5px]">
                 <div className="inline-flex h-6 items-center justify-start self-stretch">
                   <div className="justify-center text-sm leading-tight text-white/70">
                     Labeling{' '}
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-start justify-center gap-1 self-stretch  px-8 py-[15.5px]">
+              <div className="flex flex-col items-start justify-center gap-1 self-stretch px-8 py-[15.5px]">
                 <div className="inline-flex h-6 items-center justify-start self-stretch">
                   <div className="justify-center text-sm leading-tight text-white/70">
                     AI Email Writing{' '}
@@ -63,7 +81,7 @@ export default function Comparision() {
               </div>
               <div className="flex h-14 flex-col items-start justify-center gap-1 self-stretch px-8">
                 <div className="inline-flex h-6 items-center justify-start self-stretch">
-                  <div className="justify-center    text-sm leading-tight text-white/70">
+                  <div className="justify-center text-sm leading-tight text-white/70">
                     Customer Support{' '}
                   </div>
                 </div>
@@ -77,9 +95,7 @@ export default function Comparision() {
               </div>
               <div className="flex h-14 flex-col items-start justify-center gap-1 self-stretch px-8">
                 <div className="inline-flex h-6 items-center justify-start self-stretch">
-                  <div className="justify-center text-sm leading-tight text-white/70">
-                    Price
-                  </div>
+                  <div className="justify-center text-sm leading-tight text-white/70">Price</div>
                 </div>
               </div>
               <div className="flex h-14 flex-col items-start justify-center gap-1 self-stretch px-8">
@@ -98,14 +114,20 @@ export default function Comparision() {
               <div className="flex flex-col items-start justify-center gap-3 self-stretch">
                 <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-yellow-950 p-2">
                   <div className="relative h-6 w-6 overflow-hidden">
-                    <img src="lock.svg" className="h-full w-full" />
+                    <Image
+                      src="/lock.svg"
+                      alt="lock"
+                      className="h-full w-full"
+                      height={24}
+                      width={24}
+                    />
                   </div>
                 </div>
                 <div className="justify-center text-2xl font-semibold leading-loose text-white">
                   Free Plan
                 </div>
               </div>
-              <div className="h-[40px] inline-flex items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10  shadow-[inset_0px_-2px_0px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-white/10">
+              <div className="inline-flex h-[40px] items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10 shadow-[inset_0px_-2px_0px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-white/10">
                 <div className="flex items-center justify-center gap-2.5 px-1">
                   <div className="justify-start text-center text-base font-semibold leading-none text-white/80">
                     Current Plan
@@ -117,7 +139,7 @@ export default function Comparision() {
           <div className="flex flex-col items-start justify-start self-stretch pb-6">
             <div className="inline-flex h-16 items-center justify-start gap-[5px] self-stretch px-4" />
             <div className="flex flex-col items-start justify-start self-stretch">
-              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch  px-8">
+              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch px-8">
                 <div className="flex items-center justify-start gap-3">
                   <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
                     <ThickCheck className="h-3 w-3" />
@@ -127,9 +149,9 @@ export default function Comparision() {
                   </div>
                 </div>
               </div>
-              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch  px-8">
+              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch px-8">
                 <div className="flex items-center justify-start gap-3">
-                <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
+                  <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
                     <ThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-white">
@@ -137,9 +159,9 @@ export default function Comparision() {
                   </div>
                 </div>
               </div>
-              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch  px-8">
+              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch px-8">
                 <div className="flex items-center justify-start gap-3">
-                <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
+                  <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
                     <ThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-white">
@@ -149,7 +171,7 @@ export default function Comparision() {
               </div>
               <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch px-8">
                 <div className="flex items-center justify-start gap-3">
-                <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
+                  <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
                     <ThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-white">
@@ -174,7 +196,7 @@ export default function Comparision() {
               </div>
               <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch px-8">
                 <div className="flex items-center justify-start gap-3">
-                <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
+                  <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
                     <ThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-white">
@@ -184,8 +206,7 @@ export default function Comparision() {
               </div>
               <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch px-8">
                 <div className="flex items-center justify-start gap-3">
-                <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
-                    
+                  <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-white/20 p-1.5">
                     <ThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-white">
@@ -202,20 +223,29 @@ export default function Comparision() {
               <div className="flex flex-col items-start justify-center gap-3 self-stretch">
                 <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-[#3F2776] p-2">
                   <div className="relative h-6 w-6 overflow-hidden">
-                    <img src="purple-zap.svg" className="h-full w-full" />
+                    <Image
+                      src="purple-zap.svg"
+                      alt="purple-zap"
+                      className="h-full w-full"
+                      height={24}
+                      width={24}
+                    />
                   </div>
                 </div>
                 <div className="justify-center text-2xl font-semibold leading-loose text-white">
                   Zero Pro
                 </div>
               </div>
-              <div className="inline-flex items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10 p-[3.5px] outline outline-1 outline-offset-[-1px] outline-white/10 h-[40px]">
+              <button
+                onClick={handleUpgrade}
+                className="inline-flex h-[40px] items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10 p-[3.5px] outline outline-1 outline-offset-[-1px] outline-white/10"
+              >
                 <div className="flex items-center justify-center">
                   <div className="justify-start text-center text-base font-semibold leading-none text-white/80">
                     Get Zero Pro
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
           <div className="flex flex-col items-start justify-start self-stretch pb-6">
@@ -241,7 +271,7 @@ export default function Comparision() {
                   </div>
                 </div>
               </div>
-              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch    px-8">
+              <div className="inline-flex h-14 items-center justify-start gap-2 self-stretch px-8">
                 <div className="flex items-center justify-start gap-3">
                   <div className="flex h-6 w-6 items-start justify-start gap-4 rounded-full bg-violet-400/20 p-1.5">
                     <PurpleThickCheck className="h-3 w-3" />

@@ -193,7 +193,7 @@ function AISidebar({ className }: AISidebarProps) {
             <ResizablePanel
               defaultSize={22}
               minSize={22}
-              maxSize={35}
+              maxSize={22}
               className="bg-panelLight mb-1 dark:bg-panelDark mr-1 hidden h-[calc(98vh+10px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm md:block dark:border-[#252525]"
             >
           <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>

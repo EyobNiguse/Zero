@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { MailLabels } from '../mail/mail-list';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useCallback, useEffect } from 'react';
@@ -68,9 +69,12 @@ const renderThread = (thread: { id: string; title: string; snippet: string }) =>
                 {getThread.latest.receivedOn ? format(getThread.latest.receivedOn, 'MMMM do') : ''}
               </span>
             </div>
-            <span className="max-w-[220px] truncate text-xs text-[#8C8C8C] dark:text-[#8C8C8C]">
-              {getThread.latest?.subject}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="max-w-[220px] truncate text-xs text-[#8C8C8C] dark:text-[#8C8C8C]">
+                {getThread.latest?.subject}
+              </span>
+              <MailLabels labels={getThread.latest?.tags || []} />
+            </div>
           </div>
         </div>
       </div>

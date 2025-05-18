@@ -12,18 +12,21 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { PixelatedBackground } from '@/components/home/pixelated-bg';
 import { CircleCheck, CircleX } from '@/components/icons/icons';
+import PricingCard from '@/components/pricing/pricing-card';
+import Comparision from '@/components/pricing/comparision';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import { Separator } from '@/components/ui/separator';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
+import Footer from '@/components/home/footer';
 import { useCustomer } from 'autumn-js/next';
 import { useState, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import Link from 'next/link';
-import PricingCard from '@/components/pricing/pricing-card';
-import Footer from '@/components/home/footer';
-import Comparision from '@/components/pricing/comparision';
+import { signIn } from '@/lib/auth-client';
+
 
 const resources = [
   {
@@ -91,8 +94,11 @@ export default function PricingPage() {
   return (
     <main className="relative flex h-screen flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
-        className="z-1 absolute top-[-40px] left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover "
-        style={{ mixBlendMode: 'screen', maskImage: 'linear-gradient(to bottom, black, transparent)' }}
+        className="z-1 absolute left-1/2 top-[-40px] h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover"
+        style={{
+          mixBlendMode: 'screen',
+          maskImage: 'linear-gradient(to bottom, black, transparent)',
+        }}
       />
 
       {/* Desktop Navigation - Hidden on mobile */}
@@ -101,7 +107,9 @@ export default function PricingPage() {
           <div className="flex items-center gap-6">
             <a href="/" className="relative bottom-1 cursor-pointer">
               <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
-              <span className="text-muted-foreground absolute -right-[-0.5px] text-[10px]">beta</span>
+              <span className="text-muted-foreground absolute -right-[-0.5px] text-[10px]">
+                beta
+              </span>
             </a>
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
@@ -145,11 +153,24 @@ export default function PricingPage() {
             </NavigationMenu>
           </div>
           <div className="flex gap-2">
-            <a href="/login">
-              <Button variant="ghost" className="h-8">
-                Sign in
-              </Button>
-            </a>
+            <Button
+              variant="ghost"
+              className="h-8"
+              onClick={() => {
+                toast.promise(
+                  signIn.social({
+                    provider: 'google',
+                    callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+                  }),
+                  {
+                    error: 'Login redirect failed',
+                  },
+                );
+              }}
+            >
+              Sign in
+            </Button>
+
             <a target="_blank" href="https://cal.com/team/0">
               <Button className="h-8 font-medium">Contact Us</Button>
             </a>
@@ -210,16 +231,19 @@ export default function PricingPage() {
         </Sheet>
       </div>
 
-      <div className="container mx-auto mt-12 mb-20 h-screen px-4 py-16 md:mt-44 ">
+      <div className="container mx-auto mb-20 mt-12 h-screen px-4 py-16 md:mt-44">
         <div className="mb-12 text-center">
-          <h1 className="mb-2 text-5xl font-medium text-white md:text-6xl leading-[62px] self-stretch">Simple, Transparent Pricing</h1>
-          <p className="text-2xl text-[#B8B8B9] font-light mt-6">Choose the plan that's right for you</p>
+          <h1 className="mb-2 self-stretch text-5xl font-medium leading-[62px] text-white md:text-6xl">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="mt-6 text-2xl font-light text-[#B8B8B9]">
+            Choose the plan that's right for you
+          </p>
         </div>
 
-        <div className="mx-auto max-w-5xl ">
+        <div className="mx-auto max-w-5xl px-4">
           {/* Free Plan */}
           <PricingCard />
-          
 
           {/* <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
             <h1 className="mb-4 text-center text-lg font-normal text-white/50">Free</h1>
@@ -343,11 +367,11 @@ export default function PricingPage() {
           </div> */}
         </div>
       </div>
-      <div className='mt-12'>
+      <div className="mx-12 mt-[500px] md:mt-12">
         <Comparision />
       </div>
-      <div className='mt-20'>
-      <Footer />
+      <div className="mt-20">
+        <Footer />
       </div>
     </main>
   );
