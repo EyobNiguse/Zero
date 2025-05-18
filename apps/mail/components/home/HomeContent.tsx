@@ -173,8 +173,8 @@ export default function HomeContent() {
   return (
     <main className="relative flex h-full flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
-        className="z-1 absolute -top-32 left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
-        style={{ mixBlendMode: 'screen' }}
+        className="z-1 absolute top-[-40px] left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover "
+        style={{ mixBlendMode: 'screen', maskImage: 'linear-gradient(to bottom, black, transparent)' }}
       />
       {/* Desktop Navigation - Hidden on mobile */}
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
