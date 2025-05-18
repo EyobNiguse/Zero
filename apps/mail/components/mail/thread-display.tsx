@@ -597,10 +597,12 @@ export function ThreadDisplay() {
                         ) : null}
                       </>
                     )}
-                    <DropdownMenuItem onClick={handleToggleImportant}>
-                      <Lightning className={cn(isImportant ? '' : 'opacity-50', "fill-iconLight dark:fill-iconDark mr-2")} />
-                      {t('common.mail.toggleImportant')}
-                    </DropdownMenuItem>
+                   {!isImportant && (
+                      <DropdownMenuItem onClick={handleToggleImportant}>
+                        <Lightning className="fill-iconLight dark:fill-iconDark mr-2" />
+                        {t('common.mail.toggleImportant')}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
