@@ -18,6 +18,8 @@ import {
   ReplyAll,
   Star,
   ExclamationCircle,
+  Lightning,
+  Folders,
 } from '../icons/icons';
 import {
   DropdownMenu,
@@ -26,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { CircleAlertIcon, Inbox, ShieldAlertIcon, SidebarOpen, StopCircleIcon } from 'lucide-react';
+import { CircleAlertIcon, Inbox, ShieldAlertIcon, SidebarOpen, StopCircleIcon, Zap } from 'lucide-react';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -524,21 +526,7 @@ export function ThreadDisplay() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]"
-                        onClick={handleToggleImportant}
-                      >
-                        <ExclamationCircle className={cn(isImportant ? '' : 'opacity-50')} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
-                      {t('common.mail.toggleImportant')}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+               
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -603,12 +591,16 @@ export function ThreadDisplay() {
                         {emailData.latest?.listUnsubscribe ||
                         emailData.latest?.listUnsubscribePost ? (
                           <DropdownMenuItem onClick={handleUnsubscribeProcess}>
-                            <ShieldAlertIcon className="fill-iconLight dark:fill-iconDark mr-2" />
+                            <Folders className="fill-iconLight dark:fill-iconDark mr-2" />
                             <span>Unsubscribe</span>
                           </DropdownMenuItem>
                         ) : null}
                       </>
                     )}
+                    <DropdownMenuItem onClick={handleToggleImportant}>
+                      <Lightning className={cn(isImportant ? '' : 'opacity-50', "fill-iconLight dark:fill-iconDark mr-2")} />
+                      {t('common.mail.toggleImportant')}
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

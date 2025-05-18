@@ -225,7 +225,14 @@ const Thread = memo(
       async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!getThreadData || !message.id) return;
+        const newImportantState = !isImportant;
+        setIsImportant(newImportantState);
         await toggleImportant({ ids: [message.id] });
+        if (newImportantState) {
+          toast.success(t('common.actions.addedToImportant'));
+        } else {
+          toast.success(t('common.actions.removedFromImportant'));
+        }
         await refetchThread();
       },
       [getThreadData, message.id, refetchThreads],
@@ -486,7 +493,7 @@ const Thread = memo(
                   {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
+              {/* <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
@@ -500,7 +507,7 @@ const Thread = memo(
                 <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
                   {t('common.mail.toggleImportant')}
                 </TooltipContent>
-              </Tooltip>
+              </Tooltip> */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
