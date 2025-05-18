@@ -28,7 +28,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { CircleAlertIcon, Inbox, ShieldAlertIcon, SidebarOpen, StopCircleIcon, Zap } from 'lucide-react';
+import {
+  CircleAlertIcon,
+  Inbox,
+  ShieldAlertIcon,
+  SidebarOpen,
+  StopCircleIcon,
+  Zap,
+} from 'lucide-react';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -71,7 +78,7 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
     <div
       className={cn(
         'flex flex-col',
-        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100vh-2rem)]',
+        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-2rem)]',
       )}
     >
       <div
@@ -313,7 +320,7 @@ export function ThreadDisplay() {
     if (isImportant) {
       toast.success(t('common.mail.markedAsImportant'));
     } else {
-      toast.error("Failed to mark as important");
+      toast.error('Failed to mark as important');
     }
   }, [emailData, id]);
 
@@ -531,7 +538,7 @@ export function ThreadDisplay() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-               
+
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -602,7 +609,7 @@ export function ThreadDisplay() {
                         ) : null}
                       </>
                     )}
-                   {!isImportant && (
+                    {!isImportant && (
                       <DropdownMenuItem onClick={handleToggleImportant}>
                         <Lightning className="fill-iconLight dark:fill-iconDark mr-2" />
                         {t('common.mail.markAsImportant')}

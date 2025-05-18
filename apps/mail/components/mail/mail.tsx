@@ -49,6 +49,7 @@ import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
+import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
@@ -59,7 +60,6 @@ import { useQueryState } from 'nuqs';
 import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
-import AIToggleButton from '../ai-toggle-button';
 
 interface Tag {
   id: string;
@@ -291,7 +291,7 @@ export function MailLayout() {
             minSize={40}
             maxSize={50}
             className={cn(
-              `bg-panelLight dark:bg-panelDark w-fit border border-[#E7E7E7] shadow-sm md:rounded-2xl lg:flex lg:shadow-sm dark:border-[#252525] mb-1`,
+              `bg-panelLight dark:bg-panelDark mb-1 w-fit shadow-sm md:rounded-2xl md:border md:border-[#E7E7E7] lg:flex lg:shadow-sm dark:border-[#252525]`,
               isDesktop && threadId && 'hidden lg:block',
             )}
           >
@@ -383,14 +383,14 @@ export function MailLayout() {
           {isDesktop && (
             <ResizablePanel
               className={cn(
-                'bg-panelLight dark:bg-panelDark mr-0.5 mb-1 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
+                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
                 // Only show on md screens and larger when there is a threadId
                 !threadId && 'hidden lg:block',
               )}
               defaultSize={30}
               minSize={30}
             >
-              <div className="relative h-[calc(100vh-(10px))] flex-1 lg:h-[calc(100vh-(10px)]">
+              <div className="lg:h-[calc(100dvh-(10px)] relative h-[calc(100dvh-(10px))] flex-1">
                 <ThreadDisplay />
               </div>
             </ResizablePanel>
@@ -776,7 +776,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const primaryCategory = categories[0];
   if (!primaryCategory) return null;
 
-  const renderCategoryButton = (cat: CategoryType, isOverlay = false, idx?: number) => {
+  const renderCategoryButton = (cat: CategoryType, isOverlay = false, idx: number) => {
     const isSelected = cat.id === (category || 'Primary');
     const bgColor = getCategoryColor(cat.id);
 
@@ -820,7 +820,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
                 '-me-1 ms-auto inline-flex max-h-full items-center',
               )}
             >
-              {idx ? idx + 1 : ''}
+              {idx + 1}
             </kbd>
           </TooltipContent>
         )}
