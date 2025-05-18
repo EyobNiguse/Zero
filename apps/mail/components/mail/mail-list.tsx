@@ -449,7 +449,6 @@ const Thread = memo(
     const content =
       latestMessage && getThreadData ? (
         <div
-          onTouchEnd={onClick ? onClick(latestMessage) : undefined}
           className={'hover:bg-offsetLight hover:bg-primary/5 select-none border-b md:border-none'}
           onClick={onClick ? onClick(latestMessage) : undefined}
         >
@@ -968,7 +967,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
             </div>
           ) : !items || items.length === 0 ? (
-            <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
+            <div className="flex h-[calc(100dvh-6rem)] w-full items-center justify-center">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
                 <Image
                   suppressHydrationWarning
