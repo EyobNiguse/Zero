@@ -4,6 +4,7 @@ import {
   Archive2,
   Bell,
   ChevronDown,
+  ExclamationCircle,
   GroupPeople,
   Lightning,
   People,
@@ -183,16 +184,22 @@ const Thread = memo(
       refetch: refetchThread,
     } = useThread(demo ? null : message.id);
     const [isStarred, setIsStarred] = useState(false);
+    const [isImportant, setIsImportant] = useState(false);
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
+    const { mutateAsync: toggleImportant } = useMutation(
+      trpc.mail.toggleImportant.mutationOptions(),
+    );
     const [id, setThreadId] = useQueryState('threadId');
     const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
     const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
 
     useEffect(() => {
       if (getThreadData?.latest?.tags) {
+        console.log(getThreadData.latest.tags);
         setIsStarred(getThreadData.latest.tags.some((tag) => tag.name === 'STARRED'));
+        setIsImportant(getThreadData.latest.tags.some((tag) => tag.name === 'IMPORTANT'));
       }
     }, [getThreadData?.latest?.tags]);
 
@@ -212,6 +219,16 @@ const Thread = memo(
         await refetchThread();
       },
       [getThreadData, message.id, isStarred, refetchThreads, t],
+    );
+
+    const handleToggleImportant = useCallback(
+      async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!getThreadData || !message.id) return;
+        await toggleImportant({ ids: [message.id] });
+        await refetchThread();
+      },
+      [getThreadData, message.id, refetchThreads],
     );
 
     const handleNext = useCallback(
@@ -475,7 +492,22 @@ const Thread = memo(
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 [&_svg]:size-3.5"
-                    onClick={(e: React.MouseEvent) => {
+                    onClick={handleToggleImportant}
+                  >
+                    <ExclamationCircle className={cn(isImportant ? '' : 'opacity-50')} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                  {t('common.mail.toggleImportant')}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 [&_svg]:size-3.5"
+                    onClick={(e) => {
                       e.stopPropagation();
                       moveThreadTo('archive');
                     }}

@@ -284,6 +284,8 @@
       "noSearchResults": "No search results found",
       "clearSearch": "Clear search",
       "markAsImportant": "Mark as Important",
+      "removeFromImportant": "Remove from Important",
+      "toggleImportant": "Toggle important",
       "unSubscribeFromAll": "Unsubscribe from all",
       "starAll": "Star all",
       "mute": "Mute",

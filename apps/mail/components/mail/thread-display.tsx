@@ -17,6 +17,7 @@ import {
   Forward,
   ReplyAll,
   Star,
+  ExclamationCircle,
 } from '../icons/icons';
 import {
   DropdownMenu,
@@ -158,6 +159,7 @@ export function ThreadDisplay() {
   const [{ refetch: mutateThreads }, items] = useThreads();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
+  const [isImportant, setIsImportant] = useState(false);
   const t = useTranslations();
   const { refetch: refetchStats } = useStats();
   const [mode, setMode] = useQueryState('mode');
@@ -169,6 +171,7 @@ export function ThreadDisplay() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
+  const { mutateAsync: toggleImportant } = useMutation(trpc.mail.toggleImportant.mutationOptions());
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
   const { mutateAsync: markAsRead } = useMutation(
@@ -301,11 +304,18 @@ export function ThreadDisplay() {
     await refetchThread();
   }, [emailData, id, isStarred]);
 
+  const handleToggleImportant = useCallback(async () => {
+    if (!emailData || !id) return;
+    await toggleImportant({ ids: [id] });
+    await refetchThread();
+  }, [emailData, id]);
+
   // Set initial star state based on email data
   useEffect(() => {
     if (emailData?.latest?.tags) {
       // Check if any tag has the name 'STARRED'
       setIsStarred(emailData.latest.tags.some((tag) => tag.name === 'STARRED'));
+      setIsImportant(emailData.latest.tags.some((tag) => tag.name === 'IMPORTANT'));
     }
   }, [emailData?.latest?.tags]);
 
@@ -511,6 +521,21 @@ export function ThreadDisplay() {
                       {isStarred
                         ? t('common.threadDisplay.unstar')
                         : t('common.threadDisplay.star')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="inline-flex h-7 w-7 items-center justify-center gap-1 overflow-hidden rounded-md bg-white dark:bg-[#313131]"
+                        onClick={handleToggleImportant}
+                      >
+                        <ExclamationCircle className={cn(isImportant ? '' : 'opacity-50')} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                      {t('common.mail.toggleImportant')}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
