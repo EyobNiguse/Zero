@@ -167,9 +167,9 @@ export function AISidebar({ className }: AISidebarProps) {
         {/* Desktop sidebar - only visible on lg screens */}
         <div className="opacity-0 w-[1px]" />
         <ResizablePanel
-          defaultSize={22}
-          minSize={22}
-          maxSize={35}
+          defaultSize={23}
+          minSize={23}
+          maxSize={23}
           className="bg-panelLight mb-1 dark:bg-panelDark mr-1 hidden h-[calc(98vh+10px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm xl:block dark:border-[#252525]"
         >
           <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>
