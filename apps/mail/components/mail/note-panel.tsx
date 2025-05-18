@@ -561,7 +561,7 @@ export function NotesPanel({ threadId }: NotesPanelProps) {
 
       {isOpen && (
         <div
-          className="animate-in fade-in-20 zoom-in-95 fixed right-0 top-[5rem] z-50 h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] w-full max-w-[100vw] overflow-hidden rounded-t-lg border border-t bg-[#FAFAFA] shadow-lg duration-100 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:h-auto sm:max-h-[80vh] sm:w-[400px] sm:max-w-[90vw] sm:rounded-xl sm:border dark:border-[#252525] dark:bg-[#1A1A1A]"
+          className="animate-in fade-in-20 zoom-in-95 fixed right-0 top-[5rem] z-50 h-[calc(100dvh-5rem)] max-h-[calc(100dvh-5rem)] w-full max-w-[100vw] overflow-hidden rounded-t-lg border border-t bg-[#FAFAFA] shadow-lg duration-100 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:h-auto sm:max-h-[80vh] sm:w-[400px] sm:max-w-[90vw] sm:rounded-xl sm:border dark:border-[#252525] dark:bg-[#1A1A1A]"
           onClick={handlePanelClick}
         >
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#E7E7E7] p-3 dark:border-[#252525]">

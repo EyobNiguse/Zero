@@ -4,6 +4,7 @@ import {
   Archive2,
   Bell,
   ChevronDown,
+  ExclamationCircle,
   GroupPeople,
   Lightning,
   People,
@@ -183,16 +184,22 @@ const Thread = memo(
       refetch: refetchThread,
     } = useThread(demo ? null : message.id);
     const [isStarred, setIsStarred] = useState(false);
+    const [isImportant, setIsImportant] = useState(false);
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
+    const { mutateAsync: toggleImportant } = useMutation(
+      trpc.mail.toggleImportant.mutationOptions(),
+    );
     const [id, setThreadId] = useQueryState('threadId');
     const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
     const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
 
     useEffect(() => {
       if (getThreadData?.latest?.tags) {
+        console.log(getThreadData.latest.tags);
         setIsStarred(getThreadData.latest.tags.some((tag) => tag.name === 'STARRED'));
+        setIsImportant(getThreadData.latest.tags.some((tag) => tag.name === 'IMPORTANT'));
       }
     }, [getThreadData?.latest?.tags]);
 
@@ -212,6 +219,23 @@ const Thread = memo(
         await refetchThread();
       },
       [getThreadData, message.id, isStarred, refetchThreads, t],
+    );
+
+    const handleToggleImportant = useCallback(
+      async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!getThreadData || !message.id) return;
+        const newImportantState = !isImportant;
+        setIsImportant(newImportantState);
+        await toggleImportant({ ids: [message.id] });
+        if (newImportantState) {
+          toast.success(t('common.actions.addedToImportant'));
+        } else {
+          toast.success(t('common.actions.removedFromImportant'));
+        }
+        await refetchThread();
+      },
+      [getThreadData, message.id, refetchThreads],
     );
 
     const handleNext = useCallback(
@@ -425,7 +449,6 @@ const Thread = memo(
     const content =
       latestMessage && getThreadData ? (
         <div
-          onTouchEnd={onClick ? onClick(latestMessage) : undefined}
           className={'hover:bg-offsetLight hover:bg-primary/5 select-none border-b md:border-none'}
           onClick={onClick ? onClick(latestMessage) : undefined}
         >
@@ -469,13 +492,28 @@ const Thread = memo(
                   {isStarred ? t('common.threadDisplay.unstar') : t('common.threadDisplay.star')}
                 </TooltipContent>
               </Tooltip>
+              {/* <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 [&_svg]:size-3.5"
+                    onClick={handleToggleImportant}
+                  >
+                    <ExclamationCircle className={cn(isImportant ? '' : 'opacity-50')} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
+                  {t('common.mail.toggleImportant')}
+                </TooltipContent>
+              </Tooltip> */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 [&_svg]:size-3.5"
-                    onClick={(e: React.MouseEvent) => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       moveThreadTo('archive');
                     }}
@@ -929,7 +967,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
             </div>
           ) : !items || items.length === 0 ? (
-            <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
+            <div className="flex h-[calc(100dvh-9rem)] w-full items-center justify-center md:h-[calc(100dvh-4rem)]">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
                 <Image
                   suppressHydrationWarning
