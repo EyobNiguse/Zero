@@ -17,6 +17,9 @@ import {
   Forward,
   ReplyAll,
   Star,
+  ExclamationCircle,
+  Lightning,
+  Folders,
 } from '../icons/icons';
 import {
   DropdownMenu,
@@ -25,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { CircleAlertIcon, Inbox, ShieldAlertIcon, SidebarOpen, StopCircleIcon } from 'lucide-react';
+import { CircleAlertIcon, Inbox, ShieldAlertIcon, SidebarOpen, StopCircleIcon, Zap } from 'lucide-react';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -158,6 +161,7 @@ export function ThreadDisplay() {
   const [{ refetch: mutateThreads }, items] = useThreads();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
+  const [isImportant, setIsImportant] = useState(false);
   const t = useTranslations();
   const { refetch: refetchStats } = useStats();
   const [mode, setMode] = useQueryState('mode');
@@ -169,6 +173,7 @@ export function ThreadDisplay() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
+  const { mutateAsync: toggleImportant } = useMutation(trpc.mail.toggleImportant.mutationOptions());
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
   const { mutateAsync: markAsRead } = useMutation(
@@ -301,11 +306,23 @@ export function ThreadDisplay() {
     await refetchThread();
   }, [emailData, id, isStarred]);
 
+  const handleToggleImportant = useCallback(async () => {
+    if (!emailData || !id) return;
+    await toggleImportant({ ids: [id] });
+    await refetchThread();
+    if (isImportant) {
+      toast.success(t('common.mail.markedAsImportant'));
+    } else {
+      toast.error("Failed to mark as important");
+    }
+  }, [emailData, id]);
+
   // Set initial star state based on email data
   useEffect(() => {
     if (emailData?.latest?.tags) {
       // Check if any tag has the name 'STARRED'
       setIsStarred(emailData.latest.tags.some((tag) => tag.name === 'STARRED'));
+      setIsImportant(emailData.latest.tags.some((tag) => tag.name === 'IMPORTANT'));
     }
   }, [emailData?.latest?.tags]);
 
@@ -514,6 +531,7 @@ export function ThreadDisplay() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+               
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -578,11 +596,17 @@ export function ThreadDisplay() {
                         {emailData.latest?.listUnsubscribe ||
                         emailData.latest?.listUnsubscribePost ? (
                           <DropdownMenuItem onClick={handleUnsubscribeProcess}>
-                            <ShieldAlertIcon className="fill-iconLight dark:fill-iconDark mr-2" />
+                            <Folders className="fill-iconLight dark:fill-iconDark mr-2" />
                             <span>Unsubscribe</span>
                           </DropdownMenuItem>
                         ) : null}
                       </>
+                    )}
+                   {!isImportant && (
+                      <DropdownMenuItem onClick={handleToggleImportant}>
+                        <Lightning className="fill-iconLight dark:fill-iconDark mr-2" />
+                        {t('common.mail.markAsImportant')}
+                      </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
