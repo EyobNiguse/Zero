@@ -35,7 +35,12 @@ import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 import { useQueryState } from 'nuqs';
 
+import { useAIFullScreen } from './ai-sidebar';
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isFullScreen } = useAIFullScreen();
+
+  
   const { data: stats } = useStats();
 
   const pathname = usePathname();
@@ -75,7 +80,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <div>
-      <Sidebar
+      {!isFullScreen && (
+        <Sidebar
         collapsible="icon"
         {...props}
         className={`bg-lightBackground dark:bg-darkBackground flex h-screen select-none flex-col items-center  ${state === 'collapsed' ? '' : ''} pb-2`}
@@ -116,6 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarFooter>
       
       </Sidebar>
+      )}
     </div>
   );
 }

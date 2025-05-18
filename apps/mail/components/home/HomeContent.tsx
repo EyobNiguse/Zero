@@ -173,12 +173,12 @@ export default function HomeContent() {
   return (
     <main className="relative flex h-full flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
-        className="z-1 absolute -top-32 left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
-        style={{ mixBlendMode: 'screen' }}
+        className="z-1 absolute top-[-40px] left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover "
+        style={{ mixBlendMode: 'screen', maskImage: 'linear-gradient(to bottom, black, transparent)' }}
       />
       {/* Desktop Navigation - Hidden on mobile */}
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
-        <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
+        <nav className="border-input/50 bg-[#1E1E1E] flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
           <div className="flex items-center gap-6">
             <a href="/" className="relative bottom-1 cursor-pointer">
               <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
