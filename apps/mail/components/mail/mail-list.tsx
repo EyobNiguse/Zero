@@ -967,7 +967,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
             </div>
           ) : !items || items.length === 0 ? (
-            <div className="flex h-[calc(100dvh-6rem)] w-full items-center justify-center">
+            <div className="flex h-[calc(100dvh-9rem)] w-full items-center justify-center md:h-[calc(100dvh-4rem)]">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
                 <Image
                   suppressHydrationWarning
