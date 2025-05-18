@@ -287,6 +287,8 @@
       "clearSearch": "Clear search",
       "markAsImportant": "Mark as Important",
       "removeFromImportant": "Remove from Important",
+      "markedAsImportant": "Marked as Important",
+      "markedAsUnimportant": "Unmarked as Unimportant",
       "toggleImportant": "Toggle important",
       "unSubscribeFromAll": "Unsubscribe from all",
       "starAll": "Star all",

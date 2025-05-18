@@ -310,6 +310,11 @@ export function ThreadDisplay() {
     if (!emailData || !id) return;
     await toggleImportant({ ids: [id] });
     await refetchThread();
+    if (isImportant) {
+      toast.success(t('common.mail.markedAsImportant'));
+    } else {
+      toast.error("Failed to mark as important");
+    }
   }, [emailData, id]);
 
   // Set initial star state based on email data
@@ -600,7 +605,7 @@ export function ThreadDisplay() {
                    {!isImportant && (
                       <DropdownMenuItem onClick={handleToggleImportant}>
                         <Lightning className="fill-iconLight dark:fill-iconDark mr-2" />
-                        {t('common.mail.toggleImportant')}
+                        {t('common.mail.markAsImportant')}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
