@@ -29,7 +29,9 @@ checksums:
     common/actions/addingToFavorites: 720e59eec292be6c8310b47dc6c22a32
     common/actions/removingFromFavorites: 951348f8f0bbce35e3abff396c012620
     common/actions/addedToFavorites: 848046ec65d15913112b466c544722eb
+    common/actions/addedToImportant: f0c826833d8be2b285cceec77ba6c048
     common/actions/removedFromFavorites: 540609ab686ed67b1cfd7649467b8bc1
+    common/actions/removedFromImportant: bbab6c58ea968faceda26c25584df1a9
     common/actions/failedToAddToFavorites: fa51002dd9e7d953a75fd213bbea6ee2
     common/actions/failedToRemoveFromFavorites: 5ac9381e679f0f83cf4a4c87c5028106
     common/actions/failedToModifyFavorites: f30b45c6232d2a9a8fa2570eaeced133
@@ -252,6 +254,10 @@ checksums:
     common/mail/noSearchResults: 3176102f55edd2d913f3fa95f03bd380
     common/mail/clearSearch: 0ee4a80abe134b7edd90c74f03638877
     common/mail/markAsImportant: e802707c384b87a4d9581bfd7d5940b3
+    common/mail/removeFromImportant: c7ea65948437047ffa5f1f00de61c8ed
+    common/mail/markedAsImportant: b131adbb4520d1a425f9857686e4953a
+    common/mail/markedAsUnimportant: c217083ebedce69b61fb0524a2210e8d
+    common/mail/toggleImportant: e9893030c91cd85ff4c8776d96c5abf5
     common/mail/unSubscribeFromAll: ee99d0007d97aa774d89cd25ade6e8c0
     common/mail/starAll: 926c027bfe1d87e76bb1a12b9fbc8a1b
     common/mail/mute: 3ade14017ee6826e52a7e9fa75a54852
