@@ -177,23 +177,38 @@ export class OutlookMailManager implements MailManager {
           return [];
         }
 
-        return Promise.all(
+        const folders = await Promise.all(
           userLabels.value.map(async (folder: MailFolder) => {
             try {
               const res = await this.graphClient.api(`/me/mailfolders/${folder.id}`).get();
 
               let normalizedLabel = res.displayName || res.id || '';
 
-              if (res.id?.toLowerCase() === 'inbox') normalizedLabel = 'Inbox';
-              else if (res.id?.toLowerCase() === 'sentitems') normalizedLabel = 'Sent';
-              else if (res.id?.toLowerCase() === 'drafts') normalizedLabel = 'Drafts';
-              else if (res.id?.toLowerCase() === 'deleteditems') normalizedLabel = 'Bin';
-              else if (res.id?.toLowerCase() === 'archive') normalizedLabel = 'Archive';
-              else if (res.id?.toLowerCase() === 'junkemail') normalizedLabel = 'Spam';
+              if (res.displayName === 'Inbox' || res.id?.toLowerCase() === 'inbox')
+                normalizedLabel = 'Inbox';
+              else if (res.displayName === 'Sent Items' || res.id?.toLowerCase() === 'sentitems')
+                normalizedLabel = 'Sent';
+              else if (res.displayName === 'Drafts' || res.id?.toLowerCase() === 'drafts')
+                normalizedLabel = 'Drafts';
+              else if (
+                res.displayName === 'Deleted Items' ||
+                res.id?.toLowerCase() === 'deleteditems'
+              )
+                normalizedLabel = 'Bin';
+              else if (res.displayName === 'Archive' || res.id?.toLowerCase() === 'archive')
+                normalizedLabel = 'Archive';
+              else if (res.displayName === 'Junk Email' || res.id?.toLowerCase() === 'junkemail')
+                normalizedLabel = 'Spam';
+
+              // Use unreadItemCount only for Inbox, use totalItemCount for all other folders
+              const count =
+                res.id?.toLowerCase() === 'inbox'
+                  ? Number(res.unreadItemCount)
+                  : Number(res.totalItemCount);
 
               return {
                 label: normalizedLabel,
-                count: Number(res.unreadItemCount) ?? undefined,
+                count: count ?? undefined,
               };
             } catch (error) {
               console.error(`Error getting counts for folder ${folder.id}:`, error);
@@ -204,6 +219,8 @@ export class OutlookMailManager implements MailManager {
             }
           }),
         );
+
+        return folders;
       },
       { email: this.config.auth?.email },
     );
