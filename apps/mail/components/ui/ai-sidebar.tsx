@@ -83,16 +83,29 @@ export function useAIFullScreen() {
   
   // Update both query parameter and localStorage when fullscreen state changes
   const setIsFullScreen = useCallback(
-    async (value: boolean) => {
+    (value: boolean) => {
+      // Immediately update local state for faster UI response
       setIsFullScreenState(value);
-      await setIsFullScreenQuery(value ? 'true' : null);
       
-      // Save to localStorage for persistence across sessions
-      if (typeof window !== 'undefined') {
-        if (value) {
-          localStorage.setItem('ai-fullscreen', 'true');
-        } else {
+      // For exiting fullscreen, we need to be extra careful to ensure state is updated properly
+      if (!value) {
+        // Force immediate removal from localStorage for faster response
+        if (typeof window !== 'undefined') {
           localStorage.removeItem('ai-fullscreen');
+        }
+        
+        // Use setTimeout to ensure the state update happens in the next tick
+        // This helps prevent the need for double-clicking
+        setTimeout(() => {
+          setIsFullScreenQuery(null).catch(console.error);
+        }, 0);
+      } else {
+        // For entering fullscreen, we can use the normal flow
+        setIsFullScreenQuery('true').catch(console.error);
+        
+        // Save to localStorage for persistence across sessions
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('ai-fullscreen', 'true');
         }
       }
     },
@@ -102,7 +115,7 @@ export function useAIFullScreen() {
   // Sync with query parameter on mount or when it changes
   useEffect(() => {
     const queryValue = isFullScreenQuery === 'true';
-    if (isFullScreenQuery && queryValue !== isFullScreen) {
+    if (isFullScreenQuery !== null && queryValue !== isFullScreen) {
       setIsFullScreenState(queryValue);
     }
   }, [isFullScreenQuery, isFullScreen]);
@@ -115,7 +128,12 @@ export function useAIFullScreen() {
         setIsFullScreenQuery('true');
       }
     }
-  }, [isFullScreenQuery, setIsFullScreenQuery]);
+    
+    // Force a re-render when exiting fullscreen mode
+    if (isFullScreenQuery === null && isFullScreen) {
+      setIsFullScreenState(false);
+    }
+  }, [isFullScreenQuery, setIsFullScreenQuery, isFullScreen]);
   
   return {
     isFullScreen,
@@ -140,14 +158,14 @@ export function useAISidebar() {
       }
     }
     
-    return 'sidebar';
+    return 'popup';
   });
 
   // Update query parameter and localStorage when viewMode changes
   const setViewMode = useCallback(
     async (mode: ViewMode) => {
       setViewModeState(mode);
-      await setViewModeQuery(mode === 'sidebar' ? null : mode);
+      await setViewModeQuery(mode === 'popup' ? null : mode);
       
       // Save to localStorage for persistence across sessions
       if (typeof window !== 'undefined') {
@@ -159,15 +177,26 @@ export function useAISidebar() {
   
   // Function to set open state and save to localStorage
   const setOpen = useCallback(
-    async (openState: boolean) => {
-      await setOpenQuery(openState ? 'true' : null);
-      
-      // Save to localStorage for persistence across sessions
-      if (typeof window !== 'undefined') {
-        if (openState) {
-          localStorage.setItem('ai-sidebar-open', 'true');
-        } else {
+    (openState: boolean) => {
+      // For closing, we need to handle state updates more carefully
+      if (!openState) {
+        // First remove from localStorage immediately
+        if (typeof window !== 'undefined') {
           localStorage.removeItem('ai-sidebar-open');
+        }
+        
+        // Use setTimeout to ensure the query update happens in the next tick
+        // This helps prevent the need for double-clicking
+        setTimeout(() => {
+          setOpenQuery(null).catch(console.error);
+        }, 0);
+      } else {
+        // For opening, we can use the normal flow
+        setOpenQuery('true').catch(console.error);
+        
+        // Save to localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('ai-sidebar-open', 'true');
         }
       }
     },
@@ -176,9 +205,9 @@ export function useAISidebar() {
   
   // Toggle open state
   const toggleOpen = useCallback(
-    async () => {
+    () => {
       const newState = !(open === 'true');
-      await setOpen(newState);
+      setOpen(newState);
     },
     [open, setOpen]
   );
@@ -206,7 +235,7 @@ export function useAISidebar() {
     setViewMode,
     setOpen,
     toggleOpen,
-    toggleViewMode: () => setViewMode(viewMode === 'sidebar' ? 'popup' : 'sidebar'),
+    toggleViewMode: () => setViewMode(viewMode === 'popup' ? 'sidebar' : 'popup'),
     isFullScreen,
     setIsFullScreen,
     // Add convenience boolean flags for each state
@@ -329,7 +358,7 @@ function AISidebar({ className }: AISidebarProps) {
       {open && (
         <>
           {/* Desktop view - visible on md and larger screens */}
-          {isSidebar && !isFullScreen ? (
+          {isSidebar && !isFullScreen && (
             <>
               <div className="w-[1px] opacity-0" />
               <ResizablePanel
@@ -512,7 +541,7 @@ function AISidebar({ className }: AISidebarProps) {
                 </div>
               </ResizablePanel>
             </>
-          ) : null}
+          )}
 
           {/* Popup view - visible on small screens or when popup mode is selected */}
           <div
