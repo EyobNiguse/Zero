@@ -67,6 +67,7 @@ export function NavUser() {
     trpc.connections.setDefault.mutationOptions(),
   );
   const { openBillingPortal, customer: billingCustomer, attach } = useBilling();
+  const [showPricingDialog, setShowPricingDialog] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -463,11 +464,26 @@ export function NavUser() {
                 </DropdownMenu>
               )}
 
-              <AddConnectionDialog>
-                <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
-                  <Plus className="size-4" />
-                </button>
-              </AddConnectionDialog>
+              {isPro ? (
+                <AddConnectionDialog>
+                  <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
+                    <Plus className="size-4" />
+                  </button>
+                </AddConnectionDialog>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => setShowPricingDialog(true)}
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                  <PricingDialog 
+                    open={showPricingDialog} 
+                    onOpenChange={setShowPricingDialog} 
+                  />
+                </>
+              )}
             </div>
 
             <div>

@@ -16,8 +16,7 @@ import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { env } from '@/lib/env';
-import { useMemo, useState } from 'react';
-import { PricingDialog } from '../ui/pricing-dialog';
+import { useMemo } from 'react';
 
 export const AddConnectionDialog = ({
   children,
@@ -30,8 +29,6 @@ export const AddConnectionDialog = ({
 }) => {
   const { connections, attach } = useBilling();
   const t = useTranslations();
-  const [showPricingDialog, setShowPricingDialog] = useState(false);
-  const [showAddDialog, setShowAddDialog] = useState(true);
 
   const pathname = usePathname();
   const canCreateConnection = useMemo(() => {
@@ -40,31 +37,23 @@ export const AddConnectionDialog = ({
   }, [connections]);
 
   const handleUpgrade = async () => {
-    // Show pricing dialog and hide this dialog
-    setShowPricingDialog(true);
-    setShowAddDialog(false);
+    if (attach) {
+      return attach({
+        productId: 'pro-example',
+        successUrl: `${window.location.origin}/mail/inbox?success=true`,
+      })
+        .catch((error: Error) => {
+          console.error('Failed to upgrade:', error);
+        })
+        .then(() => {
+          console.log('Upgraded successfully');
+        });
+    }
   };
 
   return (
-    <>
-      <PricingDialog 
-        open={showPricingDialog} 
-        onOpenChange={(open) => {
-          setShowPricingDialog(open);
-          // When pricing dialog is closed, show add dialog again
-          if (!open) {
-            setShowAddDialog(true);
-          }
-        }} 
-      />
-      
-      <Dialog 
-        open={showAddDialog} 
-        onOpenChange={(open) => {
-          if (onOpenChange) onOpenChange(open);
-          setShowAddDialog(open);
-        }}
-      >
+    <Dialog onOpenChange={onOpenChange}>
+
         <DialogTrigger asChild>
           {children || (
             <Button
@@ -152,6 +141,5 @@ export const AddConnectionDialog = ({
         </motion.div>
       </DialogContent>
     </Dialog>
-    </>
   );
 };
