@@ -259,7 +259,7 @@ export default function PricingCard() {
             </div>
           </div>
           <button
-            className="z-50 inline-flex h-24 cursor-pointer items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-white p-3 outline outline-1 outline-offset-[-1px]"
+            className="z-30 inline-flex h-24 cursor-pointer items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-white p-3 outline outline-1 outline-offset-[-1px]"
             onClick={handleUpgrade}
           >
             <div className="flex items-center justify-center gap-2.5 px-1">
