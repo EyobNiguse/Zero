@@ -293,7 +293,7 @@ const AutoLabelingSettings = () => {
         </ScrollArea>
         <DialogFooter className="mt-4">
           <div className="flex w-full justify-between">
-            <Button variant="outline" size="sm">
+            <Button onClick={handleToggleAutolabeling} variant="outline" size="sm">
               {brainState?.enabled ? 'Disable' : 'Enable'}
             </Button>
             <div className="flex gap-2">

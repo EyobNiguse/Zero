@@ -1,5 +1,5 @@
 import { activeConnectionProcedure, brainServerAvailableMiddleware, router } from '../trpc';
-import { disableBrainFunction, enableBrainFunction } from '../../lib/brain';
+import { disableBrainFunction, enableBrainFunction, getPrompts } from '../../lib/brain';
 import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 
@@ -104,6 +104,12 @@ export const brainRouter = router({
         console.error(`[GET_LABELS] Error parsing labels for ${connection.id}:`, error);
         return [];
       }
+    }),
+  getPrompts: activeConnectionProcedure
+    .use(brainServerAvailableMiddleware)
+    .query(async ({ ctx }) => {
+      const connection = ctx.activeConnection;
+      return await getPrompts({ connectionId: connection.id });
     }),
   updateLabels: activeConnectionProcedure
     .use(brainServerAvailableMiddleware)

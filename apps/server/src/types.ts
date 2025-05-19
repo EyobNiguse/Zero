@@ -155,3 +155,11 @@ export enum Tools {
 }
 
 export type AppContext = Context<{ Bindings: Env }>;
+
+export enum EPrompts {
+  SummarizeMessage = 'SummarizeMessage',
+  ReSummarizeThread = 'ReSummarizeThread',
+  SummarizeThread = 'SummarizeThread',
+  //   ThreadLabels = 'ThreadLabels',
+  //   Chat = 'Chat',
+}
