@@ -15,7 +15,6 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { env } from '@/lib/env';
 import { useMemo } from 'react';
 
 export const AddConnectionDialog = ({
@@ -113,15 +112,7 @@ export const AddConnectionDialog = ({
                   onClick={async () =>
                     await authClient.linkSocial({
                       provider: provider.providerId,
-<<<<<<< HEAD
-<<<<<<< HEAD
-                      callbackURL: `${env.NEXT_PUBLIC_APP_URL}/${pathname}`,
-=======
                       callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
->>>>>>> a9d1ae61 (feat: outlook driver)
-=======
-                      callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
->>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
                     })
                   }
                 >

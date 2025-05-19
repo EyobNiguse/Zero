@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { env } from '@/lib/env';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
@@ -194,75 +193,8 @@ export default function ConnectionsPage() {
                       </Dialog>
                     </div>
                   </div>
-<<<<<<< HEAD
-<<<<<<< HEAD
-                  <div className="flex items-center gap-4">
-                    {data.disconnectedIds?.includes(connection.id) ? (
-                      <>
-                        <div>
-                          <Badge variant="destructive">
-                            {t('pages.settings.connections.disconnected')}
-                          </Badge>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={async () => {
-                            await authClient.linkSocial({
-                              provider: connection.providerId,
-                              callbackURL: `${env.NEXT_PUBLIC_APP_URL}/settings/connections`,
-                            });
-                          }}
-                        >
-                          <Unplug className="size-4" />
-                          {t('pages.settings.connections.reconnect')}
-                        </Button>
-                      </>
-                    ) : null}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-primary ml-4 shrink-0"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>
-                            {t('pages.settings.connections.disconnectTitle')}
-                          </DialogTitle>
-                          <DialogDescription>
-                            {t('pages.settings.connections.disconnectDescription')}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end gap-4">
-                          <DialogClose asChild>
-                            <Button variant="outline">
-                              {t('pages.settings.connections.cancel')}
-                            </Button>
-                          </DialogClose>
-                          <DialogClose asChild>
-                            <Button onClick={() => disconnectAccount(connection.id)}>
-                              {t('pages.settings.connections.remove')}
-                            </Button>
-                          </DialogClose>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-              ))}
-=======
                 );
               })}
->>>>>>> 0a89356c (fix icons in connections page)
-=======
-                );
-              })}
->>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
             </div>
           ) : null}
 

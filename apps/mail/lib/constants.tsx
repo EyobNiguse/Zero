@@ -1,11 +1,5 @@
 import { GmailColor, OutlookColor } from '../components/icons/icons';
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { env } from '@/lib/env';
-=======
->>>>>>> a9d1ae61 (feat: outlook driver)
-=======
->>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
 
 export const I18N_LOCALE_COOKIE_NAME = 'i18n:locale';
 export const SIDEBAR_COOKIE_NAME = 'sidebar:state';
