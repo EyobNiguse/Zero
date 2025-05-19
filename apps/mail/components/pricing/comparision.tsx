@@ -1,9 +1,9 @@
 import { Check, Plus, PurpleThickCheck, ThickCheck } from '../icons/icons';
-import { useBilling } from '@/hooks/use-billing';
-import Image from 'next/image';
 import { useSession, signIn } from '@/lib/auth-client';
-import { toast } from 'sonner';
+import { useBilling } from '@/hooks/use-billing';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { toast } from 'sonner';
 
 export default function Comparision() {
   const { attach } = useBilling();
@@ -12,31 +12,31 @@ export default function Comparision() {
 
   const handleUpgrade = async () => {
     if (!session) {
-      // User is not logged in, redirect to login page first
       toast.promise(
         signIn.social({
           provider: 'google',
           callbackURL: `${window.location.origin}/pricing`,
         }),
         {
-          loading: 'Redirecting to login...',
           success: 'Redirecting to login...',
           error: 'Login redirect failed',
-        }
+        },
       );
       return;
     }
-    
+
     if (attach) {
-      try {
-        await attach({
+      toast.promise(
+        attach({
           productId: 'pro-example',
           successUrl: `${window.location.origin}/mail/inbox?success=true`,
           authUrl: `${window.location.origin}/login?redirect=/pricing`,
-        });
-      } catch (error) {
-        console.error('Failed to upgrade:', error);
-      }
+        }),
+        {
+          success: 'Redirecting to payment...',
+          error: 'Failed to process upgrade. Please try again later.',
+        },
+      );
     }
   };
   return (
@@ -150,7 +150,6 @@ export default function Comparision() {
               </div>
               <button
                 onClick={() => {
-                
                   if (session) {
                     // User is logged in, redirect to inbox
                     router.push('/mail/inbox');

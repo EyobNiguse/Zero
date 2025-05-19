@@ -1,12 +1,28 @@
 import { PurpleThickCheck, ThickCheck } from '../icons/icons';
+import { useSession, signIn } from '@/lib/auth-client';
 import { PricingSwitch } from '../ui/pricing-switch';
+import { useBilling } from '@/hooks/use-billing';
+import { useRouter } from 'next/navigation';
 import { Badge } from '../ui/badge';
 import { useState } from 'react';
 import Image from 'next/image';
-import { useBilling } from '@/hooks/use-billing';
-import { useSession, signIn } from '@/lib/auth-client';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+
+const handleGoogleSignIn = (
+  callbackURL: string,
+  options?: { loading?: string; success?: string },
+) => {
+  return toast.promise(
+    signIn.social({
+      provider: 'google',
+      callbackURL,
+    }),
+    {
+      success: options?.success || 'Redirecting to login...',
+      error: 'Login redirect failed',
+    },
+  );
+};
 
 export default function PricingCard() {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -15,36 +31,31 @@ export default function PricingCard() {
   const { attach } = useBilling();
   const { data: session } = useSession();
   const router = useRouter();
-  
-    const handleUpgrade = async () => {
-      if (!session) {
-        // User is not logged in, redirect to login page first
+
+  const handleUpgrade = async () => {
+    if (!session) {
+      handleGoogleSignIn(`${window.location.origin}/pricing`);
+      return;
+    }
+
+    if (attach) {
+      try {
         toast.promise(
-          signIn.social({
-            provider: 'google',
-            callbackURL: `${window.location.origin}/pricing`,
-          }),
-          {
-            loading: 'Redirecting to login...',
-            success: 'Redirecting to login...',
-            error: 'Login redirect failed',
-          }
-        );
-        return;
-      }
-      
-      if (attach) {
-        try {
-          await attach({
+          attach({
             productId: isAnnual ? 'pro_annual' : 'pro-example',
             successUrl: `${window.location.origin}/mail/inbox?success=true`,
             authUrl: `${window.location.origin}/login?redirect=/pricing`,
-          });
-        } catch (error) {
-          console.error('Failed to upgrade:', error);
-        }
+          }),
+          {
+            success: 'Redirecting to payment...',
+            error: 'Failed to process upgrade. Please try again later.',
+          },
+        );
+      } catch (error) {
+        console.error('Failed to upgrade:', error);
       }
-    };
+    }
+  };
   return (
     <div>
       <div className="relative z-20 mb-8 flex items-center justify-center gap-2">
@@ -62,7 +73,7 @@ export default function PricingCard() {
                 <div className="relative h-6 w-6">
                   <Image
                     src="lock.svg"
-                    alt=""
+                    alt="lock"
                     height={24}
                     width={24}
                     className="relative left-0 h-6 w-6"
@@ -122,21 +133,13 @@ export default function PricingCard() {
           </div>
           <button
             onClick={() => {
-                
               if (session) {
-                // User is logged in, redirect to inbox
                 router.push('/mail/inbox');
               } else {
-                // User is not logged in, show sign-in dialog
-                toast.promise(
-                  signIn.social({
-                    provider: 'google',
-                    callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
-                  }),
-                  {
-                    error: 'Login redirect failed',
-                  },
-                );
+                handleGoogleSignIn(`${process.env.NEXT_PUBLIC_APP_URL}/mail`, {
+                  loading: undefined,
+                  success: undefined,
+                });
               }
             }}
             className="relative top-[154px] inline-flex h-10 items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-[#2D2D2D] p-3 shadow shadow-black/30 outline outline-1 outline-offset-[-1px] outline-[#434343] lg:top-[138px]"
@@ -152,7 +155,7 @@ export default function PricingCard() {
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden">
             <Image
               src="/pricing-gradient.png"
-              alt=""
+              alt="pricing-gradient"
               className="absolute -right-0 -top-52 h-auto w-full"
               height={535}
               width={535}

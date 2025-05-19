@@ -4,7 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CircleCheck, PurpleThickCheck } from '@/components/icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 interface PricingDialogProps {
   open: boolean;
@@ -13,18 +15,23 @@ interface PricingDialogProps {
 
 export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
   const { attach } = useBilling();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleUpgrade = async () => {
     if (attach) {
-      try {
-        await attach({
+      setIsLoading(true);
+      toast.promise(
+        attach({
           productId: 'pro-example',
           successUrl: `${window.location.origin}/mail/inbox?success=true`,
           authUrl: `${window.location.origin}/login?redirect=/pricing`,
-        });
-      } catch (error) {
-        console.error('Failed to upgrade:', error);
-      }
+        }),
+        {
+          success: 'Redirecting to payment...',
+          error: 'Failed to process upgrade. Please try again later.',
+          finally: () => setIsLoading(false),
+        },
+      );
     }
   };
 
@@ -40,7 +47,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden">
             <Image
               src="/pricing-gradient.png"
-              alt=""
+              alt="pricing-gradient"
               className="absolute -right-0 -top-52 h-auto w-full"
               height={535}
               width={535}
@@ -146,12 +153,13 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
             </div>
           </div>
           <button
-            className="z-50 inline-flex h-24 cursor-pointer items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-white p-3 outline outline-1 outline-offset-[-1px]"
+            className="z-50 inline-flex h-24 cursor-pointer items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-white p-3 outline outline-1 outline-offset-[-1px] disabled:cursor-not-allowed disabled:opacity-50"
             onClick={handleUpgrade}
+            disabled={isLoading}
           >
             <div className="flex items-center justify-center gap-2.5 px-1">
               <div className="justify-start text-center font-semibold leading-none text-black">
-                Get Zero Pro
+                {isLoading ? 'Processing...' : 'Get Zero Pro'}
               </div>
             </div>
           </button>

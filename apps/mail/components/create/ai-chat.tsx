@@ -1,34 +1,26 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { MailLabels } from '../mail/mail-list';
-import { useSearchValue } from '@/hooks/use-search-value';
-import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useCallback, useEffect } from 'react';
 import { useTRPC } from '@/providers/query-provider';
+import { PricingDialog } from '../ui/pricing-dialog';
 import { Markdown } from '@react-email/components';
+import { useAIFullScreen } from '../ui/ai-sidebar';
 import { CurvedArrow, Stop } from '../icons/icons';
-import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
 import { useLabels } from '@/hooks/use-labels';
+import { MailLabels } from '../mail/mail-list';
 import { cn, getEmailLogo } from '@/lib/utils';
-import { useStats } from '@/hooks/use-stats';
-import { useParams } from 'next/navigation';
-import { CheckCircle2 } from 'lucide-react';
-import { useChat } from '@ai-sdk/react';
 import { Button } from '../ui/button';
 import { format } from 'date-fns-tz';
 import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { useState } from 'react';
-import { env } from '@/lib/env';
-import { toast } from 'sonner';
-import Image from 'next/image';
-import { PricingDialog } from '../ui/pricing-dialog';
 import VoiceChat from './voice';
-import { useAIFullScreen } from '../ui/ai-sidebar';
+import Image from 'next/image';
+import { toast } from 'sonner';
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
@@ -183,8 +175,7 @@ export function AIChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [threadId] = useQueryState('threadId');
-  const { attach, chatMessages } = useBilling();
+  const { chatMessages } = useBilling();
   const { isFullScreen } = useAIFullScreen();
 
   const scrollToBottom = useCallback(() => {
@@ -197,25 +188,8 @@ export function AIChat({
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const handleUpgrade = async () => {
-    if (attach) {
-      return attach({
-        productId: 'pro-example',
-        successUrl: `${window.location.origin}/mail/inbox?success=true`,
-      })
-        .catch((error: Error) => {
-          console.error('Failed to upgrade:', error);
-        })
-        .then(() => {
-          console.log('Upgraded successfully');
-        });
-    }
-  };
-
-  // Already defined above
-
   return (
-    <div className={cn('flex h-full flex-col ', isFullScreen ? 'max-w-xl mx-auto' : '')}>
+    <div className={cn('flex h-full flex-col', isFullScreen ? 'mx-auto max-w-xl' : '')}>
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
@@ -304,7 +278,7 @@ export function AIChat({
       </div>
 
       {/* Fixed input at bottom */}
-      <div className={cn("mb-4 flex-shrink-0 px-4", isFullScreen ? 'px-0' : '')}>
+      <div className={cn('mb-4 flex-shrink-0 px-4', isFullScreen ? 'px-0' : '')}>
         <div className="bg-offsetLight border-border/50 relative rounded-lg dark:bg-[#141414]">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />

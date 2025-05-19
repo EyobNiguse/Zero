@@ -1012,25 +1012,23 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
                     />
                   );
                 })}
-              {items.length >= 9 && hasNextPage && !isFetching && (
-                <Button
-                  variant={'ghost'}
-                  className="w-full rounded-none"
-                  onMouseDown={handleScroll}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                      {t('common.actions.loading')}
-                    </div>
-                  ) : (
-                    <>
-                      {t('common.mail.loadMore')} <ChevronDown />
-                    </>
-                  )}
-                </Button>
-              )}
+              <Button
+                variant={'ghost'}
+                className="w-full rounded-none"
+                onMouseDown={handleScroll}
+                disabled={isLoading || items.length <= 9 || !hasNextPage || isFetching}
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                    {t('common.actions.loading')}
+                  </div>
+                ) : (
+                  <>
+                    {t('common.mail.loadMore')} <ChevronDown />
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </ScrollArea>

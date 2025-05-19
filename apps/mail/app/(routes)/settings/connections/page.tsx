@@ -89,7 +89,7 @@ export default function ConnectionsPage() {
                     {connection.picture ? (
                       <Image
                         src={connection.picture}
-                        alt=""
+                        alt={connection.id + ' profile picture'}
                         className="h-12 w-12 shrink-0 rounded-lg object-cover"
                         width={48}
                         height={48}
