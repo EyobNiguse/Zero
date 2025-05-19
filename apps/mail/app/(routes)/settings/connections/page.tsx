@@ -168,7 +168,7 @@ export default function ConnectionsPage() {
                             <Trash className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent showOverlay>
                           <DialogHeader>
                             <DialogTitle>
                               {t('pages.settings.connections.disconnectTitle')}
