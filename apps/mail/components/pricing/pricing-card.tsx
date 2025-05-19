@@ -120,10 +120,30 @@ export default function PricingCard() {
               </div>
             </div>
           </div>
-          <button disabled className="relative top-[154px] inline-flex h-10 items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-[#2D2D2D] p-3 shadow shadow-black/30 outline outline-1 outline-offset-[-1px] outline-[#434343] lg:top-[138px]">
+          <button
+            onClick={() => {
+                
+              if (session) {
+                // User is logged in, redirect to inbox
+                router.push('/mail/inbox');
+              } else {
+                // User is not logged in, show sign-in dialog
+                toast.promise(
+                  signIn.social({
+                    provider: 'google',
+                    callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+                  }),
+                  {
+                    error: 'Login redirect failed',
+                  },
+                );
+              }
+            }}
+            className="relative top-[154px] inline-flex h-10 items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-[#2D2D2D] p-3 shadow shadow-black/30 outline outline-1 outline-offset-[-1px] outline-[#434343] lg:top-[138px]"
+          >
             <div className="flex items-center justify-center gap-2.5 px-1">
               <div className="justify-start text-center font-semibold leading-none text-[#D5D5D5]">
-                Current Plan
+                Get Started For Free
               </div>
             </div>
           </button>

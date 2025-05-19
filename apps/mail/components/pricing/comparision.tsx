@@ -148,13 +148,33 @@ export default function Comparision() {
                   Free Plan
                 </div>
               </div>
-              <div className="inline-flex h-[40px] items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10 shadow-[inset_0px_-2px_0px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-white/10">
-                <div className="flex items-center justify-center gap-2.5 px-1">
+              <button
+                onClick={() => {
+                
+                  if (session) {
+                    // User is logged in, redirect to inbox
+                    router.push('/mail/inbox');
+                  } else {
+                    // User is not logged in, show sign-in dialog
+                    toast.promise(
+                      signIn.social({
+                        provider: 'google',
+                        callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+                      }),
+                      {
+                        error: 'Login redirect failed',
+                      },
+                    );
+                  }
+                }}
+                className="inline-flex h-[40px] items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10 p-[3.5px] outline outline-1 outline-offset-[-1px] outline-white/10"
+              >
+                <div className="flex items-center justify-center">
                   <div className="justify-start text-center text-base font-semibold leading-none text-white/80">
-                    Current Plan
+                    Get Started For Free
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
           <div className="flex flex-col items-start justify-start self-stretch pb-6">
@@ -348,7 +368,7 @@ export default function Comparision() {
                     <PurpleThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-violet-400">
-                    $10 per month
+                    $20 per month
                   </div>
                 </div>
               </div>

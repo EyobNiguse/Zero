@@ -61,7 +61,7 @@ export default function Footer() {
                 className="hidden md:flex flex-col items-center justify-start"
               >
                 <div className="text-lg lg:text-2xl justify-start text-center font-normal leading-7 text-white">
-                  Watch how 0.email helps you process your inbox in a fraction of the time.
+                  Get started and see how 0.email helps you process your inbox in a fraction of the time.
                 </div>
               </motion.div>
               <motion.div
