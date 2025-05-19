@@ -222,7 +222,14 @@ const createAuthConfig = () => {
       },
     },
     baseURL: env.VITE_PUBLIC_BACKEND_URL,
-    trustedOrigins: ['https://app.0.email', 'https://sapi.0.email'],
+    trustedOrigins: (req) => {
+      const url = new URL(req.url);
+      if (url.origin.includes(env.COOKIE_DOMAIN)) {
+        return [url.origin];
+      } else {
+        return [];
+      }
+    },
     session: {
       cookieCache: {
         enabled: true,

@@ -68,7 +68,13 @@ const app = new Hono<HonoContext>()
   .use(
     '*',
     cors({
-      origin: (c) => c,
+      origin: (c) => {
+        if (c.includes(env.COOKIE_DOMAIN)) {
+          return c;
+        } else {
+          return null;
+        }
+      },
       credentials: true,
       allowHeaders: ['Content-Type', 'Authorization'],
       exposeHeaders: ['X-Zero-Redirect'],
