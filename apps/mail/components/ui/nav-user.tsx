@@ -34,6 +34,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
 import { useThreads } from '@/hooks/use-threads';
 import { useBilling } from '@/hooks/use-billing';
+import { PricingDialog } from './pricing-dialog';
 import { SunIcon } from '../icons/animated/sun';
 import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
@@ -48,8 +49,6 @@ import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { PricingDialog } from './pricing-dialog';
-
 
 export function NavUser() {
   const { data: session, refetch } = useSession();
@@ -103,6 +102,7 @@ export function NavUser() {
   }, [queryClient]);
 
   const handleAccountSwitch = (connectionId: string) => async () => {
+    if (connectionId === session?.connectionId) return;
     await setDefaultConnection({ connectionId });
     refetch();
     refetchConnections();
@@ -222,10 +222,13 @@ export function NavUser() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="w-full">
-                        <div className="text-sm font-medium flex items-center justify-center gap-0.5">
+                        <div className="flex items-center justify-center gap-0.5 text-sm font-medium">
                           {activeAccount.name || session.user.name || 'User'}
                           {isPro && (
-                            <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+                            <BadgeCheck
+                              className="h-4 w-4 text-white dark:text-[#141414]"
+                              fill="#1D9BF0"
+                            />
                           )}
                         </div>
                         <div className="text-muted-foreground text-xs">{activeAccount.email}</div>
@@ -552,16 +555,18 @@ export function NavUser() {
         <div className="flex items-center justify-between gap-2">
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
             <div className="flex items-center gap-1 text-[13px] leading-none text-black dark:text-white">
-              <p className="text-[13px] truncate max-w-[8.5ch]">{activeAccount?.name || session.user.name || 'User'}</p>
+              <p className="max-w-[8.5ch] truncate text-[13px]">
+                {activeAccount?.name || session.user.name || 'User'}
+              </p>
               {isPro ? (
                 <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
               ) : (
                 <button
-                  className="flex gap-1 h-5 items-center rounded-full border px-1 pr-1.5 hover:bg-transparent"
+                  className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent"
                   onClick={() => setShowPricing(true)}
                 >
-                  <BadgeCheck className="h-4 w-4  text-white dark:text-[#141414]" fill="#1D9BF0" />
-                  <span className="uppercase text-muted-foreground text-[10px]">Get verified</span>
+                  <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+                  <span className="text-muted-foreground text-[10px] uppercase">Get verified</span>
                 </button>
               )}
               <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
