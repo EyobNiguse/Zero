@@ -58,37 +58,31 @@ export default function LabelsPage() {
   const formColor = form.watch('color');
 
   const onSubmit = async (data: LabelType) => {
-    try {
-      toast.promise(
-        editingLabel
-          ? updateLabel({ id: editingLabel.id!, name: data.name, color: data.color })
-          : createLabel({ color: data.color, name: data.name }),
-        {
-          loading: 'Saving label...',
-          success: 'Label saved successfully',
-          error: 'Failed to save label',
+    toast.promise(
+      editingLabel
+        ? updateLabel({ id: editingLabel.id!, name: data.name, color: data.color })
+        : createLabel({ color: data.color, name: data.name }),
+      {
+        loading: 'Saving label...',
+        success: 'Label saved successfully',
+        error: 'Failed to save label',
+        finally: async () => {
+          await refetch();
+          handleClose();
         },
-      );
-    } catch (error) {
-      console.error('Error saving label:', error);
-    } finally {
-      await refetch();
-      handleClose();
-    }
+      },
+    );
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      toast.promise(deleteLabel({ id }), {
-        loading: 'Deleting label...',
-        success: 'Label deleted successfully',
-        error: 'Failed to delete label',
-      });
-    } catch (error) {
-      console.error('Error deleting label:', error);
-    } finally {
-      await refetch();
-    }
+    toast.promise(deleteLabel({ id }), {
+      loading: 'Deleting label...',
+      success: 'Label deleted successfully',
+      error: 'Failed to delete label',
+      finally: async () => {
+        await refetch();
+      },
+    });
   };
 
   const handleEdit = async (label: LabelType) => {
