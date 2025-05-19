@@ -1,5 +1,5 @@
 import { activeConnectionProcedure, brainServerAvailableMiddleware, router } from '../trpc';
-import { disableBrainFunction, enableBrainFunction } from '../../lib/brain';
+import { disableBrainFunction, enableBrainFunction, getPrompts } from '../../lib/brain';
 import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 
@@ -17,6 +17,13 @@ export const getConnectionLimit = async (connectionId: string): Promise<number> 
     throw error;
   }
 };
+
+const labelSchema = z.object({
+  name: z.string(),
+  usecase: z.string(),
+});
+
+const labelsSchema = z.array(labelSchema);
 
 export const brainRouter = router({
   enableBrain: activeConnectionProcedure
@@ -61,7 +68,8 @@ export const brainRouter = router({
         threadId: z.string(),
       }),
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
+      // TODO: Implement loading state
       const { threadId } = input;
       return (await env.zero.getSummary({ type: 'thread', id: threadId })) as {
         data: {
@@ -79,22 +87,45 @@ export const brainRouter = router({
   }),
   getLabels: activeConnectionProcedure
     .use(brainServerAvailableMiddleware)
-    .output(z.array(z.string()))
+    .output(
+      z.array(
+        z.object({
+          name: z.string(),
+          usecase: z.string(),
+        }),
+      ),
+    )
     .query(async ({ ctx }) => {
       const connection = ctx.activeConnection;
       const labels = await env.connection_labels.get(connection.id);
-      return labels?.split(',') ?? [];
+      try {
+        return labels ? (JSON.parse(labels) as z.infer<typeof labelsSchema>) : [];
+      } catch (error) {
+        console.error(`[GET_LABELS] Error parsing labels for ${connection.id}:`, error);
+        return [];
+      }
+    }),
+  getPrompts: activeConnectionProcedure
+    .use(brainServerAvailableMiddleware)
+    .query(async ({ ctx }) => {
+      const connection = ctx.activeConnection;
+      return await getPrompts({ connectionId: connection.id });
     }),
   updateLabels: activeConnectionProcedure
     .use(brainServerAvailableMiddleware)
     .input(
       z.object({
-        labels: z.array(z.string()),
+        labels: labelsSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const connection = ctx.activeConnection;
-      await env.connection_labels.put(connection.id, input.labels.join(','));
+      console.log(input.labels);
+
+      const labels = labelsSchema.parse(input.labels);
+      console.log(labels);
+
+      await env.connection_labels.put(connection.id, JSON.stringify(labels));
       return { success: true };
     }),
 });

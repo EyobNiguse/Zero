@@ -34,12 +34,12 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
 import { useThreads } from '@/hooks/use-threads';
 import { useBilling } from '@/hooks/use-billing';
+import { PricingDialog } from './pricing-dialog';
 import { SunIcon } from '../icons/animated/sun';
 import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
 import { useStats } from '@/hooks/use-stats';
-import { useCustomer } from 'autumn-js/next';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type IConnection } from '@/types';
@@ -55,6 +55,7 @@ export function NavUser() {
   const router = useRouter();
   const { data, refetch: refetchConnections } = useConnections();
   const [isRendered, setIsRendered] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
   const { theme, setTheme } = useTheme();
   const t = useTranslations();
   const { state } = useSidebar();
@@ -65,7 +66,7 @@ export function NavUser() {
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
-  const { openBillingPortal, customer: billingCustomer } = useBilling();
+  const { openBillingPortal, customer: billingCustomer, attach } = useBilling();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -101,6 +102,7 @@ export function NavUser() {
   }, [queryClient]);
 
   const handleAccountSwitch = (connectionId: string) => async () => {
+    if (connectionId === session?.connectionId) return;
     await setDefaultConnection({ connectionId });
     refetch();
     refetchConnections();
@@ -120,6 +122,21 @@ export function NavUser() {
         window.location.href = '/login';
       },
     });
+  };
+
+  const handleUpgrade = async () => {
+    if (attach) {
+      return attach({
+        productId: 'pro-example',
+        successUrl: `${window.location.origin}/mail/inbox?success=true`,
+      })
+        .catch((error: Error) => {
+          console.error('Failed to upgrade:', error);
+        })
+        .then(() => {
+          console.log('Upgraded successfully');
+        });
+    }
   };
 
   const { data: brainState, refetch: refetchBrainState } = useBrainState();
@@ -205,8 +222,14 @@ export function NavUser() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="w-full">
-                        <div className="text-sm font-medium">
+                        <div className="flex items-center justify-center gap-0.5 text-sm font-medium">
                           {activeAccount.name || session.user.name || 'User'}
+                          {isPro && (
+                            <BadgeCheck
+                              className="h-4 w-4 text-white dark:text-[#141414]"
+                              fill="#1D9BF0"
+                            />
+                          )}
                         </div>
                         <div className="text-muted-foreground text-xs">{activeAccount.email}</div>
                       </div>
@@ -531,11 +554,22 @@ export function NavUser() {
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
-            <div className="flex items-center gap-0.5 text-[13px] leading-none text-black dark:text-white">
-              {activeAccount?.name || session.user.name || 'User'}
-              {isPro && (
+            <div className="flex items-center gap-1 text-[13px] leading-none text-black dark:text-white">
+              <p className="max-w-[8.5ch] truncate text-[13px]">
+                {activeAccount?.name || session.user.name || 'User'}
+              </p>
+              {isPro ? (
                 <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+              ) : (
+                <button
+                  className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent"
+                  onClick={() => setShowPricing(true)}
+                >
+                  <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+                  <span className="text-muted-foreground text-[10px] uppercase">Get verified</span>
+                </button>
               )}
+              <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
             </div>
             <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}

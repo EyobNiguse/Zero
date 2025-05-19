@@ -30,23 +30,27 @@ export default function Footer() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center bg-[#1A1A1A] rounded-xl m-4" >
       <div className="">
         {/* <div className="h-[527px] w-screen bg-gradient-to-b from-violet-600 via-orange-400 to-slate-950 blur-2xl" /> */}
-        <div className="inline-flex justify-center">
+       <div>
+       <Image src="/gradient.svg" alt="logo" width={1000} height={100}  className='w-screen rounded-t-2xl'/>
+       </div>
+        <div className="inline-flex justify-center w-full relative bottom-20 lg:bottom-60">
           <div
             ref={ref}
-            className="relative inline-flex flex-col items-center justify-center gap-20 rounded-full"
+            className="relative inline-flex flex-col items-center justify-center gap-20 rounded-full w-full"
           >
-            <div className="flex flex-col items-center px-2">
+            <div className="flex flex-col items-center justify-center px-2">
               <div className="flex flex-col items-center py-5">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="inline-block bg-gradient-to-b from-[#FFFFFF] to-[#1a1a19] bg-clip-text text-center text-4xl font-bold text-transparent md:text-6xl"
+                  className="inline-block text-white lg:bg-gradient-to-b lg:from-[#84878D] lg:via-[#84878D] lg:to-[#1A1A1A] lg:bg-clip-text text-center text-2xl sm:text-4xl md:text-5xl font-bold lg:text-transparent lg:text-8xl"
                 >
-                  Experience the Future of <br />
+                  <span>Experience the Future of </span> <br />
+                  
                   Email Today
                 </motion.div>
               </div>
@@ -54,9 +58,9 @@ export default function Footer() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="flex flex-col items-center justify-start"
+                className="hidden md:flex flex-col items-center justify-start"
               >
-                <div className="text-md md:text-ld justify-start text-center font-normal leading-7 text-white">
+                <div className="text-lg lg:text-2xl justify-start text-center font-normal leading-7 text-white">
                   Watch how 0.email helps you process your inbox in a fraction of the time.
                 </div>
               </motion.div>
@@ -64,7 +68,7 @@ export default function Footer() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="flex w-fit flex-col items-center justify-center pt-4"
+                className="flex w-fit flex-col items-center justify-center md:pt-4"
               >
                 <a href="/login">
                   <Button className="h-8">Get Started</Button>
@@ -114,7 +118,7 @@ export default function Footer() {
               </a>
             </div>
           </div>
-          <div className="flex flex-1 items-start justify-end gap-10">
+          <div className="flex flex-1 items-start justify-end gap-10 opacity-0 md:opacity-100">
             <div className="inline-flex flex-col items-start justify-start gap-5">
               <div className="justify-start self-stretch text-sm font-normal text-white/40">
                 Product
