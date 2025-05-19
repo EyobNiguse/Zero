@@ -1,23 +1,6 @@
 'use client';
 
 import {
-  Archive2,
-  Bell,
-  CurvedArrow,
-  Eye,
-  Important,
-  Lightning,
-  Mail,
-  Star2,
-  Tag,
-  User,
-  X,
-  MessageSquare,
-  Trash,
-  ArrowCircle,
-  ScanEye,
-} from '../icons/icons';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -26,44 +9,58 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Archive2,
+  Bell,
+  CurvedArrow,
+  Eye,
+  Lightning,
+  Mail,
+  Star2,
+  Tag,
+  User,
+  X,
+  Trash,
+  ScanEye,
+  Plus,
+} from '../icons/icons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { ChevronLeft, Command, RefreshCcw, Settings2Icon } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
+import { Command, RefreshCcw, Settings2Icon, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MailList, MailListDemo } from '@/components/mail/mail-list';
-import AISidebar, { useAISidebar } from '@/components/ui/ai-sidebar';
+import { ThreadDisplay } from '@/components/mail/thread-display';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { MailList } from '@/components/mail/mail-list';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
+import AISidebar from '@/components/ui/ai-sidebar';
 import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
 import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
+import { ScrollArea } from '../ui/scroll-area';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'next-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
-import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 
-interface Tag {
+interface ITag {
   id: string;
   name: string;
+  usecase: string;
   text: string;
 }
 
@@ -107,20 +104,69 @@ const AutoLabelingSettings = () => {
   const { mutateAsync: updateLabels, isPending } = useMutation(
     trpc.brain.updateLabels.mutationOptions(),
   );
-  const [labels, setLabels] = useState<Tag[]>([]);
-  const [activeTagIndex, setActiveTagIndex] = useState(0);
+  const [labels, setLabels] = useState<ITag[]>([]);
+  const [newLabel, setNewLabel] = useState({ name: '', usecase: '' });
 
   useEffect(() => {
     if (storedLabels) {
-      setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
+      setLabels(
+        storedLabels.map((label) => ({
+          id: label.name,
+          name: label.name,
+          text: label.name,
+          usecase: label.usecase,
+        })),
+      );
     }
   }, [storedLabels]);
 
   const handleResetToDefault = useCallback(() => {
     setLabels(
-      defaultLabels.map((label) => ({ id: label.name, name: label.name, text: label.name })),
+      defaultLabels.map((label) => ({
+        id: label.name,
+        name: label.name,
+        text: label.name,
+        usecase: label.usecase,
+      })),
     );
   }, [storedLabels]);
+
+  const handleAddLabel = () => {
+    if (!newLabel.name || !newLabel.usecase) return;
+    setLabels([...labels, { id: newLabel.name, ...newLabel, text: newLabel.name }]);
+    setNewLabel({ name: '', usecase: '' });
+  };
+
+  const handleDeleteLabel = (id: string) => {
+    setLabels(labels.filter((label) => label.id !== id));
+  };
+
+  const handleUpdateLabel = (id: string, field: 'name' | 'usecase', value: string) => {
+    setLabels(
+      labels.map((label) =>
+        label.id === id
+          ? { ...label, [field]: value, text: field === 'name' ? value : label.text }
+          : label,
+      ),
+    );
+  };
+
+  const handleSubmit = async () => {
+    const updatedLabels = labels.map((label) => ({
+      name: label.name,
+      usecase: label.usecase,
+    }));
+
+    if (newLabel.name.trim() && newLabel.usecase.trim()) {
+      updatedLabels.push({
+        name: newLabel.name,
+        usecase: newLabel.usecase,
+      });
+    }
+    await updateLabels({ labels: updatedLabels });
+    setOpen(false);
+    toast.success('Labels updated successfully, Zero will start using them.');
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -129,7 +175,7 @@ const AutoLabelingSettings = () => {
           <Settings2Icon className="text-muted-foreground h-4 w-4 cursor-pointer" />
         </Button>
       </DialogTrigger>
-      <DialogContent showOverlay>
+      <DialogContent showOverlay className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Autolabeling Settings</DialogTitle>
         </DialogHeader>
@@ -138,25 +184,70 @@ const AutoLabelingSettings = () => {
           however you like. Zero will create a new label in your account for each label you add - if
           it does not exist already.
         </DialogDescription>
-        <TagInput
-          setTags={setLabels as any}
-          tags={labels}
-          activeTagIndex={activeTagIndex}
-          setActiveTagIndex={setActiveTagIndex as any}
-        />
+        <ScrollArea className="h-[400px]">
+          <div className="space-y-4 p-4">
+            {labels.map((label) => (
+              <div key={label.id} className="flex items-start gap-2 rounded-lg border p-3">
+                <div className="flex-1 space-y-2">
+                  <input
+                    type="text"
+                    value={label.name}
+                    onChange={(e) => handleUpdateLabel(label.id, 'name', e.target.value)}
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Label name"
+                  />
+                  <textarea
+                    value={label.usecase}
+                    onChange={(e) => handleUpdateLabel(label.id, 'usecase', e.target.value)}
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Label use case"
+                    rows={2}
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handleDeleteLabel(label.id)}
+                >
+                  <TrashIcon className="h-4 w-4 fill-red-800" />
+                </Button>
+              </div>
+            ))}
+            <div className="flex items-start gap-2 rounded-lg border p-3">
+              <div className="flex-1 space-y-2">
+                <input
+                  type="text"
+                  value={newLabel.name}
+                  onChange={(e) => setNewLabel({ ...newLabel, name: e.target.value })}
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="New label name"
+                />
+                <textarea
+                  value={newLabel.usecase}
+                  onChange={(e) => setNewLabel({ ...newLabel, usecase: e.target.value })}
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="New label use case"
+                  rows={2}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleAddLabel}
+                disabled={!newLabel.name || !newLabel.usecase}
+              >
+                <Plus className="fill-white" />
+              </Button>
+            </div>
+          </div>
+        </ScrollArea>
         <DialogFooter className="mt-4">
           <Button onClick={handleResetToDefault} variant="outline" size={'sm'}>
             Use default labels
           </Button>
-          <Button
-            disabled={isPending}
-            onClick={() => {
-              updateLabels({ labels: labels.map((label) => label.text) }).then(() => {
-                setOpen(false);
-                toast.success('Labels updated successfully, Zero will start using them.');
-              });
-            }}
-          >
+          <Button disabled={isPending} onClick={handleSubmit}>
             Save
           </Button>
         </DialogFooter>
@@ -329,7 +420,7 @@ export function MailLayout() {
                         </div>
                       ) : null}
                     </div>
-                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
+                    {true ? <AutoLabelingSettings /> : null}
                     <Button
                       disabled={isEnablingBrain || isDisablingBrain}
                       onClick={handleToggleAutolabeling}
