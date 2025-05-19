@@ -68,7 +68,7 @@ const app = new Hono<HonoContext>()
   .use(
     '*',
     cors({
-      origin: () => env.VITE_PUBLIC_APP_URL,
+      origin: (c) => c,
       credentials: true,
       allowHeaders: ['Content-Type', 'Authorization'],
       exposeHeaders: ['X-Zero-Redirect'],

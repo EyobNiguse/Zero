@@ -486,7 +486,7 @@ function AISidebar({ className }: AISidebarProps) {
                       isFullScreen={isFullScreen}
                       isPopup={isPopup}
                       chatMessages={chatMessages}
-                      isPro={isPro}
+                      isPro={isPro ?? false}
                       onUpgrade={handleUpgrade}
                       onNewChat={handleNewChat}
                     />
@@ -532,7 +532,7 @@ function AISidebar({ className }: AISidebarProps) {
                   isFullScreen={isFullScreen}
                   isPopup={isPopup}
                   chatMessages={chatMessages}
-                  isPro={isPro}
+                  isPro={isPro ?? false}
                   onUpgrade={handleUpgrade}
                   onNewChat={handleNewChat}
                 />

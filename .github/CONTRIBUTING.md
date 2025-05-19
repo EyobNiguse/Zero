@@ -29,15 +29,9 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
    - Clone your fork locally: `git clone https://github.com/YOUR-USERNAME/Zero.git`
 
 2. **Set Up Development Environment**
-<<<<<<< HEAD
-   - Install [Bun](https://bun.sh)
-   - Clone the repository and install dependencies: `bun install`
-   - Start the database locally: `bun docker:db:up`
-=======
    - Install [pnpm](https://pnpm.io)
    - Clone the repository and install dependencies: `pnpm install`
    - Start the database locally: `pnpm docker:up`
->>>>>>> 7fb24724 (feat: remixify and whatever else needed to be done)
    - Copy `.env.example` to `.env` in project root
    - Setup cloudflare with `pnpm run cf-install`, you will need to run this everytime there is a `.env` change
    - Set up your Google OAuth credentials (see [README.md](../README.md))
@@ -49,11 +43,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 
    ```bash
    # Start database locally
-<<<<<<< HEAD
-   bun docker:db:up
-=======
    pnpm docker:up
->>>>>>> 7fb24724 (feat: remixify and whatever else needed to be done)
 
    # Start the development server
    pnpm dev
@@ -100,8 +90,9 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
    git fetch upstream
    git merge upstream/staging
    ```
->[!IMPORTANT]
->Remember to make `staging` branch as your base branch.
+
+   > [!IMPORTANT]
+   > Remember to make `staging` branch as your base branch.
 
 7. **Push to Your Fork**
 
@@ -114,10 +105,9 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
    - Fill out the PR template completely
    - Link any relevant issues
    - Add screenshots for UI changes
-  
->[!IMPORTANT]
->Remember to make your pull request into the `staging` branch
-  
+
+> [!IMPORTANT]
+> Remember to make your pull request into the `staging` branch
 
 ## Database Management
 
