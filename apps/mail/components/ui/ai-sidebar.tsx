@@ -489,9 +489,9 @@ function AISidebar({ className }: AISidebarProps) {
                 defaultSize={22}
                 minSize={22}
                 maxSize={22}
-                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(98vh+10px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(100dvh-10px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
               >
-                <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>
+                <div className={cn('h-[calc(98vh)]', 'flex flex-col', '', className)}>
                   <div className="flex h-full flex-col">
                     <ChatHeader
                       onClose={() => {
