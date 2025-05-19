@@ -9,6 +9,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { AddConnectionDialog } from '@/components/connection/add';
 import { useSession, authClient } from '@/lib/auth-client';
@@ -104,19 +105,33 @@ export default function ConnectionsPage() {
                       <div className="flex min-w-0 flex-col gap-1">
                         <span className="truncate text-sm font-medium">{connection.name}</span>
                         <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                          <span
-                            className="max-w-[180px] cursor-default truncate sm:max-w-[240px] md:max-w-[300px]"
-                            onClick={() => {
+                          <Tooltip
+                            delayDuration={0}
+                            open={openTooltip === connection.id}
+                            onOpenChange={(open) => {
                               if (window.innerWidth <= 768) {
-                                setOpenTooltip(
-                                  openTooltip === connection.id ? null : connection.id,
-                                );
+                                setOpenTooltip(open ? connection.id : null);
                               }
                             }}
                           >
-                            {connection.email}
-                          </span>
-                          <div className="font-mono">{connection.email}</div>
+                            <TooltipTrigger asChild>
+                              <span
+                                className="max-w-[180px] cursor-default truncate sm:max-w-[240px] md:max-w-[300px]"
+                                onClick={() => {
+                                  if (window.innerWidth <= 768) {
+                                    setOpenTooltip(
+                                      openTooltip === connection.id ? null : connection.id,
+                                    );
+                                  }
+                                }}
+                              >
+                                {connection.email}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" align="start" className="select-all">
+                              <div className="font-mono">{connection.email}</div>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     </div>
