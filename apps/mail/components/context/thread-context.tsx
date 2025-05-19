@@ -285,19 +285,15 @@ export function ThreadContextMenu({
     },
   ];
   const handleDelete = () => async () => {
-    try {
-      const promise = deleteThread({ id: threadId }).then(() => {
+    toast.promise(deleteThread({ id: threadId }), {
+      loading: t('common.actions.deletingMail'),
+      success: t('common.actions.deletedMail'),
+      error: t('common.actions.failedToDeleteMail'),
+      finally: async () => {
         setMail((prev) => ({ ...prev, bulkSelected: [] }));
-        return refetch();
-      });
-      toast.promise(promise, {
-        loading: t('common.actions.deletingMail'),
-        success: t('common.actions.deletedMail'),
-        error: t('common.actions.failedToDeleteMail'),
-      });
-    } catch (error) {
-      console.error(`Error deleting ${threadId ? 'email' : 'thread'}:`, error);
-    }
+        await Promise.allSettled([refetchThread(), refetch()]);
+      },
+    });
   };
 
   const getActions = () => {

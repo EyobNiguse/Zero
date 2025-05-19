@@ -39,21 +39,17 @@ export default function PricingCard() {
     }
 
     if (attach) {
-      try {
-        toast.promise(
-          attach({
-            productId: isAnnual ? 'pro_annual' : 'pro-example',
-            successUrl: `${window.location.origin}/mail/inbox?success=true`,
-            authUrl: `${window.location.origin}/login?redirect=/pricing`,
-          }),
-          {
-            success: 'Redirecting to payment...',
-            error: 'Failed to process upgrade. Please try again later.',
-          },
-        );
-      } catch (error) {
-        console.error('Failed to upgrade:', error);
-      }
+      toast.promise(
+        attach({
+          productId: isAnnual ? 'pro_annual' : 'pro-example',
+          successUrl: `${window.location.origin}/mail/inbox?success=true`,
+          authUrl: `${window.location.origin}/login?redirect=/pricing`,
+        }),
+        {
+          success: 'Redirecting to payment...',
+          error: 'Failed to process upgrade. Please try again later.',
+        },
+      );
     }
   };
   return (
