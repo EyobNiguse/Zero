@@ -17,6 +17,7 @@ import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { env } from '@/lib/env';
 import { useMemo } from 'react';
+import { toast } from 'sonner';
 
 export const AddConnectionDialog = ({
   children,
@@ -38,16 +39,16 @@ export const AddConnectionDialog = ({
 
   const handleUpgrade = async () => {
     if (attach) {
-      return attach({
-        productId: 'pro-example',
-        successUrl: `${window.location.origin}/mail/inbox?success=true`,
-      })
-        .catch((error: Error) => {
-          console.error('Failed to upgrade:', error);
-        })
-        .then(() => {
-          console.log('Upgraded successfully');
-        });
+      toast.promise(
+        attach({
+          productId: 'pro-example',
+          successUrl: `${window.location.origin}/mail/inbox?success=true`,
+        }),
+        {
+          success: 'Redirecting to payment...',
+          error: 'Failed to process upgrade. Please try again later.',
+        },
+      );
     }
   };
 

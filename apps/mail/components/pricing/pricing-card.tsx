@@ -18,7 +18,6 @@ const handleGoogleSignIn = (
       callbackURL,
     }),
     {
-      loading: options?.loading || 'Redirecting to login...',
       success: options?.success || 'Redirecting to login...',
       error: 'Login redirect failed',
     },
@@ -41,11 +40,17 @@ export default function PricingCard() {
 
     if (attach) {
       try {
-        await attach({
-          productId: isAnnual ? 'pro_annual' : 'pro-example',
-          successUrl: `${window.location.origin}/mail/inbox?success=true`,
-          authUrl: `${window.location.origin}/login?redirect=/pricing`,
-        });
+        toast.promise(
+          attach({
+            productId: isAnnual ? 'pro_annual' : 'pro-example',
+            successUrl: `${window.location.origin}/mail/inbox?success=true`,
+            authUrl: `${window.location.origin}/login?redirect=/pricing`,
+          }),
+          {
+            success: 'Redirecting to payment...',
+            error: 'Failed to process upgrade. Please try again later.',
+          },
+        );
       } catch (error) {
         console.error('Failed to upgrade:', error);
       }
