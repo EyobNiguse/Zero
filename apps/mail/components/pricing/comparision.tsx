@@ -145,7 +145,7 @@ export default function Comparision() {
                     <ThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-white">
-                    Basic connections
+                    One email connection
                   </div>
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function Comparision() {
                     <PurpleThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-violet-400">
-                    $20 per month
+                    $10 per month
                   </div>
                 </div>
               </div>

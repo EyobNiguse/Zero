@@ -8,7 +8,7 @@ import { useBilling } from '@/hooks/use-billing';
 export default function PricingCard() {
   const [isAnnual, setIsAnnual] = useState(false);
   const monthlyPrice = 20;
-  const annualPrice = monthlyPrice * 0.9;
+  const annualPrice = monthlyPrice * 0.5;
   const { attach } = useBilling();
   
     const handleUpgrade = async () => {
@@ -29,7 +29,7 @@ export default function PricingCard() {
       <div className="relative z-20 mb-8 flex items-center justify-center gap-2">
         <PricingSwitch onCheckedChange={(checked) => setIsAnnual(checked)} />
         <p className="text-sm text-white/70">Billed Annually</p>
-        <Badge className="border border-[#656565] bg-[#3F3F3F] text-white">Saved 10%</Badge>
+        <Badge className="border border-[#656565] bg-[#3F3F3F] text-white">Save 50%</Badge>
       </div>
 
       <div className="flex flex-col items-center justify-center gap-5 md:flex-row">
@@ -71,7 +71,7 @@ export default function PricingCard() {
                   <ThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
-                  Basic email connections{' '}
+                  One email connection{' '}
                 </div>
               </div>
               <div className="inline-flex items-center justify-start gap-2.5">

@@ -15,6 +15,7 @@ import { CircleCheck, CircleX } from '@/components/icons/icons';
 import PricingCard from '@/components/pricing/pricing-card';
 import Comparision from '@/components/pricing/comparision';
 import { TextShimmer } from '@/components/ui/text-shimmer';
+import { signIn, useSession } from '@/lib/auth-client';
 import { Separator } from '@/components/ui/separator';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ import { Menu } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { signIn } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 
 const resources = [
@@ -74,9 +75,11 @@ const aboutLinks = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const { attach } = useBilling();
-
+  const { data: session } = useSession();
+  
   const handleUpgrade = async () => {
     if (attach) {
       try {
@@ -157,15 +160,22 @@ export default function PricingPage() {
               variant="ghost"
               className="h-8"
               onClick={() => {
-                toast.promise(
-                  signIn.social({
-                    provider: 'google',
-                    callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
-                  }),
-                  {
-                    error: 'Login redirect failed',
-                  },
-                );
+                
+                if (session) {
+                  // User is logged in, redirect to inbox
+                  router.push('/mail/inbox');
+                } else {
+                  // User is not logged in, show sign-in dialog
+                  toast.promise(
+                    signIn.social({
+                      provider: 'google',
+                      callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+                    }),
+                    {
+                      error: 'Login redirect failed',
+                    },
+                  );
+                }
               }}
             >
               Sign in
