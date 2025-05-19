@@ -30,7 +30,7 @@ const api = new Hono<HonoContext>()
     trpcServer({
       endpoint: '/api/trpc',
       router: appRouter,
-      createContext: (_, c) => ({ c, session: c.var.session, db: c.var.db }),
+      createContext: (_, c) => ({ c, session: c.var['session'], db: c.var['db'] }),
       allowMethodOverride: true,
       onError: (opts) => {
         console.error('Error in TRPC handler:', opts.error);

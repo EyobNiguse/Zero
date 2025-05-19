@@ -29,12 +29,41 @@ import { common, createLowlight } from 'lowlight'
 const aiHighlight = AIHighlight
 //You can overwrite the placeholder with your own configuration
 const placeholder = Placeholder
+// Custom link extension that exits the link mark when space is typed
+import { Extension } from '@tiptap/core'
+
+// Create a separate extension to handle exiting links on space
+const ExitLinkOnSpace = Extension.create({
+  name: 'exitLinkOnSpace',
+  addKeyboardShortcuts() {
+    return {
+      Space: ({ editor }) => {
+        if (editor.isActive('link')) {
+          // Insert a space character first
+          editor.commands.insertContent(' ');
+          
+          // Then explicitly unset the link mark
+          editor.commands.unsetLink();
+          
+          return true;
+        }
+        return false;
+      }
+    };
+  },
+})
+
+// Configure the link extension with standard options
 const tiptapLink = TiptapLink.configure({
   HTMLAttributes: {
     class: cx(
       'text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer'
     )
-  }
+  },
+  openOnClick: false,
+  autolink: true,
+  linkOnPaste: true,
+  protocols: ['http', 'https', 'mailto', 'tel']
 })
 
 const tiptapImage = TiptapImage.extend({
@@ -154,6 +183,7 @@ export const defaultExtensions = [
   starterKit,
   placeholder,
   tiptapLink,
+  ExitLinkOnSpace, // Add our custom extension to exit links on space
   tiptapImage,
   updatedImage,
   taskList,

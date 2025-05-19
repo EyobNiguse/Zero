@@ -12,14 +12,20 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { PixelatedBackground } from '@/components/home/pixelated-bg';
 import { CircleCheck, CircleX } from '@/components/icons/icons';
+import PricingCard from '@/components/pricing/pricing-card';
+import Comparision from '@/components/pricing/comparision';
 import { TextShimmer } from '@/components/ui/text-shimmer';
+import { signIn, useSession } from '@/lib/auth-client';
 import { Separator } from '@/components/ui/separator';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
+import Footer from '@/components/home/footer';
 import { useCustomer } from 'autumn-js/next';
+import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import Link from 'next/link';
 
 const resources = [
@@ -68,37 +74,29 @@ const aboutLinks = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { attach } = useBilling();
-
-  const handleUpgrade = async () => {
-    if (attach) {
-      try {
-        await attach({
-          productId: 'pro-example',
-          successUrl: `${window.location.origin}/mail/inbox?success=true`,
-          authUrl: `${window.location.origin}/login?redirect=/pricing`,
-        });
-      } catch (error) {
-        console.error('Failed to upgrade:', error);
-      }
-    }
-  };
+  const { data: session } = useSession();
 
   return (
     <main className="relative flex h-screen flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
-        className="z-1 absolute -top-72 left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover opacity-5"
-        style={{ mixBlendMode: 'screen' }}
+        className="z-1 absolute left-1/2 top-[-40px] h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover"
+        style={{
+          mixBlendMode: 'screen',
+          maskImage: 'linear-gradient(to bottom, black, transparent)',
+        }}
       />
 
       {/* Desktop Navigation - Hidden on mobile */}
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
-        <nav className="border-input/50 flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t bg-[#1E1E1E] p-2 px-4">
+        <nav className="border-input/50 relative z-50 flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t bg-[#1E1E1E] p-2 px-4">
           <div className="flex items-center gap-6">
             <a href="/" className="relative bottom-1 cursor-pointer">
               <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
-              <span className="text-muted-foreground absolute -right-[-0.5px] text-[10px]">beta</span>
+              <span className="text-muted-foreground absolute -right-[-0.5px] text-[10px]">
+                beta
+              </span>
             </a>
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
@@ -142,11 +140,30 @@ export default function PricingPage() {
             </NavigationMenu>
           </div>
           <div className="flex gap-2">
-            <a href="/login">
-              <Button variant="ghost" className="h-8">
-                Sign in
-              </Button>
-            </a>
+            <Button
+              variant="ghost"
+              className="h-8"
+              onClick={() => {
+                if (session) {
+                  // User is logged in, redirect to inbox
+                  router.push('/mail/inbox');
+                } else {
+                  // User is not logged in, show sign-in dialog
+                  toast.promise(
+                    signIn.social({
+                      provider: 'google',
+                      callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+                    }),
+                    {
+                      error: 'Login redirect failed',
+                    },
+                  );
+                }
+              }}
+            >
+              Sign in
+            </Button>
+
             <a target="_blank" href="https://cal.com/team/0">
               <Button className="h-8 font-medium">Contact Us</Button>
             </a>
@@ -207,15 +224,21 @@ export default function PricingPage() {
         </Sheet>
       </div>
 
-      <div className="container mx-auto mt-12 h-screen px-4 py-16 md:mt-24">
+      <div className="container mx-auto mb-20 mt-12 h-screen px-4 py-16 md:mt-44">
         <div className="mb-12 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-white md:text-6xl">Pricing</h1>
-          <p className="text-lg text-white/50">Choose the plan that's right for you</p>
+          <h1 className="mb-2 self-stretch text-5xl font-medium leading-[62px] text-white md:text-6xl">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="mt-6 text-2xl font-light text-[#B8B8B9]">
+            Choose the plan that's right for you
+          </p>
         </div>
 
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto max-w-5xl px-4">
           {/* Free Plan */}
-          <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
+          <PricingCard />
+
+          {/* <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
             <h1 className="mb-4 text-center text-lg font-normal text-white/50">Free</h1>
             <div className="mb-4 text-center text-3xl font-bold dark:text-white">
               $0 <span className="text-lg font-medium">/ mo</span>
@@ -243,7 +266,7 @@ export default function PricingPage() {
                   AI thread summaries <span className="text-xs text-white/50">(25 per day)</span>
                 </span>
               </li>
-              {/* <li className="flex items-center gap-2">
+              <li className="flex items-center gap-2">
                 <CircleX className="h-4 w-4 fill-white opacity-50" /> Instant thread AI-generated
                 summaries
               </li>
@@ -253,15 +276,15 @@ export default function PricingPage() {
               </li>
               <li className="flex items-center gap-2">
                 <CircleX className="h-4 w-4 fill-white opacity-50" /> Priority customer support
-              </li> */}
+              </li>
             </ul>
             <a href="/login">
               <Button className="h-8 w-full">Get Started</Button>
             </a>
-          </div>
+          </div> */}
 
           {/* Pro Plan */}
-          <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
+          {/* <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
             <h1 className="mb-4 text-center text-lg font-normal text-white/50">Pro</h1>
 
             <div className="mb-4 text-center text-3xl font-bold dark:text-white">
@@ -293,10 +316,10 @@ export default function PricingPage() {
             <Button className="h-8 w-full" onClick={handleUpgrade}>
               Get Started
             </Button>
-          </div>
+          </div> */}
 
           {/* Enterprise Plan */}
-          <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
+          {/* <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
             <h1 className="mb-4 text-center text-lg font-normal text-white/50">Enterprise</h1>
 
             <div className="mb-4 text-center text-3xl font-bold dark:text-white">Contact us</div>
@@ -323,9 +346,7 @@ export default function PricingPage() {
                 <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Verified checkmark
               </li>
 
-              {/* <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Management dashboard
-              </li> */}
+              
 
               <li className="flex items-center gap-2">
                 <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Priority customer support
@@ -336,8 +357,14 @@ export default function PricingPage() {
                 Contact us
               </Button>
             </a>
-          </div>
+          </div> */}
         </div>
+      </div>
+      <div className="mx-12 mt-[500px] md:mt-12">
+        <Comparision />
+      </div>
+      <div className="mt-20">
+        <Footer />
       </div>
     </main>
   );

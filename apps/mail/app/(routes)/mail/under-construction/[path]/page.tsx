@@ -17,7 +17,7 @@ export default function UnderConstruction({ params }: UnderConstructionProps) {
   const decodedPath = decodeURIComponent(resolvedParams.path);
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] w-screen items-center justify-center px-4">
+    <div className="flex min-h-[calc(100dvh-4rem)] w-screen items-center justify-center px-4">
       <div className="flex flex-col items-center justify-between p-4">
         <div className="absolute left-2 top-2">
           <SidebarToggle className="block md:hidden" />

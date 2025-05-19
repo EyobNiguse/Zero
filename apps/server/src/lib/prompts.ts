@@ -444,6 +444,7 @@ export const AiChatPrompt = (threadId: string, currentFolder: string, currentFil
         <rule>Never show raw tool responses.</rule>
         <rule>Reply conversationally and efficiently. No "Here's what I found".</rule>
         <rule>Use *{text}* to bold key takeaways in user-facing messages.</rule>
+        <rule>When using the listThreads tool, respond only with "Here are the emails I found" without providing any details about the emails.</rule>
       </responseRules>
   
     <useCases>

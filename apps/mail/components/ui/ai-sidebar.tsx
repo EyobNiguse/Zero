@@ -1,6 +1,14 @@
 'use client';
 
 import {
+  X,
+  FileText,
+  Expand,
+  Plus,
+  Maximize2 as LucideMaximize2,
+  Minimize2 as LucideMinimize2,
+} from 'lucide-react';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -19,6 +27,7 @@ import {
 } from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { ArrowsPointingIn, ArrowsPointingOut, PanelLeftOpen, Phone } from '../icons/icons';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
 import { usePathname, useSearchParams, useParams } from 'next/navigation';
@@ -26,10 +35,10 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { useQueryClient } from '@tanstack/react-query';
 import { AIChat } from '@/components/create/ai-chat';
 import { useTRPC } from '@/providers/query-provider';
-import { X, Paper } from '@/components/icons/icons';
-import { GitBranchPlus, Plus } from 'lucide-react';
 import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
+import { PricingDialog } from './pricing-dialog';
+import { PromptsDialog } from './prompts-dialog';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useLabels } from '@/hooks/use-labels';
@@ -45,27 +54,339 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
+interface ChatHeaderProps {
+  onClose: () => void;
+  onToggleFullScreen: () => void;
+  onToggleViewMode: () => void;
+  isFullScreen: boolean;
+  isPopup: boolean;
+  chatMessages: { remaining: number };
+  isPro: boolean;
+  onUpgrade: () => void;
+  onNewChat: () => void;
+}
+
+function ChatHeader({
+  onClose,
+  onToggleFullScreen,
+  onToggleViewMode,
+  isFullScreen,
+  isPopup,
+  chatMessages,
+  isPro,
+  onUpgrade,
+  onNewChat,
+}: ChatHeaderProps) {
+  return (
+    <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button onClick={onClose} variant="ghost" className="md:h-fit md:px-2">
+              <X className="dark:text-iconDark text-iconLight" />
+              <span className="sr-only">Close chat</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Close chat</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <div className="flex items-center gap-2">
+        {isFullScreen ? (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onToggleFullScreen}
+                  variant="ghost"
+                  className="hidden md:flex md:h-fit md:px-2"
+                >
+                  <ArrowsPointingIn className="dark:fill-iconDark fill-iconLight" />
+                  <span className="sr-only">Toggle view mode</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remove full screen</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onToggleFullScreen}
+                    variant="ghost"
+                    className="hidden md:flex md:h-fit md:px-2 [&>svg]:size-2"
+                  >
+                    <Expand className="dark:text-iconDark text-iconLight" />
+                    <span className="sr-only">Toggle view mode</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Go to full screen</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={onToggleViewMode} variant="ghost" className="md:h-fit md:px-2">
+                    {isPopup ? (
+                      <PanelLeftOpen className="dark:fill-iconDark fill-iconLight" />
+                    ) : (
+                      <Phone className="dark:fill-iconDark fill-iconLight" />
+                    )}
+                    <span className="sr-only"></span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Go to {isPopup ? 'sidebar' : 'popup'}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        )}
+
+        {!isPro && (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild className="md:h-fit md:px-2">
+                <div>
+                  <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+                <p className="mb-2">Upgrade for unlimited messages!</p>
+                <Button onClick={onUpgrade} className="h-8 w-full">
+                  Upgrade
+                </Button>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        <PromptsDialog />
+
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={onNewChat} variant="ghost" className="md:h-fit md:px-2">
+                <Plus className="dark:text-iconDark text-iconLight" />
+                <span className="sr-only">New chat</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>New chat</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    </div>
+  );
+}
+
 interface AISidebarProps {
   className?: string;
 }
 
-export function useAISidebar() {
-  const [open, setOpen] = useQueryState('aiSidebar');
+type ViewMode = 'sidebar' | 'popup' | 'fullscreen';
+
+export function useAIFullScreen() {
+  const [isFullScreenQuery, setIsFullScreenQuery] = useQueryState('isFullScreen');
+
+  // Initialize isFullScreen state from query parameter or localStorage
+  const [isFullScreen, setIsFullScreenState] = useState<boolean>(() => {
+    // First check query parameter
+    if (isFullScreenQuery) {
+      return isFullScreenQuery === 'true';
+    }
+
+    // Then check localStorage if on client
+    if (typeof window !== 'undefined') {
+      const savedFullScreen = localStorage.getItem('ai-fullscreen');
+      if (savedFullScreen) {
+        return savedFullScreen === 'true';
+      }
+    }
+
+    return false;
+  });
+
+  // Update both query parameter and localStorage when fullscreen state changes
+  const setIsFullScreen = useCallback(
+    (value: boolean) => {
+      // Immediately update local state for faster UI response
+      setIsFullScreenState(value);
+
+      // For exiting fullscreen, we need to be extra careful to ensure state is updated properly
+      if (!value) {
+        // Force immediate removal from localStorage for faster response
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('ai-fullscreen');
+        }
+
+        // Use setTimeout to ensure the state update happens in the next tick
+        // This helps prevent the need for double-clicking
+        setTimeout(() => {
+          setIsFullScreenQuery(null).catch(console.error);
+        }, 0);
+      } else {
+        // For entering fullscreen, we can use the normal flow
+        setIsFullScreenQuery('true').catch(console.error);
+
+        // Save to localStorage for persistence across sessions
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('ai-fullscreen', 'true');
+        }
+      }
+    },
+    [setIsFullScreenQuery],
+  );
+
+  // Sync with query parameter on mount or when it changes
+  useEffect(() => {
+    const queryValue = isFullScreenQuery === 'true';
+    if (isFullScreenQuery !== null && queryValue !== isFullScreen) {
+      setIsFullScreenState(queryValue);
+    }
+  }, [isFullScreenQuery, isFullScreen]);
+
+  // Initialize from localStorage on mount if query parameter is not set
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isFullScreenQuery) {
+      const savedFullScreen = localStorage.getItem('ai-fullscreen');
+      if (savedFullScreen === 'true') {
+        setIsFullScreenQuery('true');
+      }
+    }
+
+    // Force a re-render when exiting fullscreen mode
+    if (isFullScreenQuery === null && isFullScreen) {
+      setIsFullScreenState(false);
+    }
+  }, [isFullScreenQuery, setIsFullScreenQuery, isFullScreen]);
+
   return {
-    open: !!open,
-    setOpen: (open: boolean) => setOpen(open ? 'true' : null),
-    toggleOpen: () => setOpen((prev) => (prev === 'true' ? null : 'true')),
+    isFullScreen,
+    setIsFullScreen,
   };
 }
 
-export function AISidebar({ className }: AISidebarProps) {
-  const { open, setOpen } = useAISidebar();
+export function useAISidebar() {
+  const [open, setOpenQuery] = useQueryState('aiSidebar');
+  const [viewModeQuery, setViewModeQuery] = useQueryState('viewMode');
+  const { isFullScreen, setIsFullScreen } = useAIFullScreen();
+
+  // Initialize viewMode from query parameter, localStorage, or default to 'sidebar'
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
+    if (viewModeQuery) return viewModeQuery as ViewMode;
+
+    // Check localStorage for saved state if on client
+    if (typeof window !== 'undefined') {
+      const savedViewMode = localStorage.getItem('ai-viewmode');
+      if (savedViewMode && (savedViewMode === 'sidebar' || savedViewMode === 'popup')) {
+        return savedViewMode as ViewMode;
+      }
+    }
+
+    return 'popup';
+  });
+
+  // Update query parameter and localStorage when viewMode changes
+  const setViewMode = useCallback(
+    async (mode: ViewMode) => {
+      setViewModeState(mode);
+      await setViewModeQuery(mode === 'popup' ? null : mode);
+
+      // Save to localStorage for persistence across sessions
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ai-viewmode', mode);
+      }
+    },
+    [setViewModeQuery],
+  );
+
+  // Function to set open state and save to localStorage
+  const setOpen = useCallback(
+    (openState: boolean) => {
+      // For closing, we need to handle state updates more carefully
+      if (!openState) {
+        // First remove from localStorage immediately
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('ai-sidebar-open');
+        }
+
+        // Use setTimeout to ensure the query update happens in the next tick
+        // This helps prevent the need for double-clicking
+        setTimeout(() => {
+          setOpenQuery(null).catch(console.error);
+        }, 0);
+      } else {
+        // For opening, we can use the normal flow
+        setOpenQuery('true').catch(console.error);
+
+        // Save to localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('ai-sidebar-open', 'true');
+        }
+      }
+    },
+    [setOpenQuery],
+  );
+
+  // Toggle open state
+  const toggleOpen = useCallback(() => {
+    const newState = !(open === 'true');
+    setOpen(newState);
+  }, [open, setOpen]);
+
+  // Initialize from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !open) {
+      const savedOpen = localStorage.getItem('ai-sidebar-open');
+      if (savedOpen === 'true') {
+        setOpenQuery('true');
+      }
+    }
+  }, [open, setOpenQuery]);
+
+  // Sync with query parameters on mount or when they change
+  useEffect(() => {
+    if (viewModeQuery && viewModeQuery !== viewMode) {
+      setViewModeState(viewModeQuery as ViewMode);
+    }
+  }, [viewModeQuery, viewMode]);
+
+  return {
+    open: !!open,
+    viewMode,
+    setViewMode,
+    setOpen,
+    toggleOpen,
+    toggleViewMode: () => setViewMode(viewMode === 'popup' ? 'sidebar' : 'popup'),
+    isFullScreen,
+    setIsFullScreen,
+    // Add convenience boolean flags for each state
+    isSidebar: viewMode === 'sidebar',
+    isPopup: viewMode === 'popup',
+  };
+}
+
+function AISidebar({ className }: AISidebarProps) {
+  const {
+    open,
+    setOpen,
+    viewMode,
+    setViewMode,
+    isFullScreen,
+    setIsFullScreen,
+    toggleViewMode,
+    isSidebar,
+    isPopup,
+  } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
+  const [showPricing, setShowPricing] = useState(false);
   const pathname = usePathname();
   const { attach, customer, chatMessages, track, refetch: refetchBilling } = useBilling();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const [threadId] = useQueryState('threadId');
+  const [threadId, setThreadId] = useQueryState('threadId');
   const { folder } = useParams<{ folder: string }>();
   const { refetch: refetchLabels } = useLabels();
   const [searchValue] = useSearchValue();
@@ -134,19 +455,8 @@ export function AISidebar({ className }: AISidebarProps) {
     );
   }, [customer]);
 
-  const handleUpgrade = async () => {
-    if (attach) {
-      return attach({
-        productId: 'pro-example',
-        successUrl: `${window.location.origin}/mail/inbox?success=true`,
-      })
-        .catch((error: Error) => {
-          console.error('Failed to upgrade:', error);
-        })
-        .then(() => {
-          console.log('Upgraded successfully');
-        });
-    }
+  const handleUpgrade = () => {
+    setShowPricing(true);
   };
 
   useHotkeys('Meta+0', () => {
@@ -158,271 +468,100 @@ export function AISidebar({ className }: AISidebarProps) {
   });
 
   const handleNewChat = useCallback(() => {
+    // Reset threadId query parameter
+    setThreadId(null);
+    // Reset chat state by forcing a remount of AIChat component
     setResetKey((prev) => prev + 1);
-  }, []);
+    // Reset chat messages by setting them to empty
+    chatState.setMessages([]);
+  }, [setThreadId, chatState]);
 
   return (
-    open && (
-      <>
-        {/* Desktop sidebar - only visible on lg screens */}
-        <div className="opacity-0 w-[1px]" />
-        <ResizablePanel
-          defaultSize={23}
-          minSize={23}
-          maxSize={23}
-          className="bg-panelLight mb-1 dark:bg-panelDark mr-1 hidden h-[calc(98vh+10px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm xl:block dark:border-[#252525]"
-        >
-          <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>
-            <div className="flex h-full flex-col">
-              <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => setOpen(false)}
-                        variant="ghost"
-                        className="md:h-fit md:px-2"
-                      >
-                        <X className="dark:fill-iconDark fill-iconLight" />
-                        <span className="sr-only">Close chat</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Close chat</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <div className="flex items-center gap-2">
-                  {!isPro && (
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild className="md:h-fit md:px-2">
-                          <div>
-                            <Gauge
-                              value={50 - chatMessages.remaining!}
-                              size="small"
-                              showValue={true}
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-                          <p className="mb-2">Upgrade for unlimited messages!</p>
-                          <Button onClick={handleUpgrade} className="h-8 w-full">
-                            Upgrade
-                          </Button>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-
-                  <TooltipProvider delayDuration={0}>
-                    <Dialog>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" className="md:h-fit md:px-2 [&>svg]:size-3">
-                              <Paper className="dark:fill-iconDark fill-iconLight h-3.5 w-3.5" />
-                            </Button>
-                          </DialogTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>Prompts</TooltipContent>
-                      </Tooltip>
-                      <DialogContent showOverlay={true}>
-                        <DialogHeader>
-                          <DialogTitle>AI System Prompts</DialogTitle>
-                          <DialogDescription>
-                            We believe in Open Source, so we're open sourcing our AI system prompts.
-                            Soon you will be able to customize them to your liking. For now, here
-                            are the default prompts:
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
-                          <span>Zero Chat / System Prompt</span>
-                          <Link
-                            href={'https://github.com/Mail-0/Zero.git'}
-                            target="_blank"
-                            className="flex items-center gap-1 underline"
-                          >
-                            <span>Contribute</span>
-                            <GitBranchPlus className="h-4 w-4" />
-                          </Link>
-                        </div>
-                        <Textarea className="min-h-60" readOnly value={AiChatPrompt('', '', '')} />
-                        <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
-                          <span>Zero Compose / System Prompt</span>
-                          <Link
-                            href={'https://github.com/Mail-0/Zero.git'}
-                            target="_blank"
-                            className="flex items-center gap-1 underline"
-                          >
-                            <span>Contribute</span>
-                            <GitBranchPlus className="h-4 w-4" />
-                          </Link>
-                        </div>
-                        <Textarea
-                          className="min-h-60"
-                          readOnly
-                          value={StyledEmailAssistantSystemPrompt().trim()}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                  </TooltipProvider>
-
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={handleNewChat}
-                          variant="ghost"
-                          className="md:h-fit md:px-2"
-                        >
-                          <Plus className="dark:text-iconDark text-iconLight" />
-                          <span className="sr-only">New chat</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>New chat</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+    <>
+      <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
+      {open && (
+        <>
+          {/* Desktop view - visible on md and larger screens */}
+          {isSidebar && !isFullScreen && (
+            <>
+              <div className="w-[1px] opacity-0" />
+              <ResizablePanel
+                defaultSize={22}
+                minSize={22}
+                maxSize={22}
+                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(98vh+10px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+              >
+                <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>
+                  <div className="flex h-full flex-col">
+                    <ChatHeader
+                      onClose={() => {
+                        setOpen(false);
+                        setIsFullScreen(false);
+                      }}
+                      onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}
+                      onToggleViewMode={toggleViewMode}
+                      isFullScreen={isFullScreen}
+                      isPopup={isPopup}
+                      chatMessages={chatMessages}
+                      isPro={isPro}
+                      onUpgrade={handleUpgrade}
+                      onNewChat={handleNewChat}
+                    />
+                    <div className="relative flex-1 overflow-hidden">
+                      <AIChat key={resetKey} {...chatState} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="b relative flex-1 overflow-hidden">
-                <AIChat
-                  key={resetKey}
-                  {...chatState}
-                  // Pass the chat state to preserve conversation when switching between desktop/mobile
+              </ResizablePanel>
+            </>
+          )}
+
+          {/* Popup view - visible on small screens or when popup mode is selected */}
+          <div
+            className={cn(
+              'fixed inset-0 z-50 flex items-center justify-center bg-transparent p-4 opacity-40 backdrop-blur-sm transition-opacity duration-150 hover:opacity-100 sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0',
+              'md:hidden',
+              isPopup && !isFullScreen && 'md:flex',
+              isFullScreen && '!inset-0 !flex !p-0 !opacity-100 !backdrop-blur-none',
+            )}
+          >
+            <div
+              className={cn(
+                'bg-panelLight dark:bg-panelDark w-full overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg dark:border-[#252525]',
+                'md:hidden',
+                isPopup && !isFullScreen && 'w-[600px] max-w-[90vw] sm:w-[400px] md:block',
+                isFullScreen && '!block !max-w-none !rounded-none !border-none',
+              )}
+            >
+              <div
+                className={cn(
+                  'flex w-full flex-col',
+                  isFullScreen ? 'h-screen' : 'h-[90vh] sm:h-[600px] sm:max-h-[85vh]',
+                )}
+              >
+                <ChatHeader
+                  onClose={() => {
+                    setOpen(false);
+                    setIsFullScreen(false);
+                  }}
+                  onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}
+                  onToggleViewMode={toggleViewMode}
+                  isFullScreen={isFullScreen}
+                  isPopup={isPopup}
+                  chatMessages={chatMessages}
+                  isPro={isPro}
+                  onUpgrade={handleUpgrade}
+                  onNewChat={handleNewChat}
                 />
+                <div className="relative flex-1 overflow-hidden">
+                  <AIChat key={resetKey} {...chatState} />
+                </div>
               </div>
             </div>
           </div>
-        </ResizablePanel>
-        {/* Mobile popup - only visible on smaller screens */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0 xl:hidden">
-          {/* Chat popup container */}
-          <div className="bg-panelLight dark:bg-panelDark w-full max-w-[800px] overflow-hidden rounded-2xl border border-[#E7E7E7] shadow-lg sm:max-w-[500px] dark:border-[#252525]">
-            <div className="flex h-[90vh] w-full flex-col sm:h-[500px] sm:max-h-[80vh]">
-              <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-1 py-2 pb-1 dark:border-[#252525]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => setOpen(false)}
-                        variant="ghost"
-                        className="md:h-fit md:px-2"
-                      >
-                        <X className="dark:fill-iconDark fill-iconLight" />
-                        <span className="sr-only">Close chat</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Close chat</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <div className="flex items-center gap-2">
-                  {!isPro && (
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild className="md:h-fit md:px-2">
-                          <div>
-                            <Gauge
-                              value={50 - chatMessages.remaining!}
-                              size="small"
-                              showValue={true}
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-                          <p className="mb-2">Upgrade for unlimited messages!</p>
-                          <Button onClick={handleUpgrade} className="h-8 w-full">
-                            Upgrade
-                          </Button>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-
-                  <TooltipProvider delayDuration={0}>
-                    <Dialog>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" className="md:h-fit md:px-2 [&>svg]:size-3">
-                              <Paper className="dark:fill-iconDark fill-iconLight h-3.5 w-3.5" />
-                            </Button>
-                          </DialogTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>Prompts</TooltipContent>
-                      </Tooltip>
-                      <DialogContent showOverlay={true}>
-                        <DialogHeader>
-                          <DialogTitle>AI System Prompts</DialogTitle>
-                          <DialogDescription>
-                            We believe in Open Source, so we're open sourcing our AI system prompts.
-                            Soon you will be able to customize them to your liking. For now, here
-                            are the default prompts:
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
-                          <span>Zero Chat / System Prompt</span>
-                          <Link
-                            href={'https://github.com/Mail-0/Zero.git'}
-                            target="_blank"
-                            className="flex items-center gap-1 underline"
-                          >
-                            <span>Contribute</span>
-                            <GitBranchPlus className="h-4 w-4" />
-                          </Link>
-                        </div>
-                        <Textarea className="min-h-60" readOnly value={AiChatPrompt('', '', '')} />
-                        <div className="text-muted-foreground mb-1 mt-4 flex gap-2 text-sm">
-                          <span>Zero Compose / System Prompt</span>
-                          <Link
-                            href={'https://github.com/Mail-0/Zero.git'}
-                            target="_blank"
-                            className="flex items-center gap-1 underline"
-                          >
-                            <span>Contribute</span>
-                            <GitBranchPlus className="h-4 w-4" />
-                          </Link>
-                        </div>
-                        <Textarea
-                          className="min-h-60"
-                          readOnly
-                          value={StyledEmailAssistantSystemPrompt().trim()}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                  </TooltipProvider>
-
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={handleNewChat}
-                          variant="ghost"
-                          className="md:h-fit md:px-2"
-                        >
-                          <Plus className="dark:text-iconDark text-iconLight" />
-                          <span className="sr-only">New chat</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>New chat</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
-              <div className="relative flex-1 overflow-hidden">
-                <AIChat
-                  key={resetKey}
-                  {...chatState}
-                  // Pass the same chat state to ensure conversation continuity with desktop view
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    )
+        </>
+      )}
+    </>
   );
 }
 
