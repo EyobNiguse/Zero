@@ -115,6 +115,7 @@ const aboutLinks = [
     href: '/about',
     description: 'Learn more about Zero and our mission.',
   },
+  
   {
     title: 'Privacy',
     href: '/privacy',
@@ -272,7 +273,7 @@ export default function HomeContent() {
             </SheetHeader>
             <div className="mt-8 flex flex-col space-y-3">
               <div className="space-y-3">
-                <h4 className="text-muted-foreground text-sm font-medium">Company</h4>
+                <Link href="/pricing" className='mt-2'>Pricing</Link>
                 {aboutLinks.map((link) => (
                   <a key={link.title} href={link.href} className="block font-medium">
                     {link.title}

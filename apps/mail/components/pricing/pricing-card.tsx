@@ -4,14 +4,35 @@ import { Badge } from '../ui/badge';
 import { useState } from 'react';
 import Image from 'next/image';
 import { useBilling } from '@/hooks/use-billing';
+import { useSession, signIn } from '@/lib/auth-client';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function PricingCard() {
   const [isAnnual, setIsAnnual] = useState(false);
   const monthlyPrice = 20;
   const annualPrice = monthlyPrice * 0.5;
   const { attach } = useBilling();
+  const { data: session } = useSession();
+  const router = useRouter();
   
     const handleUpgrade = async () => {
+      if (!session) {
+        // User is not logged in, redirect to login page first
+        toast.promise(
+          signIn.social({
+            provider: 'google',
+            callbackURL: `${window.location.origin}/pricing`,
+          }),
+          {
+            loading: 'Redirecting to login...',
+            success: 'Redirecting to login...',
+            error: 'Login redirect failed',
+          }
+        );
+        return;
+      }
+      
       if (attach) {
         try {
           await attach({

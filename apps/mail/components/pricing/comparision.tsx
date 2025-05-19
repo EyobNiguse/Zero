@@ -1,11 +1,32 @@
 import { Check, Plus, PurpleThickCheck, ThickCheck } from '../icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import Image from 'next/image';
+import { useSession, signIn } from '@/lib/auth-client';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function Comparision() {
   const { attach } = useBilling();
+  const { data: session } = useSession();
+  const router = useRouter();
 
   const handleUpgrade = async () => {
+    if (!session) {
+      // User is not logged in, redirect to login page first
+      toast.promise(
+        signIn.social({
+          provider: 'google',
+          callbackURL: `${window.location.origin}/pricing`,
+        }),
+        {
+          loading: 'Redirecting to login...',
+          success: 'Redirecting to login...',
+          error: 'Login redirect failed',
+        }
+      );
+      return;
+    }
+    
     if (attach) {
       try {
         await attach({
