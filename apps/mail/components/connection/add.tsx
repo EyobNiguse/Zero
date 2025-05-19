@@ -16,7 +16,8 @@ import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { env } from '@/lib/env';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { PricingDialog } from '../ui/pricing-dialog';
 
 export const AddConnectionDialog = ({
   children,
@@ -29,6 +30,8 @@ export const AddConnectionDialog = ({
 }) => {
   const { connections, attach } = useBilling();
   const t = useTranslations();
+  const [showPricingDialog, setShowPricingDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(true);
 
   const pathname = usePathname();
   const canCreateConnection = useMemo(() => {
@@ -37,35 +40,44 @@ export const AddConnectionDialog = ({
   }, [connections]);
 
   const handleUpgrade = async () => {
-    if (attach) {
-      return attach({
-        productId: 'pro-example',
-        successUrl: `${window.location.origin}/mail/inbox?success=true`,
-      })
-        .catch((error: Error) => {
-          console.error('Failed to upgrade:', error);
-        })
-        .then(() => {
-          console.log('Upgraded successfully');
-        });
-    }
+    // Show pricing dialog and hide this dialog
+    setShowPricingDialog(true);
+    setShowAddDialog(false);
   };
 
   return (
-    <Dialog onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button
-            size={'dropdownItem'}
-            variant={'dropdownItem'}
-            className={cn('w-full justify-start gap-2', className)}
-          >
-            <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
-            <p className="text-[13px] opacity-60">{t('pages.settings.connections.addEmail')}</p>
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent showOverlay={true}>
+    <>
+      <PricingDialog 
+        open={showPricingDialog} 
+        onOpenChange={(open) => {
+          setShowPricingDialog(open);
+          // When pricing dialog is closed, show add dialog again
+          if (!open) {
+            setShowAddDialog(true);
+          }
+        }} 
+      />
+      
+      <Dialog 
+        open={showAddDialog} 
+        onOpenChange={(open) => {
+          if (onOpenChange) onOpenChange(open);
+          setShowAddDialog(open);
+        }}
+      >
+        <DialogTrigger asChild>
+          {children || (
+            <Button
+              size={'dropdownItem'}
+              variant={'dropdownItem'}
+              className={cn('w-full justify-start gap-2', className)}
+            >
+              <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
+              <p className="text-[13px] opacity-60">{t('pages.settings.connections.addEmail')}</p>
+            </Button>
+          )}
+        </DialogTrigger>
+        <DialogContent showOverlay={true}>
         <DialogHeader>
           <DialogTitle>{t('pages.settings.connections.connectEmail')}</DialogTitle>
           <DialogDescription>
@@ -140,5 +152,6 @@ export const AddConnectionDialog = ({
         </motion.div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
