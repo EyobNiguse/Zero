@@ -114,10 +114,14 @@ export const AddConnectionDialog = ({
                     await authClient.linkSocial({
                       provider: provider.providerId,
 <<<<<<< HEAD
+<<<<<<< HEAD
                       callbackURL: `${env.NEXT_PUBLIC_APP_URL}/${pathname}`,
 =======
                       callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
 >>>>>>> a9d1ae61 (feat: outlook driver)
+=======
+                      callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
+>>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
                     })
                   }
                 >

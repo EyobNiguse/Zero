@@ -173,8 +173,11 @@ export class OutlookMailManager implements MailManager {
       async () => {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> a6fa624f (update count function to get the correct counts)
+=======
+>>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
         const userLabels = await this.graphClient.api('/me/mailfolders').get();
         
         if (!userLabels.value) {
@@ -209,6 +212,9 @@ export class OutlookMailManager implements MailManager {
           }),
         );
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
       },
       { email: this.config.auth?.email },
     );
@@ -506,6 +512,7 @@ export class OutlookMailManager implements MailManager {
       .filter((req) => typeof req !== 'undefined')
       .filter((req) => Object.keys(req.body).length > 0 || req.method === 'POST');
 
+<<<<<<< HEAD
 =======
         const mailFolders: MailFolder[] = (await this.graphClient.api('/me/mailfolders').get())
           .value;
@@ -822,6 +829,8 @@ export class OutlookMailManager implements MailManager {
       .filter((req) => Object.keys(req.body).length > 0 || req.method === 'POST');
 
 >>>>>>> a9d1ae61 (feat: outlook driver)
+=======
+>>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
     if (validBatchRequests.length === 0) {
       console.warn('No valid batch requests generated for modifyMessageLabelsOrFolders.');
       return;

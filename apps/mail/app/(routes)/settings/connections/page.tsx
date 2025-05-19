@@ -195,6 +195,7 @@ export default function ConnectionsPage() {
                     </div>
                   </div>
 <<<<<<< HEAD
+<<<<<<< HEAD
                   <div className="flex items-center gap-4">
                     {data.disconnectedIds?.includes(connection.id) ? (
                       <>
@@ -258,6 +259,10 @@ export default function ConnectionsPage() {
                 );
               })}
 >>>>>>> 0a89356c (fix icons in connections page)
+=======
+                );
+              })}
+>>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
             </div>
           ) : null}
 

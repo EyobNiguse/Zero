@@ -37,9 +37,12 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useConnections } from '@/hooks/use-connections';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { MailList } from '@/components/mail/mail-list';
 =======
 >>>>>>> a9d1ae61 (feat: outlook driver)
+=======
+>>>>>>> 0a89356c165d7bea3316fc303c5330890bb317d8
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
@@ -327,6 +330,13 @@ export function MailLayout() {
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
+
+  const activeAccount = useMemo(() => {
+    if (!session?.activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find(
+      (connection) => connection.id === session.activeConnection?.id,
+    );
+  }, [session?.activeConnection?.id, connections?.connections]);
 
   const activeAccount = useMemo(() => {
     if (!session?.activeConnection?.id || !connections?.connections) return null;
