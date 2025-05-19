@@ -1,12 +1,28 @@
 import { PurpleThickCheck, ThickCheck } from '../icons/icons';
+import { useSession, signIn } from '@/lib/auth-client';
 import { PricingSwitch } from '../ui/pricing-switch';
+import { useBilling } from '@/hooks/use-billing';
+import { useRouter } from 'next/navigation';
 import { Badge } from '../ui/badge';
 import { useState } from 'react';
 import Image from 'next/image';
-import { useBilling } from '@/hooks/use-billing';
-import { useSession, signIn } from '@/lib/auth-client';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+
+const handleGoogleSignIn = (
+  callbackURL: string,
+  options?: { loading?: string; success?: string },
+) => {
+  return toast.promise(
+    signIn.social({
+      provider: 'google',
+      callbackURL,
+    }),
+    {
+      success: options?.success || 'Redirecting to login...',
+      error: 'Login redirect failed',
+    },
+  );
+};
 
 export default function PricingCard() {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -15,36 +31,27 @@ export default function PricingCard() {
   const { attach } = useBilling();
   const { data: session } = useSession();
   const router = useRouter();
-  
-    const handleUpgrade = async () => {
-      if (!session) {
-        // User is not logged in, redirect to login page first
-        toast.promise(
-          signIn.social({
-            provider: 'google',
-            callbackURL: `${window.location.origin}/pricing`,
-          }),
-          {
-            loading: 'Redirecting to login...',
-            success: 'Redirecting to login...',
-            error: 'Login redirect failed',
-          }
-        );
-        return;
-      }
-      
-      if (attach) {
-        try {
-          await attach({
-            productId: 'pro-example',
-            successUrl: `${window.location.origin}/mail/inbox?success=true`,
-            authUrl: `${window.location.origin}/login?redirect=/pricing`,
-          });
-        } catch (error) {
-          console.error('Failed to upgrade:', error);
-        }
-      }
-    };
+
+  const handleUpgrade = async () => {
+    if (!session) {
+      handleGoogleSignIn(`${window.location.origin}/pricing`);
+      return;
+    }
+
+    if (attach) {
+      toast.promise(
+        attach({
+          productId: isAnnual ? 'pro_annual' : 'pro-example',
+          successUrl: `${window.location.origin}/mail/inbox?success=true`,
+          authUrl: `${window.location.origin}/login?redirect=/pricing`,
+        }),
+        {
+          success: 'Redirecting to payment...',
+          error: 'Failed to process upgrade. Please try again later.',
+        },
+      );
+    }
+  };
   return (
     <div>
       <div className="relative z-20 mb-8 flex items-center justify-center gap-2">
@@ -52,7 +59,6 @@ export default function PricingCard() {
         <p className="text-sm text-white/70">Billed Annually</p>
         <Badge className="border border-[#656565] bg-[#3F3F3F] text-white">Save 50%</Badge>
       </div>
-
       <div className="flex flex-col items-center justify-center gap-5 md:flex-row">
         <div className="relative inline-flex h-[535px] w-96 flex-col items-start justify-start overflow-hidden rounded-2xl border border-[#2D2D2D] bg-zinc-900/50 p-5">
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden"></div>
@@ -63,7 +69,7 @@ export default function PricingCard() {
                 <div className="relative h-6 w-6">
                   <Image
                     src="lock.svg"
-                    alt=""
+                    alt="lock"
                     height={24}
                     width={24}
                     className="relative left-0 h-6 w-6"
@@ -121,10 +127,22 @@ export default function PricingCard() {
               </div>
             </div>
           </div>
-          <button disabled className="relative top-[154px] inline-flex h-10 items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-[#2D2D2D] p-3 shadow shadow-black/30 outline outline-1 outline-offset-[-1px] outline-[#434343] lg:top-[138px]">
+          <button
+            onClick={() => {
+              if (session) {
+                router.push('/mail/inbox');
+              } else {
+                handleGoogleSignIn(`${process.env.NEXT_PUBLIC_APP_URL}/mail`, {
+                  loading: undefined,
+                  success: undefined,
+                });
+              }
+            }}
+            className="relative top-[154px] inline-flex h-10 items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-[#2D2D2D] p-3 shadow shadow-black/30 outline outline-1 outline-offset-[-1px] outline-[#434343] lg:top-[138px]"
+          >
             <div className="flex items-center justify-center gap-2.5 px-1">
               <div className="justify-start text-center font-semibold leading-none text-[#D5D5D5]">
-                Current Plan
+                Get Started For Free
               </div>
             </div>
           </button>
@@ -133,7 +151,7 @@ export default function PricingCard() {
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden">
             <Image
               src="/pricing-gradient.png"
-              alt=""
+              alt="pricing-gradient"
               className="absolute -right-0 -top-52 h-auto w-full"
               height={535}
               width={535}
@@ -240,7 +258,7 @@ export default function PricingCard() {
             </div>
           </div>
           <button
-            className="z-50 inline-flex h-24 cursor-pointer items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-white p-3 outline outline-1 outline-offset-[-1px]"
+            className="z-30 inline-flex h-24 cursor-pointer items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-white p-3 outline outline-1 outline-offset-[-1px]"
             onClick={handleUpgrade}
           >
             <div className="flex items-center justify-center gap-2.5 px-1">

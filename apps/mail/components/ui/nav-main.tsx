@@ -171,7 +171,7 @@ export function NavMain({ items }: NavMainProps) {
       }
 
       // Handle category links
-      if (category) {
+      if (item.id === "inbox" && category) {
         return `${item.url}?category=${encodeURIComponent(category)}`;
       }
 

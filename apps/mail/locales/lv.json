@@ -29,7 +29,9 @@
       "addingToFavorites": "Pievieno izlasei...",
       "removingFromFavorites": "Noņem no izlases...",
       "addedToFavorites": "Pievienots izlasei",
+      "addedToImportant": "Pievienots svarīgajiem",
       "removedFromFavorites": "Noņemts no izlases",
+      "removedFromImportant": "Noņemts no svarīgajiem",
       "failedToAddToFavorites": "Neizdevās pievienot izlasei",
       "failedToRemoveFromFavorites": "Neizdevās noņemt no izlases",
       "failedToModifyFavorites": "Neizdevās modificēt izlasi",
@@ -284,6 +286,10 @@
       "noSearchResults": "Meklēšanas rezultāti nav atrasti",
       "clearSearch": "Notīrīt meklēšanu",
       "markAsImportant": "Atzīmēt kā svarīgu",
+      "removeFromImportant": "Noņemt no svarīgajiem",
+      "markedAsImportant": "Atzīmēts kā svarīgs",
+      "markedAsUnimportant": "Atzīme 'svarīgs' noņemta",
+      "toggleImportant": "Pārslēgt svarīgumu",
       "unSubscribeFromAll": "Atrakstīties no visiem",
       "starAll": "Pievienot zvaigznīti visiem",
       "mute": "Apklusināt",
@@ -445,7 +451,15 @@
           "goToArchive": "Doties uz arhīvu",
           "goToBin": "Doties uz miskasti",
           "scrollDown": "Ritināt uz leju vēstuļu sarakstā",
-          "scrollUp": "Ritināt uz augšu vēstuļu sarakstā"
+          "scrollUp": "Ritināt uz augšu vēstuļu sarakstā",
+          "goToSettings": "Doties uz iestatījumiem",
+          "showImportant": "Rādīt svarīgos",
+          "showAllMail": "Rādīt visu pastu",
+          "showPersonal": "Rādīt personīgos",
+          "showUpdates": "Rādīt atjauninājumus",
+          "showPromotions": "Rādīt akcijas",
+          "showUnread": "Rādīt nelasītos",
+          "selectUnderCursor": "Atlasīt zem kursora"
         }
       },
       "labels": {

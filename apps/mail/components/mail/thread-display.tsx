@@ -394,13 +394,14 @@ export function ThreadDisplay() {
                   Choose an email to view details or
                 </p>
                 <div className="mt-4 grid grid-cols-1 gap-2 xl:grid-cols-2">
-                  <Button onClick={toggleAISidebar} variant="outline">
-                    Chat with Zero AI
-                  </Button>
+                  {!isSidebarOpen ? (
+                    <Button onClick={toggleAISidebar} variant="outline">
+                      Chat with Zero AI
+                    </Button>
+                  ) : null}
                   <Button onClick={() => setIsComposeOpen('true')} variant="outline">
                     Send an email
                   </Button>
-                  
                 </div>
               </div>
             </div>

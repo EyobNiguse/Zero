@@ -29,7 +29,9 @@ checksums:
     common/actions/addingToFavorites: 720e59eec292be6c8310b47dc6c22a32
     common/actions/removingFromFavorites: 951348f8f0bbce35e3abff396c012620
     common/actions/addedToFavorites: 848046ec65d15913112b466c544722eb
+    common/actions/addedToImportant: f0c826833d8be2b285cceec77ba6c048
     common/actions/removedFromFavorites: 540609ab686ed67b1cfd7649467b8bc1
+    common/actions/removedFromImportant: bbab6c58ea968faceda26c25584df1a9
     common/actions/failedToAddToFavorites: fa51002dd9e7d953a75fd213bbea6ee2
     common/actions/failedToRemoveFromFavorites: 5ac9381e679f0f83cf4a4c87c5028106
     common/actions/failedToModifyFavorites: f30b45c6232d2a9a8fa2570eaeced133
@@ -252,6 +254,10 @@ checksums:
     common/mail/noSearchResults: 3176102f55edd2d913f3fa95f03bd380
     common/mail/clearSearch: 0ee4a80abe134b7edd90c74f03638877
     common/mail/markAsImportant: e802707c384b87a4d9581bfd7d5940b3
+    common/mail/removeFromImportant: c7ea65948437047ffa5f1f00de61c8ed
+    common/mail/markedAsImportant: b131adbb4520d1a425f9857686e4953a
+    common/mail/markedAsUnimportant: c217083ebedce69b61fb0524a2210e8d
+    common/mail/toggleImportant: e9893030c91cd85ff4c8776d96c5abf5
     common/mail/unSubscribeFromAll: ee99d0007d97aa774d89cd25ade6e8c0
     common/mail/starAll: 926c027bfe1d87e76bb1a12b9fbc8a1b
     common/mail/mute: 3ade14017ee6826e52a7e9fa75a54852
@@ -384,6 +390,14 @@ checksums:
     pages/settings/shortcuts/actions/goToBin: 5b567f48c63b3352fc37cd807f6117bf
     pages/settings/shortcuts/actions/scrollDown: 2c9203d844e88e8c4854e79b5e3ad673
     pages/settings/shortcuts/actions/scrollUp: d498a56c18503f03c3f864191175c3a1
+    pages/settings/shortcuts/actions/goToSettings: 6ace3a9c8e0d0bcef02e8835a8e0ac08
+    pages/settings/shortcuts/actions/showImportant: 957efba1aa3ba2e58b08b17d134e226a
+    pages/settings/shortcuts/actions/showAllMail: d4f1d7ebc25c8d1d726a357e4217302a
+    pages/settings/shortcuts/actions/showPersonal: 81793e4936105946728187b27d8bbb46
+    pages/settings/shortcuts/actions/showUpdates: 4831c672f270ed9f2bea9ff2e30b9d83
+    pages/settings/shortcuts/actions/showPromotions: 0adf7973051c25739500c0a74f556d68
+    pages/settings/shortcuts/actions/showUnread: e53cd61d7e4fe6f1695d02c864909a39
+    pages/settings/shortcuts/actions/selectUnderCursor: d4642d66eb27aea7513af1fbb1bd3bb2
     pages/settings/labels/title: 6f15627a90002323eac018274b6922d6
     pages/settings/labels/description: 0418ef2ed4c3ca5082fddd6686b8596d
     pages/settings/dangerZone/title: ab5417cabdfa70b0a7c9d407ec69b450

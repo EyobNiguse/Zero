@@ -14,6 +14,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
     - [JavaScript/TypeScript Guidelines](#javascripttypescript-guidelines)
     - [React Guidelines](#react-guidelines)
   - [Internationalization (i18n)](#internationalization-i18n)
+    - [Adding Translations for New Features](#adding-translations-for-new-features)
   - [Testing](#testing)
   - [Documentation](#documentation)
   - [Areas of Contribution](#areas-of-contribution)
@@ -30,7 +31,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 2. **Set Up Development Environment**
    - Install [Bun](https://bun.sh)
    - Clone the repository and install dependencies: `bun install`
-   - Start the database locally: `bun docker:up`
+   - Start the database locally: `bun docker:db:up`
    - Copy `.env.example` to `.env` in project root
    - Setup cloudflare with `bun run cf-install`, you will need to run this everytime there is a `.env` change
    - Set up your Google OAuth credentials (see [README.md](../README.md))
@@ -42,7 +43,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 
    ```bash
    # Start database locally
-   bun docker:up
+   bun docker:db:up
 
    # Start the development server
    bun dev

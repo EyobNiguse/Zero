@@ -79,27 +79,67 @@ export default function ConnectionsPage() {
             </div>
           ) : data?.connections?.length ? (
             <div className="lg: grid gap-4 sm:grid-cols-1 md:grid-cols-2">
-              {data.connections.map((connection) => {
-                const Icon = emailProviders.find(
-                  (p) => p.providerId === connection.providerId,
-                )?.icon;
-                return (
-                  <div
-                    key={connection.id}
-                    className="bg-popover flex items-center justify-between rounded-lg border p-4"
-                  >
-                    <div className="flex min-w-0 items-center gap-4">
-                      {connection.picture ? (
-                        <Image
-                          src={connection.picture}
-                          alt=""
-                          className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                          width={48}
-                          height={48}
-                        />
-                      ) : (
-                        <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg">
-                          {Icon && <Icon className="size-6" />}
+              {data.connections.map((connection) => (
+                <div
+                  key={connection.id}
+                  className="bg-popover flex items-center justify-between rounded-lg border p-4"
+                >
+                  <div className="flex min-w-0 items-center gap-4">
+                    {connection.picture ? (
+                      <Image
+                        src={connection.picture}
+                        alt={connection.id + ' profile picture'}
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                        width={48}
+                        height={48}
+                      />
+                    ) : (
+                      <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg">
+                        <svg viewBox="0 0 24 24" className="text-primary h-6 w-6">
+                          <path fill="currentColor" d={emailProviders[0]!.icon} />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="truncate text-sm font-medium">{connection.name}</span>
+                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                        <Tooltip
+                          delayDuration={0}
+                          open={openTooltip === connection.id}
+                          onOpenChange={(open) => {
+                            if (window.innerWidth <= 768) {
+                              setOpenTooltip(open ? connection.id : null);
+                            }
+                          }}
+                        >
+                          <TooltipTrigger asChild>
+                            <span
+                              className="max-w-[180px] cursor-default truncate sm:max-w-[240px] md:max-w-[300px]"
+                              onClick={() => {
+                                if (window.innerWidth <= 768) {
+                                  setOpenTooltip(
+                                    openTooltip === connection.id ? null : connection.id,
+                                  );
+                                }
+                              }}
+                            >
+                              {connection.email}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" align="start" className="select-all">
+                            <div className="font-mono">{connection.email}</div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {data.disconnectedIds?.includes(connection.id) ? (
+                      <>
+                        <div>
+                          <Badge variant="destructive">
+                            {t('pages.settings.connections.disconnected')}
+                          </Badge>
                         </div>
                       )}
                       <div className="flex min-w-0 flex-col gap-1">

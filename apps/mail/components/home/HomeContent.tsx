@@ -369,7 +369,9 @@ export default function HomeContent() {
           >
             Get Started
           </Button>
+          
         </motion.div>
+        <p className="text-[#B7B7B7]/60 text-xs mt-2 ml-0.5">No credit card required. </p>
       </section>
 
       <section className="relative mt-10 hidden flex-col justify-center md:flex">

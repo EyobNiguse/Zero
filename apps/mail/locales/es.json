@@ -29,7 +29,9 @@
       "addingToFavorites": "Añadiendo a favoritos...",
       "removingFromFavorites": "Eliminando de favoritos...",
       "addedToFavorites": "Añadido a favoritos",
+      "addedToImportant": "Añadido a importantes",
       "removedFromFavorites": "Eliminado de favoritos",
+      "removedFromImportant": "Eliminado de importantes",
       "failedToAddToFavorites": "Error al añadir a favoritos",
       "failedToRemoveFromFavorites": "Error al eliminar de favoritos",
       "failedToModifyFavorites": "Error al modificar favoritos",
@@ -284,6 +286,10 @@
       "noSearchResults": "No se encontraron resultados",
       "clearSearch": "Limpiar búsqueda",
       "markAsImportant": "Marcar como importante",
+      "removeFromImportant": "Quitar de importantes",
+      "markedAsImportant": "Marcado como importante",
+      "markedAsUnimportant": "Desmarcado como no importante",
+      "toggleImportant": "Alternar importante",
       "unSubscribeFromAll": "Cancelar suscripción de todos",
       "starAll": "Destacar todos",
       "mute": "Silenciar",
@@ -445,7 +451,15 @@
           "goToArchive": "Ir a archivo",
           "goToBin": "Ir a papelera",
           "scrollDown": "Desplazarse hacia abajo en la lista de correos",
-          "scrollUp": "Desplazarse hacia arriba en la lista de correos"
+          "scrollUp": "Desplazarse hacia arriba en la lista de correos",
+          "goToSettings": "Ir a la configuración",
+          "showImportant": "Mostrar importantes",
+          "showAllMail": "Mostrar todos los correos",
+          "showPersonal": "Mostrar personales",
+          "showUpdates": "Mostrar actualizaciones",
+          "showPromotions": "Mostrar promociones",
+          "showUnread": "Mostrar no leídos",
+          "selectUnderCursor": "Seleccionar bajo el cursor"
         }
       },
       "labels": {

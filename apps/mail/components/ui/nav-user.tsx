@@ -63,6 +63,7 @@ export function NavUser() {
     trpc.connections.setDefault.mutationOptions(),
   );
   const { openBillingPortal, customer: billingCustomer, attach } = useBilling();
+  const [showPricingDialog, setShowPricingDialog] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -111,21 +112,6 @@ export function NavUser() {
         window.location.href = '/login';
       },
     });
-  };
-
-  const handleUpgrade = async () => {
-    if (attach) {
-      return attach({
-        productId: 'pro-example',
-        successUrl: `${window.location.origin}/mail/inbox?success=true`,
-      })
-        .catch((error: Error) => {
-          console.error('Failed to upgrade:', error);
-        })
-        .then(() => {
-          console.log('Upgraded successfully');
-        });
-    }
   };
 
   const { data: brainState, refetch: refetchBrainState } = useBrainState();
@@ -352,7 +338,7 @@ export function NavUser() {
                       </AvatarFallback>
                     </Avatar>
                     {activeAccount.id === session.connectionId && data.connections.length > 1 && (
-                      <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black" />
+                      <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-[#141414]" />
                     )}
                   </div>
                 </div>
@@ -452,11 +438,26 @@ export function NavUser() {
                 </DropdownMenu>
               )}
 
-              <AddConnectionDialog>
-                <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
-                  <Plus className="size-4" />
-                </button>
-              </AddConnectionDialog>
+              {isPro ? (
+                <AddConnectionDialog>
+                  <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
+                    <Plus className="size-4" />
+                  </button>
+                </AddConnectionDialog>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => setShowPricingDialog(true)}
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                  <PricingDialog 
+                    open={showPricingDialog} 
+                    onOpenChange={setShowPricingDialog} 
+                  />
+                </>
+              )}
             </div>
 
             <div>

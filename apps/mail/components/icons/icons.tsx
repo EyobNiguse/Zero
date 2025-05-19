@@ -1644,7 +1644,7 @@ export const ThickCheck = ({ className }: { className?: string }) => (
     <path
       d="M0.666992 4L2.75033 6.08333L7.33366 1.5"
       stroke="white"
-      stroke-width="1.875"
+      strokeWidth="1.875"
     />
   </svg>
 );
@@ -1686,7 +1686,7 @@ export const PurpleThickCheck = ({ className }: { className?: string }) => (
     <path
       d="M0.666992 4L2.75033 6.08333L7.33366 1.5"
       stroke="#A586FF"
-      stroke-width="1.875"
+      strokeWidth="1.875"
     />
   </svg>
 );
