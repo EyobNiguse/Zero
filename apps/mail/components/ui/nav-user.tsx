@@ -124,21 +124,6 @@ export function NavUser() {
     });
   };
 
-  const handleUpgrade = async () => {
-    if (attach) {
-      return attach({
-        productId: 'pro-example',
-        successUrl: `${window.location.origin}/mail/inbox?success=true`,
-      })
-        .catch((error: Error) => {
-          console.error('Failed to upgrade:', error);
-        })
-        .then(() => {
-          console.log('Upgraded successfully');
-        });
-    }
-  };
-
   const { data: brainState, refetch: refetchBrainState } = useBrainState();
 
   const otherConnections = useMemo(() => {

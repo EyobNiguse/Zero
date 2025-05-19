@@ -40,7 +40,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden">
             <Image
               src="/pricing-gradient.png"
-              alt=""
+              alt="pricing-gradient"
               className="absolute -right-0 -top-52 h-auto w-full"
               height={535}
               width={535}
