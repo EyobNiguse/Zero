@@ -73,6 +73,7 @@ export const authProviders = (env: Record<string, string>): ProviderConfig[] => 
       loginHint: 'email',
       disableProfilePhoto: true,
     },
+    required: true,
   },
 ];
 
