@@ -106,6 +106,13 @@ const AutoLabelingSettings = () => {
   );
   const [labels, setLabels] = useState<ITag[]>([]);
   const [newLabel, setNewLabel] = useState({ name: '', usecase: '' });
+  const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
+    trpc.brain.enableBrain.mutationOptions(),
+  );
+  const { mutateAsync: DisableBrain, isPending: isDisablingBrain } = useMutation(
+    trpc.brain.disableBrain.mutationOptions(),
+  );
+  const { data: brainState, refetch: refetchBrainState } = useBrainState();
 
   useEffect(() => {
     if (storedLabels) {
@@ -168,11 +175,52 @@ const AutoLabelingSettings = () => {
     toast.success('Labels updated successfully, Zero will start using them.');
   };
 
+  const handleEnableBrain = useCallback(async () => {
+    toast.promise(EnableBrain({}), {
+      loading: 'Enabling autolabeling...',
+      success: 'Autolabeling enabled successfully',
+      error: 'Failed to enable autolabeling',
+      finally: async () => {
+        await refetchBrainState();
+      },
+    });
+  }, []);
+
+  const handleDisableBrain = useCallback(async () => {
+    toast.promise(DisableBrain({}), {
+      loading: 'Disabling autolabeling...',
+      success: 'Autolabeling disabled successfully',
+      error: 'Failed to disable autolabeling',
+      finally: async () => {
+        await refetchBrainState();
+      },
+    });
+  }, []);
+
+  const handleToggleAutolabeling = useCallback(() => {
+    if (brainState?.enabled) {
+      handleDisableBrain();
+    } else {
+      handleEnableBrain();
+    }
+  }, [brainState?.enabled]);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="md:h-fit md:px-2">
-          <Settings2Icon className="text-muted-foreground h-4 w-4 cursor-pointer" />
+        <Button
+          disabled={isEnablingBrain || isDisablingBrain}
+          variant="outline"
+          size={'sm'}
+          className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
+        >
+          <div
+            className={cn(
+              'h-2 w-2 animate-pulse rounded-full',
+              brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
+            )}
+          />
+          Auto Labeling
         </Button>
       </DialogTrigger>
       <DialogContent showOverlay className="max-w-2xl">
@@ -185,7 +233,7 @@ const AutoLabelingSettings = () => {
           it does not exist already.
         </DialogDescription>
         <ScrollArea className="h-[400px]">
-          <div className="space-y-4 p-4">
+          <div className="space-y-2">
             {labels.map((label) => (
               <div key={label.id} className="flex items-start gap-2 rounded-lg border p-3">
                 <div className="flex-1 space-y-2">
@@ -244,12 +292,19 @@ const AutoLabelingSettings = () => {
           </div>
         </ScrollArea>
         <DialogFooter className="mt-4">
-          <Button onClick={handleResetToDefault} variant="outline" size={'sm'}>
-            Use default labels
-          </Button>
-          <Button disabled={isPending} onClick={handleSubmit}>
-            Save
-          </Button>
+          <div className="flex w-full justify-between">
+            <Button variant="outline" size="sm">
+              {brainState?.enabled ? 'Disable' : 'Enable'}
+            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleResetToDefault} variant="outline" size="sm">
+                Use default labels
+              </Button>
+              <Button disabled={isPending} onClick={handleSubmit} size="sm">
+                Save
+              </Button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -267,7 +322,6 @@ export function MailLayout() {
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
-  const { data: brainState } = useBrainState();
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -285,14 +339,8 @@ export function MailLayout() {
   const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
   const trpc = useTRPC();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-  const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
-    trpc.brain.enableBrain.mutationOptions(),
-  );
-  const { mutateAsync: DisableBrain, isPending: isDisablingBrain } = useMutation(
-    trpc.brain.disableBrain.mutationOptions(),
-  );
+
   const [threadId, setThreadId] = useQueryState('threadId');
-  const { refetch: refetchBrainState } = useBrainState();
 
   useEffect(() => {
     if (threadId) {
@@ -317,36 +365,6 @@ export function MailLayout() {
     setThreadId(null);
     setActiveReplyId(null);
   }, [setThreadId]);
-
-  const handleEnableBrain = useCallback(async () => {
-    toast.promise(EnableBrain({}), {
-      loading: 'Enabling autolabeling...',
-      success: 'Autolabeling enabled successfully',
-      error: 'Failed to enable autolabeling',
-      finally: async () => {
-        await refetchBrainState();
-      },
-    });
-  }, []);
-
-  const handleDisableBrain = useCallback(async () => {
-    toast.promise(DisableBrain({}), {
-      loading: 'Disabling autolabeling...',
-      success: 'Autolabeling disabled successfully',
-      error: 'Failed to disable autolabeling',
-      finally: async () => {
-        await refetchBrainState();
-      },
-    });
-  }, []);
-
-  const handleToggleAutolabeling = useCallback(() => {
-    if (brainState?.enabled) {
-      handleDisableBrain();
-    } else {
-      handleEnableBrain();
-    }
-  }, [brainState?.enabled]);
 
   // Add mailto protocol handler registration
   useEffect(() => {
@@ -420,22 +438,7 @@ export function MailLayout() {
                         </div>
                       ) : null}
                     </div>
-                    {true ? <AutoLabelingSettings /> : null}
-                    <Button
-                      disabled={isEnablingBrain || isDisablingBrain}
-                      onClick={handleToggleAutolabeling}
-                      variant="outline"
-                      size={'sm'}
-                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
-                    >
-                      <div
-                        className={cn(
-                          'h-2 w-2 animate-pulse rounded-full',
-                          brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
-                        )}
-                      />
-                      Auto Labeling
-                    </Button>
+                    <AutoLabelingSettings />
                     <Button
                       onClick={() => {
                         refetchThreads();
