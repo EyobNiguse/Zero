@@ -61,7 +61,6 @@ export const authProviders = (env: Record<string, string>): ProviderConfig[] => 
     config: {
       clientId: env.MICROSOFT_CLIENT_ID,
       clientSecret: env.MICROSOFT_CLIENT_SECRET,
-      redirectUri: env.MICROSOFT_REDIRECT_URI,
       scope: [
         'https://graph.microsoft.com/User.Read',
         'https://graph.microsoft.com/Mail.ReadWrite',
