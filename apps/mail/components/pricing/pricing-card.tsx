@@ -36,7 +36,7 @@ export default function PricingCard() {
       if (attach) {
         try {
           await attach({
-            productId: 'pro-example',
+            productId: isAnnual ? 'pro_annual' : 'pro-example',
             successUrl: `${window.location.origin}/mail/inbox?success=true`,
             authUrl: `${window.location.origin}/login?redirect=/pricing`,
           });
@@ -52,7 +52,6 @@ export default function PricingCard() {
         <p className="text-sm text-white/70">Billed Annually</p>
         <Badge className="border border-[#656565] bg-[#3F3F3F] text-white">Save 50%</Badge>
       </div>
-
       <div className="flex flex-col items-center justify-center gap-5 md:flex-row">
         <div className="relative inline-flex h-[535px] w-96 flex-col items-start justify-start overflow-hidden rounded-2xl border border-[#2D2D2D] bg-zinc-900/50 p-5">
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden"></div>
