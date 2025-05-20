@@ -10,7 +10,6 @@
     "dev": "dotenv -- turbo run dev",
     "build": "dotenv -- turbo run build",
     "build:frontend": "pnpm run --filter=@zero/mail build",
-    "build:backend": "pnpm run --filter=@zero/server build",
     "deploy:frontend": "pnpm run --filter=@zero/mail deploy",
     "deploy:backend": "pnpm run --filter=@zero/server deploy",
     "start": "dotenv -- turbo run start",
