@@ -57,7 +57,6 @@ const PRO_PLANS = ['pro-example', 'pro_annual', 'team', 'enterprise'] as const;
 
 export const useBilling = () => {
   const { customer, refetch } = useCustomer();
-  console.log('customer', customer);
   const { attach, track, openBillingPortal } = useAutumn();
 
   const isPro = useMemo(() => {
