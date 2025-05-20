@@ -8,6 +8,7 @@ export type Label = {
     textColor: string;
   };
   type: string;
+  labels?: Label[];
 };
 
 export interface User {
