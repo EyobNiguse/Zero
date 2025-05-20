@@ -8,12 +8,15 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { Folder as FolderIcon } from '@/components/icons/icons';
-import { FileIcon, FolderOpenIcon } from 'lucide-react';
-import { Accordion } from 'radix-ui';
-
+import {
+  Bookmark,
+  Folder as FolderIcon,
+  FolderOpen as FolderOpenIcon,
+} from '@/components/icons/icons';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { FileIcon } from 'lucide-react';
+import { Accordion } from 'radix-ui';
 import { cn } from '@/lib/utils';
 
 type TreeViewElement = {
@@ -260,12 +263,13 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
             </Accordion.Trigger>
           ) : (
             <div className="flex items-center">
-              <FolderIcon className="relative mr-3 size-4" />
+              <Bookmark className="relative mr-3 size-4" />
             </div>
           )}
           <span
             className={cn('flex-1 truncate', {
               'cursor-pointer': canExpand && isSelectable && onFolderClick,
+              'font-bold': isSelect,
             })}
             {...(canExpand && isSelectable && onFolderClick
               ? {

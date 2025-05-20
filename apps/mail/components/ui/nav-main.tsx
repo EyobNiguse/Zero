@@ -301,7 +301,7 @@ export function NavMain({ items }: NavMainProps) {
           </Collapsible>
         ))}
         {!pathname.includes('/settings') && !isBottomNav && state !== 'collapsed' && (
-          <Collapsible defaultOpen={true} className="group/collapsible">
+          <Collapsible defaultOpen={true} className="group/collapsible flex-col">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
               <div className="mx-2 mb-4 flex items-center justify-between">
                 <span className="text-[13px] text-[#6D6D6D] dark:text-[#898989]">
@@ -444,115 +444,89 @@ export function NavMain({ items }: NavMainProps) {
                 ) : activeAccount?.providerId === 'microsoft' ? null : null}
               </div>
 
-              <div className="mr-0 pr-0">
-                <div
-                  className={cn(
-                    'hide-scrollbar flex h-full max-h-[calc(100dvh-40rem)] min-h-[4rem] flex-row flex-wrap gap-2 overflow-scroll',
-                  )}
-                >
-                  {(() => {
-                    if (!data) return null;
+              <div className="mr-0 flex-1 pr-0">
+                <div className="bg-background relative -m-2 flex-1 overflow-auto">
+                  <Tree className="bg-background rounded-md">
+                    {(() => {
+                      if (!data) return null;
+                      const isMicrosoftAccount = activeAccount?.providerId === 'microsoft';
+                      if (isMicrosoftAccount) {
+                        return data?.map((label) => (
+                          <RecursiveFolder key={label.id} label={label} />
+                        ));
+                      }
 
-                    const groupedLabels = data.reduce(
-                      (acc, label) => {
-                        const isFolderLabel = /[^/]+\/[^/]+/.test(label.name);
-                        if (isFolderLabel) {
+                      const groups = {
+                        brackets: [] as typeof data,
+                        other: [] as typeof data,
+                        folders: {} as Record<string, typeof data>,
+                      };
+
+                      data.forEach((label) => {
+                        if (/\[.*\]/.test(label.name)) {
+                          groups.brackets.push(label);
+                        } else if (/[^/]+\/[^/]+/.test(label.name)) {
                           const [groupName] = label.name.split('/') as [string];
-                          if (!acc[groupName]) {
-                            acc[groupName] = [];
+                          if (!groups.folders[groupName]) {
+                            groups.folders[groupName] = [];
                           }
-                          acc[groupName].push(label);
+                          groups.folders[groupName].push(label);
                         } else {
-                          if (!acc['other']) {
-                            acc['other'] = [];
-                          }
-                          acc['other'].push(label);
+                          groups.other.push(label);
                         }
-                        return acc;
-                      },
-                      {} as Record<string, typeof data>,
-                    );
+                      });
 
-                    return (
-                      <>
-                        {Object.entries(groupedLabels)
-                          .sort(([a], [b]) => {
-                            if (a === 'other') return 1;
-                            if (b === 'other') return -1;
-                            return a.localeCompare(b);
-                          })
-                          .map(([groupName, labels]) => {
-                            if (groupName === 'other') {
-                              return labels.map((label) => (
-                                <LabelSidebarContextMenu labelId={label.id} key={label.id}>
-                                  <div
-                                    onClick={handleFilterByLabel(label)}
-                                    className="flex cursor-pointer items-center gap-2 text-sm"
-                                  >
-                                    <span
-                                      className={cn(
-                                        'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
-                                        searchValue.value.includes(`label:${label.name}`)
-                                          ? 'border-accent-foreground'
-                                          : 'dark:bg-subtleBlack',
-                                      )}
-                                    >
-                                      {label.name}
-                                    </span>
-                                  </div>
-                                </LabelSidebarContextMenu>
-                              ));
-                            }
+                      const components = [];
 
-                            return (
-                              <DropdownMenu key={groupName}>
-                                <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1.5 py-0.5 text-xs">
-                                  <span>
-                                    <FolderIcon className="h-4 w-4" />
-                                  </span>
-                                  <span className="truncate">{groupName}</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="dark:bg-panelDark/10 bg-panelLight/10 flex w-56 gap-1 border-none backdrop-blur-sm">
-                                  {labels.map((label) => {
-                                    const folderParts = label.name.split('/').slice(1);
-                                    return (
-                                      <LabelSidebarContextMenu labelId={label.id} key={label.id}>
-                                        <div
-                                          onClick={handleFilterByLabel(label)}
-                                          className="flex cursor-pointer items-center gap-2 text-sm"
-                                        >
-                                          <span
-                                            className={cn(
-                                              'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
-                                              searchValue.value.includes(`label:${label.name}`)
-                                                ? 'border-accent-foreground'
-                                                : 'dark:bg-subtleBlack',
-                                            )}
-                                          >
-                                            {folderParts.map((part, index) => (
-                                              <span key={index}>
-                                                {part}
-                                                {index < folderParts.length - 1 && (
-                                                  <span className="text-muted-foreground">/</span>
-                                                )}
-                                              </span>
-                                            ))}
-                                          </span>
-                                        </div>
-                                      </LabelSidebarContextMenu>
-                                    );
-                                  })}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            );
-                          })}
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="bg-background relative -m-2 flex h-[300px]">
-                  <Tree className="bg-background overflow-hidden rounded-md">
-                    {data?.map((label) => <RecursiveFolder key={label.id} label={label} />)}
+                      Object.entries(groups.folders)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .forEach(([groupName, labels]) => {
+                          const groupFolder = {
+                            id: `group-${groupName}`,
+                            name: groupName,
+                            labels: labels.map((label) => ({
+                              id: label.id,
+                              name: label.name.split('/').slice(1).join('/'),
+                              originalLabel: label,
+                            })),
+                          };
+                          components.push(
+                            <RecursiveFolder key={groupFolder.id} label={groupFolder} />,
+                          );
+                        });
+
+                      if (groups.other.length > 0) {
+                        groups.other.forEach((label) => {
+                          components.push(
+                            <RecursiveFolder
+                              key={label.id}
+                              label={{
+                                id: label.id,
+                                name: label.name,
+                                originalLabel: label,
+                              }}
+                            />,
+                          );
+                        });
+                      }
+
+                      if (groups.brackets.length > 0) {
+                        const bracketsFolder = {
+                          id: 'group-other',
+                          name: 'Other',
+                          labels: groups.brackets.map((label) => ({
+                            id: label.id,
+                            name: label.name.replace(/\[|\]/g, ''),
+                            originalLabel: label,
+                          })),
+                        };
+                        components.push(
+                          <RecursiveFolder key={bracketsFolder.id} label={bracketsFolder} />,
+                        );
+                      }
+
+                      return components;
+                    })()}
                   </Tree>
                 </div>
               </div>
@@ -582,7 +556,6 @@ function NavItem(item: NavItemProps & { href: string }) {
     );
   }
 
-  // Apply animation handlers to all buttons including back buttons
   const linkProps = {
     to: item.href,
     onMouseEnter: () => iconRef.current?.startAnimation?.(),

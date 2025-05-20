@@ -37,7 +37,6 @@ import { useAIFullScreen } from './ai-sidebar';
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isFullScreen } = useAIFullScreen();
 
-  
   const { data: stats } = useStats();
 
   const location = useLocation();
@@ -79,11 +78,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <div>
       {!isFullScreen && (
         <Sidebar
-        collapsible="icon"
-        {...props}
-        className={`bg-lightBackground dark:bg-darkBackground flex h-screen select-none flex-col items-center  ${state === 'collapsed' ? '' : ''} pb-2`}
-      >
-          <SidebarHeader className={`flex flex-col gap-2 relative top-2.5 ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}>
+          collapsible="icon"
+          {...props}
+          className={`bg-lightBackground dark:bg-darkBackground flex h-screen select-none flex-col items-center ${state === 'collapsed' ? '' : ''} pb-2`}
+        >
+          <SidebarHeader
+            className={`relative top-2.5 flex flex-col gap-2 ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}
+          >
             {session && <NavUser />}
             <AnimatePresence mode="wait">
               {showComposeButton && (
@@ -99,7 +100,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </AnimatePresence>
           </SidebarHeader>
 
-          <SidebarContent className={`py-0 pt-0 scrollbar scrollbar-w-1 scrollbar-thumb-accent/40 scrollbar-track-transparent hover:scrollbar-thumb-accent scrollbar-thumb-rounded-full  ${state !== 'collapsed' ? 'mt-5 md:px-4' : 'px-2'}`}>
+          <SidebarContent
+            className={`scrollbar scrollbar-w-1 scrollbar-thumb-accent/40 scrollbar-track-transparent hover:scrollbar-thumb-accent scrollbar-thumb-rounded-full overflow-x-hidden py-0 pt-0 ${state !== 'collapsed' ? 'mt-5 md:px-4' : 'px-2'}`}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentSection}
@@ -113,12 +116,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </motion.div>
             </AnimatePresence>
           </SidebarContent>
-        
-          <SidebarFooter className={`pb-0 px-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
+
+          <SidebarFooter className={`px-0 pb-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
             <NavMain items={bottomNavItems} />
           </SidebarFooter>
-      
-      </Sidebar>
+        </Sidebar>
       )}
     </div>
   );
