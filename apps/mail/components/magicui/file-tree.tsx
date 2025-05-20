@@ -8,7 +8,8 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { FileIcon, FolderIcon, FolderOpenIcon } from 'lucide-react';
+import { Folder as FolderIcon } from '@/components/icons/icons';
+import { FileIcon, FolderOpenIcon } from 'lucide-react';
 import { Accordion } from 'radix-ui';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -190,10 +191,27 @@ type FolderProps = {
   element: string;
   isSelectable?: boolean;
   isSelect?: boolean;
+  onFolderClick?: (id: string) => void;
+  hasChildren?: boolean;
 } & FolderComponentProps;
 
 const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, element, value, isSelectable = true, isSelect, children, ...props }, ref) => {
+  (
+    {
+      className,
+      element,
+      value,
+      isSelectable = true,
+      isSelect,
+      children,
+      onFolderClick,
+      hasChildren,
+      ...props
+    },
+    ref,
+  ) => {
+    const childrenCount = React.Children.count(children);
+    const canExpand = hasChildren !== undefined ? hasChildren : childrenCount > 0;
     const {
       direction,
       handleExpand,
@@ -206,20 +224,65 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
 
     return (
       <Accordion.Item {...props} value={value} className="relative h-full overflow-hidden">
-        <Accordion.Trigger
-          className={cn(`flex items-center gap-1 rounded-md text-sm`, className, {
-            'bg-muted rounded-md': isSelect && isSelectable,
-            'cursor-pointer': isSelectable,
-            'cursor-not-allowed opacity-50': !isSelectable,
-          })}
-          disabled={!isSelectable}
-          onClick={() => handleExpand(value)}
+        <div
+          className={cn(
+            `hover:bg-sidebar-accent-foreground flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm dark:hover:bg-[#202020]`,
+            className,
+            {
+              'bg-muted rounded-md': isSelect && isSelectable,
+              'cursor-pointer': isSelectable,
+              'cursor-not-allowed opacity-50': !isSelectable,
+            },
+          )}
+          {...(!canExpand && isSelectable && onFolderClick
+            ? {
+                onClick: (e) => {
+                  e.stopPropagation();
+                  onFolderClick(value);
+                },
+                role: 'button',
+                tabIndex: 0,
+              }
+            : {})}
         >
-          {expandedItems?.includes(value)
-            ? (openIcon ?? <FolderOpenIcon className="size-4" />)
-            : (closeIcon ?? <FolderIcon className="size-4" />)}
-          <span className="ml-3">{element}</span>
-        </Accordion.Trigger>
+          {canExpand ? (
+            <Accordion.Trigger
+              className="flex cursor-[ns-resize] items-center"
+              disabled={!isSelectable}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleExpand(value);
+              }}
+            >
+              {expandedItems?.includes(value)
+                ? (openIcon ?? <FolderOpenIcon className="relative mr-3 size-4" />)
+                : (closeIcon ?? <FolderIcon className="relative mr-3 size-4" />)}
+            </Accordion.Trigger>
+          ) : (
+            <div className="flex items-center">
+              <FolderIcon className="relative mr-3 size-4" />
+            </div>
+          )}
+          <span
+            className={cn('flex-1 truncate', {
+              'cursor-pointer': canExpand && isSelectable && onFolderClick,
+            })}
+            {...(canExpand && isSelectable && onFolderClick
+              ? {
+                  onClick: (e) => {
+                    e.stopPropagation();
+                    if (onFolderClick) {
+                      onFolderClick(value);
+                    }
+                  },
+                  role: 'button',
+                  tabIndex: 0,
+                }
+              : {})}
+          >
+            {element}
+          </span>
+        </div>
         <Accordion.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down relative h-full overflow-hidden text-sm">
           {element && indicator && <TreeIndicator aria-hidden="true" />}
           <Accordion.Root
