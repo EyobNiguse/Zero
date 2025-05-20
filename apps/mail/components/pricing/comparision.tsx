@@ -156,7 +156,7 @@ export default function Comparision() {
                     toast.promise(
                       signIn.social({
                         provider: 'google',
-                        callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+                        callbackURL: `${window.location.origin}/mail`,
                       }),
                       {
                         error: 'Login redirect failed',

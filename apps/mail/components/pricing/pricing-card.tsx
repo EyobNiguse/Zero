@@ -130,7 +130,7 @@ export default function PricingCard() {
               if (session) {
                 navigate('/mail/inbox');
               } else {
-                handleGoogleSignIn(`${process.env.NEXT_PUBLIC_APP_URL}/mail`, {
+                handleGoogleSignIn(`${window.location.origin}/mail`, {
                   loading: undefined,
                   success: undefined,
                 });
