@@ -23,6 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'use-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useBilling } from '@/hooks/use-billing';
+import { PricingDialog } from '@/components/ui/pricing-dialog';
 
 export default function ConnectionsPage() {
   const { data, isLoading, refetch: refetchConnections } = useConnections();
@@ -32,6 +34,7 @@ export default function ConnectionsPage() {
   const trpc = useTRPC();
   const { mutateAsync: deleteConnection } = useMutation(trpc.connections.delete.mutationOptions());
   const [{ refetch: refetchThreads }] = useThreads();
+  const { isPro } = useBilling();
 
   const disconnectAccount = async (connectionId: string) => {
     await deleteConnection(
@@ -196,7 +199,7 @@ export default function ConnectionsPage() {
           ) : null}
 
           <div className="flex items-center justify-start">
-            <AddConnectionDialog>
+            {isPro ? <AddConnectionDialog>
               <Button
                 variant="outline"
                 className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
@@ -206,7 +209,17 @@ export default function ConnectionsPage() {
                   {t('pages.settings.connections.addEmail')}
                 </span>
               </Button>
-            </AddConnectionDialog>
+            </AddConnectionDialog> : <PricingDialog>
+              <Button
+                  variant="outline"
+                  className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
+                >
+                  <Plus className="absolute left-2 h-4 w-4" />
+                  <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {t('pages.settings.connections.addEmail')}
+                  </span>
+              </Button>
+            </PricingDialog> }
           </div>
         </div>
       </SettingsCard>

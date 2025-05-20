@@ -51,7 +51,6 @@ export function NavUser() {
   const { data: session, refetch: refetchSession } = useSession();
   const { data, refetch: refetchConnections } = useConnections();
   const [isRendered, setIsRendered] = useState(false);
-  const [showPricing, setShowPricing] = useState(false);
   const { theme, setTheme } = useTheme();
   const t = useTranslations();
   const { state } = useSidebar();
@@ -60,7 +59,6 @@ export function NavUser() {
     trpc.connections.setDefault.mutationOptions(),
   );
   const { openBillingPortal, customer: billingCustomer, isPro } = useBilling();
-  const [showPricingDialog, setShowPricingDialog] = useState(false);
   const pathname = useLocation().pathname;
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -432,13 +430,13 @@ export function NavUser() {
                 </AddConnectionDialog>
               ) : (
                 <>
-                  <button
-                    onClick={() => setShowPricingDialog(true)}
-                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]"
-                  >
-                    <Plus className="size-4" />
-                  </button>
-                  <PricingDialog open={showPricingDialog} onOpenChange={setShowPricingDialog} />
+                  <PricingDialog>
+                    <Button
+                      className="flex h-7 w-7 px-0 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]"
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                  </PricingDialog>
                 </>
               )}
             </div>
@@ -534,15 +532,14 @@ export function NavUser() {
               {isPro ? (
                 <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
               ) : (
-                <button
-                  className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent"
-                  onClick={() => setShowPricing(true)}
-                >
-                  <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
-                  <span className="text-muted-foreground text-[10px] uppercase">Get verified</span>
-                </button>
+                <PricingDialog>
+                  <button
+                    className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent">
+                    <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+                    <span className="text-muted-foreground text-[10px] uppercase">Get verified</span>
+                  </button>
+                </PricingDialog>
               )}
-              <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
             </div>
             <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}

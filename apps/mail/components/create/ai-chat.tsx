@@ -165,7 +165,6 @@ export function AIChat({
   className,
 }: AIChatProps): React.ReactElement {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
-  const [showPricing, setShowPricing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -187,15 +186,16 @@ export function AIChat({
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <TextShimmer className="text-center text-xl font-medium">
-                Upgrade to Zero Pro for unlimited AI chats
-              </TextShimmer>
-              <Button onClick={() => setShowPricing(true)} className="mt-2 h-8 w-52">
-                Upgrade
-              </Button>
-              <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
-            </div>
+              <PricingDialog>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <TextShimmer className="text-center text-xl font-medium">
+                    Upgrade to Zero Pro for unlimited AI chats
+                  </TextShimmer>
+                  <Button className="mt-2 h-8 w-52">
+                    Upgrade
+                  </Button>
+                </div>
+              </PricingDialog>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative mb-4 h-[44px] w-[44px]">
