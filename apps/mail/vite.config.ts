@@ -6,6 +6,9 @@ import { defineConfig } from 'vite';
 import dedent from 'dedent';
 
 export default defineConfig({
+  esbuild: {
+    drop: ['console'],
+  },
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     reactRouter(),
