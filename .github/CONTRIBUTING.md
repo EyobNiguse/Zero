@@ -31,7 +31,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 2. **Set Up Development Environment**
    - Install [pnpm](https://pnpm.io)
    - Clone the repository and install dependencies: `pnpm install`
-   - Start the database locally: `pnpm docker:up`
+   - Start the database locally: `pnpm docker:db:up`
    - Copy `.env.example` to `.env` in project root
    - Setup cloudflare with `pnpm run cf-install`, you will need to run this everytime there is a `.env` change
    - Set up your Google OAuth credentials (see [README.md](../README.md))
@@ -43,7 +43,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 
    ```bash
    # Start database locally
-   pnpm docker:up
+   pnpm docker:db:up
 
    # Start the development server
    pnpm dev

@@ -8,7 +8,7 @@
     "postinstall": "turbo run postinstall",
     "cf-install": "turbo run postinstall",
     "dev": "dotenv -- turbo run dev",
-    "build": "dotenv -- turbo run --filter=@zero/mail build",
+    "build": "dotenv -- turbo run build",
     "deploy:frontend": "pnpm run --filter=@zero/mail build && pnpm run --filter=@zero/mail deploy",
     "deploy:backend": "pnpm run --filter=@zero/server deploy",
     "start": "dotenv -- turbo run start",
