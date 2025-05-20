@@ -432,7 +432,7 @@ export function NavUser() {
                 <>
                   <PricingDialog>
                     <Button
-                      className="flex h-7 w-7 px-0 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]"
+                      className="flex h-7 w-7 px-0 cursor-pointer items-center justify-center rounded-[5px] border border-dashed hover:bg-offsetLight/80 bg-transparent text-black dark:bg-[#262626] dark:text-[#929292]"
                     >
                       <Plus className="size-4" />
                     </Button>
