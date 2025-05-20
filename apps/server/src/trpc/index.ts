@@ -1,20 +1,31 @@
-import { lazy, type inferRouterInputs, type inferRouterOutputs } from '@trpc/server';
+import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server';
+import { cookiePreferencesRouter } from './routes/cookies';
+import { connectionsRouter } from './routes/connections';
+import { shortcutRouter } from './routes/shortcut';
+import { settingsRouter } from './routes/settings';
 import { getContext } from 'hono/context-storage';
+import { draftsRouter } from './routes/drafts';
+import { labelsRouter } from './routes/label';
+import { brainRouter } from './routes/brain';
+import { notesRouter } from './routes/notes';
+import { mailRouter } from './routes/mail';
+import { userRouter } from './routes/user';
 import type { HonoContext } from '../ctx';
+import { aiRouter } from './routes/ai';
 import { router } from './trpc';
 
 export const appRouter = router({
-  ai: lazy(() => import('./routes/ai').then((m) => m.aiRouter)),
-  brain: lazy(() => import('./routes/brain').then((m) => m.brainRouter)),
-  connections: lazy(() => import('./routes/connections').then((m) => m.connectionsRouter)),
-  cookiePreferences: lazy(() => import('./routes/cookies').then((m) => m.cookiePreferencesRouter)),
-  drafts: lazy(() => import('./routes/drafts').then((m) => m.draftsRouter)),
-  labels: lazy(() => import('./routes/label').then((m) => m.labelsRouter)),
-  mail: lazy(() => import('./routes/mail').then((m) => m.mailRouter)),
-  notes: lazy(() => import('./routes/notes').then((m) => m.notesRouter)),
-  shortcut: lazy(() => import('./routes/shortcut').then((m) => m.shortcutRouter)),
-  settings: lazy(() => import('./routes/settings').then((m) => m.settingsRouter)),
-  user: lazy(() => import('./routes/user').then((m) => m.userRouter)),
+  ai: aiRouter,
+  brain: brainRouter,
+  connections: connectionsRouter,
+  cookiePreferences: cookiePreferencesRouter,
+  drafts: draftsRouter,
+  labels: labelsRouter,
+  mail: mailRouter,
+  notes: notesRouter,
+  shortcut: shortcutRouter,
+  settings: settingsRouter,
+  user: userRouter,
 });
 
 export type AppRouter = typeof appRouter;
