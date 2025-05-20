@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useEffect, useState, useMemo } from 'react';
 
 // ElevenLabs
@@ -8,17 +6,13 @@ import { useConversation } from '@11labs/react';
 // UI
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mic, MicOff, Volume2, VolumeX, XIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
 // Auth
 import { trpcClient } from '@/providers/query-provider';
 import { useThreads } from '@/hooks/use-threads';
+import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import type { Sender } from '@/types';
 import dedent from 'dedent';
-
-// Utils
-import { env } from '@/lib/env';
 
 interface EmailContent {
   metadata: {
@@ -132,7 +126,7 @@ const VoiceChat = ({ onClose }: VoiceChatProps) => {
       const emailContext = emailContent.join('\n\n');
 
       const conversationId = await conversation.startSession({
-        agentId: env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID,
+        agentId: import.meta.env.VITE_PUBLIC_ELEVENLABS_AGENT_ID!,
         dynamicVariables: {
           user_name: userName,
           email_context: emailContext,

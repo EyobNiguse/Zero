@@ -1,4 +1,3 @@
-'use client';
 import {
   PersistQueryClientProvider,
   type PersistedClient,
@@ -13,7 +12,6 @@ import { CACHE_BURST_KEY } from '@/lib/constants';
 import type { PropsWithChildren } from 'react';
 import { get, set, del } from 'idb-keyval';
 import superjson from 'superjson';
-import { env } from '@/lib/env';
 import { toast } from 'sonner';
 
 function createIDBPersister(idbValidKey: IDBValidKey = 'zero-query-cache') {
@@ -93,7 +91,7 @@ const getQueryClient = (session: Session | null) => {
 };
 
 const getUrl = () => {
-  return env.NEXT_PUBLIC_BACKEND_URL + '/api/trpc';
+  return import.meta.env.VITE_PUBLIC_BACKEND_URL + '/api/trpc';
 };
 
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();

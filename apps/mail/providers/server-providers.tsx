@@ -1,27 +1,20 @@
-import { NextIntlClientProvider } from 'next-intl';
+import type { IntlMessages, Locale } from '@/i18n/config';
+import type { Session } from '@/lib/auth-client';
 import { QueryProvider } from './query-provider';
-import { AutumnProvider } from 'autumn-js/next';
-import { authClient } from '@/lib/auth-client';
-import { getMessages } from 'next-intl/server';
+import { AutumnProvider } from 'autumn-js/react';
 import type { PropsWithChildren } from 'react';
-import { headers } from 'next/headers';
+import { IntlProvider } from 'use-intl';
 
-export async function ServerProviders({ children }: PropsWithChildren) {
-  const messages = await getMessages();
-  const session = await authClient.getSession({
-    fetchOptions: { headers: await headers() },
-  });
-
+export function ServerProviders({
+  children,
+  messages,
+  locale,
+}: PropsWithChildren<{ messages: IntlMessages; locale: Locale }>) {
   return (
-    <AutumnProvider
-      customerData={
-        session.data ? { name: session.data.user.name, email: session.data.user.email } : undefined
-      }
-      customerId={session.data ? session.data.user.id : undefined}
-    >
-      <NextIntlClientProvider messages={messages}>
+    <AutumnProvider backendUrl={import.meta.env.VITE_PUBLIC_BACKEND_URL}>
+      <IntlProvider messages={messages} locale={locale} timeZone={'UTC'}>
         <QueryProvider>{children}</QueryProvider>
-      </NextIntlClientProvider>
+      </IntlProvider>
     </AutumnProvider>
   );
 }

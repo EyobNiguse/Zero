@@ -1,8 +1,5 @@
-'use client';
-
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useRef, useCallback, useEffect } from 'react';
-import { useTRPC } from '@/providers/query-provider';
 import { PricingDialog } from '../ui/pricing-dialog';
 import { Markdown } from '@react-email/components';
 import { useAIFullScreen } from '../ui/ai-sidebar';
@@ -10,7 +7,6 @@ import { CurvedArrow, Stop } from '../icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
-import { useLabels } from '@/hooks/use-labels';
 import { MailLabels } from '../mail/mail-list';
 import { cn, getEmailLogo } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -19,8 +15,6 @@ import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { useState } from 'react';
 import VoiceChat from './voice';
-import Image from 'next/image';
-import { toast } from 'sonner';
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
@@ -205,8 +199,8 @@ export function AIChat({
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative mb-4 h-[44px] w-[44px]">
-                <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
-                <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
+                <img src="/black-icon.svg" alt="Zero Logo" className="dark:hidden" />
+                <img src="/white-icon.svg" alt="Zero Logo" className="hidden dark:block" />
               </div>
               <p className="mb-1 mt-2 hidden text-center text-sm font-medium text-black md:block dark:text-white">
                 Ask anything about your emails

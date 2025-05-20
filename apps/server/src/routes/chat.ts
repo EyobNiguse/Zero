@@ -3,6 +3,7 @@ import { getActiveConnection } from '../lib/server-utils';
 import { streamText, generateObject, tool } from 'ai';
 import { getContext } from 'hono/context-storage';
 import type { HonoContext } from '../ctx';
+import { env } from 'cloudflare:workers';
 import { openai } from '@ai-sdk/openai';
 import { tools } from './agent/tools';
 import { Autumn } from 'autumn-js';
@@ -33,7 +34,7 @@ export const chatHandler = async () => {
   if (!session) return c.json({ error: 'Unauthorized' }, 401);
 
   console.log('Checking chat permissions for user:', session.user.id);
-  const canSendMessages = await Autumn.check({
+  const canSendMessages = await new Autumn({ secretKey: env.AUTUMN_SECRET_KEY }).check({
     feature_id: 'chat-messages',
     customer_id: session.user.id,
   });

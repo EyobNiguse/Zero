@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Form,
   FormControl,
@@ -19,8 +17,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useSettings } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'use-intl';
 import { useForm } from 'react-hook-form';
 import { XIcon } from 'lucide-react';
 import { toast } from 'sonner';

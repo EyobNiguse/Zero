@@ -9,13 +9,12 @@ import {
 import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { authClient } from '@/lib/auth-client';
-import { usePathname } from 'next/navigation';
 import { Plus, UserPlus } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocation } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { env } from '@/lib/env';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 
@@ -31,11 +30,11 @@ export const AddConnectionDialog = ({
   const { connections, attach } = useBilling();
   const t = useTranslations();
 
-  const pathname = usePathname();
   const canCreateConnection = useMemo(() => {
     if (!connections?.remaining && !connections?.unlimited) return false;
     return (connections?.unlimited && !connections?.remaining) || (connections?.remaining ?? 0) > 0;
   }, [connections]);
+  const pathname = useLocation().pathname;
 
   const handleUpgrade = async () => {
     if (attach) {
@@ -54,20 +53,19 @@ export const AddConnectionDialog = ({
 
   return (
     <Dialog onOpenChange={onOpenChange}>
-
-        <DialogTrigger asChild>
-          {children || (
-            <Button
-              size={'dropdownItem'}
-              variant={'dropdownItem'}
-              className={cn('w-full justify-start gap-2', className)}
-            >
-              <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
-              <p className="text-[13px] opacity-60">{t('pages.settings.connections.addEmail')}</p>
-            </Button>
-          )}
-        </DialogTrigger>
-        <DialogContent showOverlay={true}>
+      <DialogTrigger asChild>
+        {children || (
+          <Button
+            size={'dropdownItem'}
+            variant={'dropdownItem'}
+            className={cn('w-full justify-start gap-2', className)}
+          >
+            <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
+            <p className="text-[13px] opacity-60">{t('pages.settings.connections.addEmail')}</p>
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent showOverlay={true}>
         <DialogHeader>
           <DialogTitle>{t('pages.settings.connections.connectEmail')}</DialogTitle>
           <DialogDescription>
@@ -97,33 +95,34 @@ export const AddConnectionDialog = ({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          {emailProviders.map((provider, index) => (
-            <motion.div
-              key={provider.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <Button
-                disabled={!canCreateConnection}
-                variant="outline"
-                className="h-24 w-full flex-col items-center justify-center gap-2"
-                onClick={async () =>
-                  await authClient.linkSocial({
-                    provider: provider.providerId,
-                    callbackURL: `${env.NEXT_PUBLIC_APP_URL}/${pathname}`,
-                  })
-                }
+          {emailProviders.map((provider, index) => {
+            const Icon = provider.icon;
+            return (
+              <motion.div
+                key={provider.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                <svg viewBox="0 0 24 24" className="h-12 w-12">
-                  <path fill="currentColor" d={provider.icon} />
-                </svg>
-                <span className="text-xs">{provider.name}</span>
-              </Button>
-            </motion.div>
-          ))}
+                <Button
+                  disabled={!canCreateConnection}
+                  variant="outline"
+                  className="h-24 w-full flex-col items-center justify-center gap-2"
+                  onClick={async () =>
+                    await authClient.linkSocial({
+                      provider: provider.providerId,
+                      callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
+                    })
+                  }
+                >
+                  <Icon className="!size-6" />
+                  <span className="text-xs">{provider.name}</span>
+                </Button>
+              </motion.div>
+            );
+          })}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

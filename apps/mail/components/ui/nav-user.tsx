@@ -1,5 +1,3 @@
-'use client';
-
 import {
   HelpCircle,
   LogIn,
@@ -25,7 +23,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CircleCheck, Danger, ThreeDots } from '../icons/icons';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useLocation, useSearchParams } from 'react-router';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
@@ -40,19 +38,17 @@ import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
 import { useStats } from '@/hooks/use-stats';
-import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useNavigate } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
 import { Progress } from './progress';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 export function NavUser() {
-  const { data: session, refetch } = useSession();
-  const router = useRouter();
+  const { data: session, refetch: refetchSession } = useSession();
   const { data, refetch: refetchConnections } = useConnections();
   const [isRendered, setIsRendered] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
@@ -60,16 +56,13 @@ export function NavUser() {
   const t = useTranslations();
   const { state } = useSidebar();
   const trpc = useTRPC();
-  const { refetch: refetchStats } = useStats();
-  const [{ refetch: refetchThreads }] = useThreads();
-  const { refetch: refetchLabels } = useLabels();
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
-  const { openBillingPortal, customer: billingCustomer, attach } = useBilling();
+  const { openBillingPortal, customer: billingCustomer, isPro } = useBilling();
   const [showPricingDialog, setShowPricingDialog] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = useLocation().pathname;
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   const getSettingsHref = useCallback(() => {
@@ -98,20 +91,13 @@ export function NavUser() {
 
   useEffect(() => setIsRendered(true), []);
 
-  const refetchBrainLabels = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: trpc.brain.getLabels.queryKey() });
-  }, [queryClient]);
-
   const handleAccountSwitch = (connectionId: string) => async () => {
     if (connectionId === session?.connectionId) return;
     await setDefaultConnection({ connectionId });
-    refetch();
-    refetchConnections();
-    refetchThreads();
-    refetchLabels();
-    refetchStats();
-    refetchBrainState();
-    refetchBrainLabels();
+    await refetchConnections();
+    refetchSession();
+    // TODO: fix this cache issue, for now this is a quick fix to hard refresh the page
+    window.location.href = pathname;
   };
 
   const handleLogout = async () => {
@@ -135,17 +121,6 @@ export function NavUser() {
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
-
-  const isPro = useMemo(() => {
-    return (
-      billingCustomer &&
-      Array.isArray(billingCustomer.products) &&
-      billingCustomer.products.some(
-        (product: any) =>
-          product.id.includes('pro-example') || product.name.includes('pro-example'),
-      )
-    );
-  }, [billingCustomer]);
 
   if (!isRendered) return null;
   if (!session) return null;
@@ -457,16 +432,13 @@ export function NavUser() {
                 </AddConnectionDialog>
               ) : (
                 <>
-                  <button 
+                  <button
                     onClick={() => setShowPricingDialog(true)}
                     className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]"
                   >
                     <Plus className="size-4" />
                   </button>
-                  <PricingDialog 
-                    open={showPricingDialog} 
-                    onOpenChange={setShowPricingDialog} 
-                  />
+                  <PricingDialog open={showPricingDialog} onOpenChange={setShowPricingDialog} />
                 </>
               )}
             </div>
@@ -485,14 +457,14 @@ export function NavUser() {
                   sideOffset={8}
                 >
                   <div className="space-y-1">
-                    {billingCustomer?.stripe_id ? (
+                    {/* {billingCustomer?.stripe_id ? (
                       <DropdownMenuItem onClick={openBillingPortal}>
                         <div className="flex items-center gap-2">
                           <BanknoteIcon size={16} className="opacity-60" />
                           <p className="text-[13px] opacity-60">Billing</p>
                         </div>
                       </DropdownMenuItem>
-                    ) : null}
+                    ) : null} */}
                     <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
                       <div className="flex w-full items-center gap-2">
                         {theme === 'dark' ? (
