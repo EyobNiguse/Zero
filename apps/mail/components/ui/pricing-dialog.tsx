@@ -1,16 +1,18 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CircleCheck, PurpleThickCheck } from '@/components/icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface PricingDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children?: React.ReactNode;
 }
 
-export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
+export function PricingDialog({ open, onOpenChange, children }: PricingDialogProps) {
   const { attach } = useBilling();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,7 +34,10 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
       <DialogContent
         className="flex items-center justify-center border-none dark:bg-transparent"
         showOverlay
