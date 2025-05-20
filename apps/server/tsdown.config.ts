@@ -1,11 +1,11 @@
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { defineConfig, logger } from 'tsdown';
 import { resolve } from 'path';
-import { parse } from 'json5';
+import JSON5 from 'json5';
 
 const setupDeploy = async () => {
   logger.info('Setting up deployment files');
-  const config = await parse(await readFile('./wrangler.jsonc', 'utf-8'));
+  const config = JSON5.parse(await readFile('./wrangler.jsonc', 'utf-8'));
 
   await mkdir('./.wrangler/deploy', { recursive: true });
 
