@@ -39,7 +39,7 @@ export function PricingDialog({ open, onOpenChange, children }: PricingDialogPro
         {children}
       </DialogTrigger>
       <DialogContent
-        className="flex items-center justify-center border-none dark:bg-transparent"
+        className="flex items-center justify-center border-none w-auto p-1 rounded-2xl"
         showOverlay
       >
         <DialogTitle className="text-center text-2xl"></DialogTitle>
