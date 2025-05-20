@@ -59,11 +59,13 @@ export const autumnApi = new Hono<AutumnContext>()
     const body = await c.req.json();
 
     return c.json(
-      await autumn.customers.create({
-        id: customerData!.customerId,
-        ...customerData!.customerData,
-        ...sanitizeCustomerBody(body),
-      }),
+      await autumn.customers
+        .create({
+          id: customerData!.customerId,
+          ...customerData!.customerData,
+          ...sanitizeCustomerBody(body),
+        })
+        .then((data) => data.data),
     );
   })
   .post('/attach', requireCustomer, async (c) => {
@@ -72,11 +74,13 @@ export const autumnApi = new Hono<AutumnContext>()
     const sanitizedBody = sanitizeCustomerBody(body);
 
     return c.json(
-      await autumn.attach({
-        ...sanitizedBody,
-        customer_id: customerData!.customerId,
-        customer_data: customerData!.customerData,
-      }),
+      await autumn
+        .attach({
+          ...sanitizedBody,
+          customer_id: customerData!.customerId,
+          customer_data: customerData!.customerData,
+        })
+        .then((data) => data.data),
     );
   })
   .post('/cancel', requireCustomer, async (c) => {
@@ -85,10 +89,12 @@ export const autumnApi = new Hono<AutumnContext>()
     const sanitizedBody = sanitizeCustomerBody(body);
 
     return c.json(
-      await autumn.cancel({
-        ...sanitizedBody,
-        customer_id: customerData!.customerId,
-      }),
+      await autumn
+        .cancel({
+          ...sanitizedBody,
+          customer_id: customerData!.customerId,
+        })
+        .then((data) => data.data),
     );
   })
   .post('/check', requireCustomer, async (c) => {
@@ -97,11 +103,13 @@ export const autumnApi = new Hono<AutumnContext>()
     const sanitizedBody = sanitizeCustomerBody(body);
 
     return c.json(
-      await autumn.check({
-        ...sanitizedBody,
-        customer_id: customerData!.customerId,
-        customer_data: customerData!.customerData,
-      }),
+      await autumn
+        .check({
+          ...sanitizedBody,
+          customer_id: customerData!.customerId,
+          customer_data: customerData!.customerData,
+        })
+        .then((data) => data.data),
     );
   })
   .post('/track', requireCustomer, async (c) => {
@@ -110,18 +118,24 @@ export const autumnApi = new Hono<AutumnContext>()
     const sanitizedBody = sanitizeCustomerBody(body);
 
     return c.json(
-      await autumn.track({
-        ...sanitizedBody,
-        customer_id: customerData!.customerId,
-        customer_data: customerData!.customerData,
-      }),
+      await autumn
+        .track({
+          ...sanitizedBody,
+          customer_id: customerData!.customerId,
+          customer_data: customerData!.customerData,
+        })
+        .then((data) => data.data),
     );
   })
   .post('/billing_portal', requireCustomer, async (c) => {
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
 
-    return c.json(await autumn.customers.billingPortal(customerData!.customerId, body));
+    return c.json(
+      await autumn.customers
+        .billingPortal(customerData!.customerId, body)
+        .then((data) => data.data),
+    );
   })
   .get('/components/pricing_table', async (c) => {
     const { autumn, customerData } = c.var;
@@ -139,7 +153,9 @@ export const autumnApi = new Hono<AutumnContext>()
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
 
-    return c.json(await autumn.entities.create(customerData!.customerId, body));
+    return c.json(
+      await autumn.entities.create(customerData!.customerId, body).then((data) => data.data),
+    );
   })
   .get('/entities/:entityId', requireCustomer, async (c) => {
     const { autumn, customerData } = c.var;
@@ -157,9 +173,11 @@ export const autumnApi = new Hono<AutumnContext>()
     }
 
     return c.json(
-      await autumn.entities.get(customerData!.customerId, entityId, {
-        expand,
-      }),
+      await autumn.entities
+        .get(customerData!.customerId, entityId, {
+          expand,
+        })
+        .then((data) => data.data),
     );
   })
   .delete('/entities/:entityId', requireCustomer, async (c) => {
@@ -176,5 +194,7 @@ export const autumnApi = new Hono<AutumnContext>()
       );
     }
 
-    return c.json(await autumn.entities.delete(customerData!.customerId, entityId));
+    return c.json(
+      await autumn.entities.delete(customerData!.customerId, entityId).then((data) => data.data),
+    );
   });
