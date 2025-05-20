@@ -449,6 +449,12 @@ importers:
       '@hono/trpc-server':
         specifier: ^0.3.4
         version: 0.3.4(@trpc/server@11.1.2(typescript@5.8.3))(hono@4.7.9)
+      '@microsoft/microsoft-graph-client':
+        specifier: ^3.0.7
+        version: 3.0.7
+      '@microsoft/microsoft-graph-types':
+        specifier: ^2.40.0
+        version: 2.40.0
       '@react-email/components':
         specifier: ^0.0.38
         version: 0.0.38(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -506,6 +512,9 @@ importers:
       hono:
         specifier: ^4.7.8
         version: 4.7.9
+      hono-party:
+        specifier: ^0.0.12
+        version: 0.0.12(@cloudflare/workers-types@4.20250514.0)(hono@4.7.9)(partyserver@0.0.71(@cloudflare/workers-types@4.20250514.0))
       jsonrepair:
         specifier: ^3.12.0
         version: 3.12.0
@@ -1598,6 +1607,27 @@ packages:
 
   '@levischuck/tiny-cbor@0.2.11':
     resolution: {integrity: sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==}
+
+  '@microsoft/microsoft-graph-client@3.0.7':
+    resolution: {integrity: sha512-/AazAV/F+HK4LIywF9C+NYHcJo038zEnWkteilcxC1FM/uK/4NVGDKGrxx7nNq1ybspAroRKT4I1FHfxQzxkUw==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      '@azure/identity': '*'
+      '@azure/msal-browser': '*'
+      buffer: '*'
+      stream-browserify: '*'
+    peerDependenciesMeta:
+      '@azure/identity':
+        optional: true
+      '@azure/msal-browser':
+        optional: true
+      buffer:
+        optional: true
+      stream-browserify:
+        optional: true
+
+  '@microsoft/microsoft-graph-types@2.40.0':
+    resolution: {integrity: sha512-1fcPVrB/NkbNcGNfCy+Cgnvwxt6/sbIEEFgZHFBJ670zYLegENYJF8qMo7x3LqBjWX2/Eneq5BVVRCLTmlJN+g==}
 
   '@mjackson/node-fetch-server@0.2.0':
     resolution: {integrity: sha512-EMlH1e30yzmTpGLQjlFmaDAjyOeZhng1/XCd7DExR8PNAnG/G1tyruZxEoUe11ClnwGhGrtsdnyyUx1frSzjng==}
@@ -4977,6 +5007,13 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
+  hono-party@0.0.12:
+    resolution: {integrity: sha512-mvjPDel2GcI93dJ6sreCn3Jx+ta3aw4JFGWwwNYwK7wYpjJG8pqiwVhEnbcneXl+TPheyq0uykQpgNVkruF1Yg==}
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.20240729.0
+      hono: ^4.6.17
+      partyserver: ^0.0.71
+
   hono@4.7.9:
     resolution: {integrity: sha512-/EsCoR5h7N4yu01TDu9GMCCJa6ZLk5ZJIWFFGNawAXmd1Tp53+Wir4xm0D2X19bbykWUlzQG0+BvPAji6p9E8Q==}
     engines: {node: '>=16.9.0'}
@@ -8226,6 +8263,13 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.0
 
   '@levischuck/tiny-cbor@0.2.11': {}
+
+  '@microsoft/microsoft-graph-client@3.0.7':
+    dependencies:
+      '@babel/runtime': 7.27.1
+      tslib: 2.8.1
+
+  '@microsoft/microsoft-graph-types@2.40.0': {}
 
   '@mjackson/node-fetch-server@0.2.0': {}
 
@@ -11917,6 +11961,12 @@ snapshots:
   hoist-non-react-statics@3.3.2:
     dependencies:
       react-is: 16.13.1
+
+  hono-party@0.0.12(@cloudflare/workers-types@4.20250514.0)(hono@4.7.9)(partyserver@0.0.71(@cloudflare/workers-types@4.20250514.0)):
+    dependencies:
+      '@cloudflare/workers-types': 4.20250514.0
+      hono: 4.7.9
+      partyserver: 0.0.71(@cloudflare/workers-types@4.20250514.0)
 
   hono@4.7.9: {}
 

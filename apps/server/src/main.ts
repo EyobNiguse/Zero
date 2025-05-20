@@ -1,9 +1,9 @@
-import { contextStorage, getContext } from 'hono/context-storage';
 import { env, WorkerEntrypoint } from 'cloudflare:workers';
+import { contextStorage } from 'hono/context-storage';
 import { routePartykitRequest } from 'partyserver';
 import { trpcServer } from '@hono/trpc-server';
-import { autumnHandler } from 'autumn-js/hono';
 import { DurableMailbox } from './lib/party';
+import { autumnApi } from './routes/autumn';
 import { chatHandler } from './routes/chat';
 import type { HonoContext } from './ctx';
 import { createAuth } from './lib/auth';
@@ -23,22 +23,7 @@ const api = new Hono<HonoContext>()
     c.set('session', session);
     await next();
   })
-  .use(
-    '/autumn/*',
-    autumnHandler({
-      identify: async () => {
-        const { session } = getContext<HonoContext>().var;
-        if (!session) return null;
-        return {
-          customerId: session.user.id,
-          customerData: {
-            name: session.user.name,
-            email: session.user.email,
-          },
-        };
-      },
-    }),
-  )
+  .route('/autumn', autumnApi)
   .post('/chat', chatHandler)
   .on(['GET', 'POST'], '/auth/*', (c) => c.var.auth.handler(c.req.raw))
   .use(
