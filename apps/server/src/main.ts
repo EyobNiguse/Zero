@@ -8,6 +8,7 @@ import { chatHandler } from './routes/chat';
 import type { HonoContext } from './ctx';
 import { createAuth } from './lib/auth';
 import { createDb } from '@zero/db';
+import { Autumn } from 'autumn-js';
 import { appRouter } from './trpc';
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
@@ -21,6 +22,8 @@ const api = new Hono<HonoContext>()
     c.set('auth', auth);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     c.set('session', session);
+    const autumn = new Autumn({ secretKey: env.AUTUMN_SECRET_KEY });
+    c.set('autumn', autumn);
     await next();
   })
   .route('/autumn', autumnApi)
@@ -67,9 +70,7 @@ const app = new Hono<HonoContext>()
   )
   .route('/api', api)
   .get('/health', (c) => c.json({ message: 'Zero Server is Up!' }))
-  .get('/', (c) => {
-    return c.redirect(`${env.VITE_PUBLIC_APP_URL}`);
-  });
+  .get('/', (c) => c.redirect(`${env.VITE_PUBLIC_APP_URL}`));
 
 export default class extends WorkerEntrypoint<typeof env> {
   async fetch(request: Request): Promise<Response> {

@@ -146,7 +146,7 @@ export default function ConnectionsPage() {
                             onClick={async () => {
                               await authClient.linkSocial({
                                 provider: connection.providerId,
-                                callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/settings/connections`,
+                                callbackURL: `${window.location.origin}/settings/connections`,
                               });
                             }}
                           >

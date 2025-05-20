@@ -10,7 +10,7 @@ catalog:
   "@trpc/server": "^11.1.2"
   "@trpc/client": "^11.1.2"
   "@trpc/tanstack-react-query": "^11.1.2"
-  wrangler: "^4.15.2"
+  wrangler: "^4.16.0"
   typescript: "^5.8.3"
 patchedDependencies:
   novel: patches/novel.patch

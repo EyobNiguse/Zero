@@ -70,7 +70,7 @@ You can set up Zero in two ways:
    pnpm install
 
    # Start database locally
-   pnpm docker:up
+   pnpm docker:db:up
    ```
 
 2. **Set Up Environment**
@@ -81,7 +81,7 @@ You can set up Zero in two ways:
      ```
    - Configure your environment variables (see below)
    - Setup cloudflare with `pnpm run cf-install`, you will need to run this everytime there is a `.env` change
-   - Start the database with the provided docker compose setup: `pnpm docker:up`
+   - Start the database with the provided docker compose setup: `pnpm docker:db:up`
    - Initialize the database: `pnpm db:push`
 
 3. **Start the App**
@@ -179,7 +179,7 @@ Zero uses PostgreSQL for storing data. Here's how to set it up:
    Run this command to start a local PostgreSQL instance:
 
    ```bash
-   pnpm docker:up
+   pnpm docker:db:up
    ```
 
    This creates a database with:

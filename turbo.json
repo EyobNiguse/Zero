@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build", "sentry:sourcemaps"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["build/**", "!.react-router/**"]
+      "outputs": ["build/**", "!.react-router/**", "dist/**"]
     },
     "dev": {
       "dependsOn": ["db:studio"],
