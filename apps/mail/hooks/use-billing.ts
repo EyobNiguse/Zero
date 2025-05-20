@@ -17,37 +17,6 @@ type Features = {
   brainActivity: FeatureState;
 };
 
-type Product = {
-  id: string;
-  name: string;
-  [key: string]: any;
-};
-
-type Customer = {
-  id: string;
-  stripe_id?: string;
-  products?: Product[];
-  features?: Feature[];
-  [key: string]: any;
-};
-
-type TrackParams = {
-  featureId: string;
-  value: number;
-};
-
-type BillingHook = {
-  customer: Customer | null;
-  refetch: () => Promise<void>;
-  attach: (params: { productId: string; successUrl: string; authUrl?: string }) => Promise<void>;
-  track: (params: TrackParams) => Promise<void>;
-  openBillingPortal: () => Promise<void>;
-  isPro: boolean;
-  chatMessages: FeatureState;
-  connections: FeatureState;
-  brainActivity: FeatureState;
-};
-
 const DEFAULT_FEATURES: Features = {
   chatMessages: {
     total: 0,
@@ -86,13 +55,14 @@ const FEATURE_IDS = {
 
 const PRO_PLANS = ['pro-example', 'pro_annual', 'team', 'enterprise'] as const;
 
-export const useBilling = (): BillingHook => {
+export const useBilling = () => {
   const { customer, refetch } = useCustomer();
+  console.log('customer', customer);
   const { attach, track, openBillingPortal } = useAutumn();
 
   const isPro = useMemo(() => {
     if (!customer?.products || !Array.isArray(customer.products)) return false;
-    return customer.products.some((product: Product) =>
+    return customer.products.some((product) =>
       PRO_PLANS.some((plan) => product.id?.includes(plan) || product.name?.includes(plan)),
     );
   }, [customer]);
