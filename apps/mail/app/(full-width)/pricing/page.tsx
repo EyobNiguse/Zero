@@ -100,8 +100,10 @@ export default function PricingPage() {
             </a>
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Company</NavigationMenuTrigger>
+                <NavigationMenuItem className="hover:bg-popover/20 rounded">
+                  <NavigationMenuTrigger className="text-white bg-transparent hover:bg-popover/20">
+                    Company
+                  </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-1 lg:w-[600px]">
                       {aboutLinks.map((link) => (
@@ -112,8 +114,8 @@ export default function PricingPage() {
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
+                <NavigationMenuItem className="hover:bg-popover/20 rounded">
+                  <NavigationMenuTrigger className="text-white bg-transparent hover:bg-popover/20 focus:bg-popover/20">Resources</NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                       {resources.map((resource) => (
@@ -131,7 +133,7 @@ export default function PricingPage() {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <a href="/pricing">
-                    <Button variant="ghost" className="h-9">
+                    <Button variant="ghost" className="h-9 hover:bg-accent/10 hover:text-white text-white">
                       Pricing
                     </Button>
                   </a>
@@ -142,7 +144,7 @@ export default function PricingPage() {
           <div className="flex gap-2">
             <Button
               variant="ghost"
-              className="h-8"
+              className="h-8 text-white hover:bg-accent/10 hover:text-white"
               onClick={() => {
                 if (session) {
                   // User is logged in, redirect to inbox
@@ -165,7 +167,7 @@ export default function PricingPage() {
             </Button>
 
             <a target="_blank" href="https://cal.com/team/0">
-              <Button className="h-8 font-medium">Contact Us</Button>
+              <Button className="h-8 font-medium bg-white text-black">Contact Us</Button>
             </a>
           </div>
         </nav>

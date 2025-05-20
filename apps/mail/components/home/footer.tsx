@@ -30,7 +30,7 @@ export default function Footer() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <div className="flex flex-col items-center justify-center bg-[#1A1A1A] rounded-xl m-4" >
+    <div className="flex-col items-center justify-center bg-[#1A1A1A] rounded-xl m-4 hidden md:flex" >
       <div className="">
         {/* <div className="h-[527px] w-screen bg-gradient-to-b from-violet-600 via-orange-400 to-slate-950 blur-2xl" /> */}
        <div>
@@ -71,7 +71,7 @@ export default function Footer() {
                 className="flex w-fit flex-col items-center justify-center md:pt-4"
               >
                 <a href="/login">
-                  <Button className="h-8">Get Started</Button>
+                  <Button className="h-8 bg-white text-black">Get Started</Button>
                 </a>
               </motion.div>
             </div>

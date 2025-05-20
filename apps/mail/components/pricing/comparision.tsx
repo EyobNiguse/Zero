@@ -45,7 +45,7 @@ export default function Comparision() {
       <Plus className="absolute bottom-[-21px] left-[-5px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute right-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute bottom-[-21px] right-[-5px] mb-4 h-3 w-3 fill-white" />
-      <div className="inline-flex items-start justify-start self-stretch border">
+      <div className="inline-flex items-start justify-start self-stretch border border-white/5">
         <div className="inline-flex flex-1 flex-col items-start justify-start">
           <div className="flex h-52 flex-col items-start justify-start gap-2 self-stretch border-b border-white/5 p-8">
             <div className="flex flex-col items-start justify-start gap-2">
