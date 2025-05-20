@@ -3,8 +3,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "predev": "rm -rf .wrangler/deploy",
     "dev": "wrangler dev --show-interactive-dev-session=false --env staging",
-    "build": "wrangler deploy --dry-run",
+    "build": "tsdown",
     "deploy": "wrangler deploy",
     "postinstall": "(cp ../../.env .dev.vars)||true && pnpm run types",
     "types": "wrangler types --env staging"
@@ -23,7 +24,7 @@
     "@hono/trpc-server": "^0.3.4",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@microsoft/microsoft-graph-types": "^2.40.0",
-    "@react-email/components": "^0.0.38",
+    "@react-email/components": "^0.0.41",
     "@react-email/render": "^1.1.0",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
@@ -46,7 +47,6 @@
     "mimetext": "^3.0.27",
     "p-retry": "6.2.1",
     "partyserver": "^0.0.71",
-    "react": "19.0.0",
     "remeda": "2.21.3",
     "resend": "^4.5.1",
     "sanitize-html": "^2.16.0",
@@ -58,8 +58,9 @@
   "devDependencies": {
     "@types/he": "1.2.3",
     "@types/node": "^22.9.0",
-    "@types/react": "19.0.10",
     "@types/sanitize-html": "2.13.0",
+    "json5": "2.2.3",
+    "tsdown": "0.11.12",
     "typescript": "catalog:"
   }
 }
