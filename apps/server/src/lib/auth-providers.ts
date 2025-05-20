@@ -59,15 +59,22 @@ export const authProviders = (env: Record<string, string>): ProviderConfig[] => 
   //       { name: 'MICROSOFT_CLIENT_SECRET', source: 'Microsoft Azure App Password' },
   //     ],
   //     config: {
-  //       clientId: env.MICROSOFT_CLIENT_ID!,
-  //       clientSecret: env.MICROSOFT_CLIENT_SECRET!,
-  //       redirectUri: env.MICROSOFT_REDIRECT_URI!,
-  //       scope: ['https://graph.microsoft.com/User.Read', 'offline_access'],
+  //       clientId: env.MICROSOFT_CLIENT_ID,
+  //       clientSecret: env.MICROSOFT_CLIENT_SECRET,
+  //       redirectUri: env.MICROSOFT_REDIRECT_URI,
+  //       scope: [
+  //         'https://graph.microsoft.com/User.Read',
+  //         'https://graph.microsoft.com/Mail.ReadWrite',
+  //         'https://graph.microsoft.com/Mail.Send',
+  //         'offline_access',
+  //       ],
   //       authority: 'https://login.microsoftonline.com/common',
   //       responseType: 'code',
   //       prompt: 'consent',
   //       loginHint: 'email',
+  //       disableProfilePhoto: true,
   //     },
+  //     required: true,
   //   },
 ];
 
