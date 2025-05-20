@@ -1,5 +1,3 @@
-'use client';
-
 import {
   HelpCircle,
   LogIn,
@@ -25,7 +23,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CircleCheck, Danger, ThreeDots } from '../icons/icons';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useLocation, useSearchParams } from 'react-router';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
@@ -40,15 +38,14 @@ import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
 import { Gauge } from '@/components/ui/gauge';
 import { useStats } from '@/hooks/use-stats';
-import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useNavigate } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
 import { Progress } from './progress';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 export function NavUser() {
   const { data: session, refetch: refetchSession } = useSession();
@@ -64,8 +61,8 @@ export function NavUser() {
   );
   const { openBillingPortal, customer: billingCustomer, isPro } = useBilling();
   const [showPricingDialog, setShowPricingDialog] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = useLocation().pathname;
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   const getSettingsHref = useCallback(() => {
@@ -460,14 +457,14 @@ export function NavUser() {
                   sideOffset={8}
                 >
                   <div className="space-y-1">
-                    {billingCustomer?.stripe_id ? (
+                    {/* {billingCustomer?.stripe_id ? (
                       <DropdownMenuItem onClick={openBillingPortal}>
                         <div className="flex items-center gap-2">
                           <BanknoteIcon size={16} className="opacity-60" />
                           <p className="text-[13px] opacity-60">Billing</p>
                         </div>
                       </DropdownMenuItem>
-                    ) : null}
+                    ) : null} */}
                     <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
                       <div className="flex w-full items-center gap-2">
                         {theme === 'dark' ? (

@@ -9,9 +9,9 @@ import {
 import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { authClient } from '@/lib/auth-client';
-import { usePathname } from 'next/navigation';
 import { Plus, UserPlus } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocation } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { Button } from '../ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -34,7 +34,7 @@ export const AddConnectionDialog = ({
     if (!connections?.remaining && !connections?.unlimited) return false;
     return (connections?.unlimited && !connections?.remaining) || (connections?.remaining ?? 0) > 0;
   }, [connections]);
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
 
   const handleUpgrade = async () => {
     if (attach) {
@@ -53,20 +53,19 @@ export const AddConnectionDialog = ({
 
   return (
     <Dialog onOpenChange={onOpenChange}>
-
-        <DialogTrigger asChild>
-          {children || (
-            <Button
-              size={'dropdownItem'}
-              variant={'dropdownItem'}
-              className={cn('w-full justify-start gap-2', className)}
-            >
-              <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
-              <p className="text-[13px] opacity-60">{t('pages.settings.connections.addEmail')}</p>
-            </Button>
-          )}
-        </DialogTrigger>
-        <DialogContent showOverlay={true}>
+      <DialogTrigger asChild>
+        {children || (
+          <Button
+            size={'dropdownItem'}
+            variant={'dropdownItem'}
+            className={cn('w-full justify-start gap-2', className)}
+          >
+            <UserPlus size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
+            <p className="text-[13px] opacity-60">{t('pages.settings.connections.addEmail')}</p>
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent showOverlay={true}>
         <DialogHeader>
           <DialogTitle>{t('pages.settings.connections.connectEmail')}</DialogTitle>
           <DialogDescription>

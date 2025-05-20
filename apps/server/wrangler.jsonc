@@ -1,5 +1,5 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "zero-server",
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -43,8 +43,8 @@
         "NODE_ENV": "development",
         "FORCE_GMAIL_CONSENT": "true",
         "COOKIE_DOMAIN": "0.email",
-        "NEXT_PUBLIC_BACKEND_URL": "https://sapi.0.email",
-        "NEXT_PUBLIC_APP_URL": "https://staging.0.email",
+        "VITE_PUBLIC_BACKEND_URL": "https://sapi.0.email",
+        "VITE_PUBLIC_APP_URL": "https://app.0.email",
       },
       "kv_namespaces": [
         {
@@ -100,8 +100,8 @@
         "NODE_ENV": "production",
         "FORCE_GMAIL_CONSENT": "true",
         "COOKIE_DOMAIN": "0.email",
-        "NEXT_PUBLIC_BACKEND_URL": "https://api.0.email",
-        "NEXT_PUBLIC_APP_URL": "https://0.email",
+        "VITE_PUBLIC_BACKEND_URL": "https://api.0.email",
+        "VITE_PUBLIC_APP_URL": "https://0.email",
       },
       "kv_namespaces": [
         {
