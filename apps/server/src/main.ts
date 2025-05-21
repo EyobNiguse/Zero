@@ -85,21 +85,21 @@ export default class extends WorkerEntrypoint<typeof env> {
 
   public async notifyUser({
     connectionId,
-    threadId,
+    threadIds,
     type,
   }: {
     connectionId: string;
-    threadId: string;
-    type: 'start' | 'end';
+    threadIds: string[];
+    type: 'refresh' | 'list';
   }) {
-    console.log(`Notifying user ${connectionId} for thread ${threadId} with type ${type}`);
+    console.log(`Notifying user ${connectionId} for threads ${threadIds} with type ${type}`);
     const durableObject = env.DURABLE_MAILBOX.idFromName(`${connectionId}`);
     if (env.DURABLE_MAILBOX.get(durableObject)) {
       const stub = env.DURABLE_MAILBOX.get(durableObject);
       if (stub) {
-        console.log(`Broadcasting message for thread ${threadId} with type ${type}`);
-        await stub.broadcast(threadId + ':' + type);
-        console.log(`Successfully broadcasted message for thread ${threadId}`);
+        console.log(`Broadcasting message for thread ${threadIds} with type ${type}`);
+        await stub.broadcast(JSON.stringify({ threadIds, type }));
+        console.log(`Successfully broadcasted message for thread ${threadIds}`);
       } else {
         console.log(`No stub found for connection ${connectionId}`);
       }
