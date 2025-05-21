@@ -40,7 +40,7 @@ export function PricingDialog({ open, onOpenChange, children }: PricingDialogPro
   };
 
   return (
-    <Dialog onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         className="flex w-auto items-center justify-center rounded-2xl border-none p-1"
