@@ -119,13 +119,13 @@ export function CreateEmail({
 
     // Track different email sending scenarios
     if (data.cc && data.cc.length > 0 && data.bcc && data.bcc.length > 0) {
-      console.log(posthog.capture('Create Email Sent with CC and BCC'));
+      posthog.capture('Create Email Sent with CC and BCC');
     } else if (data.cc && data.cc.length > 0) {
-      console.log(posthog.capture('Create Email Sent with CC'));
+      posthog.capture('Create Email Sent with CC');
     } else if (data.bcc && data.bcc.length > 0) {
-      console.log(posthog.capture('Create Email Sent with BCC'));
+      posthog.capture('Create Email Sent with BCC');
     } else {
-      console.log(posthog.capture('Create Email Sent'));
+      posthog.capture('Create Email Sent');
     }
 
     toast.success(t('pages.createEmail.emailSentSuccessfully'));

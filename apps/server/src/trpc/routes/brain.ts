@@ -66,14 +66,20 @@ export const brainRouter = router({
       }),
     )
     .query(async ({ input }) => {
-      // TODO: Implement loading state
       const { threadId } = input;
-      return (await env.zero.getSummary({ type: 'thread', id: threadId })) as {
-        data: {
-          long: string;
-          short: string;
+      const response = await env.VECTORIZE.getByIds([threadId]);
+      if (response.length && response?.[0]?.metadata?.['content']) {
+        const content = response[0].metadata['content'] as string;
+        const shortResponse = await env.AI.run('@cf/facebook/bart-large-cnn', {
+          input_text: content,
+        });
+        return {
+          data: {
+            short: shortResponse.summary,
+          },
         };
-      };
+      }
+      return null;
     }),
   getState: activeConnectionProcedure.query(async ({ ctx }) => {
     const connection = ctx.activeConnection;

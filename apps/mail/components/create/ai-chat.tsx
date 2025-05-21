@@ -186,16 +186,14 @@ export function AIChat({
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
-              <PricingDialog>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <TextShimmer className="text-center text-xl font-medium">
-                    Upgrade to Zero Pro for unlimited AI chats
-                  </TextShimmer>
-                  <Button className="mt-2 h-8 w-52">
-                    Upgrade
-                  </Button>
-                </div>
-              </PricingDialog>
+            <PricingDialog>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <TextShimmer className="text-center text-xl font-medium">
+                  Upgrade to Zero Pro for unlimited AI chats
+                </TextShimmer>
+                <Button className="mt-2 h-8 w-52">Upgrade</Button>
+              </div>
+            </PricingDialog>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative mb-4 h-[44px] w-[44px]">
@@ -256,7 +254,7 @@ export function AIChat({
           )}
           <div ref={messagesEndRef} />
 
-          {status === 'submitted' && (
+          {(status === 'submitted' || status === 'streaming') && (
             <div className="flex flex-col gap-2 rounded-lg">
               <div className="flex items-center gap-2">
                 <TextShimmer className="text-muted-foreground text-sm">

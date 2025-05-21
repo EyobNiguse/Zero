@@ -285,7 +285,7 @@ const AutoLabelingSettings = () => {
                 onClick={handleAddLabel}
                 disabled={!newLabel.name || !newLabel.usecase}
               >
-                <Plus className="fill-white h-4 w-4" />
+                <Plus className="h-4 w-4 fill-white" />
               </Button>
             </div>
           </div>

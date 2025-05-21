@@ -6,6 +6,19 @@
   "main": "src/main.ts",
   "env": {
     "local": {
+      "ai": {
+        "binding": "AI",
+      },
+      "vectorize": [
+        {
+          "binding": "VECTORIZE",
+          "index_name": "threads-vector",
+        },
+        {
+          "binding": "VECTORIZE_MESSAGE",
+          "index_name": "messages-vector",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -42,6 +55,7 @@
         "COOKIE_DOMAIN": "localhost",
         "VITE_PUBLIC_BACKEND_URL": "http://localhost:8787",
         "VITE_PUBLIC_APP_URL": "http://localhost:3000",
+        "PERPLEXITY_API_KEY": "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",
       },
       "kv_namespaces": [
         {

@@ -151,6 +151,9 @@ export enum Tools {
   BulkDelete = 'bulkDelete',
   BulkArchive = 'bulkArchive',
   DeleteLabel = 'deleteLabel',
+  AskZeroMailbox = 'askZeroMailbox',
+  AskZeroThread = 'askZeroThread',
+  WebSearch = 'webSearch',
 }
 
 export type AppContext = Context<{ Bindings: Env }>;

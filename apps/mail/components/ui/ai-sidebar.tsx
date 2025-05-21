@@ -46,6 +46,7 @@ import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
+import posthog from 'posthog-js';
 import { toast } from 'sonner';
 
 interface ChatHeaderProps {
@@ -140,8 +141,7 @@ function ChatHeader({
         )}
 
         {!isPro && (
-        
-           <>
+          <>
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild className="md:h-fit md:px-2">
@@ -152,12 +152,12 @@ function ChatHeader({
                 <TooltipContent>
                   <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
                   <p className="mb-2">Upgrade for unlimited messages!</p>
-                  <Button 
+                  <Button
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsPricingOpen(true);
                       onUpgrade();
-                    }} 
+                    }}
                     className="h-8 w-full"
                   >
                     Upgrade
@@ -169,7 +169,6 @@ function ChatHeader({
               <div className="hidden" />
             </PricingDialog>
           </>
-         
         )}
 
         <PromptsDialog />
@@ -413,16 +412,36 @@ function AISidebar({ className }: AISidebarProps) {
     },
     onError(error) {
       console.error('Error in useChat', error);
+      posthog.capture('AI Chat Error', {
+        error: error.message,
+        threadId: threadId ?? undefined,
+        currentFolder: folder ?? undefined,
+        currentFilter: searchValue.value ?? undefined,
+        messages: chatState.messages,
+      });
       toast.error('Error, please try again later');
     },
     onResponse: (response) => {
+      posthog.capture('AI Chat Response', {
+        response,
+        threadId: threadId ?? undefined,
+        currentFolder: folder ?? undefined,
+        currentFilter: searchValue.value ?? undefined,
+        messages: chatState.messages,
+      });
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
     },
-    onFinish: () => {},
     async onToolCall({ toolCall }) {
       console.warn('toolCall', toolCall);
+      posthog.capture('AI Chat Tool Call', {
+        toolCall,
+        threadId: threadId ?? undefined,
+        currentFolder: folder ?? undefined,
+        currentFilter: searchValue.value ?? undefined,
+        messages: chatState.messages,
+      });
       switch (toolCall.toolName) {
         case Tools.CreateLabel:
         case Tools.DeleteLabel:

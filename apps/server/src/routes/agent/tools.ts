@@ -2,9 +2,19 @@ import { connectionToDriver, getActiveConnection } from '../../lib/server-utils'
 import { composeEmail } from '../../trpc/routes/ai/compose';
 import type { MailManager } from '../../lib/driver/types';
 import { colors } from '../../lib/prompts';
+import { env } from 'cloudflare:workers';
 import { Tools } from '../../types';
 import { tool } from 'ai';
 import { z } from 'zod';
+
+type ModelTypes = 'summarize' | 'general' | 'chat' | 'vectorize';
+
+const models: Record<ModelTypes, any> = {
+  summarize: '@cf/facebook/bart-large-cnn',
+  general: 'llama-3.3-70b-instruct-fp8-fast',
+  chat: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+  vectorize: '@cf/baai/bge-large-en-v1.5',
+};
 
 // export class Chat extends AIChatAgent<Env> {
 //   mailManager: MailManager | undefined;
@@ -70,6 +80,92 @@ import { z } from 'zod';
 //     return dataStreamResponse;
 //   }
 // }
+
+export const getEmbeddingVector = async (
+  text: string,
+  gatewayId: 'vectorize-save' | 'vectorize-load',
+) => {
+  try {
+    const embeddingResponse = await env.AI.run(
+      models.vectorize,
+      { text },
+      {
+        gateway: {
+          id: gatewayId,
+        },
+      },
+    );
+    const embeddingVector = embeddingResponse.data[0];
+    return embeddingVector ?? null;
+  } catch (error) {
+    console.log('[getEmbeddingVector] failed', error);
+    return null;
+  }
+};
+
+const askZeroMailbox = tool({
+  description: 'Ask Zero a question about the mailbox',
+  parameters: z.object({
+    question: z.string().describe('The question to ask Zero'),
+    topK: z.number().describe('The number of results to return').max(9).min(1).default(3),
+  }),
+  execute: async ({ question, topK = 3 }) => {
+    const embedding = await getEmbeddingVector(question, 'vectorize-load');
+    if (!embedding) {
+      return { error: 'Failed to get embedding' };
+    }
+    const activeConnection = await getActiveConnection();
+    const threadResults = await env.VECTORIZE.query(embedding, {
+      topK,
+      returnMetadata: 'all',
+      filter: {
+        connection: activeConnection.id,
+      },
+    });
+
+    if (!threadResults.matches.length) {
+      return {
+        response: [],
+        success: false,
+      };
+    }
+    return {
+      response: threadResults.matches.map((e) => e.metadata?.['content'] ?? 'no content'),
+      success: true,
+    };
+  },
+});
+
+const askZeroThread = tool({
+  description: 'Ask Zero a question about a specific thread',
+  parameters: z.object({
+    threadId: z.string().describe('The ID of the thread to ask Zero about'),
+    question: z.string().describe('The question to ask Zero'),
+  }),
+  execute: async ({ threadId, question }) => {
+    const response = await env.VECTORIZE.getByIds([threadId]);
+    if (!response.length) return { response: "I don't know, no threads found", success: false };
+    const embedding = await getEmbeddingVector(question, 'vectorize-load');
+    if (!embedding) {
+      return { error: 'Failed to get embedding' };
+    }
+    const activeConnection = await getActiveConnection();
+    const threadResults = await env.VECTORIZE.query(embedding, {
+      topK: 1,
+      returnMetadata: 'all',
+      filter: {
+        thread: threadId,
+        connection: activeConnection.id,
+      },
+    });
+    const topThread = threadResults.matches[0];
+    if (!topThread) return { response: "I don't know, no threads found", success: false };
+    return {
+      response: topThread.metadata?.['content'] ?? 'no content',
+      success: true,
+    };
+  },
+});
 
 const getMailManager: () => Promise<MailManager> = async () => {
   const activeConnection = await getActiveConnection();
@@ -409,6 +505,39 @@ const deleteLabel = tool({
   },
 });
 
+const webSearch = tool({
+  description: 'Search the web for information using Perplexity AI',
+  parameters: z.object({
+    query: z.string().describe('The query to search the web for'),
+  }),
+  execute: async ({ query }) => {
+    const options = {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        max_tokens: 1024,
+        model: 'sonar',
+        messages: [
+          { role: 'system', content: 'Be precise and concise.' },
+          { role: 'user', content: query },
+        ],
+      }),
+    };
+
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', options);
+      const data = (await response.json()) as any;
+      return { result: data };
+    } catch (error) {
+      console.error('Web search error:', error);
+      throw new Error('Failed to perform web search');
+    }
+  },
+});
+
 export const tools = {
   [Tools.GetThread]: getEmail,
   [Tools.ComposeEmail]: composeEmailTool,
@@ -422,6 +551,9 @@ export const tools = {
   [Tools.BulkDelete]: bulkDelete,
   [Tools.BulkArchive]: bulkArchive,
   [Tools.DeleteLabel]: deleteLabel,
+  [Tools.AskZeroMailbox]: askZeroMailbox,
+  [Tools.AskZeroThread]: askZeroThread,
+  [Tools.WebSearch]: webSearch,
 };
 
 // export const executions = {
