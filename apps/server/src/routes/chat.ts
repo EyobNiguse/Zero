@@ -5,7 +5,6 @@ import { getContext } from 'hono/context-storage';
 import type { HonoContext } from '../ctx';
 import { openai } from '@ai-sdk/openai';
 import { tools } from './agent/tools';
-import { Autumn } from 'autumn-js';
 import { z } from 'zod';
 
 const buildGmailSearchQuery = tool({
@@ -29,11 +28,11 @@ const buildGmailSearchQuery = tool({
 export const chatHandler = async () => {
   const c = getContext<HonoContext>();
 
-  const { session } = c.var;
+  const { session, autumn } = c.var;
   if (!session) return c.json({ error: 'Unauthorized' }, 401);
 
   console.log('Checking chat permissions for user:', session.user.id);
-  const canSendMessages = await Autumn.check({
+  const canSendMessages = await autumn.check({
     feature_id: 'chat-messages',
     customer_id: session.user.id,
   });

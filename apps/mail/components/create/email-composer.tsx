@@ -10,10 +10,11 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { useActiveConnection } from '@/hooks/use-connections';
 import useComposeEditor from '@/hooks/use-compose-editor';
 import { Loader, Check, X as XIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Command, Paperclip, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useTRPC } from '@/providers/query-provider';
@@ -114,6 +115,7 @@ export function EmailComposer({
   const toWrapperRef = useRef<HTMLDivElement>(null);
   const ccWrapperRef = useRef<HTMLDivElement>(null);
   const bccWrapperRef = useRef<HTMLDivElement>(null);
+  const { data: activeConnection } = useActiveConnection();
 
   // Add this function to handle clicks outside the input fields
   useEffect(() => {
@@ -165,9 +167,9 @@ export function EmailComposer({
     // Don't populate from threadId if we're in compose mode
     if (isComposeOpen === 'true') return;
 
-    if (!emailData?.latest || !mode || !session?.activeConnection?.email) return;
+    if (!emailData?.latest || !mode || !activeConnection?.email) return;
 
-    const userEmail = session.activeConnection.email.toLowerCase();
+    const userEmail = activeConnection.email.toLowerCase();
     const latestEmail = emailData.latest;
     const senderEmail = latestEmail.sender.email.toLowerCase();
 
@@ -233,7 +235,7 @@ export function EmailComposer({
       }
     }
     // For forward, we start with empty recipients
-  }, [mode, emailData?.latest, session?.activeConnection?.email]);
+  }, [mode, emailData?.latest, activeConnection?.email]);
 
   const { watch, setValue, getValues } = form;
   const toEmails = watch('to');

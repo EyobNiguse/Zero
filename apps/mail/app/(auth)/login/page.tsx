@@ -1,18 +1,10 @@
 import { authProviders, customProviders, isProviderEnabled } from '@zero/server/auth-providers';
-import { authProxy } from '@/lib/auth-proxy';
 import { LoginClient } from './login-client';
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
-import { env } from '@/lib/env';
+import { useLoaderData } from 'react-router';
+import { env } from 'cloudflare:workers';
 
-export default async function LoginPage() {
-  const headersList = new Headers(Object.fromEntries(await (await headers()).entries()));
-  const session = await authProxy.api.getSession({ headers: headersList });
-  if (session?.connectionId) {
-    redirect('/mail/inbox');
-  }
-  const envNodeEnv = env.NODE_ENV;
-  const isProd = envNodeEnv === 'production';
+export function loader() {
+  const isProd = !import.meta.env.DEV;
 
   const authProviderStatus = authProviders(env as unknown as Record<string, string>).map(
     (provider) => {
@@ -50,6 +42,15 @@ export default async function LoginPage() {
   });
 
   const allProviders = [...customProviderStatus, ...authProviderStatus];
+
+  return {
+    allProviders,
+    isProd,
+  };
+}
+
+export default function LoginPage() {
+  const { allProviders, isProd } = useLoaderData<typeof loader>();
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-white dark:bg-black">

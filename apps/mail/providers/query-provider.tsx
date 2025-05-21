@@ -1,4 +1,3 @@
-'use client';
 import {
   PersistQueryClientProvider,
   type PersistedClient,
@@ -11,9 +10,9 @@ import { createTRPCContext } from '@trpc/tanstack-react-query';
 import type { AppRouter } from '@zero/server/trpc';
 import { CACHE_BURST_KEY } from '@/lib/constants';
 import type { PropsWithChildren } from 'react';
+import { useState, useEffect } from 'react';
 import { get, set, del } from 'idb-keyval';
 import superjson from 'superjson';
-import { env } from '@/lib/env';
 import { toast } from 'sonner';
 
 function createIDBPersister(idbValidKey: IDBValidKey = 'zero-query-cache') {
@@ -30,7 +29,7 @@ function createIDBPersister(idbValidKey: IDBValidKey = 'zero-query-cache') {
   } satisfies Persister;
 }
 
-export const makeQueryClient = (session: Session | null) =>
+export const makeQueryClient = (session: Session | null, connectionId: string | null) =>
   new QueryClient({
     queryCache: new QueryCache({
       onError: (err, { meta }) => {
@@ -55,7 +54,7 @@ export const makeQueryClient = (session: Session | null) =>
         queryKeyHashFn: (queryKey) =>
           hashKey([
             session
-              ? { userId: session.user.id, connectionId: session.connectionId }
+              ? { userId: session.user.id, connectionId }
               : { userId: null, connectionId: null },
             ...queryKey,
           ]),
@@ -70,30 +69,33 @@ export const makeQueryClient = (session: Session | null) =>
 let browserQueryClient = {
   queryClient: undefined,
   session: null,
+  activeConnection: null,
 } as {
   queryClient: QueryClient | undefined;
   session: Session | null;
+  activeConnection: { id: string } | null;
 };
 
-const getQueryClient = (session: Session | null) => {
+const getQueryClient = (session: Session | null, connectionId: string | null) => {
   if (typeof window === 'undefined') {
-    return makeQueryClient(session);
+    return makeQueryClient(session, connectionId);
   } else {
     if (
       !browserQueryClient.queryClient ||
       !browserQueryClient.session ||
       browserQueryClient.session.user.id !== session?.user.id ||
-      browserQueryClient.session.connectionId !== session?.connectionId
+      browserQueryClient.activeConnection?.id !== connectionId
     ) {
-      browserQueryClient.queryClient = makeQueryClient(session);
+      browserQueryClient.queryClient = makeQueryClient(session, connectionId);
       browserQueryClient.session = session;
+      browserQueryClient.activeConnection = connectionId ? { id: connectionId } : null;
     }
     return browserQueryClient.queryClient;
   }
 };
 
 const getUrl = () => {
-  return env.NEXT_PUBLIC_BACKEND_URL + '/api/trpc';
+  return import.meta.env.VITE_PUBLIC_BACKEND_URL + '/api/trpc';
 };
 
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
@@ -123,7 +125,30 @@ export const trpcClient = createTRPCClient<AppRouter>({
 
 export function QueryProvider({ children }: PropsWithChildren) {
   const { data } = useSession();
-  const queryClient = getQueryClient(data ?? null);
+  const [activeConnection, setActiveConnection] = useState<{ id: string } | null>(null);
+
+  useEffect(() => {
+    if (!data) {
+      setActiveConnection(null);
+      return;
+    }
+
+    const fetchActiveConnection = async () => {
+      try {
+        const result = await trpcClient.connections.getDefault.query();
+        if (result?.id) {
+          setActiveConnection({ id: result.id });
+        }
+      } catch (error) {
+        console.error('Failed to fetch active connection:', error);
+        setActiveConnection(null);
+      }
+    };
+
+    fetchActiveConnection();
+  }, [data]);
+
+  const queryClient = getQueryClient(data ?? null, activeConnection?.id ?? null);
 
   return (
     <PersistQueryClientProvider

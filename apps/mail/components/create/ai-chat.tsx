@@ -1,8 +1,5 @@
-'use client';
-
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useRef, useCallback, useEffect } from 'react';
-import { useTRPC } from '@/providers/query-provider';
 import { PricingDialog } from '../ui/pricing-dialog';
 import { Markdown } from '@react-email/components';
 import { useAIFullScreen } from '../ui/ai-sidebar';
@@ -10,7 +7,6 @@ import { CurvedArrow, Stop } from '../icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
-import { useLabels } from '@/hooks/use-labels';
 import { MailLabels } from '../mail/mail-list';
 import { cn, getEmailLogo } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -19,8 +15,6 @@ import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
 import { useState } from 'react';
 import VoiceChat from './voice';
-import Image from 'next/image';
-import { toast } from 'sonner';
 
 const renderThread = (thread: { id: string; title: string; snippet: string }) => {
   const [, setThreadId] = useQueryState('threadId');
@@ -171,7 +165,6 @@ export function AIChat({
   className,
 }: AIChatProps): React.ReactElement {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
-  const [showPricing, setShowPricing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -193,20 +186,21 @@ export function AIChat({
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <TextShimmer className="text-center text-xl font-medium">
-                Upgrade to Zero Pro for unlimited AI chats
-              </TextShimmer>
-              <Button onClick={() => setShowPricing(true)} className="mt-2 h-8 w-52">
-                Upgrade
-              </Button>
-              <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
-            </div>
+              <PricingDialog>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <TextShimmer className="text-center text-xl font-medium">
+                    Upgrade to Zero Pro for unlimited AI chats
+                  </TextShimmer>
+                  <Button className="mt-2 h-8 w-52">
+                    Upgrade
+                  </Button>
+                </div>
+              </PricingDialog>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative mb-4 h-[44px] w-[44px]">
-                <Image src="/black-icon.svg" alt="Zero Logo" fill className="dark:hidden" />
-                <Image src="/white-icon.svg" alt="Zero Logo" fill className="hidden dark:block" />
+                <img src="/black-icon.svg" alt="Zero Logo" className="dark:hidden" />
+                <img src="/white-icon.svg" alt="Zero Logo" className="hidden dark:block" />
               </div>
               <p className="mb-1 mt-2 hidden text-center text-sm font-medium text-black md:block dark:text-white">
                 Ask anything about your emails

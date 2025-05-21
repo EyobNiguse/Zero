@@ -1,7 +1,6 @@
-'use client';
+import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { Dialog, DialogClose } from '@/components/ui/dialog';
 import { useEmailAliases } from '@/hooks/use-email-aliases';
-import { useConnections } from '@/hooks/use-connections';
 import { cleanEmailAddresses } from '@/lib/email-utils';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useTRPC } from '@/providers/query-provider';
@@ -11,8 +10,8 @@ import { EmailComposer } from './email-composer';
 import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { useDraft } from '@/hooks/use-drafts';
-import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useNavigate } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { useQueryState } from 'nuqs';
 import { X } from '../icons/icons';
 import posthog from 'posthog-js';
@@ -63,12 +62,13 @@ export function CreateEmail({
     error: draftError,
   } = useDraft(draftId ?? propDraftId ?? null);
   const t = useTranslations();
-  const router = useRouter();
+  const navigate = useNavigate();
   const { enableScope, disableScope } = useHotkeysContext();
   const [isDraftFailed, setIsDraftFailed] = useState(false);
   const trpc = useTRPC();
   const { mutateAsync: sendEmail } = useMutation(trpc.mail.send.mutationOptions());
   const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
+  const { data: activeConnection } = useActiveConnection();
 
   // If there was an error loading the draft, set the failed state
   useEffect(() => {
@@ -87,11 +87,10 @@ export function CreateEmail({
     const connectionsList = connections.connections as Connection[];
     if (!connectionsList || !Array.isArray(connectionsList)) return null;
 
-    return connectionsList.find((connection) => connection.id === session?.activeConnection?.id);
-  }, [session, connections]);
+    return connectionsList.find((connection) => connection.id === activeConnection?.id);
+  }, [session, connections, activeConnection]);
 
-  const userEmail =
-    activeAccount?.email || session?.activeConnection?.email || session?.user?.email || '';
+  const userEmail = activeAccount?.email || activeConnection?.email || session?.user?.email || '';
 
   const handleSendEmail = async (data: {
     to: string[];

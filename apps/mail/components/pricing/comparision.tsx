@@ -1,14 +1,13 @@
 import { Check, Plus, PurpleThickCheck, ThickCheck } from '../icons/icons';
 import { useSession, signIn } from '@/lib/auth-client';
 import { useBilling } from '@/hooks/use-billing';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 export default function Comparision() {
   const { attach } = useBilling();
   const { data: session } = useSession();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleUpgrade = async () => {
     if (!session) {
@@ -30,7 +29,6 @@ export default function Comparision() {
         attach({
           productId: 'pro-example',
           successUrl: `${window.location.origin}/mail/inbox?success=true`,
-          authUrl: `${window.location.origin}/login?redirect=/pricing`,
         }),
         {
           success: 'Redirecting to payment...',
@@ -45,7 +43,7 @@ export default function Comparision() {
       <Plus className="absolute bottom-[-21px] left-[-5px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute right-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute bottom-[-21px] right-[-5px] mb-4 h-3 w-3 fill-white" />
-      <div className="inline-flex items-start justify-start self-stretch border">
+      <div className="inline-flex items-start justify-start self-stretch border border-white/5">
         <div className="inline-flex flex-1 flex-col items-start justify-start">
           <div className="flex h-52 flex-col items-start justify-start gap-2 self-stretch border-b border-white/5 p-8">
             <div className="flex flex-col items-start justify-start gap-2">
@@ -135,7 +133,7 @@ export default function Comparision() {
               <div className="flex flex-col items-start justify-center gap-3 self-stretch">
                 <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-yellow-950 p-2">
                   <div className="relative h-6 w-6 overflow-hidden">
-                    <Image
+                    <img
                       src="/lock.svg"
                       alt="lock"
                       className="h-full w-full"
@@ -152,13 +150,13 @@ export default function Comparision() {
                 onClick={() => {
                   if (session) {
                     // User is logged in, redirect to inbox
-                    router.push('/mail/inbox');
+                    navigate('/mail/inbox');
                   } else {
                     // User is not logged in, show sign-in dialog
                     toast.promise(
                       signIn.social({
                         provider: 'google',
-                        callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/mail`,
+                        callbackURL: `${window.location.origin}/mail`,
                       }),
                       {
                         error: 'Login redirect failed',
@@ -263,7 +261,7 @@ export default function Comparision() {
               <div className="flex flex-col items-start justify-center gap-3 self-stretch">
                 <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-[#3F2776] p-2">
                   <div className="relative h-6 w-6 overflow-hidden">
-                    <Image
+                    <img
                       src="purple-zap.svg"
                       alt="purple-zap"
                       className="h-full w-full"

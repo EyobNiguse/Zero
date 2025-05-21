@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Dialog,
   DialogContent,
@@ -12,6 +10,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { AddConnectionDialog } from '@/components/connection/add';
+import { PricingDialog } from '@/components/ui/pricing-dialog';
 import { useSession, authClient } from '@/lib/auth-client';
 import { useConnections } from '@/hooks/use-connections';
 import { useTRPC } from '@/providers/query-provider';
@@ -19,12 +18,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation } from '@tanstack/react-query';
 import { Trash, Plus, Unplug } from 'lucide-react';
 import { useThreads } from '@/hooks/use-threads';
+import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { useState } from 'react';
-import Image from 'next/image';
 import { toast } from 'sonner';
 
 export default function ConnectionsPage() {
@@ -35,6 +34,7 @@ export default function ConnectionsPage() {
   const trpc = useTRPC();
   const { mutateAsync: deleteConnection } = useMutation(trpc.connections.delete.mutationOptions());
   const [{ refetch: refetchThreads }] = useThreads();
+  const { isPro } = useBilling();
 
   const disconnectAccount = async (connectionId: string) => {
     await deleteConnection(
@@ -90,7 +90,7 @@ export default function ConnectionsPage() {
                   >
                     <div className="flex min-w-0 items-center gap-4">
                       {connection.picture ? (
-                        <Image
+                        <img
                           src={connection.picture}
                           alt=""
                           className="h-12 w-12 shrink-0 rounded-lg object-cover"
@@ -149,7 +149,7 @@ export default function ConnectionsPage() {
                             onClick={async () => {
                               await authClient.linkSocial({
                                 provider: connection.providerId,
-                                callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/settings/connections`,
+                                callbackURL: `${window.location.origin}/settings/connections`,
                               });
                             }}
                           >
@@ -199,17 +199,31 @@ export default function ConnectionsPage() {
           ) : null}
 
           <div className="flex items-center justify-start">
-            <AddConnectionDialog>
-              <Button
-                variant="outline"
-                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
-              >
-                <Plus className="absolute left-2 h-4 w-4" />
-                <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  {t('pages.settings.connections.addEmail')}
-                </span>
-              </Button>
-            </AddConnectionDialog>
+            {isPro ? (
+              <AddConnectionDialog>
+                <Button
+                  variant="outline"
+                  className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
+                >
+                  <Plus className="absolute left-2 h-4 w-4" />
+                  <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {t('pages.settings.connections.addEmail')}
+                  </span>
+                </Button>
+              </AddConnectionDialog>
+            ) : (
+              <PricingDialog>
+                <Button
+                  variant="outline"
+                  className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
+                >
+                  <Plus className="absolute left-2 h-4 w-4" />
+                  <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {t('pages.settings.connections.addEmail')}
+                  </span>
+                </Button>
+              </PricingDialog>
+            )}
           </div>
         </div>
       </SettingsCard>

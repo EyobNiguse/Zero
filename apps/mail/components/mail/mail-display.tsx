@@ -13,21 +13,12 @@ import {
   User,
   ChevronDown,
 } from '../icons/icons';
-import {
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-  Dialog,
-  DialogFooter,
-  DialogHeader,
-  DialogClose,
-} from '../ui/dialog';
 import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Briefcase, Star, StickyNote, Users, Lock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useActiveConnection } from '@/hooks/use-connections';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { getListUnsubscribeAction } from '@/lib/email-utils';
 import AttachmentsAccordion from './attachments-accordion';
@@ -43,16 +34,15 @@ import { useSession } from '@/lib/auth-client';
 import { RenderLabels } from './render-labels';
 import ReplyCompose from './reply-composer';
 import { Separator } from '../ui/separator';
-import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { MailIframe } from './mail-iframe';
+import { useTranslations } from 'use-intl';
+import { useParams } from 'react-router';
 import { MailLabels } from './mail-list';
 import { FileText } from 'lucide-react';
 import { format, set } from 'date-fns';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import { Badge } from '../ui/badge';
-import Image from 'next/image';
 
 // Add formatFileSize utility function
 const formatFileSize = (size: number) => {
@@ -295,6 +285,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
     emailData.tags ? emailData.tags.map((l) => l.id) : [],
   );
   const { data: brainState } = useBrainState();
+  const { data: activeConnection } = useActiveConnection();
 
   useEffect(() => {
     if (!demo) {
@@ -408,7 +399,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
   );
 
   const people = useMemo(() => {
-    if (!session?.activeConnection) return [];
+    if (!activeConnection) return [];
     const allPeople = [
       ...(folder === 'sent' ? [] : [emailData.sender]),
       ...(emailData.to || []),
@@ -418,11 +409,11 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
     return allPeople.filter(
       (p): p is Sender =>
         Boolean(p?.email) &&
-        p.email !== session.activeConnection!.email &&
+        p.email !== activeConnection!.email &&
         p.name !== 'No Sender Name' &&
         p === allPeople.find((other) => other?.email === p?.email),
     );
-  }, [emailData]);
+  }, [emailData, activeConnection]);
 
   return (
     <div
@@ -817,7 +808,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <kbd
                     className={cn(
                       'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
-                      '-me-1 ms-auto hidden md:inline-flex max-h-full items-center',
+                      '-me-1 ms-auto hidden max-h-full items-center md:inline-flex',
                     )}
                   >
                     r
@@ -840,7 +831,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <kbd
                     className={cn(
                       'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
-                      '-me-1 ms-auto md:inline-flex max-h-full items-center hidden',
+                      '-me-1 ms-auto hidden max-h-full items-center md:inline-flex',
                     )}
                   >
                     a
@@ -863,7 +854,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo }: Props) => {
                   <kbd
                     className={cn(
                       'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
-                      '-me-1 ms-auto hidden md:inline-flex max-h-full items-center',
+                      '-me-1 ms-auto hidden max-h-full items-center md:inline-flex',
                     )}
                   >
                     f

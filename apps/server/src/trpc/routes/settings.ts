@@ -1,8 +1,11 @@
-import { defaultUserSettings, userSettingsSchema } from '@zero/db/user_settings_default';
+import {
+  defaultUserSettings,
+  userSettingsSchema,
+  type UserSettings,
+} from '@zero/db/user_settings_default';
 import { createRateLimiterMiddleware, privateProcedure, router } from '../trpc';
 import { Ratelimit } from '@upstash/ratelimit';
 import { userSettings } from '@zero/db/schema';
-import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 
 export const settingsRouter = router({
@@ -25,11 +28,19 @@ export const settingsRouter = router({
       if (!result) return { settings: defaultUserSettings };
 
       const settingsRes = userSettingsSchema.safeParse(result.settings);
-      if (!settingsRes.success)
-        throw new TRPCError({
-          code: 'UNPROCESSABLE_CONTENT',
-          message: 'Invalid user settings',
-        });
+      if (!settingsRes.success) {
+        ctx.c.executionCtx.waitUntil(
+          db
+            .update(userSettings)
+            .set({
+              settings: defaultUserSettings,
+              updatedAt: new Date(),
+            })
+            .where(eq(userSettings.userId, session.user.id)),
+        );
+        console.log('returning default settings');
+        return { settings: defaultUserSettings };
+      }
 
       return { settings: settingsRes.data };
     }),
@@ -45,7 +56,7 @@ export const settingsRouter = router({
       .limit(1);
 
     if (existingSettings) {
-      const newSettings = { ...existingSettings, ...input };
+      const newSettings = { ...(existingSettings.settings as UserSettings), ...input };
       await db
         .update(userSettings)
         .set({

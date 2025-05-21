@@ -1,19 +1,24 @@
-'use client';
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { CircleCheck, PurpleThickCheck } from '@/components/icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import Image from 'next/image';
 import { toast } from 'sonner';
 
 interface PricingDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children?: React.ReactNode;
 }
 
-export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
+export function PricingDialog({ open, onOpenChange, children }: PricingDialogProps) {
   const { attach } = useBilling();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,7 +29,6 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
         attach({
           productId: 'pro-example',
           successUrl: `${window.location.origin}/mail/inbox?success=true`,
-          authUrl: `${window.location.origin}/login?redirect=/pricing`,
         }),
         {
           success: 'Redirecting to payment...',
@@ -36,16 +40,17 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        className="flex items-center justify-center border-none dark:bg-transparent"
+        className="flex w-auto items-center justify-center rounded-2xl border-none p-1"
         showOverlay
       >
         <DialogTitle className="text-center text-2xl"></DialogTitle>
 
         <div className="relative inline-flex h-[535px] w-96 flex-col items-center justify-center overflow-hidden rounded-2xl border border-[#2D2D2D] bg-zinc-900/50 p-5 outline outline-2 outline-offset-[3.5px] outline-[#2D2D2D]">
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden">
-            <Image
+            <img
               src="/pricing-gradient.png"
               alt="pricing-gradient"
               className="absolute -right-0 -top-52 h-auto w-full"
@@ -57,7 +62,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
           <div className="relative right-5 top-[-70px] h-56 w-[720px]">
             <div className="absolute left-[-157px] top-[-68.43px] h-36 w-[1034px] rounded-full bg-white/10 mix-blend-overlay blur-[100px]" />
 
-            <Image
+            <img
               className="absolute left-0 top-0 h-56 w-[719.25px] mix-blend-screen"
               src="/small-pixel.png"
               height={56}
@@ -69,7 +74,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
             <div className="flex flex-col items-start justify-start gap-4 self-stretch">
               <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-[#B183FF] p-2">
                 <div className="relative h-6 w-6">
-                  <Image height={24} width={24} src="/zap.svg" alt="hi" />
+                  <img height={24} width={24} src="/zap.svg" alt="hi" />
                 </div>
               </div>
 
