@@ -338,113 +338,6 @@ const Thread = memo(
       return latestMessage.sender.name.trim().replace(/^['"]|['"]$/g, '');
     }, [latestMessage?.sender?.name]);
 
-    if (!demo && (isLoading || !latestMessage || !getThreadData)) return null;
-
-    const demoContent =
-      demo && latestMessage ? (
-        <div className="p-1 px-3" onClick={onClick ? onClick(latestMessage) : undefined}>
-          <div
-            data-thread-id={latestMessage.threadId ?? message.id}
-            key={latestMessage.threadId ?? message.id}
-            className={cn(
-              'hover:bg-offsetLight hover:bg-primary/5 group relative flex cursor-pointer flex-col items-start overflow-clip rounded-lg border border-transparent px-4 py-3 text-left text-sm transition-all hover:opacity-100',
-
-              (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
-                'border-border bg-primary/5 opacity-100',
-              isKeyboardFocused && 'ring-primary/50 ring-2',
-            )}
-          >
-            <div className="flex w-full items-center justify-between gap-4">
-              <Avatar className="h-8 w-8">
-                {isGroupThread ? (
-                  <div className="bg-muted-foreground/50 dark:bg-muted/50 flex h-full w-full items-center justify-center rounded-full p-2">
-                    <Users className="h-4 w-4" />
-                  </div>
-                ) : (
-                  <>
-                    <AvatarImage
-                      className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full p-2"
-                      src={getEmailLogo(latestMessage.sender.email)}
-                    />
-                    <AvatarFallback className="bg-muted-foreground/50 dark:bg-muted/50 rounded-full">
-                      {cleanName[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </>
-                )}
-              </Avatar>
-              <div className="flex w-full justify-between">
-                <div className="w-full">
-                  <div className="flex w-full flex-row items-center justify-between">
-                    <div className="flex flex-row items-center gap-1">
-                      <p
-                        className={cn(
-                          latestMessage.unread && !isMailSelected ? 'font-bold' : 'font-medium',
-                          'text-md flex items-baseline gap-1 group-hover:opacity-100',
-                        )}
-                      >
-                        <span className={cn(threadId ? 'max-w-[3ch] truncate' : '')}>
-                          {highlightText(
-                            cleanNameDisplay(latestMessage.sender.name) || '',
-                            searchValue.highlight,
-                          )}
-                        </span>{' '}
-                        {latestMessage.unread && !isMailSelected ? (
-                          <span className="size-2 rounded bg-[#006FFE]" />
-                        ) : null}
-                      </p>
-                      {/* <MailLabels labels={latestMessage.tags} /> */}
-                      {Math.random() > 0.5 &&
-                        (() => {
-                          const count = Math.floor(Math.random() * 10) + 1;
-                          return (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="rounded-md border border-dotted px-[5px] py-[1px] text-xs opacity-70">
-                                  {count}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent className="px-1 py-0 text-xs">
-                                {t('common.mail.replies', { count })}
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        })()}
-                    </div>
-                    {latestMessage.receivedOn ? (
-                      <p
-                        className={cn(
-                          'text-nowrap text-xs font-normal opacity-70 transition-opacity group-hover:opacity-100',
-                          isMailSelected && 'opacity-100',
-                        )}
-                      >
-                        {formatDate(latestMessage.receivedOn.split('.')[0] || '')}
-                      </p>
-                    ) : null}
-                  </div>
-                  <p className={cn('mt-1 line-clamp-1 text-xs opacity-70 transition-opacity')}>
-                    {highlightText(latestMessage.subject, searchValue.highlight)}
-                  </p>
-                  {emailContent && (
-                    <div className="text-muted-foreground mt-2 line-clamp-2 text-xs">
-                      {highlightText(emailContent, searchValue.highlight)}
-                    </div>
-                  )}
-                  {mainSearchTerm && (
-                    <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-                      <span className="bg-primary/10 text-primary rounded px-1.5 py-0.5">
-                        {mainSearchTerm}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null;
-
-    if (demo) return demoContent;
-
     const content =
       latestMessage && getThreadData ? (
         <div
@@ -715,36 +608,6 @@ const Thread = memo(
 
 Thread.displayName = 'Thread';
 
-export function MailListDemo({
-  items: filteredItems = items,
-  onSelectMail,
-}: {
-  items?: typeof items;
-  onSelectMail?: (message: any) => void;
-}) {
-  return (
-    <div className={cn('relative min-h-[calc(100dvh-4rem)] w-full')}>
-      <div className="absolute left-0 top-0 w-full p-[8px]">
-        <VList count={filteredItems.length}>
-          {(index) => {
-            const item = filteredItems[index];
-            return (
-              <Thread
-                demo
-                key={item.id}
-                message={item}
-                selectMode={'single'}
-                onClick={(message) => () => onSelectMail && onSelectMail(message)}
-                demoMessage={item as any}
-              />
-            );
-          }}
-        </VList>
-      </div>
-    </div>
-  );
-}
-
 export const MailList = memo(({ isCompact }: MailListProps) => {
   const { folder } = useParams<{ folder: string }>();
   const { data: session } = useSession();
@@ -965,11 +828,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           disableScope('mail-list');
         }}
       >
-<<<<<<< HEAD
-        <ScrollArea hideScrollbar className="no-scrollbar h-full overflow-auto">
-=======
         <div>
->>>>>>> fc837bd5 (virtual list broken)
           {isLoading ? (
             <div className="flex h-32 items-center justify-center">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
@@ -996,27 +855,55 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </div>
             </div>
           ) : (
-            <div className="flex h-full flex-col md:gap-2" id="mail-list-scroll">
-              <VList count={filteredItems.length} className="h-full">
+            <div className="flex h-[calc(100dvh-10rem)] flex-col md:gap-2" id="mail-list-scroll">
+              <VList
+                count={filteredItems.length}
+                style={{
+                  flex: 1,
+                  overflowX: 'hidden',
+                }}
+              >
                 {(index) => {
                   const item = filteredItems[index];
                   return (
-                    <Thread
-                      onClick={handleMailClick}
-                      selectMode={selectMode}
-                      isCompact={isCompact}
-                      sessionData={sessionData}
-                      message={item}
-                      key={item.id}
-                      isKeyboardFocused={focusedIndex === index && keyboardActive}
-                      isInQuickActionMode={isQuickActionMode && focusedIndex === index}
-                      selectedQuickActionIndex={quickActionIndex}
-                      resetNavigation={resetNavigation}
-                      index={index}
-                    />
+                    <>
+                      <Thread
+                        onClick={handleMailClick}
+                        selectMode={selectMode}
+                        isCompact={isCompact}
+                        sessionData={sessionData}
+                        message={item}
+                        key={item.id}
+                        isKeyboardFocused={focusedIndex === index && keyboardActive}
+                        isInQuickActionMode={isQuickActionMode && focusedIndex === index}
+                        selectedQuickActionIndex={quickActionIndex}
+                        resetNavigation={resetNavigation}
+                        index={index}
+                      />
+                      {index === filteredItems.length - 1 && (
+                        <Button
+                          variant={'ghost'}
+                          className="w-full rounded-none"
+                          onMouseDown={handleScroll}
+                          disabled={isLoading || items.length <= 9 || !hasNextPage || isFetching}
+                        >
+                          {isLoading || isFetching ? (
+                            <div className="flex items-center gap-2">
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                              {t('common.actions.loading')}
+                            </div>
+                          ) : (
+                            <>
+                              {t('common.mail.loadMore')} <ChevronDown />
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </>
                   );
                 }}
               </VList>
+
               {/* {items
                 .filter((data) => data.id)
                 .map((data, index) => {
@@ -1028,23 +915,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
                   );
                 })} */}
-              <Button
-                variant={'ghost'}
-                className="w-full rounded-none"
-                onMouseDown={handleScroll}
-                disabled={isLoading || items.length <= 9 || !hasNextPage || isFetching}
-              >
-                {isLoading || isFetching ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                    {t('common.actions.loading')}
-                  </div>
-                ) : (
-                  <>
-                    {t('common.mail.loadMore')} <ChevronDown />
-                  </>
-                )}
-              </Button>
             </div>
           )}
         </div>
