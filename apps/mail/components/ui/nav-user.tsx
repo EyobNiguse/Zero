@@ -18,13 +18,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CircleCheck, Danger, ThreeDots } from '../icons/icons';
 import { useLocation, useSearchParams } from 'react-router';
-import { useConnections } from '@/hooks/use-connections';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
 import { useTRPC } from '@/providers/query-provider';
@@ -43,6 +43,7 @@ import { useTranslations } from 'use-intl';
 import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
 import { Progress } from './progress';
+import { useQueryState } from 'nuqs';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -55,6 +56,7 @@ export function NavUser() {
   const t = useTranslations();
   const { state } = useSidebar();
   const trpc = useTRPC();
+  const [, setThreadId] = useQueryState('threadId');
   const { mutateAsync: setDefaultConnection } = useMutation(
     trpc.connections.setDefault.mutationOptions(),
   );
@@ -62,6 +64,8 @@ export function NavUser() {
   const pathname = useLocation().pathname;
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { data: activeConnection, refetch: refetchActiveConnection } = useActiveConnection();
+  const [{ refetch: refetchThreads }] = useThreads();
 
   const getSettingsHref = useCallback(() => {
     const category = searchParams.get('category');
@@ -78,24 +82,24 @@ export function NavUser() {
   }, []);
 
   const handleCopyConnectionId = useCallback(async () => {
-    await navigator.clipboard.writeText(session?.connectionId || '');
+    await navigator.clipboard.writeText(activeConnection?.id || '');
     toast.success('Connection ID copied to clipboard');
-  }, [session]);
+  }, [activeConnection]);
 
   const activeAccount = useMemo(() => {
-    if (!session || !data) return null;
-    return data.connections?.find((connection) => connection.id === session.connectionId);
-  }, [session, data]);
+    if (!activeConnection || !data) return null;
+    return data.connections?.find((connection) => connection.id === activeConnection.id);
+  }, [activeConnection, data]);
 
   useEffect(() => setIsRendered(true), []);
 
   const handleAccountSwitch = (connectionId: string) => async () => {
-    if (connectionId === session?.connectionId) return;
+    if (connectionId === activeConnection?.id) return;
+    setThreadId(null);
     await setDefaultConnection({ connectionId });
+    await refetchActiveConnection();
     await refetchConnections();
     refetchSession();
-    // TODO: fix this cache issue, for now this is a quick fix to hard refresh the page
-    window.location.href = pathname;
   };
 
   const handleLogout = async () => {
@@ -203,7 +207,7 @@ export function NavUser() {
                     </p>
 
                     {data?.connections
-                      ?.filter((connection) => connection.id !== session.connectionId)
+                      ?.filter((connection) => connection.id !== activeConnection?.id)
                       .map((connection) => (
                         <DropdownMenuItem
                           key={connection.id}
@@ -300,7 +304,7 @@ export function NavUser() {
                   key={activeAccount.id}
                   onClick={handleAccountSwitch(activeAccount.id)}
                   className={`flex cursor-pointer items-center ${
-                    activeAccount.id === session.connectionId && data.connections.length > 1
+                    activeAccount.id === activeConnection?.id && data.connections.length > 1
                       ? 'outline-mainBlue rounded-[5px] outline outline-2'
                       : ''
                   }`}
@@ -321,7 +325,7 @@ export function NavUser() {
                           .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    {activeAccount.id === session.connectionId && data.connections.length > 1 && (
+                    {activeAccount.id === activeConnection?.id && data.connections.length > 1 && (
                       <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-[#141414]" />
                     )}
                   </div>
@@ -339,7 +343,7 @@ export function NavUser() {
                     <div
                       onClick={handleAccountSwitch(connection.id)}
                       className={`flex cursor-pointer items-center ${
-                        connection.id === session.connectionId && otherConnections.length > 1
+                        connection.id === activeConnection?.id && otherConnections.length > 1
                           ? 'outline-mainBlue rounded-[5px] outline outline-2'
                           : ''
                       }`}
@@ -360,7 +364,7 @@ export function NavUser() {
                               .slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
-                        {connection.id === session.connectionId && otherConnections.length > 1 && (
+                        {connection.id === activeConnection?.id && otherConnections.length > 1 && (
                           <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-black" />
                         )}
                       </div>
@@ -431,9 +435,7 @@ export function NavUser() {
               ) : (
                 <>
                   <PricingDialog>
-                    <Button
-                      className="flex h-7 w-7 px-0 cursor-pointer items-center justify-center rounded-[5px] border border-dashed hover:bg-offsetLight/80 bg-transparent text-black dark:bg-[#262626] dark:text-[#929292]"
-                    >
+                    <Button className="hover:bg-offsetLight/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]">
                       <Plus className="size-4" />
                     </Button>
                   </PricingDialog>
@@ -455,14 +457,14 @@ export function NavUser() {
                   sideOffset={8}
                 >
                   <div className="space-y-1">
-                    {/* {billingCustomer?.stripe_id ? (
-                      <DropdownMenuItem onClick={openBillingPortal}>
+                    {billingCustomer?.stripe_id ? (
+                      <DropdownMenuItem onClick={() => openBillingPortal()}>
                         <div className="flex items-center gap-2">
                           <BanknoteIcon size={16} className="opacity-60" />
                           <p className="text-[13px] opacity-60">Billing</p>
                         </div>
                       </DropdownMenuItem>
-                    ) : null} */}
+                    ) : null}
                     <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
                       <div className="flex w-full items-center gap-2">
                         {theme === 'dark' ? (
@@ -533,10 +535,11 @@ export function NavUser() {
                 <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
               ) : (
                 <PricingDialog>
-                  <button
-                    className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent">
+                  <button className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent">
                     <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
-                    <span className="text-muted-foreground text-[10px] uppercase">Get verified</span>
+                    <span className="text-muted-foreground text-[10px] uppercase">
+                      Get verified
+                    </span>
                   </button>
                 </PricingDialog>
               )}

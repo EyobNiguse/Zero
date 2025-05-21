@@ -10,6 +10,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { AddConnectionDialog } from '@/components/connection/add';
+import { PricingDialog } from '@/components/ui/pricing-dialog';
 import { useSession, authClient } from '@/lib/auth-client';
 import { useConnections } from '@/hooks/use-connections';
 import { useTRPC } from '@/providers/query-provider';
@@ -17,14 +18,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation } from '@tanstack/react-query';
 import { Trash, Plus, Unplug } from 'lucide-react';
 import { useThreads } from '@/hooks/use-threads';
+import { useBilling } from '@/hooks/use-billing';
 import { emailProviders } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'use-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useBilling } from '@/hooks/use-billing';
-import { PricingDialog } from '@/components/ui/pricing-dialog';
 
 export default function ConnectionsPage() {
   const { data, isLoading, refetch: refetchConnections } = useConnections();
@@ -199,18 +199,9 @@ export default function ConnectionsPage() {
           ) : null}
 
           <div className="flex items-center justify-start">
-            {isPro ? <AddConnectionDialog>
-              <Button
-                variant="outline"
-                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
-              >
-                <Plus className="absolute left-2 h-4 w-4" />
-                <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  {t('pages.settings.connections.addEmail')}
-                </span>
-              </Button>
-            </AddConnectionDialog> : <PricingDialog>
-              <Button
+            {isPro ? (
+              <AddConnectionDialog>
+                <Button
                   variant="outline"
                   className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
                 >
@@ -218,8 +209,21 @@ export default function ConnectionsPage() {
                   <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                     {t('pages.settings.connections.addEmail')}
                   </span>
-              </Button>
-            </PricingDialog> }
+                </Button>
+              </AddConnectionDialog>
+            ) : (
+              <PricingDialog>
+                <Button
+                  variant="outline"
+                  className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
+                >
+                  <Plus className="absolute left-2 h-4 w-4" />
+                  <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {t('pages.settings.connections.addEmail')}
+                  </span>
+                </Button>
+              </PricingDialog>
+            )}
           </div>
         </div>
       </SettingsCard>

@@ -39,6 +39,7 @@ import { useMail, type Config } from '@/components/mail/use-mail';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
+import { useActiveConnection } from '@/hooks/use-connections';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -753,6 +754,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const [searchValue, setSearchValue] = useSearchValue();
   const { enableScope, disableScope } = useHotkeysContext();
   const [{ refetch, isLoading, isFetching, hasNextPage }, items, , loadMore] = useThreads();
+  const { data: activeConnection } = useActiveConnection();
 
   const allCategories = Categories();
 
@@ -762,9 +764,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
   const sessionData = useMemo(
     () => ({
       userId: session?.user?.id ?? '',
-      connectionId: session?.connectionId ?? null,
+      connectionId: activeConnection?.id ?? null,
     }),
-    [session],
+    [activeConnection, session],
   );
 
   // Set initial category search value only if not in special folders

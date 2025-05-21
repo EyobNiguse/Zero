@@ -1,3 +1,4 @@
+import { useActiveConnection } from '@/hooks/use-connections';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTRPC } from '@/providers/query-provider';
 import { usePartySocket } from 'partysocket/react';
@@ -10,10 +11,10 @@ const DEBOUNCE_DELAY = 10_000; // 10 seconds is appropriate for real-time notifi
 
 export const NotificationProvider = ({ headers }: { headers: Record<string, string> }) => {
   const trpc = useTRPC();
-  const { data: session } = useSession();
   const { refetch: refetchLabels } = useLabels();
   const queryClient = useQueryClient();
   const [{ refetch: refetchThreads }] = useThreads();
+  const { data: activeConnection } = useActiveConnection();
 
   //   const handleRefetchLabels = useCallback(async () => {
   //     await refetchLabels();
@@ -28,7 +29,7 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
 
   usePartySocket({
     party: 'durable-mailbox',
-    room: session?.activeConnection?.id ? `${session.activeConnection.id}` : 'general',
+    room: activeConnection?.id ? `${activeConnection.id}` : 'general',
     prefix: 'zero',
     debug: true,
     maxRetries: 1,
