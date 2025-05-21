@@ -1,12 +1,4 @@
 import {
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-  SidebarMenuSub,
-} from './sidebar';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -22,39 +14,36 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { LabelSidebarContextMenu } from '../context/label-sidebar-context';
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from './sidebar';
+import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useActiveConnection, useConnections } from '@/hooks/use-connections';
+import { type MessageKey, type NavItem } from '@/config/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { clearBulkSelectionAtom } from '../mail/use-mail';
-import { Label as UILabel } from '@/components/ui/label';
-import { type MessageKey } from '@/config/navigation';
 import { useTRPC } from '@/providers/query-provider';
-import { CurvedArrow, Folder } from '../icons/icons';
-import { Command, SettingsIcon } from 'lucide-react';
+import { RecursiveFolder } from './recursive-folder';
 import { useMutation } from '@tanstack/react-query';
-import { type NavItem } from '@/config/navigation';
 import type { Label as LabelType } from '@/types';
+import { Link, useLocation } from 'react-router';
 import { Button } from '@/components/ui/button';
-import { HexColorPicker } from 'react-colorful';
 import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useStats } from '@/hooks/use-stats';
-import { useRef, useCallback } from 'react';
+import { CurvedArrow } from '../icons/icons';
+import { Command, Plus } from 'lucide-react';
+import { Tree } from '../magicui/file-tree';
+import { useCallback, useRef } from 'react';
 import { BASE_URL } from '@/lib/constants';
-import { useLocation } from 'react-router';
 import { useTranslations } from 'use-intl';
 import { useForm } from 'react-hook-form';
 import { useQueryState } from 'nuqs';
-import { Plus } from 'lucide-react';
-import { Link } from 'react-router';
 import { cn } from '@/lib/utils';
-import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 import * as React from 'react';
 
@@ -92,6 +81,9 @@ export function NavMain({ items }: NavMainProps) {
   const [category] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const { data: session } = useSession();
+  const { data: connections } = useConnections();
+  const { data: activeConnection } = useActiveConnection();
   const form = useForm<LabelType>({
     defaultValues: {
       name: '',
@@ -105,6 +97,7 @@ export function NavMain({ items }: NavMainProps) {
   const formColor = form.watch('color');
 
   const { data, refetch } = useLabels();
+
   const { state } = useSidebar();
 
   // Check if these are bottom navigation items by looking at the first section's title
@@ -170,7 +163,7 @@ export function NavMain({ items }: NavMainProps) {
       }
 
       // Handle category links
-      if (item.id === "inbox" && category) {
+      if (item.id === 'inbox' && category) {
         return `${item.url}?category=${encodeURIComponent(category)}`;
       }
 
@@ -178,6 +171,11 @@ export function NavMain({ items }: NavMainProps) {
     },
     [pathname, category, searchParams, isValidInternalUrl],
   );
+
+  const activeAccount = React.useMemo(() => {
+    if (!activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find((connection) => connection.id === activeConnection?.id);
+  }, [activeConnection?.id, connections?.connections]);
 
   const isUrlActive = useCallback(
     (url: string) => {
@@ -287,250 +285,233 @@ export function NavMain({ items }: NavMainProps) {
           </Collapsible>
         ))}
         {!pathname.includes('/settings') && !isBottomNav && state !== 'collapsed' && (
-          <Collapsible defaultOpen={true} className="group/collapsible">
+          <Collapsible defaultOpen={true} className="group/collapsible flex-col">
             <SidebarMenuItem className="mb-4" style={{ height: 'auto' }}>
               <div className="mx-2 mb-4 flex items-center justify-between">
-                <span className="text-[13px] text-[#6D6D6D] dark:text-[#898989]">Labels</span>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="mr-1 h-4 w-4 p-0 hover:bg-transparent"
-                    >
-                      <Plus className="h-3 w-3 text-[#6D6D6D] dark:text-[#898989]" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent showOverlay={true}>
-                    <DialogHeader>
-                      <DialogTitle>Create New Label</DialogTitle>
-                    </DialogHeader>
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-4"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                            e.preventDefault();
-                            form.handleSubmit(onSubmit)();
-                          }
-                        }}
+                <span className="text-[13px] text-[#6D6D6D] dark:text-[#898989]">
+                  {activeAccount?.providerId === 'google' ? 'Labels' : 'Folders'}
+                </span>
+                {activeAccount?.providerId === 'google' ? (
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="mr-1 h-4 w-4 p-0 hover:bg-transparent"
                       >
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <FormField
-                              control={form.control}
-                              name="name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Label Name</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter label name" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <div className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name="color"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Color</FormLabel>
-                                  <FormControl>
-                                    <div className="w-full">
-                                      <div className="g-panelLight dark:bg-panelDark grid grid-cols-7 gap-4">
-                                        {[
-                                          // Row 1 - Grayscale
-                                          '#000000',
-                                          '#434343',
-                                          '#666666',
-                                          '#999999',
-                                          '#cccccc',
-                                          '#ffffff',
-                                          // Row 2 - Warm colors
-                                          '#fb4c2f',
-                                          '#ffad47',
-                                          '#fad165',
-                                          '#ff7537',
-                                          '#cc3a21',
-                                          '#8a1c0a',
-                                          // Row 3 - Cool colors
-                                          '#16a766',
-                                          '#43d692',
-                                          '#4a86e8',
-                                          '#285bac',
-                                          '#3c78d8',
-                                          '#0d3472',
-                                          // Row 4 - Purple tones
-                                          '#a479e2',
-                                          '#b99aff',
-                                          '#653e9b',
-                                          '#3d188e',
-                                          '#f691b3',
-                                          '#994a64',
-                                          // Row 5 - Pastels
-                                          '#f6c5be',
-                                          '#ffe6c7',
-                                          '#c6f3de',
-                                          '#c9daf8',
-                                        ].map((color) => (
-                                          <button
-                                            key={color}
-                                            type="button"
-                                            className={`h-10 w-10 rounded-[4px] border-[0.5px] border-white/10 ${
-                                              field.value?.backgroundColor === color
-                                                ? 'ring-2 ring-blue-500'
-                                                : ''
-                                            }`}
-                                            style={{ backgroundColor: color }}
-                                            onClick={() =>
-                                              form.setValue('color', {
-                                                backgroundColor: color,
-                                                textColor: '#ffffff',
-                                              })
-                                            }
-                                          />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            className="h-8"
-                            type="button"
-                            variant="outline"
-                            onClick={handleClose}
-                          >
-                            Cancel
-                          </Button>
-                          <Button className="h-8" type="submit">
-                            Create Label
-                            <div className="gap- flex h-5 items-center justify-center rounded-sm bg-white/10 px-1 dark:bg-black/10">
-                              <Command className="h-2 w-2 text-white dark:text-[#929292]" />
-                              <CurvedArrow className="mt-1.5 h-3 w-3 fill-white dark:fill-[#929292]" />
+                        <Plus className="h-3 w-3 text-[#6D6D6D] dark:text-[#898989]" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent showOverlay={true}>
+                      <DialogHeader>
+                        <DialogTitle>Create New Label</DialogTitle>
+                      </DialogHeader>
+                      <Form {...form}>
+                        <form
+                          onSubmit={form.handleSubmit(onSubmit)}
+                          className="space-y-4"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault();
+                              form.handleSubmit(onSubmit)();
+                            }
+                          }}
+                        >
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Label Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Enter label name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                             </div>
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
+                            <div className="space-y-4">
+                              <FormField
+                                control={form.control}
+                                name="color"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Color</FormLabel>
+                                    <FormControl>
+                                      <div className="w-full">
+                                        <div className="g-panelLight dark:bg-panelDark grid grid-cols-7 gap-4">
+                                          {[
+                                            // Row 1 - Grayscale
+                                            '#000000',
+                                            '#434343',
+                                            '#666666',
+                                            '#999999',
+                                            '#cccccc',
+                                            '#ffffff',
+                                            // Row 2 - Warm colors
+                                            '#fb4c2f',
+                                            '#ffad47',
+                                            '#fad165',
+                                            '#ff7537',
+                                            '#cc3a21',
+                                            '#8a1c0a',
+                                            // Row 3 - Cool colors
+                                            '#16a766',
+                                            '#43d692',
+                                            '#4a86e8',
+                                            '#285bac',
+                                            '#3c78d8',
+                                            '#0d3472',
+                                            // Row 4 - Purple tones
+                                            '#a479e2',
+                                            '#b99aff',
+                                            '#653e9b',
+                                            '#3d188e',
+                                            '#f691b3',
+                                            '#994a64',
+                                            // Row 5 - Pastels
+                                            '#f6c5be',
+                                            '#ffe6c7',
+                                            '#c6f3de',
+                                            '#c9daf8',
+                                          ].map((color) => (
+                                            <button
+                                              key={color}
+                                              type="button"
+                                              className={`h-10 w-10 rounded-[4px] border-[0.5px] border-white/10 ${
+                                                field.value?.backgroundColor === color
+                                                  ? 'ring-2 ring-blue-500'
+                                                  : ''
+                                              }`}
+                                              style={{ backgroundColor: color }}
+                                              onClick={() =>
+                                                form.setValue('color', {
+                                                  backgroundColor: color,
+                                                  textColor: '#ffffff',
+                                                })
+                                              }
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              className="h-8"
+                              type="button"
+                              variant="outline"
+                              onClick={handleClose}
+                            >
+                              Cancel
+                            </Button>
+                            <Button className="h-8" type="submit">
+                              Create Label
+                              <div className="gap- flex h-5 items-center justify-center rounded-sm bg-white/10 px-1 dark:bg-black/10">
+                                <Command className="h-2 w-2 text-white dark:text-[#929292]" />
+                                <CurvedArrow className="mt-1.5 h-3 w-3 fill-white dark:fill-[#929292]" />
+                              </div>
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                ) : activeAccount?.providerId === 'microsoft' ? null : null}
               </div>
 
-              <div className="mr-0 pr-0">
-                <div
-                  className={cn(
-                    'hide-scrollbar flex h-full max-h-[calc(100dvh-40rem)] min-h-[4rem] flex-row flex-wrap gap-2 overflow-scroll',
-                  )}
-                >
-                  {(() => {
-                    if (!data) return null;
+              <div className="mr-0 flex-1 pr-0">
+                <div className="bg-background relative -m-2 flex-1 overflow-auto">
+                  <Tree className="bg-background rounded-md">
+                    {(() => {
+                      if (!data) return null;
+                      const isMicrosoftAccount = activeAccount?.providerId === 'microsoft';
+                      if (isMicrosoftAccount) {
+                        return data?.map((label) => (
+                          <RecursiveFolder key={label.id} label={label} />
+                        ));
+                      }
 
-                    const groupedLabels = data.reduce(
-                      (acc, label) => {
-                        const isFolderLabel = /[^/]+\/[^/]+/.test(label.name);
-                        if (isFolderLabel) {
+                      const groups = {
+                        brackets: [] as typeof data,
+                        other: [] as typeof data,
+                        folders: {} as Record<string, typeof data>,
+                      };
+
+                      data.forEach((label) => {
+                        if (/\[.*\]/.test(label.name)) {
+                          groups.brackets.push(label);
+                        } else if (/[^/]+\/[^/]+/.test(label.name)) {
                           const [groupName] = label.name.split('/') as [string];
-                          if (!acc[groupName]) {
-                            acc[groupName] = [];
+                          if (!groups.folders[groupName]) {
+                            groups.folders[groupName] = [];
                           }
-                          acc[groupName].push(label);
+                          groups.folders[groupName].push(label);
                         } else {
-                          if (!acc['other']) {
-                            acc['other'] = [];
-                          }
-                          acc['other'].push(label);
+                          groups.other.push(label);
                         }
-                        return acc;
-                      },
-                      {} as Record<string, typeof data>,
-                    );
+                      });
 
-                    return (
-                      <>
-                        {Object.entries(groupedLabels)
-                          .sort(([a], [b]) => {
-                            if (a === 'other') return 1;
-                            if (b === 'other') return -1;
-                            return a.localeCompare(b);
-                          })
-                          .map(([groupName, labels]) => {
-                            if (groupName === 'other') {
-                              return labels.map((label) => (
-                                <LabelSidebarContextMenu labelId={label.id} key={label.id}>
-                                  <div
-                                    onClick={handleFilterByLabel(label)}
-                                    className="flex cursor-pointer items-center gap-2 text-sm"
-                                  >
-                                    <span
-                                      className={cn(
-                                        'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
-                                        searchValue.value.includes(`label:${label.name}`)
-                                          ? 'border-accent-foreground'
-                                          : 'dark:bg-subtleBlack',
-                                      )}
-                                    >
-                                      {label.name}
-                                    </span>
-                                  </div>
-                                </LabelSidebarContextMenu>
-                              ));
-                            }
+                      const components = [];
 
-                            return (
-                              <DropdownMenu key={groupName}>
-                                <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1.5 py-0.5 text-xs">
-                                  <span>
-                                    <Folder className="h-4 w-4" />
-                                  </span>
-                                  <span className="truncate">{groupName}</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="dark:bg-panelDark/10 bg-panelLight/10 flex w-56 gap-1 border-none backdrop-blur-sm">
-                                  {labels.map((label) => {
-                                    const folderParts = label.name.split('/').slice(1);
-                                    return (
-                                      <LabelSidebarContextMenu labelId={label.id} key={label.id}>
-                                        <div
-                                          onClick={handleFilterByLabel(label)}
-                                          className="flex cursor-pointer items-center gap-2 text-sm"
-                                        >
-                                          <span
-                                            className={cn(
-                                              'max-w-[20ch] truncate rounded border px-1.5 py-0.5 text-xs',
-                                              searchValue.value.includes(`label:${label.name}`)
-                                                ? 'border-accent-foreground'
-                                                : 'dark:bg-subtleBlack',
-                                            )}
-                                          >
-                                            {folderParts.map((part, index) => (
-                                              <span key={index}>
-                                                {part}
-                                                {index < folderParts.length - 1 && (
-                                                  <span className="text-muted-foreground">/</span>
-                                                )}
-                                              </span>
-                                            ))}
-                                          </span>
-                                        </div>
-                                      </LabelSidebarContextMenu>
-                                    );
-                                  })}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            );
-                          })}
-                      </>
-                    );
-                  })()}
+                      Object.entries(groups.folders)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .forEach(([groupName, labels]) => {
+                          const groupFolder = {
+                            id: `group-${groupName}`,
+                            name: groupName,
+                            labels: labels.map((label) => ({
+                              id: label.id,
+                              name: label.name.split('/').slice(1).join('/'),
+                              originalLabel: label,
+                            })),
+                          };
+                          components.push(
+                            <RecursiveFolder key={groupFolder.id} label={groupFolder} />,
+                          );
+                        });
+
+                      if (groups.other.length > 0) {
+                        groups.other.forEach((label) => {
+                          components.push(
+                            <RecursiveFolder
+                              key={label.id}
+                              label={{
+                                id: label.id,
+                                name: label.name,
+                                originalLabel: label,
+                              }}
+                            />,
+                          );
+                        });
+                      }
+
+                      if (groups.brackets.length > 0) {
+                        const bracketsFolder = {
+                          id: 'group-other',
+                          name: 'Other',
+                          labels: groups.brackets.map((label) => ({
+                            id: label.id,
+                            name: label.name.replace(/\[|\]/g, ''),
+                            originalLabel: label,
+                          })),
+                        };
+                        components.push(
+                          <RecursiveFolder key={bracketsFolder.id} label={bracketsFolder} />,
+                        );
+                      }
+
+                      return components;
+                    })()}
+                  </Tree>
                 </div>
               </div>
             </SidebarMenuItem>
@@ -559,7 +540,6 @@ function NavItem(item: NavItemProps & { href: string }) {
     );
   }
 
-  // Apply animation handlers to all buttons including back buttons
   const linkProps = {
     to: item.href,
     onMouseEnter: () => iconRef.current?.startAnimation?.(),
