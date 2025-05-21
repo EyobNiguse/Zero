@@ -1,10 +1,16 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { CircleCheck, PurpleThickCheck } from '@/components/icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 interface PricingDialogProps {
   open?: boolean;
@@ -35,11 +41,9 @@ export function PricingDialog({ open, onOpenChange, children }: PricingDialogPro
 
   return (
     <Dialog onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        className="flex items-center justify-center border-none w-auto p-1 rounded-2xl"
+        className="flex w-auto items-center justify-center rounded-2xl border-none p-1"
         showOverlay
       >
         <DialogTitle className="text-center text-2xl"></DialogTitle>

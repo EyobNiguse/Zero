@@ -1,4 +1,5 @@
 import { createRateLimiterMiddleware, privateProcedure, router } from '../trpc';
+import { getActiveConnection } from '../../lib/server-utils';
 import { connection, user as user_ } from '@zero/db/schema';
 import { Ratelimit } from '@upstash/ratelimit';
 import { TRPCError } from '@trpc/server';
@@ -72,7 +73,12 @@ export const connectionsRouter = router({
         .delete(connection)
         .where(and(eq(connection.id, connectionId), eq(connection.userId, user.id)));
 
-      if (connectionId === ctx.session.connectionId)
+      const activeConnection = await getActiveConnection();
+      if (connectionId === activeConnection.id)
         await db.update(user_).set({ defaultConnectionId: null });
     }),
+  getDefault: privateProcedure.query(async () => {
+    const connection = await getActiveConnection();
+    return connection;
+  }),
 });

@@ -1,3 +1,4 @@
+import { getActiveConnection } from '../server-utils';
 import { getContext } from 'hono/context-storage';
 import { connection } from '@zero/db/schema';
 import type { HonoContext } from '../../ctx';
@@ -9,13 +10,15 @@ export const FatalErrors = ['invalid_grant'];
 
 export const deleteActiveConnection = async () => {
   const c = getContext<HonoContext>();
+  const activeConnection = await getActiveConnection();
+  if (!activeConnection) return console.log('No connection ID found');
   const session = await c.var.auth.api.getSession({ headers: c.req.raw.headers });
-  if (!session?.connectionId) return console.log('No connection ID found');
+  if (!session) return console.log('No session found');
   try {
     await c.var.auth.api.signOut({ headers: c.req.raw.headers });
     await c.var.db
       .delete(connection)
-      .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
+      .where(and(eq(connection.userId, session.user.id), eq(connection.id, activeConnection.id)));
   } catch (error) {
     console.error('Server: Error deleting connection:', error);
     throw error;
@@ -25,11 +28,9 @@ export const deleteActiveConnection = async () => {
 export const getActiveDriver = async () => {
   const c = getContext<HonoContext>();
   const session = await c.var.auth.api.getSession({ headers: c.req.raw.headers });
-  if (!session || !session.connectionId) throw new Error('Invalid session');
-
-  const activeConnection = await c.var.db.query.connection.findFirst({
-    where: and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)),
-  });
+  if (!session) throw new Error('Invalid session');
+  const activeConnection = await getActiveConnection();
+  if (!activeConnection) throw new Error('Invalid connection');
 
   if (!activeConnection || !activeConnection.accessToken || !activeConnection.refreshToken)
     throw new Error('Invalid connection');

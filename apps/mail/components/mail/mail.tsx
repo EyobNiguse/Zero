@@ -24,6 +24,7 @@ import {
 } from '../icons/icons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Command, RefreshCcw, Settings2Icon, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -33,7 +34,6 @@ import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { useConnections } from '@/hooks/use-connections';
 import { MailList } from '@/components/mail/mail-list';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useNavigate } from 'react-router';
@@ -322,13 +322,12 @@ export function MailLayout() {
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
+  const { data: activeConnection } = useActiveConnection();
 
   const activeAccount = useMemo(() => {
-    if (!session?.activeConnection?.id || !connections?.connections) return null;
-    return connections.connections.find(
-      (connection) => connection.id === session.activeConnection?.id,
-    );
-  }, [session?.activeConnection?.id, connections?.connections]);
+    if (!activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find((connection) => connection.id === activeConnection?.id);
+  }, [activeConnection?.id, connections?.connections]);
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {

@@ -184,10 +184,17 @@ export function ThreadDisplay() {
   const { mutateAsync: toggleImportant } = useMutation(trpc.mail.toggleImportant.mutationOptions());
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
+  const invalidateThread = () =>
+    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: id ?? '' }) });
   const { mutateAsync: markAsRead } = useMutation(
-    trpc.mail.markAsRead.mutationOptions({ onSuccess: () => invalidateCount() }),
+    trpc.mail.markAsRead.mutationOptions({
+      onSuccess: () => {
+        return Promise.all([invalidateCount(), invalidateThread()]);
+      },
+    }),
   );
   const [, setIsComposeOpen] = useQueryState('isComposeOpen');
+  const markAsReadRef = useRef<Promise<void> | null>(null);
 
   const handlePrevious = useCallback(() => {
     if (!id || !items.length || focusedIndex === null) return;
@@ -212,42 +219,26 @@ export function ThreadDisplay() {
     }
   }, [items, id, focusedIndex, setThreadId, setActiveReplyId, setFocusedIndex]);
 
-  // Check if thread contains any images (excluding sender avatars)
-  const hasImages = useMemo(() => {
-    if (!emailData) return false;
-    return emailData.messages.some((message) => {
-      const hasAttachments = message.attachments?.some((attachment) =>
-        attachment.mimeType?.startsWith('image/'),
-      );
-      const hasInlineImages =
-        message.processedHtml?.includes('<img') &&
-        !message.processedHtml.includes('data:image/svg+xml;base64'); // Exclude avatar SVGs
-      return hasAttachments || hasInlineImages;
-    });
-  }, [emailData]);
-
-  const hasMultipleParticipants =
-    (emailData?.latest?.to?.length ?? 0) + (emailData?.latest?.cc?.length ?? 0) + 1 > 2;
-
-  /**
-   * Mark email as read if it's unread, if there are no unread emails, mark the current thread as read
-   */
   useEffect(() => {
     if (!emailData || !id) return;
+
     const unreadEmails = emailData.messages.filter((e) => e.unread);
-    console.log({
-      totalReplies: emailData.totalReplies,
-      unreadEmails: unreadEmails.length,
+    if (unreadEmails.length === 0) return;
+
+    const ids = [id, ...unreadEmails.map((e) => e.id)];
+
+    const markAsReadPromise = markAsRead({ ids });
+    markAsReadRef.current = markAsReadPromise;
+
+    void markAsReadPromise.finally(() => {
+      if (markAsReadRef.current === markAsReadPromise) {
+        markAsReadRef.current = null;
+      }
     });
-    if (unreadEmails.length > 0) {
-      const ids = [id, ...unreadEmails.map((e) => e.id)];
-      markAsRead({ ids })
-        .catch((error) => {
-          console.error('Failed to mark email as read:', error);
-          toast.error(t('common.mail.failedToMarkAsRead'));
-        })
-        .then(() => Promise.allSettled([refetchThread(), refetchStats()]));
-    }
+
+    return () => {
+      markAsReadRef.current = null;
+    };
   }, [emailData, id]);
 
   const handleUnsubscribeProcess = () => {

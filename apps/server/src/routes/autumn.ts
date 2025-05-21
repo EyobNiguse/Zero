@@ -126,6 +126,15 @@ export const autumnApi = new Hono<AutumnContext>()
       await autumn.customers.billingPortal(customerData.customerId, body).then((data) => data.data),
     );
   })
+  .post('/openBillingPortal', async (c) => {
+    const { autumn, customerData } = c.var;
+    const body = await c.req.json();
+    if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+
+    return c.json(
+      await autumn.customers.billingPortal(customerData.customerId, body).then((data) => data.data),
+    );
+  })
   .post('/entities', async (c) => {
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
