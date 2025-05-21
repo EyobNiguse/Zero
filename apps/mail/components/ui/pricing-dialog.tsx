@@ -9,8 +9,9 @@ import { CircleCheck, PurpleThickCheck } from '@/components/icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useQueryState } from 'nuqs';
 
 interface PricingDialogProps {
   open?: boolean;
@@ -18,9 +19,25 @@ interface PricingDialogProps {
   children?: React.ReactNode;
 }
 
-export function PricingDialog({ open, onOpenChange, children }: PricingDialogProps) {
+export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, children }: PricingDialogProps) {
   const { attach } = useBilling();
   const [isLoading, setIsLoading] = useState(false);
+  const [pricingDialog, setPricingDialog] = useQueryState('pricingDialog');
+  const isControlled = propOpen !== undefined;
+  const open = isControlled ? propOpen : pricingDialog === 'true';
+
+  useEffect(() => {
+    if (!isControlled && pricingDialog === 'true' && !open) {
+      setPricingDialog('true');
+    }
+  }, [isControlled, open, pricingDialog, setPricingDialog]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isControlled) {
+      setPricingDialog(isOpen ? 'true' : null);
+    }
+    propOnOpenChange?.(isOpen);
+  };
 
   const handleUpgrade = async () => {
     if (attach) {
@@ -31,7 +48,6 @@ export function PricingDialog({ open, onOpenChange, children }: PricingDialogPro
           successUrl: `${window.location.origin}/mail/inbox?success=true`,
         }),
         {
-          success: 'Redirecting to payment...',
           error: 'Failed to process upgrade. Please try again later.',
           finally: () => setIsLoading(false),
         },
@@ -40,7 +56,7 @@ export function PricingDialog({ open, onOpenChange, children }: PricingDialogPro
   };
 
   return (
-    <Dialog onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         className="flex w-auto items-center justify-center rounded-2xl border-none p-1"

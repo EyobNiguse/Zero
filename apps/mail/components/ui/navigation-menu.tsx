@@ -135,7 +135,7 @@ const ListItem = React.forwardRef<
           {...props}
         >
           <div className="flex items-center gap-2 text-sm font-medium leading-none">
-            {IconComponent && <IconComponent className="h-4 w-4" />}
+            {IconComponent && <IconComponent className="h-4 w-4 fill-white" />}
             {title}
           </div>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">{children}</p>

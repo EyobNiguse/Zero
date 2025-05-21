@@ -226,7 +226,7 @@ const AutoLabelingSettings = () => {
         <DialogHeader>
           <DialogTitle>Autolabeling Settings</DialogTitle>
         </DialogHeader>
-        <DialogDescription className="mb-4">
+        <DialogDescription className="mb-4 mt-2">
           These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
           however you like. Zero will create a new label in your account for each label you add - if
           it does not exist already.
@@ -257,7 +257,7 @@ const AutoLabelingSettings = () => {
                   className="h-8 w-8"
                   onClick={() => handleDeleteLabel(label.id)}
                 >
-                  <TrashIcon className="h-4 w-4 fill-red-800" />
+                  <Trash className="h-4 w-4 fill-[#F43F5E]" />
                 </Button>
               </div>
             ))}
@@ -285,7 +285,7 @@ const AutoLabelingSettings = () => {
                 onClick={handleAddLabel}
                 disabled={!newLabel.name || !newLabel.usecase}
               >
-                <Plus className="fill-white" />
+                <Plus className="fill-white h-4 w-4" />
               </Button>
             </div>
           </div>

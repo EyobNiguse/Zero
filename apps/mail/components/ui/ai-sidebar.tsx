@@ -71,6 +71,7 @@ function ChatHeader({
   onUpgrade,
   onNewChat,
 }: ChatHeaderProps) {
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   return (
     <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
       <TooltipProvider delayDuration={0}>
@@ -139,22 +140,36 @@ function ChatHeader({
         )}
 
         {!isPro && (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild className="md:h-fit md:px-2">
-                <div>
-                  <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-                <p className="mb-2">Upgrade for unlimited messages!</p>
-                <Button onClick={onUpgrade} className="h-8 w-full">
-                  Upgrade
-                </Button>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        
+           <>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild className="md:h-fit md:px-2">
+                  <div>
+                    <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+                  <p className="mb-2">Upgrade for unlimited messages!</p>
+                  <Button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPricingOpen(true);
+                      onUpgrade();
+                    }} 
+                    className="h-8 w-full"
+                  >
+                    Upgrade
+                  </Button>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <PricingDialog open={isPricingOpen} onOpenChange={setIsPricingOpen}>
+              <div className="hidden" />
+            </PricingDialog>
+          </>
+         
         )}
 
         <PromptsDialog />
@@ -461,7 +476,6 @@ function AISidebar({ className }: AISidebarProps) {
 
   return (
     <>
-      <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
       {open && (
         <>
           {/* Desktop view - visible on md and larger screens */}
