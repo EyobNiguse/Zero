@@ -530,6 +530,9 @@ importers:
       partyserver:
         specifier: ^0.0.71
         version: 0.0.71(@cloudflare/workers-types@4.20250514.0)
+      react:
+        specifier: 19.0.0
+        version: 19.0.0
       remeda:
         specifier: 2.21.3
         version: 2.21.3
@@ -558,6 +561,9 @@ importers:
       '@types/node':
         specifier: ^22.9.0
         version: 22.13.8
+      '@types/react':
+        specifier: 19.0.10
+        version: 19.0.10
       '@types/sanitize-html':
         specifier: 2.13.0
         version: 2.13.0
