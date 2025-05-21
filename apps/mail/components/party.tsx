@@ -24,8 +24,14 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
   //     await refetchThreads();
   //   }, [refetchThreads]);
 
-  const labelsDebouncer = funnel(refetchLabels, { minQuietPeriodMs: DEBOUNCE_DELAY });
-  const threadsDebouncer = funnel(refetchThreads, { minQuietPeriodMs: DEBOUNCE_DELAY });
+  const labelsDebouncer = funnel(
+    () => queryClient.invalidateQueries({ queryKey: trpc.labels.list.queryKey() }),
+    { minQuietPeriodMs: DEBOUNCE_DELAY },
+  );
+  const threadsDebouncer = funnel(
+    () => queryClient.invalidateQueries({ queryKey: trpc.mail.listThreads.queryKey() }),
+    { minQuietPeriodMs: DEBOUNCE_DELAY },
+  );
 
   usePartySocket({
     party: 'durable-mailbox',
