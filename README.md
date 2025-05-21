@@ -55,7 +55,7 @@ Before running the application, you'll need to set up services and configure env
 You can set up Zero in two ways:
 
 <details open>
-<summary><b>Option 1: Standard Setup (Recommended)</b></summary>
+<summary><b>Standard Setup (Recommended)</b></summary>
 
 #### Quick Start Guide
 
@@ -75,12 +75,8 @@ You can set up Zero in two ways:
 
 2. **Set Up Environment**
 
-   - Copy `.env.example` to `.env` in project root
-     ```bash
-     cp .env.example .env
-     ```
-   - Configure your environment variables (see below)
-   - Setup cloudflare with `pnpm run cf-install`, you will need to run this everytime there is a `.env` change
+   - Run `pnpm nizzy env` to setup your environment variables
+   - Run `pnpm nizzy sync` to sync your environment variables and types
    - Start the database with the provided docker compose setup: `pnpm docker:db:up`
    - Initialize the database: `pnpm db:push`
 
@@ -150,24 +146,7 @@ You can set up Zero in two ways:
 
 ### Environment Variables
 
-Copy `.env.example` located in the project folder to `.env` in the same folder and configure the following variables:
-
-```env
-# Auth
-BETTER_AUTH_SECRET=     # Required: Secret key for authentication
-
-# Google OAuth (Required for Gmail integration)
-GOOGLE_CLIENT_ID=       # Required for Gmail integration
-GOOGLE_CLIENT_SECRET=   # Required for Gmail integration
-
-# Database
-DATABASE_URL=           # Required: PostgreSQL connection string for backend connection
-
-# Redis
-REDIS_URL=              # Redis URL for caching (http://localhost:8079 for local dev)
-REDIS_TOKEN=            # Redis token (upstash-local-token for local dev)
-```
-
+Run `pnpm nizzy env` to setup your environment variables. It will copy the `.env.example` file to `.env` and fill in the variables for you.
 For local development a connection string example is provided in the `.env.example` file located in the same folder as the database.
 
 ### Database Setup
@@ -191,7 +170,7 @@ Zero uses PostgreSQL for storing data. Here's how to set it up:
 
 2. **Set Up Database Connection**
 
-   Make sure your database connection string is in `.env` file. And you have ran `pnpm run cf-install` to sync the latest env.
+   Make sure your database connection string is in `.env` file. And you have ran `pnpm nizzy sync` to sync the latest env.
 
    For local development use:
 

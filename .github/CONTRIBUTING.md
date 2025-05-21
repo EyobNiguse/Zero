@@ -32,8 +32,8 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
    - Install [pnpm](https://pnpm.io)
    - Clone the repository and install dependencies: `pnpm install`
    - Start the database locally: `pnpm docker:db:up`
-   - Copy `.env.example` to `.env` in project root
-   - Setup cloudflare with `pnpm run cf-install`, you will need to run this everytime there is a `.env` change
+   - Run `pnpm nizzy env` to setup your environment variables
+   - Run `pnpm nizzy sync` to sync your environment variables and types
    - Set up your Google OAuth credentials (see [README.md](../README.md))
    - Initialize the database: `pnpm db:push`
 

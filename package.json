@@ -5,8 +5,8 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "prepare": "husky",
-    "postinstall": "turbo run postinstall",
-    "cf-install": "turbo run postinstall",
+    "nizzy": "tsx ./packages/cli/src/cli.ts",
+    "postinstall": "pnpm nizzy sync",
     "dev": "dotenv -- turbo run dev",
     "build": "dotenv -- turbo run build",
     "build:frontend": "pnpm run --filter=@zero/mail build",
@@ -36,6 +36,7 @@
     "prettier": "3.5.3",
     "prettier-plugin-sort-imports": "1.8.6",
     "prettier-plugin-tailwindcss": "0.6.11",
+    "tsx": "4.19.4",
     "turbo": "^2.5.0",
     "typescript": "catalog:"
   }

@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "wrangler dev --show-interactive-dev-session=false --env local",
     "deploy": "wrangler deploy",
-    "postinstall": "(cp ../../.env .dev.vars)||true && pnpm run types",
-    "types": "wrangler types --env staging"
+    "types": "wrangler types --env local"
   },
   "exports": {
     "./trpc": "./src/trpc/index.ts",
