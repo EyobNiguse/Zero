@@ -947,6 +947,9 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
 
   const { resolvedTheme } = useTheme();
 
+  const filteredItems = useMemo(() => items.filter((item) => item.id), [items]);
+  const selectMode = getSelectMode();
+
   return (
     <>
       <div
@@ -962,7 +965,11 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           disableScope('mail-list');
         }}
       >
+<<<<<<< HEAD
         <ScrollArea hideScrollbar className="no-scrollbar h-full overflow-auto">
+=======
+        <div>
+>>>>>>> fc837bd5 (virtual list broken)
           {isLoading ? (
             <div className="flex h-32 items-center justify-center">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
@@ -989,22 +996,18 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col md:gap-2" id="mail-list-scroll">
-              {items
-                .filter((data) => data.id)
-                .map((data, index) => {
-                  if (!data || !data.id) return null;
-
-                  return isFolderDraft ? (
-                    <Draft key={`${data.id}-${index}`} message={{ id: data.id }} />
-                  ) : (
+            <div className="flex h-full flex-col md:gap-2" id="mail-list-scroll">
+              <VList count={filteredItems.length} className="h-full">
+                {(index) => {
+                  const item = filteredItems[index];
+                  return (
                     <Thread
                       onClick={handleMailClick}
-                      selectMode={getSelectMode()}
+                      selectMode={selectMode}
                       isCompact={isCompact}
                       sessionData={sessionData}
-                      message={data}
-                      key={`${data.id}-${index}`}
+                      message={item}
+                      key={item.id}
                       isKeyboardFocused={focusedIndex === index && keyboardActive}
                       isInQuickActionMode={isQuickActionMode && focusedIndex === index}
                       selectedQuickActionIndex={quickActionIndex}
@@ -1012,14 +1015,26 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
                       index={index}
                     />
                   );
-                })}
+                }}
+              </VList>
+              {/* {items
+                .filter((data) => data.id)
+                .map((data, index) => {
+                  if (!data || !data.id) return null;
+
+                  return isFolderDraft ? (
+                    <Draft key={`${data.id}-${index}`} message={{ id: data.id }} />
+                  ) : (
+
+                  );
+                })} */}
               <Button
                 variant={'ghost'}
                 className="w-full rounded-none"
                 onMouseDown={handleScroll}
                 disabled={isLoading || items.length <= 9 || !hasNextPage || isFetching}
               >
-                {isLoading ? (
+                {isLoading || isFetching ? (
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
                     {t('common.actions.loading')}
@@ -1032,7 +1047,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </Button>
             </div>
           )}
-        </ScrollArea>
+        </div>
       </div>
       <div className="w-full pt-4 text-center">
         {isLoading || isFetching ? (
