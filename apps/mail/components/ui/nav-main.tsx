@@ -1,12 +1,4 @@
 import {
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-  SidebarMenuSub,
-} from './sidebar';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -22,43 +14,36 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { LabelSidebarContextMenu } from '../context/label-sidebar-context';
-import { Tree, Folder, CollapseButton } from '../magicui/file-tree';
-import { CurvedArrow, Folder as FolderIcon } from '../icons/icons';
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from './sidebar';
+import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useActiveConnection, useConnections } from '@/hooks/use-connections';
+import { type MessageKey, type NavItem } from '@/config/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { clearBulkSelectionAtom } from '../mail/use-mail';
-import { useConnections } from '@/hooks/use-connections';
-import { Label as UILabel } from '@/components/ui/label';
-import { useLocation, useNavigate } from 'react-router';
-import { type MessageKey } from '@/config/navigation';
 import { useTRPC } from '@/providers/query-provider';
 import { RecursiveFolder } from './recursive-folder';
-import { Command, SettingsIcon } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { type NavItem } from '@/config/navigation';
 import type { Label as LabelType } from '@/types';
+import { Link, useLocation } from 'react-router';
 import { Button } from '@/components/ui/button';
-import { HexColorPicker } from 'react-colorful';
 import { useLabels } from '@/hooks/use-labels';
 import { useSession } from '@/lib/auth-client';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useStats } from '@/hooks/use-stats';
-import { useRef, useCallback } from 'react';
+import { CurvedArrow } from '../icons/icons';
+import { Command, Plus } from 'lucide-react';
+import { Tree } from '../magicui/file-tree';
+import { useCallback, useRef } from 'react';
 import { BASE_URL } from '@/lib/constants';
 import { useTranslations } from 'use-intl';
 import { useForm } from 'react-hook-form';
-import { session } from '@zero/db/schema';
 import { useQueryState } from 'nuqs';
-import { Plus } from 'lucide-react';
-import { Link } from 'react-router';
 import { cn } from '@/lib/utils';
-import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 import * as React from 'react';
 
@@ -98,6 +83,7 @@ export function NavMain({ items }: NavMainProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const { data: session } = useSession();
   const { data: connections } = useConnections();
+  const { data: activeConnection } = useActiveConnection();
   const form = useForm<LabelType>({
     defaultValues: {
       name: '',
@@ -187,11 +173,9 @@ export function NavMain({ items }: NavMainProps) {
   );
 
   const activeAccount = React.useMemo(() => {
-    if (!session?.activeConnection?.id || !connections?.connections) return null;
-    return connections.connections.find(
-      (connection) => connection.id === session.activeConnection?.id,
-    );
-  }, [session?.activeConnection?.id, connections?.connections]);
+    if (!activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find((connection) => connection.id === activeConnection?.id);
+  }, [activeConnection?.id, connections?.connections]);
 
   const isUrlActive = useCallback(
     (url: string) => {

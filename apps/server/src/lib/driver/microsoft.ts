@@ -738,7 +738,6 @@ export class OutlookMailManager implements MailManager {
         'conversationhistory',
       ];
 
-      // Process folders recursively to include child folders
       const processedFolders = await this.processMailFoldersHierarchy(
         rootFolders,
         systemFolderNames,
@@ -754,15 +753,11 @@ export class OutlookMailManager implements MailManager {
       return [];
     }
   }
-
-  /**
-   * Recursively process mail folders to build a hierarchical structure
-   */
   private async processMailFoldersHierarchy(
     folders: MailFolder[],
     systemFolderNames: string[],
     depth: number = 0,
-    maxDepth: number = 9, // Increased max depth to handle deeper hierarchies
+    maxDepth: number = 99, // Increased max depth to handle deeper hierarchies
   ): Promise<Label[]> {
     if (depth >= maxDepth) {
       return [];
