@@ -55,7 +55,7 @@
         "COOKIE_DOMAIN": "localhost",
         "VITE_PUBLIC_BACKEND_URL": "http://localhost:8787",
         "VITE_PUBLIC_APP_URL": "http://localhost:3000",
-        "PERPLEXITY_API_KEY": "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",
+        "PERPLEXITY_API_KEY": "",
       },
       "kv_namespaces": [
         {
