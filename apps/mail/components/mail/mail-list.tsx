@@ -63,6 +63,7 @@ import { Categories } from './mail';
 import items from './demo.json';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
+import { VList } from 'virtua';
 
 const HOVER_DELAY = 1000; // ms before prefetching
 
@@ -722,11 +723,12 @@ export function MailListDemo({
   onSelectMail?: (message: any) => void;
 }) {
   return (
-    <ScrollArea className="h-full pb-2" type="scroll">
-      <div className={cn('relative min-h-[calc(100dvh-4rem)] w-full')}>
-        <div className="absolute left-0 top-0 w-full p-[8px]">
-          {filteredItems.map((item) => {
-            return item ? (
+    <div className={cn('relative min-h-[calc(100dvh-4rem)] w-full')}>
+      <div className="absolute left-0 top-0 w-full p-[8px]">
+        <VList count={filteredItems.length}>
+          {(index) => {
+            const item = filteredItems[index];
+            return (
               <Thread
                 demo
                 key={item.id}
@@ -735,11 +737,11 @@ export function MailListDemo({
                 onClick={(message) => () => onSelectMail && onSelectMail(message)}
                 demoMessage={item as any}
               />
-            ) : null;
-          })}
-        </div>
+            );
+          }}
+        </VList>
       </div>
-    </ScrollArea>
+    </div>
   );
 }
 
