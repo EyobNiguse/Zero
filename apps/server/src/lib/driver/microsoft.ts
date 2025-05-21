@@ -757,7 +757,7 @@ export class OutlookMailManager implements MailManager {
     folders: MailFolder[],
     systemFolderNames: string[],
     depth: number = 0,
-    maxDepth: number = 99, // Increased max depth to handle deeper hierarchies
+    maxDepth: number = 99,
   ): Promise<Label[]> {
     if (depth >= maxDepth) {
       return [];
@@ -769,19 +769,15 @@ export class OutlookMailManager implements MailManager {
       if (!folder.id) continue;
 
       try {
-        // Determine if this is a system folder
         const folderType = systemFolderNames.includes(folder.displayName?.toLowerCase() || '')
           ? 'system'
           : 'user';
-
-        // Get child folders for this folder
         const childFoldersResponse = await this.graphClient
           .api(`/me/mailFolders/${folder.id}/childFolders`)
           .get();
 
         const childFolders: MailFolder[] = childFoldersResponse.value || [];
 
-        // Process child folders recursively
         const childLabels = await this.processMailFoldersHierarchy(
           childFolders,
           systemFolderNames,
@@ -789,7 +785,6 @@ export class OutlookMailManager implements MailManager {
           maxDepth,
         );
 
-        // Create the label for this folder
         const label: Label = {
           id: folder.id,
           name: folder.displayName || '',
@@ -800,7 +795,6 @@ export class OutlookMailManager implements MailManager {
           },
         };
 
-        // Add child labels if any
         if (childLabels.length > 0) {
           label.labels = childLabels;
         }
@@ -808,7 +802,6 @@ export class OutlookMailManager implements MailManager {
         result.push(label);
       } catch (error) {
         console.error(`Error processing folder ${folder.displayName || folder.id}:`, error);
-        // Continue with other folders even if one fails
       }
     }
 
@@ -818,7 +811,6 @@ export class OutlookMailManager implements MailManager {
     console.warn('getLabel needs to differentiate between Category ID and Mail Folder ID.');
 
     try {
-      // Try fetching as a Mail Folder first
       const folder: MailFolder = await this.graphClient.api(`/me/mailfolders/${labelId}`).get();
       return {
         id: folder.id || '',
