@@ -183,6 +183,8 @@ export function AIChat({
 
   return (
     <div className={cn('flex h-full flex-col', isFullScreen ? 'mx-auto max-w-xl' : '')}>
+      <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
+        <div className="min-h-full space-y-4 px-2 py-4">
       <div className="no-scrollbar flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
@@ -233,7 +235,7 @@ export function AIChat({
                   {textParts.length > 0 && (
                     <div
                       className={cn(
-                        'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
+                        'flex w-fit flex-col gap-2 rounded-lg text-sm',
                         message.role === 'user'
                           ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
                           : 'overflow-wrap-anywhere dark:bg-sidebar mr-auto break-words border bg-[#f0f0f0] p-2',
@@ -268,7 +270,7 @@ export function AIChat({
 
       {/* Fixed input at bottom */}
       <div className={cn('mb-4 flex-shrink-0 px-4', isFullScreen ? 'px-0' : '')}>
-        <div className="bg-offsetLight border-border/50 relative rounded-lg dark:bg-[#141414]">
+        <div className="bg-offsetLight relative rounded-lg dark:bg-[#141414]">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
           ) : (
@@ -290,7 +292,7 @@ export function AIChat({
                       className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
                       disabled={!input.trim() || !chatMessages.enabled}
                     >
-                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
+                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-[#262626] px-1 pr-0.5">
                         <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
                       </div>
                     </button>
@@ -300,7 +302,7 @@ export function AIChat({
                       type="button"
                       className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
                     >
-                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
+                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-[#262626] px-1">
                         <Stop className="h-4 w-4 fill-black dark:fill-[#929292]" />
                       </div>
                     </button>
