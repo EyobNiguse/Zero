@@ -125,7 +125,7 @@ function ChatHeader({
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={onToggleViewMode} variant="ghost" className="md:h-fit md:px-2">
+                  <Button onClick={onToggleViewMode} variant="ghost" className="md:h-fit md:px-2 hidden md:flex">
                     {isPopup ? (
                       <PanelLeftOpen className="dark:fill-iconDark fill-iconLight" />
                     ) : (
@@ -502,10 +502,10 @@ function AISidebar({ className }: AISidebarProps) {
             <>
               <div className="w-[1px] opacity-0" />
               <ResizablePanel
-                defaultSize={22}
-                minSize={22}
-                maxSize={22}
-                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(100dvh-10px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+                defaultSize={24}
+                minSize={24}
+                maxSize={24}
+                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(100dvh-8px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
               >
                 <div className={cn('h-[calc(98vh)]', 'flex flex-col', '', className)}>
                   <div className="flex h-full flex-col">
