@@ -447,14 +447,14 @@ const Thread = memo(
     const content =
       latestMessage && getThreadData ? (
         <div
-          className={'hover:bg-offsetLight hover:bg-primary/5 select-none border-b md:border-none'}
+          className={'select-none border-b md:border-none '}
           onClick={onClick ? onClick(latestMessage) : undefined}
         >
           <div
             data-thread-id={latestMessage.threadId ?? latestMessage.id}
             key={latestMessage.threadId ?? latestMessage.id}
             className={cn(
-              'group relative mx-1 flex cursor-pointer flex-col items-start rounded-lg py-2 text-left text-sm transition-all hover:opacity-100',
+              'group relative mx-1 flex cursor-pointer flex-col items-start rounded-lg py-2 text-left text-sm transition-all hover:opacity-100 hover:bg-offsetLight hover:bg-primary/5 ',
               (isMailSelected || isMailBulkSelected || isKeyboardFocused) &&
                 'border-border bg-primary/5 opacity-100',
               isKeyboardFocused && 'ring-primary/50',
