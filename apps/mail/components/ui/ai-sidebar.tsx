@@ -150,11 +150,11 @@ function ChatHeader({
               <Tooltip>
                 <TooltipTrigger asChild className="md:h-fit md:px-2">
                   <div>
-                    <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+                    <Gauge value={20 - chatMessages.remaining!} size="small" showValue={true} />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+                  <p>You've used {20 - chatMessages.remaining!} out of 20 chat messages.</p>
                   <p className="mb-2">Upgrade for unlimited messages!</p>
                   <Button
                     onClick={(e) => {

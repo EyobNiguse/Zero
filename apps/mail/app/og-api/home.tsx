@@ -1,30 +1,10 @@
-import { ImageResponse } from 'workers-og';
+import { ImageResponse, loadGoogleFont } from 'workers-og';
+import mail from '../../public/white-icon.svg?url';
 
 export async function loader() {
-  async function loadGoogleFont(font: string, weight: string) {
-    const url = `https://fonts.googleapis.com/css2?family=${font}:wght@${weight}&display=swap`;
-    const css = await (await fetch(url)).text();
-    const resource = css.match(/src: url\((.+)\) format\('(opentype|truetype)'\)/);
-
-    if (resource?.[1]) {
-      const response = await fetch(resource[1]);
-      if (response.status === 200) {
-        return await response.arrayBuffer();
-      }
-    }
-
-    throw new Error('failed to load font data');
-  }
-
   try {
-    const mailBuffer = await fetch(
-      new URL(`${import.meta.env.VITE_PUBLIC_APP_URL}/white-icon.svg`),
-    ).then((res) => res.arrayBuffer());
-    const mailBase64 = Buffer.from(mailBuffer).toString('base64');
-    const mail = `data:image/svg+xml;base64,${mailBase64}`;
-
-    const fontWeight400 = await loadGoogleFont('Geist', '400');
-    const fontWeight600 = await loadGoogleFont('Geist', '600');
+    const fontWeight400 = await loadGoogleFont({ family: 'Geist', weight: 400 });
+    const fontWeight600 = await loadGoogleFont({ family: 'Geist', weight: 600 });
 
     return new ImageResponse(
       (

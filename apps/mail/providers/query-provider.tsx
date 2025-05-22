@@ -3,14 +3,13 @@ import {
   type PersistedClient,
   type Persister,
 } from '@tanstack/react-query-persist-client';
+import { QueryCache, QueryClient, hashKey, type InfiniteData } from '@tanstack/react-query';
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client';
-import { QueryCache, QueryClient, hashKey } from '@tanstack/react-query';
-import { useSession, type Session, signOut } from '@/lib/auth-client';
 import { createTRPCContext } from '@trpc/tanstack-react-query';
+import { useMemo, type PropsWithChildren } from 'react';
 import type { AppRouter } from '@zero/server/trpc';
 import { CACHE_BURST_KEY } from '@/lib/constants';
-import type { PropsWithChildren } from 'react';
-import { useState, useEffect } from 'react';
+import { signOut } from '@/lib/auth-client';
 import { get, set, del } from 'idb-keyval';
 import superjson from 'superjson';
 import { toast } from 'sonner';
@@ -29,7 +28,7 @@ function createIDBPersister(idbValidKey: IDBValidKey = 'zero-query-cache') {
   } satisfies Persister;
 }
 
-export const makeQueryClient = (session: Session | null, connectionId: string | null) =>
+export const makeQueryClient = (connectionId: string | null) =>
   new QueryClient({
     queryCache: new QueryCache({
       onError: (err, { meta }) => {
@@ -51,13 +50,7 @@ export const makeQueryClient = (session: Session | null, connectionId: string | 
       queries: {
         retry: false,
         refetchOnWindowFocus: false,
-        queryKeyHashFn: (queryKey) =>
-          hashKey([
-            session
-              ? { userId: session.user.id, connectionId }
-              : { userId: null, connectionId: null },
-            ...queryKey,
-          ]),
+        queryKeyHashFn: (queryKey) => hashKey([{ connectionId }, ...queryKey]),
         gcTime: 1000 * 60 * 60 * 24,
       },
       mutations: {
@@ -67,36 +60,26 @@ export const makeQueryClient = (session: Session | null, connectionId: string | 
   });
 
 let browserQueryClient = {
-  queryClient: undefined,
-  session: null,
-  activeConnection: null,
+  queryClient: null,
+  activeConnectionId: null,
 } as {
-  queryClient: QueryClient | undefined;
-  session: Session | null;
-  activeConnection: { id: string } | null;
+  queryClient: QueryClient | null;
+  activeConnectionId: string | null;
 };
 
-const getQueryClient = (session: Session | null, connectionId: string | null) => {
+const getQueryClient = (connectionId: string | null) => {
   if (typeof window === 'undefined') {
-    return makeQueryClient(session, connectionId);
+    return makeQueryClient(connectionId);
   } else {
-    if (
-      !browserQueryClient.queryClient ||
-      !browserQueryClient.session ||
-      browserQueryClient.session.user.id !== session?.user.id ||
-      browserQueryClient.activeConnection?.id !== connectionId
-    ) {
-      browserQueryClient.queryClient = makeQueryClient(session, connectionId);
-      browserQueryClient.session = session;
-      browserQueryClient.activeConnection = connectionId ? { id: connectionId } : null;
+    if (!browserQueryClient.queryClient || browserQueryClient.activeConnectionId !== connectionId) {
+      browserQueryClient.queryClient = makeQueryClient(connectionId);
+      browserQueryClient.activeConnectionId = connectionId;
     }
     return browserQueryClient.queryClient;
   }
 };
 
-const getUrl = () => {
-  return import.meta.env.VITE_PUBLIC_BACKEND_URL + '/api/trpc';
-};
+const getUrl = () => import.meta.env.VITE_PUBLIC_BACKEND_URL + '/api/trpc';
 
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 
@@ -112,51 +95,50 @@ export const trpcClient = createTRPCClient<AppRouter>({
         fetch(url, { ...options, credentials: 'include' }).then((res) => {
           const currentPath = new URL(window.location.href).pathname;
           const redirectPath = res.headers.get('X-Zero-Redirect');
-
-          if (!!redirectPath && redirectPath !== currentPath) {
-            window.location.href = redirectPath;
-          }
-
+          if (!!redirectPath && redirectPath !== currentPath) window.location.href = redirectPath;
           return res;
         }),
     }),
   ],
 });
 
-export function QueryProvider({ children }: PropsWithChildren) {
-  const { data } = useSession();
-  const [activeConnection, setActiveConnection] = useState<{ id: string } | null>(null);
+type TrpcHook = ReturnType<typeof useTRPC>;
 
-  useEffect(() => {
-    if (!data) {
-      setActiveConnection(null);
-      return;
-    }
-
-    const fetchActiveConnection = async () => {
-      try {
-        const result = await trpcClient.connections.getDefault.query();
-        if (result?.id) {
-          setActiveConnection({ id: result.id });
-        }
-      } catch (error) {
-        console.error('Failed to fetch active connection:', error);
-        setActiveConnection(null);
-      }
-    };
-
-    fetchActiveConnection();
-  }, [data]);
-
-  const queryClient = getQueryClient(data ?? null, activeConnection?.id ?? null);
+export function QueryProvider({
+  children,
+  connectionId,
+}: PropsWithChildren<{ connectionId: string | null }>) {
+  const persister = useMemo(
+    () => createIDBPersister(`zero-query-cache-${connectionId ?? 'default'}`),
+    [connectionId],
+  );
+  const queryClient = useMemo(() => getQueryClient(connectionId), [connectionId]);
 
   return (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        persister: createIDBPersister(),
+        persister,
         buster: CACHE_BURST_KEY,
         maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      }}
+      onSuccess={() => {
+        const threadQueryKey = [['mail', 'listThreads'], { type: 'infinite' }];
+        queryClient.setQueriesData(
+          { queryKey: threadQueryKey },
+          (data: InfiniteData<TrpcHook['mail']['listThreads']['~types']['output']>) => {
+            if (!data) return data;
+            // We only keep few pages of threads in the cache before we invalidate them
+            // invalidating will attempt to refetch every page that was in cache, if someone have too many pages in cache, it will refetch every page every time
+            // We don't want that, just keep like 3 pages (20 * 3 = 60 threads) in cache
+            return {
+              pages: data.pages.slice(0, 3),
+              pageParams: data.pageParams.slice(0, 3),
+            };
+          },
+        );
+        // invalidate the query, it will refetch when the data is it is being accessed
+        queryClient.invalidateQueries({ queryKey: threadQueryKey });
       }}
     >
       <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
