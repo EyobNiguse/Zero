@@ -125,7 +125,11 @@ function ChatHeader({
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={onToggleViewMode} variant="ghost" className="md:h-fit md:px-2 hidden md:flex">
+                  <Button
+                    onClick={onToggleViewMode}
+                    variant="ghost"
+                    className="hidden md:flex md:h-fit md:px-2"
+                  >
                     {isPopup ? (
                       <PanelLeftOpen className="dark:fill-iconDark fill-iconLight" />
                     ) : (
@@ -540,6 +544,7 @@ function AISidebar({ className }: AISidebarProps) {
               isPopup && !isFullScreen && 'md:flex',
               isFullScreen && '!inset-0 !flex !p-0 !opacity-100 !backdrop-blur-none',
               'rounded-2xl focus:opacity-100',
+              'focus:opacity-100',
             )}
           >
             <div
