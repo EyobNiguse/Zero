@@ -221,7 +221,7 @@ const AutoLabelingSettings = () => {
             checked={brainState?.enabled}
            
           />
-           <span className="text-muted-foreground text-xs">Auto label</span>
+           <span className="text-muted-foreground text-xs cursor-pointer">Auto label</span>
         </div>
       </DialogTrigger>
       <DialogContent showOverlay className="max-w-2xl">
@@ -447,7 +447,7 @@ export function MailLayout() {
                       ) : null}
                     </div>
                     <AutoLabelingSettings />
-                    <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}                    <Button
+                    <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7] ml-2" />{' '}                    <Button
                       onClick={() => {
                         refetchThreads();
                       }}
