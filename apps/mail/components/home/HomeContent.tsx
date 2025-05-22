@@ -50,10 +50,10 @@ import { Balancer } from 'react-wrap-balancer';
 import { Input } from '@/components/ui/input';
 import { Command, Menu } from 'lucide-react';
 import { Separator } from '../ui/separator';
-import { signIn } from '@/lib/auth-client';
+import { signIn, useSession } from '@/lib/auth-client';
 import { useForm } from 'react-hook-form';
 import { useTheme } from 'next-themes';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Footer from './footer';
@@ -110,7 +110,7 @@ const aboutLinks = [
     href: '/about',
     description: 'Learn more about Zero and our mission.',
   },
-  
+
   {
     title: 'Privacy',
     href: '/privacy',
@@ -133,6 +133,8 @@ export default function HomeContent() {
   const [open, setOpen] = useState(false);
   const { setTheme } = useTheme();
   const ref = useRef(null);
+  const { data: session } = useSession();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setTheme('dark');
@@ -169,12 +171,15 @@ export default function HomeContent() {
   return (
     <main className="relative flex h-full flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
-        className="z-1 absolute top-[-40px] left-1/2 h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover "
-        style={{ mixBlendMode: 'screen', maskImage: 'linear-gradient(to bottom, black, transparent)' }}
+        className="z-1 absolute left-1/2 top-[-40px] h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover"
+        style={{
+          mixBlendMode: 'screen',
+          maskImage: 'linear-gradient(to bottom, black, transparent)',
+        }}
       />
       {/* Desktop Navigation - Hidden on mobile */}
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
-        <nav className="border-input/50 bg-[#1E1E1E] flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
+        <nav className="border-input/50 flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t bg-[#1E1E1E] p-2 px-4">
           <div className="flex items-center gap-6">
             <Link to="/" className="relative bottom-1 cursor-pointer">
               <img src="white-icon.svg" alt="Zero Email" width={22} height={22} />
@@ -225,26 +230,27 @@ export default function HomeContent() {
           </div>
           <div className="flex gap-2">
             <Button
-              variant="ghost"
-              className="h-8"
+              className="h-8 bg-white text-black hover:bg-white hover:text-black"
               onClick={() => {
-                toast.promise(
-                  signIn.social({
-                    provider: 'google',
-                    callbackURL: `${window.location.origin}/mail`,
-                  }),
-                  {
-                    error: 'Login redirect failed',
-                  },
-                );
+                if (session) {
+                  // User is logged in, redirect to inbox
+                  navigate('/mail/inbox');
+                } else {
+                  // User is not logged in, show sign-in dialog
+                  toast.promise(
+                    signIn.social({
+                      provider: 'google',
+                      callbackURL: `${window.location.origin}/mail`,
+                    }),
+                    {
+                      error: 'Login redirect failed',
+                    },
+                  );
+                }
               }}
             >
               Sign in
             </Button>
-
-            <a target="_blank" href="https://cal.com/team/0">
-              <Button className="h-8 font-medium">Contact Us</Button>
-            </a>
           </div>
         </nav>
       </header>
@@ -268,7 +274,9 @@ export default function HomeContent() {
             </SheetHeader>
             <div className="mt-8 flex flex-col space-y-3">
               <div className="space-y-3">
-                <Link href="/pricing" className='mt-2'>Pricing</Link>
+                <Link href="/pricing" className="mt-2">
+                  Pricing
+                </Link>
                 {aboutLinks.map((link) => (
                   <a key={link.title} href={link.href} className="block font-medium">
                     {link.title}
@@ -364,9 +372,8 @@ export default function HomeContent() {
           >
             Get Started
           </Button>
-          
         </motion.div>
-        <p className="text-[#B7B7B7]/60 text-xs mt-2 ml-0.5">No credit card required. </p>
+        <p className="ml-0.5 mt-2 text-xs text-[#B7B7B7]/60">No credit card required. </p>
       </section>
 
       <section className="relative mt-10 hidden flex-col justify-center md:flex">
