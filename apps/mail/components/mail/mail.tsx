@@ -43,6 +43,7 @@ import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import AISidebar from '@/components/ui/ai-sidebar';
 import { cleanSearchValue, cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 import { useThreads } from '@/hooks/use-threads';
 import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -207,20 +208,21 @@ const AutoLabelingSettings = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          disabled={isEnablingBrain || isDisablingBrain}
-          variant="outline"
-          size={'sm'}
-          className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
-        >
-          <div
+        <div className="flex items-center gap-2">
+          {/* <div
             className={cn(
               'h-2 w-2 animate-pulse rounded-full',
               brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
             )}
+          /> */}
+         
+          <Switch
+            disabled={isEnablingBrain || isDisablingBrain}
+            checked={brainState?.enabled}
+           
           />
-          Auto Labeling
-        </Button>
+           <span className="text-muted-foreground text-xs">Auto label</span>
+        </div>
       </DialogTrigger>
       <DialogContent showOverlay className="max-w-2xl">
         <DialogHeader>
@@ -445,7 +447,7 @@ export function MailLayout() {
                       ) : null}
                     </div>
                     <AutoLabelingSettings />
-                    <Button
+                    <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}                    <Button
                       onClick={() => {
                         refetchThreads();
                       }}

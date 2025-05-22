@@ -236,7 +236,7 @@ export function AIChat({
                         'flex w-fit flex-col gap-2 rounded-lg text-sm',
                         message.role === 'user'
                           ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
-                          : 'overflow-wrap-anywhere dark:bg-sidebar mr-auto break-words border bg-[#f0f0f0] p-2',
+                          : 'overflow-wrap-anywhere dark:bg-sidebar mr-auto break-words p-2',
                       )}
                     >
                       {textParts.map(
@@ -281,7 +281,7 @@ export function AIChat({
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask Zero to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 focus:ring-0 ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
                   />
                   {status === 'ready' ? (
                     <button
@@ -291,7 +291,7 @@ export function AIChat({
                       disabled={!input.trim() || !chatMessages.enabled}
                     >
                       <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-[#262626] px-1 pr-0.5">
-                        <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
+                        <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-[#929292]" />
                       </div>
                     </button>
                   ) : (
@@ -300,8 +300,8 @@ export function AIChat({
                       type="button"
                       className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
                     >
-                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-[#262626] px-1">
-                        <Stop className="h-4 w-4 fill-black dark:fill-[#929292]" />
+                      <div className=" flex h-5 items-center justify-center gap-1 rounded-sm px-1">
+                        <Stop className="h-4 w-4 fill-[#DE5555]" />
                       </div>
                     </button>
                   )}
