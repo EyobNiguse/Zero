@@ -183,10 +183,8 @@ export function AIChat({
 
   return (
     <div className={cn('flex h-full flex-col', isFullScreen ? 'mx-auto max-w-xl' : '')}>
-      <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
-        <div className="min-h-full space-y-4 px-2 py-4">
       <div className="no-scrollbar flex-1 overflow-y-auto" ref={messagesContainerRef}>
-        <div className="min-h-full space-y-4 px-4 py-4">
+        <div className="min-h-full space-y-4 px-2 py-4">
           {chatMessages && !chatMessages.enabled ? (
             <PricingDialog>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
