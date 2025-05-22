@@ -262,7 +262,7 @@ export default function PricingCard() {
           >
             <div className="flex items-center justify-center gap-2.5 px-1">
               <div className="justify-start text-center font-semibold leading-none text-black">
-                Get Zero Pro
+                Start free trial
               </div>
             </div>
           </button>

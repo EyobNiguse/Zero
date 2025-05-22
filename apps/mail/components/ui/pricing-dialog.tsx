@@ -10,6 +10,8 @@ import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { PricingSwitch } from './pricing-switch';
+import { Badge } from './badge';
 import { toast } from 'sonner';
 import { useQueryState } from 'nuqs';
 
@@ -22,7 +24,10 @@ interface PricingDialogProps {
 export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, children }: PricingDialogProps) {
   const { attach } = useBilling();
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(false);
   const [pricingDialog, setPricingDialog] = useQueryState('pricingDialog');
+  const monthlyPrice = 20;
+  const annualPrice = monthlyPrice * 0.5; // 50% off for annual billing
   const isControlled = propOpen !== undefined;
   const open = isControlled ? propOpen : pricingDialog === 'true';
 
@@ -44,10 +49,11 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
       setIsLoading(true);
       toast.promise(
         attach({
-          productId: 'pro-example',
+          productId: isAnnual ? 'pro_annual' : 'pro-example',
           successUrl: `${window.location.origin}/mail/inbox?success=true`,
         }),
         {
+          success: 'Redirecting to payment...',
           error: 'Failed to process upgrade. Please try again later.',
           finally: () => setIsLoading(false),
         },
@@ -88,20 +94,30 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
           </div>
           <div className="relative bottom-[50px] z-10 flex flex-col items-start justify-start gap-5 self-stretch md:bottom-[55px] lg:bottom-[37px]">
             <div className="flex flex-col items-start justify-start gap-4 self-stretch">
-              <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-[#B183FF] p-2">
-                <div className="relative h-6 w-6">
-                  <img height={24} width={24} src="/zap.svg" alt="hi" />
+              <div className="flex w-full items-center justify-between">
+                <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-[#B183FF] p-2">
+                  <div className="relative h-6 w-6">
+                    <img height={24} width={24} src="/zap.svg" alt="hi" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <PricingSwitch onCheckedChange={(checked) => setIsAnnual(checked)} />
+                  <p className="text-sm text-white/70">Billed Annually</p>
+                  <Badge className="border border-[#656565] bg-[#3F3F3F] text-white">Save 50%</Badge>
                 </div>
               </div>
 
               <div className="flex flex-col items-start justify-start gap-2 self-stretch">
                 <div className="inline-flex items-end justify-start gap-1 self-stretch">
                   <div className="justify-center text-4xl font-semibold leading-10 text-white">
-                    $20
+                    ${isAnnual ? annualPrice : monthlyPrice}
+                    {isAnnual && (
+                      <span className="ml-2 text-base font-normal text-white/40 line-through">${monthlyPrice}</span>
+                    )}
                   </div>
                   <div className="flex items-center justify-center gap-2.5 pb-0.5">
                     <div className="justify-center text-sm font-medium leading-tight text-white/40">
-                      /MONTH
+                      / MONTH
                     </div>
                   </div>
                 </div>
@@ -116,7 +132,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
             <div className="h-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white/10"></div>
             <div className="flex flex-col items-start justify-start gap-2.5 self-stretch">
               <div className="inline-flex items-center justify-start gap-2.5">
-                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-white/10 p-[5px]">
+                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-[#1F1F1F] dark:bg-white/10 p-[5px]">
                   <PurpleThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
@@ -124,7 +140,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
                 </div>
               </div>
               <div className="inline-flex items-center justify-start gap-2.5">
-                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-white/10 p-[5px]">
+                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-[#1F1F1F] dark:bg-white/10 p-[5px]">
                   <PurpleThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
@@ -132,7 +148,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
                 </div>
               </div>
               <div className="inline-flex items-center justify-start gap-2.5">
-                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-white/10 p-[5px]">
+                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-[#1F1F1F] dark:bg-white/10 p-[5px]">
                   <PurpleThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
@@ -140,7 +156,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
                 </div>
               </div>
               <div className="inline-flex items-center justify-start gap-2.5">
-                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-white/10 p-[5px]">
+                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-[#1F1F1F] dark:bg-white/10 p-[5px]">
                   <PurpleThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
@@ -148,7 +164,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
                 </div>
               </div>
               <div className="inline-flex items-center justify-start gap-2.5">
-                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-white/10 p-[5px]">
+                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-[#1F1F1F] dark:bg-white/10 p-[5px]">
                   <PurpleThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
@@ -156,7 +172,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
                 </div>
               </div>
               <div className="inline-flex items-center justify-start gap-2.5">
-                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-white/10 p-[5px]">
+                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-[#1F1F1F] dark:bg-white/10 p-[5px]">
                   <PurpleThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
@@ -164,7 +180,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
                 </div>
               </div>
               <div className="inline-flex items-center justify-start gap-2.5">
-                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-white/10 p-[5px]">
+                <div className="flex h-5 w-5 items-start justify-start gap-3 rounded-[125px] bg-[#1F1F1F] dark:bg-white/10 p-[5px]">
                   <PurpleThickCheck className="relative left-[1px] top-[1px]" />
                 </div>
                 <div className="justify-center text-sm font-normal leading-normal text-white lg:text-base">
@@ -180,7 +196,7 @@ export function PricingDialog({ open: propOpen, onOpenChange: propOnOpenChange, 
           >
             <div className="flex items-center justify-center gap-2.5 px-1">
               <div className="justify-start text-center font-semibold leading-none text-black">
-                {isLoading ? 'Processing...' : 'Get Zero Pro'}
+                {isLoading ? 'Processing...' : 'Start free trial'}
               </div>
             </div>
           </button>

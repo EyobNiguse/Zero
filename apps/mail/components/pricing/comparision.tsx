@@ -280,7 +280,7 @@ export default function Comparision() {
               >
                 <div className="flex items-center justify-center">
                   <div className="justify-start text-center text-base font-semibold leading-none text-white/80">
-                    Get Zero Pro
+                    Start free trial
                   </div>
                 </div>
               </button>
