@@ -429,7 +429,7 @@ export function NavMain({ items }: NavMainProps) {
               </div>
 
               <div className="mr-0 flex-1 pr-0">
-                <div className="bg-background relative -m-2 flex-1 overflow-auto">
+                <div className="bg-background relative -m-2 flex-1 max-h-48 overflow-auto hide-scrollbar">
                   <Tree className="bg-background rounded-md">
                     {(() => {
                       if (!data) return null;
