@@ -1,5 +1,5 @@
+import { ImageResponse, loadGoogleFont } from 'workers-og';
 import type { Route } from './+types/create';
-import { ImageResponse } from 'workers-og';
 
 export async function loader({ request }: Route.LoaderArgs) {
   // Get URL parameters
@@ -10,23 +10,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Use the email directly
   const recipient = toParam;
 
-  // Load fonts
-  async function loadGoogleFont(font: string, weight: string) {
-    const url = `https://fonts.googleapis.com/css2?family=${font}:wght@${weight}&display=swap`;
-    const css = await (await fetch(url)).text();
-    const resource = css.match(/src: url\((.+)\) format\('(opentype|truetype)'\)/);
-
-    // Check if resource and the captured group exist
-    if (resource?.[1]) {
-      const response = await fetch(resource[1]);
-      if (response.status === 200) {
-        return await response.arrayBuffer();
-      }
-    }
-
-    throw new Error('failed to load font data');
-  }
-
   // Use a simple embedded SVG for the Zero logo instead of trying to load from file
   const logoSvg = `<svg width="191" height="191" viewBox="0 0 191 191" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M38.125 190.625V152.5H0V38.125H38.125V0H152.5V38.125H190.625V152.5H152.5V190.625H38.125ZM38.125 114.375H76.25V150.975H152.5V76.25H114.375V114.375H76.25V76.25H114.375V39.65H38.125V114.375Z" fill="white"/>
@@ -34,8 +17,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const logoDataUrl = `data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}`;
 
-  const fontWeight400 = await loadGoogleFont('Geist', '400');
-  const fontWeight600 = await loadGoogleFont('Geist', '600');
+  const fontWeight400 = await loadGoogleFont({ family: 'Geist', weight: 400 });
+  const fontWeight600 = await loadGoogleFont({ family: 'Geist', weight: 600 });
 
   return new ImageResponse(
     (
