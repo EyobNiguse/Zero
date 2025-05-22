@@ -44,16 +44,16 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { signIn, useSession } from '@/lib/auth-client';
 import { useInView, motion } from 'motion/react';
+import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Balancer } from 'react-wrap-balancer';
 import { Input } from '@/components/ui/input';
 import { Command, Menu } from 'lucide-react';
 import { Separator } from '../ui/separator';
-import { signIn, useSession } from '@/lib/auth-client';
 import { useForm } from 'react-hook-form';
 import { useTheme } from 'next-themes';
-import { Link, useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Footer from './footer';
@@ -274,7 +274,7 @@ export default function HomeContent() {
             </SheetHeader>
             <div className="mt-8 flex flex-col space-y-3">
               <div className="space-y-3">
-                <Link href="/pricing" className="mt-2">
+                <Link to="/pricing" className="mt-2">
                   Pricing
                 </Link>
                 {aboutLinks.map((link) => (
@@ -981,7 +981,7 @@ export default function HomeContent() {
                 <div className="absolute left-0 top-[121px] inline-flex w-[650px] flex-col items-start justify-start gap-4 overflow-hidden rounded-3xl border border-[#8B5CF6] bg-[#2A1D48] p-6 outline outline-[#3F325F]">
                   <div className="inline-flex items-center justify-start gap-1.5">
                     <div className="relative h-3.5 w-3.5">
-                      <img src="/star.svg" alt="AI Summary" width={16} height={16} className="" />
+                      <img src="/star.svg" alt="AI Summary" width={16} height={16} />
                     </div>
                     <div className="flex items-center justify-start gap-1 text-xs leading-3 text-[#948CA4]">
                       AI Summary
@@ -1510,7 +1510,7 @@ export default function HomeContent() {
                     <div className="flex h-8 flex-1 items-center justify-start gap-1.5 overflow-hidden rounded-md bg-[#141414] pl-2.5 pr-1">
                       <div className="relative h-3 w-px rounded-full bg-white" />
                       <div className="flex-1 justify-start text-sm leading-none text-[#727272]">
-                        Ask AI to do anything...
+                        Ask Zero to do anything...
                       </div>
                       <div className="flex h-6 items-center justify-center gap-2.5 rounded bg-[#262626] px-1">
                         <CurvedArrow className="relative left-[1px] mt-1 h-4 w-4 fill-black dark:fill-[#929292]" />

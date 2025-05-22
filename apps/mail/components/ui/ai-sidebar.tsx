@@ -539,6 +539,7 @@ function AISidebar({ className }: AISidebarProps) {
               'md:hidden',
               isPopup && !isFullScreen && 'md:flex',
               isFullScreen && '!inset-0 !flex !p-0 !opacity-100 !backdrop-blur-none',
+              'rounded-2xl focus:opacity-100',
             )}
           >
             <div
@@ -582,21 +583,3 @@ function AISidebar({ className }: AISidebarProps) {
 }
 
 export default AISidebar;
-
-// Add this style to the file to hide scrollbars
-const noScrollbarStyle = `
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-`;
-
-if (typeof document !== 'undefined') {
-  // Add the style to the document head when on client
-  const style = document.createElement('style');
-  style.innerHTML = noScrollbarStyle;
-  document.head.appendChild(style);
-}

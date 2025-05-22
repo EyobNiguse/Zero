@@ -183,7 +183,7 @@ export function AIChat({
 
   return (
     <div className={cn('flex h-full flex-col', isFullScreen ? 'mx-auto max-w-xl' : '')}>
-      <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
+      <div className="no-scrollbar flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
             <PricingDialog>
@@ -222,9 +222,6 @@ export function AIChat({
               const toolParts = message.parts.filter((part) => part.type === 'tool-invocation');
               return (
                 <div key={`${message.id}-${index}`} className="flex flex-col gap-2">
-                  {/* Text in chat bubble */}
-
-                  {/* Threads below the bubble */}
                   {toolParts.map((part, idx) =>
                     part.toolInvocation &&
                     'result' in part.toolInvocation &&
@@ -283,7 +280,7 @@ export function AIChat({
                     readOnly={!chatMessages.enabled}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask AI to do anything..."
+                    placeholder="Ask Zero to do anything..."
                     className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
                   />
                   {status === 'ready' ? (

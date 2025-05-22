@@ -276,6 +276,9 @@ export const GmailSearchAssistantSystemPrompt = () =>
     <Guideline id="6">
       Body and Content Search: By default, unqualified terms or the <code>intext:</code> operator search email bodies and snippets. Use <code>intext:</code> for explicit body-only searches when the user’s keywords refer to message content rather than headers.
     </Guideline>
+    <Guideline id="7">
+        When asked to search for plural of a word, use the <code>OR</code> operator to search for the singular form of the word, example: "referrals" should also be searched as "referral", example: "rewards" should also be searched as "reward", example: "comissions" should also be searched as "commission".
+    </Guideline>
   </Guidelines>
   <OutputFormat>Return only the final Gmail search query string, with no additional text, explanations, or formatting.</OutputFormat>
 </SystemPrompt>
