@@ -1,4 +1,5 @@
 import { useActiveConnection, useConnections } from '@/hooks/use-connections';
+import { LabelSidebarContextMenu } from '../context/label-sidebar-context';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useSidebar } from '../context/sidebar-context';
 import type { Label as LabelType } from '@/types';
@@ -7,7 +8,7 @@ import { useNavigate } from 'react-router';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-export const RecursiveFolder = ({ label }: { label: any }) => {
+export const RecursiveFolder = ({ label, activeAccount }: { label: any; activeAccount?: any }) => {
   const [searchValue, setSearchValue] = useSearchValue();
   const isActive = searchValue.value.includes(`label:${label.name}`);
   const isFolderActive = isActive || window.location.pathname.includes(`/mail/label/${label.id}`);
@@ -39,11 +40,6 @@ export const RecursiveFolder = ({ label }: { label: any }) => {
     [searchValue, setSearchValue],
   );
 
-  const activeAccount = React.useMemo(() => {
-    if (!activeConnection?.id || !connections?.connections) return null;
-    return connections.connections.find((connection) => connection.id === activeConnection?.id);
-  }, [activeConnection?.id, connections?.connections]);
-
   const handleFolderClick = useCallback(
     (id: string) => {
       if (!activeAccount) return;
@@ -70,17 +66,23 @@ export const RecursiveFolder = ({ label }: { label: any }) => {
   const hasChildren = label.labels && label.labels.length > 0;
 
   return (
-    <Folder
-      element={label.name}
-      value={label.id}
+    <LabelSidebarContextMenu
+      labelId={label.id}
       key={label.id}
-      hasChildren={hasChildren}
-      onFolderClick={handleFolderClick}
-      isSelect={isFolderActive}
+      hide={activeAccount?.providerId === 'microsoft' || hasChildren}
     >
-      {label.labels?.map((childLabel: any) => (
-        <RecursiveFolder key={childLabel.id} label={childLabel} />
-      ))}
-    </Folder>
+      <Folder
+        element={label.name}
+        value={label.id}
+        key={label.id}
+        hasChildren={hasChildren}
+        onFolderClick={handleFolderClick}
+        isSelect={isFolderActive}
+      >
+        {label.labels?.map((childLabel: any) => (
+          <RecursiveFolder key={childLabel.id} label={childLabel} />
+        ))}
+      </Folder>
+    </LabelSidebarContextMenu>
   );
 };
