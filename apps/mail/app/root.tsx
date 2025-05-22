@@ -12,6 +12,7 @@ import {
 import { ClientProviders } from '@/providers/client-providers';
 import { ServerProviders } from '@/providers/server-providers';
 import { useEffect, type PropsWithChildren } from 'react';
+import { getServerTrpc } from '@/lib/trpc.server';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/lib/site-config';
 import { resolveLocale } from '@/i18n/request';
@@ -37,14 +38,22 @@ export const meta: MetaFunction = () => {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const locale = resolveLocale(request);
+  const trpc = getServerTrpc(request);
+
+  const connectionId = await trpc.connections.getDefault
+    .query()
+    .then((res) => res?.id)
+    .catch(() => null);
+
   return {
     locale,
     messages: await getMessages(locale),
+    connectionId,
   };
 }
 
 export function Layout({ children }: PropsWithChildren) {
-  const { locale, messages } = useLoaderData<typeof loader>();
+  const { locale, messages, connectionId } = useLoaderData<typeof loader>();
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
@@ -54,7 +63,7 @@ export function Layout({ children }: PropsWithChildren) {
         <Links />
       </head>
       <body className="antialiased">
-        <ServerProviders messages={messages} locale={locale}>
+        <ServerProviders messages={messages} locale={locale} connectionId={connectionId}>
           <ClientProviders>{children}</ClientProviders>
         </ServerProviders>
         <ScrollRestoration />
