@@ -436,7 +436,11 @@ export function NavMain({ items }: NavMainProps) {
                       const isMicrosoftAccount = activeAccount?.providerId === 'microsoft';
                       if (isMicrosoftAccount) {
                         return data?.map((label) => (
-                          <RecursiveFolder key={label.id} label={label} />
+                          <RecursiveFolder
+                            key={label.id}
+                            label={label}
+                            activeAccount={activeAccount}
+                          />
                         ));
                       }
 
@@ -475,7 +479,11 @@ export function NavMain({ items }: NavMainProps) {
                             })),
                           };
                           components.push(
-                            <RecursiveFolder key={groupFolder.id} label={groupFolder} />,
+                            <RecursiveFolder
+                              key={groupFolder.id}
+                              label={groupFolder}
+                              activeAccount={activeAccount}
+                            />,
                           );
                         });
 
@@ -489,6 +497,7 @@ export function NavMain({ items }: NavMainProps) {
                                 name: label.name,
                                 originalLabel: label,
                               }}
+                              activeAccount={activeAccount}
                             />,
                           );
                         });
@@ -505,7 +514,11 @@ export function NavMain({ items }: NavMainProps) {
                           })),
                         };
                         components.push(
-                          <RecursiveFolder key={bracketsFolder.id} label={bracketsFolder} />,
+                          <RecursiveFolder
+                            key={bracketsFolder.id}
+                            label={bracketsFolder}
+                            activeAccount={activeAccount}
+                          />,
                         );
                       }
 
