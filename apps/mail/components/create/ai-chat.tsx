@@ -183,19 +183,17 @@ export function AIChat({
 
   return (
     <div className={cn('flex h-full flex-col', isFullScreen ? 'mx-auto max-w-xl' : '')}>
-      <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
-        <div className="min-h-full space-y-4 px-4 py-4">
+      <div className="no-scrollbar flex-1 overflow-y-auto" ref={messagesContainerRef}>
+        <div className="min-h-full space-y-4 px-2 py-4">
           {chatMessages && !chatMessages.enabled ? (
-              <PricingDialog>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <TextShimmer className="text-center text-xl font-medium">
-                    Upgrade to Zero Pro for unlimited AI chats
-                  </TextShimmer>
-                  <Button className="mt-2 h-8 w-52">
-                    Upgrade
-                  </Button>
-                </div>
-              </PricingDialog>
+            <PricingDialog>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <TextShimmer className="text-center text-xl font-medium">
+                  Upgrade to Zero Pro for unlimited AI chats
+                </TextShimmer>
+                <Button className="mt-2 h-8 w-52">Upgrade</Button>
+              </div>
+            </PricingDialog>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative mb-4 h-[44px] w-[44px]">
@@ -224,9 +222,6 @@ export function AIChat({
               const toolParts = message.parts.filter((part) => part.type === 'tool-invocation');
               return (
                 <div key={`${message.id}-${index}`} className="flex flex-col gap-2">
-                  {/* Text in chat bubble */}
-
-                  {/* Threads below the bubble */}
                   {toolParts.map((part, idx) =>
                     part.toolInvocation &&
                     'result' in part.toolInvocation &&
@@ -238,10 +233,10 @@ export function AIChat({
                   {textParts.length > 0 && (
                     <div
                       className={cn(
-                        'flex w-fit flex-col gap-2 rounded-xl text-sm shadow',
+                        'flex w-fit flex-col gap-2 rounded-lg text-sm',
                         message.role === 'user'
-                          ? 'overflow-wrap-anywhere text-subtleWhite dark:text-offsetDark ml-auto break-words bg-[#313131] p-2 dark:bg-[#f0f0f0]'
-                          : 'overflow-wrap-anywhere dark:bg-sidebar mr-auto break-words border bg-[#f0f0f0] p-2',
+                          ? 'overflow-wrap-anywhere text-offsetDark dark:text-subtleWhite ml-auto break-words bg-[#f0f0f0] px-2 py-1 dark:bg-[#252525]'
+                          : 'overflow-wrap-anywhere mr-auto break-words p-2',
                       )}
                     >
                       {textParts.map(
@@ -256,7 +251,7 @@ export function AIChat({
           )}
           <div ref={messagesEndRef} />
 
-          {status === 'submitted' && (
+          {(status === 'submitted' || status === 'streaming') && (
             <div className="flex flex-col gap-2 rounded-lg">
               <div className="flex items-center gap-2">
                 <TextShimmer className="text-muted-foreground text-sm">
@@ -273,7 +268,7 @@ export function AIChat({
 
       {/* Fixed input at bottom */}
       <div className={cn('mb-4 flex-shrink-0 px-4', isFullScreen ? 'px-0' : '')}>
-        <div className="bg-offsetLight border-border/50 relative rounded-lg dark:bg-[#141414]">
+        <div className="bg-offsetLight relative rounded-lg dark:bg-[#141414]">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
           ) : (
@@ -285,8 +280,8 @@ export function AIChat({
                     readOnly={!chatMessages.enabled}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask AI to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
+                    placeholder="Ask Zero to do anything..."
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm ring-0 focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
                   />
                   {status === 'ready' ? (
                     <button
@@ -295,8 +290,8 @@ export function AIChat({
                       className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
                       disabled={!input.trim() || !chatMessages.enabled}
                     >
-                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
-                        <CurvedArrow className="mt-1.5 h-4 w-4 fill-black dark:fill-[#929292]" />
+                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-[#262626] px-1 pr-0.5">
+                        <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-[#929292]" />
                       </div>
                     </button>
                   ) : (
@@ -305,8 +300,8 @@ export function AIChat({
                       type="button"
                       className="absolute right-1 top-1/2 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg"
                     >
-                      <div className="dark:bg[#141414] flex h-5 items-center justify-center gap-1 rounded-sm bg-black/10 px-1">
-                        <Stop className="h-4 w-4 fill-black dark:fill-[#929292]" />
+                      <div className="flex h-5 items-center justify-center gap-1 rounded-sm px-1">
+                        <Stop className="h-4 w-4 fill-[#DE5555]" />
                       </div>
                     </button>
                   )}

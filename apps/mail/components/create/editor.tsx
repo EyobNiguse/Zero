@@ -478,7 +478,7 @@ export default function Editor({
             }),
           ]}
           ref={containerRef}
-          className="hide-scrollbar relative max-h-[500px] min-h-[220px] cursor-text overflow-auto"
+          className="no-scrollbar relative max-h-[500px] min-h-[220px] cursor-text overflow-auto"
           editorProps={{
             editable: () => !readOnly,
             handleDOMEvents: {

@@ -715,47 +715,102 @@ export class OutlookMailManager implements MailManager {
     );
   }
   public async getUserLabels() {
-    console.warn(
-      'getUserLabels maps to Outlook Categories and Mail Folders, which have different APIs.',
-    );
-
     try {
-      const categories: Category[] = (
-        await this.graphClient.api('/me/outlook/masterCategories').get()
-      ).value;
-      const folders: MailFolder[] = (await this.graphClient.api('/me/mailfolders').get()).value;
+      // Get root mail folders
+      const rootFoldersResponse = await this.graphClient.api('/me/mailfolders').get();
+      const rootFolders: MailFolder[] = rootFoldersResponse.value || [];
 
-      const mappedCategories: Label[] = categories.map((cat: Category) => ({
-        id: cat.id || cat.displayName || '',
-        name: cat.displayName || '',
-        type: 'category', // Indicate these are categories
-        color: {
-          backgroundColor: cat.color || '', // Graph category color is a string enum, not hex
-          textColor: '', // Outlook categories don't have separate text color in API
-        },
-      }));
+      // System folders to identify
+      const systemFolderNames = [
+        'inbox',
+        'drafts',
+        'sentitems',
+        'deleteditems',
+        'archive',
+        'outbox',
+        'junkemail',
+        'clutter',
+        'notes',
+        'journal',
+        'calendar',
+        'contacts',
+        'tasks',
+        'conversationhistory',
+      ];
 
-      const mappedFolders: Label[] = folders.map((folder) => ({
-        id: folder.id || '',
-        name: folder.displayName || '',
-        type: 'user', // Differentiate system vs user folders
-        color: {
-          backgroundColor: '', // Outlook folders don't have colors via API
-          textColor: '',
-        },
-      }));
+      const processedFolders = await this.processMailFoldersHierarchy(
+        rootFolders,
+        systemFolderNames,
+      );
 
-      return [...mappedCategories, ...mappedFolders];
+      console.log('Microsoft labels with hierarchy:', processedFolders);
+      return processedFolders;
     } catch (error) {
       console.error('Error fetching Outlook categories or folders:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+      }
       return [];
     }
+  }
+  private async processMailFoldersHierarchy(
+    folders: MailFolder[],
+    systemFolderNames: string[],
+    depth: number = 0,
+    maxDepth: number = 99,
+  ): Promise<Label[]> {
+    if (depth >= maxDepth) {
+      return [];
+    }
+
+    const result: Label[] = [];
+
+    for (const folder of folders) {
+      if (!folder.id) continue;
+
+      try {
+        const folderType = systemFolderNames.includes(folder.displayName?.toLowerCase() || '')
+          ? 'system'
+          : 'user';
+        const childFoldersResponse = await this.graphClient
+          .api(`/me/mailFolders/${folder.id}/childFolders`)
+          .get();
+
+        const childFolders: MailFolder[] = childFoldersResponse.value || [];
+
+        const childLabels = await this.processMailFoldersHierarchy(
+          childFolders,
+          systemFolderNames,
+          depth + 1,
+          maxDepth,
+        );
+
+        const label: Label = {
+          id: folder.id,
+          name: folder.displayName || '',
+          type: folderType,
+          color: {
+            backgroundColor: '',
+            textColor: '',
+          },
+        };
+
+        if (childLabels.length > 0) {
+          label.labels = childLabels;
+        }
+
+        result.push(label);
+      } catch (error) {
+        console.error(`Error processing folder ${folder.displayName || folder.id}:`, error);
+      }
+    }
+
+    return result;
   }
   public async getLabel(labelId: string): Promise<Label> {
     console.warn('getLabel needs to differentiate between Category ID and Mail Folder ID.');
 
     try {
-      // Try fetching as a Mail Folder first
       const folder: MailFolder = await this.graphClient.api(`/me/mailfolders/${labelId}`).get();
       return {
         id: folder.id || '',

@@ -28,6 +28,7 @@ const api = new Hono<HonoContext>()
   })
   .route('/autumn', autumnApi)
   .post('/chat', chatHandler)
+  //   .post('/public-chat', publicChatHandler) // ssshhhh
   .on(['GET', 'POST'], '/auth/*', (c) => c.var.auth.handler(c.req.raw))
   .use(
     trpcServer({

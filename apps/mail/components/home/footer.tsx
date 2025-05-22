@@ -24,11 +24,10 @@ const socialLinks = [
 
 export default function Footer() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <div className="flex-col items-center justify-center bg-[#1A1A1A] rounded-xl m-4 hidden md:flex" >
-      <div className="">
+    <div className="m-4 hidden flex-col items-center justify-center rounded-xl bg-[#1A1A1A] md:flex">
+      <div>
         {/* <div className="h-[527px] w-screen bg-gradient-to-b from-violet-600 via-orange-400 to-slate-950 blur-2xl" /> */}
         <div>
           <img

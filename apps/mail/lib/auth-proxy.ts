@@ -16,7 +16,10 @@ export const authProxy = {
       const session = await authClient.getSession({
         fetchOptions: { headers, credentials: 'include' },
       });
-      if (session.error) throw new Error(session.error.message);
+      if (session.error) {
+        console.error(`Failed to get session: ${session.error}`);
+        return null;
+      }
       return session.data;
     },
   },

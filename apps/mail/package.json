@@ -7,7 +7,6 @@
     "dev": "react-router dev",
     "build": "react-router build",
     "start": "wrangler dev --port 3000 --show-interactive-dev-session=false",
-    "postinstall": "(cp ../../.env .dev.vars)||true && pnpm run types",
     "types": "wrangler types",
     "deploy": "wrangler deploy"
   },
@@ -21,6 +20,7 @@
     "@fontsource-variable/geist": "^5.2.6",
     "@fontsource-variable/geist-mono": "^5.2.6",
     "@hookform/resolvers": "4.1.2",
+    "@radix-ui/react-switch": "1.2.5",
     "@react-email/components": "^0.0.36",
     "@react-email/html": "^0.0.11",
     "@react-email/render": "^1.1.2",

@@ -3,10 +3,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "wrangler dev --show-interactive-dev-session=false --env local",
+    "dev": "wrangler dev --show-interactive-dev-session=false --experimental-vectorize-bind-to-prod --env local",
     "deploy": "wrangler deploy",
-    "postinstall": "(cp ../../.env .dev.vars)||true && pnpm run types",
-    "types": "wrangler types --env staging"
+    "types": "wrangler types --env local"
   },
   "exports": {
     "./trpc": "./src/trpc/index.ts",

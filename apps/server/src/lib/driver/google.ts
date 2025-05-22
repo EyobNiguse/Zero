@@ -4,6 +4,7 @@ import {
   findHtmlBody,
   fromBase64Url,
   fromBinary,
+  getSimpleLoginSender,
   sanitizeContext,
   StandardizedError,
 } from './utils';
@@ -726,8 +727,14 @@ export class GoogleMailManager implements MailManager {
   > {
     const receivedOn =
       payload?.headers?.find((h) => h.name?.toLowerCase() === 'date')?.value || 'Failed';
+
+    // If there's a SimpleLogin Header, use it as the sender
+    const simpleLoginSender = getSimpleLoginSender(payload);
+
     const sender =
-      payload?.headers?.find((h) => h.name?.toLowerCase() === 'from')?.value || 'Failed';
+      simpleLoginSender ||
+      payload?.headers?.find((h) => h.name?.toLowerCase() === 'from')?.value ||
+      'Failed';
     const subject = payload?.headers?.find((h) => h.name?.toLowerCase() === 'subject')?.value || '';
     const references =
       payload?.headers?.find((h) => h.name?.toLowerCase() === 'references')?.value || '';

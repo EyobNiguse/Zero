@@ -34,9 +34,10 @@ interface LabelAction {
 interface LabelSidebarContextMenuProps {
   children: ReactNode;
   labelId: string;
+  hide?: boolean;
 }
 
-export function LabelSidebarContextMenu({ children, labelId }: LabelSidebarContextMenuProps) {
+export function LabelSidebarContextMenu({ children, labelId, hide }: LabelSidebarContextMenuProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const t = useTranslations();
   const trpc = useTRPC();
@@ -53,6 +54,8 @@ export function LabelSidebarContextMenu({ children, labelId }: LabelSidebarConte
       },
     });
   };
+
+  if (hide) return children;
 
   return (
     <>

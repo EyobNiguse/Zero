@@ -1,10 +1,12 @@
 import { AiChatPrompt, GmailSearchAssistantSystemPrompt } from '../lib/prompts';
-import { getActiveConnection } from '../lib/server-utils';
-import { streamText, generateObject, tool } from 'ai';
+import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
+import { streamText, generateObject, tool, generateText } from 'ai';
+import { publicTools, tools } from './agent/tools';
 import { getContext } from 'hono/context-storage';
+import { connection } from '@zero/db/schema';
 import type { HonoContext } from '../ctx';
 import { openai } from '@ai-sdk/openai';
-import { tools } from './agent/tools';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const buildGmailSearchQuery = tool({
@@ -53,10 +55,12 @@ export const chatHandler = async () => {
     return c.json({ error: 'Insufficient plan balance' }, 403);
   }
 
-  await getActiveConnection().catch((err) => {
+  const _conn = await getActiveConnection().catch((err) => {
     console.error('Error in getActiveConnection:', err);
     throw c.json({ error: 'Failed to get active connection' }, 500);
   });
+
+  const driver = connectionToDriver(_conn);
 
   const { messages, threadId, currentFolder, currentFilter } = await c.req
     .json()
@@ -70,7 +74,7 @@ export const chatHandler = async () => {
     system: AiChatPrompt(threadId, currentFolder, currentFilter),
     messages,
     tools: {
-      ...tools,
+      ...tools(driver, _conn.id),
       buildGmailSearchQuery,
     },
     onError: (error) => {
@@ -80,4 +84,29 @@ export const chatHandler = async () => {
   });
 
   return result.toDataStreamResponse();
+};
+
+export const publicChatHandler = async () => {
+  const c = getContext<HonoContext>();
+  const { message } = await c.req.json<{ message: string; query: string }>();
+  const _connection = await c.var.db.query.connection.findFirst({
+    where: eq(connection.email, 'test@test.com'),
+  });
+  if (!_connection) {
+    return c.json({ error: 'Connection not found' }, 404);
+  }
+  const driver = connectionToDriver(_connection);
+  const result = await generateText({
+    model: openai('gpt-4o'),
+    system: AiChatPrompt('', '', ''),
+    messages: [
+      {
+        role: 'user',
+        content: message,
+      },
+    ],
+    tools: { ...publicTools(driver, _connection.id), buildGmailSearchQuery },
+  });
+
+  return c.json({ response: result.text, toolResults: result.toolResults.map((r) => r.result) });
 };

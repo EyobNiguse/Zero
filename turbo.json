@@ -18,9 +18,6 @@
     "lint": {
       "outputs": []
     },
-    "postinstall": {
-      "cache": false
-    },
     "db:generate": {
       "cache": false
     },

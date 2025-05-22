@@ -6,6 +6,19 @@
   "main": "src/main.ts",
   "env": {
     "local": {
+      "ai": {
+        "binding": "AI",
+      },
+      "vectorize": [
+        {
+          "binding": "VECTORIZE",
+          "index_name": "threads-vector",
+        },
+        {
+          "binding": "VECTORIZE_MESSAGE",
+          "index_name": "messages-vector",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -63,6 +76,19 @@
       ],
     },
     "staging": {
+      "ai": {
+        "binding": "AI",
+      },
+      "vectorize": [
+        {
+          "binding": "VECTORIZE",
+          "index_name": "threads-vector",
+        },
+        {
+          "binding": "VECTORIZE_MESSAGE",
+          "index_name": "messages-vector",
+        },
+      ],
       "limits": {
         "cpu_ms": 300000,
       },
@@ -101,7 +127,7 @@
         "FORCE_GMAIL_CONSENT": "true",
         "COOKIE_DOMAIN": "0.email",
         "VITE_PUBLIC_BACKEND_URL": "https://sapi.0.email",
-        "VITE_PUBLIC_APP_URL": "https://app.0.email",
+        "VITE_PUBLIC_APP_URL": "https://staging.0.email",
       },
       "kv_namespaces": [
         {
@@ -123,6 +149,19 @@
       ],
     },
     "production": {
+      "ai": {
+        "binding": "AI",
+      },
+      "vectorize": [
+        {
+          "binding": "VECTORIZE",
+          "index_name": "threads-vector",
+        },
+        {
+          "binding": "VECTORIZE_MESSAGE",
+          "index_name": "messages-vector",
+        },
+      ],
       "observability": {
         "enabled": true,
       },

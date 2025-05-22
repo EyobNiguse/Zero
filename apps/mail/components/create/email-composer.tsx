@@ -93,6 +93,7 @@ export function EmailComposer({
   const [showCc, setShowCc] = useState(initialCc.length > 0);
   const [showBcc, setShowBcc] = useState(initialBcc.length > 0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [messageLength, setMessageLength] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -289,7 +290,7 @@ export function EmailComposer({
 
   const handleSend = async () => {
     try {
-      if (isLoading) return;
+      if (isLoading || isSavingDraft) return;
       setIsLoading(true);
       setAiGeneratedMessage(null);
       const values = getValues();
@@ -366,7 +367,7 @@ export function EmailComposer({
     if (!values.to.length || !values.subject.length || !messageText.length) return;
 
     try {
-      setIsLoading(true);
+      setIsSavingDraft(true);
       const draftData = {
         to: values.to.join(', '),
         cc: values.cc?.join(', '),
@@ -385,8 +386,10 @@ export function EmailComposer({
     } catch (error) {
       console.error('Error saving draft:', error);
       toast.error('Failed to save draft');
+      setIsSavingDraft(false);
+      setHasUnsavedChanges(false);
     } finally {
-      setIsLoading(false);
+      setIsSavingDraft(false);
       setHasUnsavedChanges(false);
     }
   };
@@ -449,11 +452,11 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'hide-scrollbar max-h-[500px] w-full max-w-[750px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#202020]',
+        'no-scrollbar max-h-[500px] w-full max-w-[750px] overflow-hidden rounded-2xl bg-[#FAFAFA] p-0 py-0 shadow-sm dark:bg-[#202020]',
         className,
       )}
     >
-      <div className="hide-scrollbar max-h-[500px] grow overflow-y-auto dark:bg-[#1A1A1A]">
+      <div className="no-scrollbar max-h-[500px] grow overflow-y-auto dark:bg-[#1A1A1A]">
         {/* To, Cc, Bcc */}
         <div className="shrink-0 overflow-y-auto border-b border-[#E7E7E7] pb-2 dark:border-[#252525]">
           <div className="flex justify-between px-3 pt-3">
@@ -937,11 +940,7 @@ export function EmailComposer({
               setHasUnsavedChanges(true);
             }}
           />
-          <button
-            className=""
-            onClick={handleGenerateSubject}
-            disabled={isLoading || isGeneratingSubject}
-          >
+          <button onClick={handleGenerateSubject} disabled={isLoading || isGeneratingSubject}>
             <div className="flex items-center justify-center gap-2.5 pl-0.5">
               <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
                 {isGeneratingSubject ? (
@@ -978,7 +977,7 @@ export function EmailComposer({
             >
               <div className="flex items-center justify-center gap-2.5 pl-0.5">
                 <div className="text-center text-sm leading-none text-white dark:text-black">
-                  <span className="">Send </span>
+                  <span>Send </span>
                 </div>
               </div>
               <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">

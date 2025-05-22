@@ -38,7 +38,7 @@ export default function Comparision() {
     }
   };
   return (
-    <div className="relative mx-auto hidden max-w-[1200px] flex-col items-center justify-center md:flex">
+    <div className="relative mx-auto mt-20 hidden max-w-[1200px] flex-col items-center justify-center md:flex">
       <Plus className="absolute left-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute bottom-[-21px] left-[-5px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute right-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
@@ -280,7 +280,7 @@ export default function Comparision() {
               >
                 <div className="flex items-center justify-center">
                   <div className="justify-start text-center text-base font-semibold leading-none text-white/80">
-                    Get Zero Pro
+                    Start free trial
                   </div>
                 </div>
               </button>
