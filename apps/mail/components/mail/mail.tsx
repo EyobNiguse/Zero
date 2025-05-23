@@ -43,10 +43,10 @@ import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import AISidebar from '@/components/ui/ai-sidebar';
 import { cleanSearchValue, cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
 import { useThreads } from '@/hooks/use-threads';
 import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { ScrollArea } from '../ui/scroll-area';
@@ -215,13 +215,12 @@ const AutoLabelingSettings = () => {
               brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
             )}
           /> */}
-         
+
           <Switch
             disabled={isEnablingBrain || isDisablingBrain}
-            checked={brainState?.enabled}
-           
+            checked={brainState?.enabled ?? false}
           />
-           <span className="text-muted-foreground text-xs cursor-pointer">Auto label</span>
+          <span className="text-muted-foreground cursor-pointer text-xs">Auto label</span>
         </div>
       </DialogTrigger>
       <DialogContent showOverlay className="max-w-2xl">
@@ -447,7 +446,8 @@ export function MailLayout() {
                       ) : null}
                     </div>
                     <AutoLabelingSettings />
-                    <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7] ml-2" />{' '}                    <Button
+                    <div className="dark:bg-iconDark/20 relative ml-2 h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}
+                    <Button
                       onClick={() => {
                         refetchThreads();
                       }}
@@ -475,7 +475,7 @@ export function MailLayout() {
                 )}
               />
               <div className="relative z-[1] h-[calc(100dvh-(2px+88px+49px+2px))] overflow-hidden pt-0 md:h-[calc(100dvh-9.8rem)]">
-                <MailList isCompact={true} />
+                <MailList />
               </div>
             </div>
           </ResizablePanel>
@@ -896,7 +896,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
               });
             }}
             className={cn(
-              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-md border transition-all duration-300 ease-out dark:border-none',
+              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-lg border transition-all duration-300 ease-out dark:border-none',
               isSelected
                 ? cn('flex-1 border-none px-3 text-white', bgColor)
                 : 'w-8 bg-white hover:bg-gray-100 dark:bg-[#313131] dark:hover:bg-[#313131]/80',
