@@ -56,7 +56,7 @@ const FEATURE_IDS = {
 const PRO_PLANS = ['pro-example', 'pro_annual', 'team', 'enterprise'] as const;
 
 export const useBilling = () => {
-  const { customer, refetch } = useCustomer();
+  const { customer, refetch, isLoading } = useCustomer();
   const { attach, track, openBillingPortal } = useAutumn();
 
   const isPro = useMemo(() => {
@@ -114,6 +114,7 @@ export const useBilling = () => {
   }, [customer]);
 
   return {
+    isLoading,
     customer,
     refetch,
     attach,
