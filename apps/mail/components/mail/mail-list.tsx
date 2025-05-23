@@ -759,7 +759,7 @@ export const MailList = memo(
                 <VList
                   count={filteredItems.length}
                   overscan={5}
-                  className="flex-1 overflow-x-hidden"
+                  className="style-scrollbar flex-1 overflow-x-hidden"
                   children={vListRenderer}
                 />
               </div>
