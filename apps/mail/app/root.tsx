@@ -60,7 +60,9 @@ export function Layout({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
-        <script crossOrigin="anonymous" src="//unpkg.com/react-scan/dist/auto.global.js" />
+        {import.meta.env.REACT_SCAN && (
+          <script crossOrigin="anonymous" src="//unpkg.com/react-scan/dist/auto.global.js" />
+        )}
         <Links />
       </head>
       <body className="antialiased">
