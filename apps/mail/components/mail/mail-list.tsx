@@ -1,8 +1,14 @@
 import {
+  cn,
+  FOLDERS,
+  formatDate,
+  getEmailLogo,
+  getMainSearchTerm,
+  parseNaturalLanguageSearch,
+} from '@/lib/utils';
+import {
   Archive2,
   Bell,
-  ChevronDown,
-  ExclamationCircle,
   GroupPeople,
   Lightning,
   People,
@@ -12,14 +18,6 @@ import {
   User,
 } from '../icons/icons';
 import {
-  cn,
-  FOLDERS,
-  formatDate,
-  getEmailLogo,
-  getMainSearchTerm,
-  parseNaturalLanguageSearch,
-} from '@/lib/utils';
-import {
   type ComponentProps,
   memo,
   useCallback,
@@ -28,147 +26,44 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
-import { Briefcase, Check, Star, StickyNote, Users } from 'lucide-react';
+import type { MailSelectMode, ParsedMessage, ThreadProps } from '@/types';
 import { ThreadContextMenu } from '@/components/context/thread-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useMail, type Config } from '@/components/mail/use-mail';
+import { Briefcase, Check, Star, StickyNote } from 'lucide-react';
 import { useMailNavigation } from '@/hooks/use-mail-navigation';
 import { focusedIndexAtom } from '@/hooks/use-mail-navigation';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
-import { useActiveConnection } from '@/hooks/use-connections';
 import { useThread, useThreads } from '@/hooks/use-threads';
-import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { highlightText } from '@/lib/email-utils.client';
 import { useHotkeysContext } from 'react-hotkeys-hook';
-import { useParams, useNavigate } from 'react-router';
 import { useTRPC } from '@/providers/query-provider';
 import { useThreadLabels } from '@/hooks/use-labels';
 import { useKeyState } from '@/hooks/use-hot-key';
-import { useSession } from '@/lib/auth-client';
 import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
-import { useDraft } from '@/hooks/use-drafts';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'use-intl';
+import { useParams } from 'react-router';
 import { useTheme } from 'next-themes';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import { Categories } from './mail';
-import items from './demo.json';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 import { VList } from 'virtua';
 
-const HOVER_DELAY = 1000; // ms before prefetching
-
-const ThreadWrapper = ({
-  children,
-  emailId,
-  threadId,
-  isFolderInbox,
-  isFolderSpam,
-  isFolderSent,
-  isFolderBin,
-  refreshCallback,
-}: {
-  children: React.ReactNode;
-  emailId: string;
-  threadId: string;
-  isFolderInbox: boolean;
-  isFolderSpam: boolean;
-  isFolderSent: boolean;
-  isFolderBin: boolean;
-  refreshCallback: () => void;
-}) => {
-  return (
-    <ThreadContextMenu
-      emailId={emailId}
-      threadId={threadId}
-      isInbox={isFolderInbox}
-      isSpam={isFolderSpam}
-      isSent={isFolderSent}
-      isBin={isFolderBin}
-      refreshCallback={refreshCallback}
-    >
-      {children}
-    </ThreadContextMenu>
-  );
-};
-
-const Draft = memo(({ message }: { message: { id: string } }) => {
-  const { data: draft } = useDraft(message.id);
-  const [composeOpen, setComposeOpen] = useQueryState('isComposeOpen');
-  const [draftId, setDraftId] = useQueryState('draftId');
-  const handleMailClick = useCallback(() => {
-    setComposeOpen('true');
-    setDraftId(message.id);
-    return;
-  }, [message.id]);
-
-  return (
-    <div className="select-none py-1" onClick={handleMailClick}>
-      <div
-        key={message.id}
-        className={cn(
-          'hover:bg-offsetLight hover:bg-primary/5 group relative mx-[8px] flex cursor-pointer flex-col items-start overflow-clip rounded-[10px] border-transparent py-3 text-left text-sm transition-all hover:opacity-100',
-        )}
-      >
-        <div
-          className={cn(
-            'bg-primary absolute inset-y-0 left-0 w-1 -translate-x-2 transition-transform ease-out',
-          )}
-        />
-        <div className="flex w-full items-center justify-between gap-4 px-4">
-          <div className="flex w-full justify-between">
-            <div className="w-full">
-              <div className="flex w-full flex-row items-center justify-between">
-                <div className="flex flex-row items-center gap-[4px]">
-                  <span
-                    className={cn(
-                      'font-medium',
-                      'text-md flex items-baseline gap-1 group-hover:opacity-100',
-                    )}
-                  >
-                    <span className={cn('max-w-[25ch] truncate text-sm')}>
-                      {cleanNameDisplay(draft?.to?.[0] || 'noname') || ''}
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <p
-                  className={cn(
-                    'mt-1 line-clamp-1 max-w-[50ch] text-sm text-[#8C8C8C] md:max-w-[30ch]',
-                  )}
-                >
-                  {draft?.subject}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
 const Thread = memo(
-  ({
+  function Thread({
     message,
-    selectMode,
-    demo,
     onClick,
-    sessionData,
     isKeyboardFocused,
-    demoMessage,
     index,
-  }: ConditionalThreadProps & { index?: number }) => {
+  }: ThreadProps & { index?: number }) {
     const [searchValue, setSearchValue] = useSearchValue();
     const t = useTranslations();
     const { folder } = useParams<{ folder: string }>();
@@ -176,29 +71,18 @@ const Thread = memo(
     const [threadId] = useQueryState('threadId');
     const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
     const { refetch: refetchStats } = useStats();
-    const {
-      data: getThreadData,
-      isLoading,
-      isGroupThread,
-      refetch: refetchThread,
-    } = useThread(demo ? null : message.id);
+    const { data: getThreadData, isGroupThread, refetch: refetchThread } = useThread(message.id);
     const [isStarred, setIsStarred] = useState(false);
-    const [isImportant, setIsImportant] = useState(false);
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
-    const { mutateAsync: toggleImportant } = useMutation(
-      trpc.mail.toggleImportant.mutationOptions(),
-    );
     const [id, setThreadId] = useQueryState('threadId');
     const [activeReplyId, setActiveReplyId] = useQueryState('activeReplyId');
     const [focusedIndex, setFocusedIndex] = useAtom(focusedIndexAtom);
 
     useEffect(() => {
       if (getThreadData?.latest?.tags) {
-        console.log(getThreadData.latest.tags);
         setIsStarred(getThreadData.latest.tags.some((tag) => tag.name === 'STARRED'));
-        setIsImportant(getThreadData.latest.tags.some((tag) => tag.name === 'IMPORTANT'));
       }
     }, [getThreadData?.latest?.tags]);
 
@@ -218,23 +102,6 @@ const Thread = memo(
         await refetchThread();
       },
       [getThreadData, message.id, isStarred, refetchThreads, t],
-    );
-
-    const handleToggleImportant = useCallback(
-      async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!getThreadData || !message.id) return;
-        const newImportantState = !isImportant;
-        setIsImportant(newImportantState);
-        await toggleImportant({ ids: [message.id] });
-        if (newImportantState) {
-          toast.success(t('common.actions.addedToImportant'));
-        } else {
-          toast.success(t('common.actions.removedFromImportant'));
-        }
-        await refetchThread();
-      },
-      [getThreadData, message.id, refetchThreads],
     );
 
     const handleNext = useCallback(
@@ -257,7 +124,7 @@ const Thread = memo(
         if (!message.id) return;
         const promise = moveThreadsTo({
           threadIds: [message.id],
-          currentFolder: folder,
+          currentFolder: folder ?? '',
           destination,
         });
         setBackgroundQueue({ type: 'add', threadId: `thread:${message.id}` });
@@ -287,8 +154,8 @@ const Thread = memo(
       [message.id, folder, t, setBackgroundQueue, refetchStats, refetchThreads],
     );
 
-    const latestMessage = demo ? demoMessage : getThreadData?.latest;
-    const emailContent = demo ? demoMessage?.body : getThreadData?.latest?.body;
+    const latestMessage = getThreadData?.latest;
+    const emailContent = getThreadData?.latest?.body;
 
     const { labels: threadLabels } = useThreadLabels(
       getThreadData?.labels ? getThreadData.labels.map((l) => l.id) : [],
@@ -591,352 +458,331 @@ const Thread = memo(
       ) : null;
 
     return latestMessage ? (
-      <ThreadWrapper
+      <ThreadContextMenu
         emailId={message.id}
         threadId={latestMessage.threadId ?? message.id}
-        isFolderInbox={isFolderInbox}
-        isFolderSpam={isFolderSpam}
-        isFolderSent={isFolderSent}
-        isFolderBin={isFolderBin}
-        refreshCallback={() => refetchThreads()}
+        isInbox={isFolderInbox}
+        isSpam={isFolderSpam}
+        isSent={isFolderSent}
+        isBin={isFolderBin}
       >
         {content}
-      </ThreadWrapper>
+      </ThreadContextMenu>
     ) : null;
+  },
+  (prev, next) => {
+    const isSameMessage =
+      prev.message.id === next.message.id &&
+      prev.isKeyboardFocused === next.isKeyboardFocused &&
+      prev.index === next.index &&
+      Object.is(prev.onClick, next.onClick);
+    return isSameMessage;
   },
 );
 
-Thread.displayName = 'Thread';
+export const MailList = memo(
+  function MailList() {
+    const { folder } = useParams<{ folder: string }>();
+    const t = useTranslations();
+    const [, setThreadId] = useQueryState('threadId');
+    const [, setDraftId] = useQueryState('draftId');
+    const [category, setCategory] = useQueryState('category');
+    const [searchValue, setSearchValue] = useSearchValue();
+    const { enableScope, disableScope } = useHotkeysContext();
+    const [{ refetch, isLoading, isFetching, isFetchingNextPage, hasNextPage }, items, , loadMore] =
+      useThreads();
 
-export const MailList = memo(({ isCompact }: MailListProps) => {
-  const { folder } = useParams<{ folder: string }>();
-  const { data: session } = useSession();
-  const t = useTranslations();
-  const navigate = useNavigate();
-  const [, setThreadId] = useQueryState('threadId');
-  const [, setDraftId] = useQueryState('draftId');
-  const [category, setCategory] = useQueryState('category');
-  const [searchValue, setSearchValue] = useSearchValue();
-  const { enableScope, disableScope } = useHotkeysContext();
-  const [{ refetch, isLoading, isFetching, hasNextPage }, items, , loadMore] = useThreads();
-  const { data: activeConnection } = useActiveConnection();
+    const allCategories = Categories();
 
-  const allCategories = Categories();
+    // Skip category filtering for drafts, spam, sent, archive, and bin pages
+    const shouldFilter = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
 
-  // Skip category filtering for drafts, spam, sent, archive, and bin pages
-  const shouldFilter = !['draft', 'spam', 'sent', 'archive', 'bin'].includes(folder || '');
+    // Set initial category search value only if not in special folders
+    useEffect(() => {
+      if (!shouldFilter) return;
 
-  const sessionData = useMemo(
-    () => ({
-      userId: session?.user?.id ?? '',
-      connectionId: activeConnection?.id ?? null,
-    }),
-    [activeConnection, session],
-  );
+      const currentCategory = category
+        ? allCategories.find((cat) => cat.id === category)
+        : allCategories.find((cat) => cat.id === 'Important');
 
-  // Set initial category search value only if not in special folders
-  useEffect(() => {
-    if (!shouldFilter) return;
+      if (currentCategory && searchValue.value === '') {
+        setSearchValue({
+          value: currentCategory.searchValue || '',
+          highlight: '',
+          folder: '',
+        });
+      }
+    }, [allCategories, category, shouldFilter, searchValue.value, setSearchValue]);
 
-    const currentCategory = category
-      ? allCategories.find((cat) => cat.id === category)
-      : allCategories.find((cat) => cat.id === 'Important');
+    // Add event listener for refresh
+    useEffect(() => {
+      const handleRefresh = () => {
+        void refetch();
+      };
 
-    if (currentCategory && searchValue.value === '') {
+      window.addEventListener('refreshMailList', handleRefresh);
+      return () => window.removeEventListener('refreshMailList', handleRefresh);
+    }, [refetch]);
+
+    const parentRef = useRef<HTMLDivElement>(null);
+
+    const handleNavigateToThread = useCallback(
+      (threadId: string) => {
+        setThreadId(threadId);
+        // Prevent default navigation
+        return false;
+      },
+      [setThreadId],
+    );
+
+    const { focusedIndex, handleMouseEnter, keyboardActive } = useMailNavigation({
+      items,
+      containerRef: parentRef,
+      onNavigate: handleNavigateToThread,
+    });
+
+    const handleLoadMore = useCallback(() => {
+      if (isLoading || isFetching || isFetchingNextPage || !hasNextPage) return;
+      console.log('Loading more items...');
+      void loadMore();
+    }, [isLoading, isFetchingNextPage, loadMore, hasNextPage]);
+
+    const isKeyPressed = useKeyState();
+
+    const getSelectMode = useCallback((): MailSelectMode => {
+      const isAltPressed =
+        isKeyPressed('Alt') || isKeyPressed('AltLeft') || isKeyPressed('AltRight');
+
+      const isShiftPressed =
+        isKeyPressed('Shift') || isKeyPressed('ShiftLeft') || isKeyPressed('ShiftRight');
+
+      if (isKeyPressed('Control') || isKeyPressed('Meta')) {
+        return 'mass';
+      }
+
+      if (isAltPressed && isShiftPressed) {
+        console.log('Select All Below mode activated'); // Debug log
+        return 'selectAllBelow';
+      }
+
+      if (isShiftPressed) {
+        return 'range';
+      }
+
+      return 'single';
+    }, [isKeyPressed]);
+
+    const [, setActiveReplyId] = useQueryState('activeReplyId');
+    const [mail, setMail] = useMail();
+
+    const handleSelectMail = useCallback(
+      (message: ParsedMessage) => {
+        const itemId = message.threadId ?? message.id;
+        const currentMode = getSelectMode();
+        console.log('Selection mode:', currentMode, 'for item:', itemId);
+
+        switch (currentMode) {
+          case 'mass': {
+            const newSelected = mail.bulkSelected.includes(itemId)
+              ? mail.bulkSelected.filter((id) => id !== itemId)
+              : [...mail.bulkSelected, itemId];
+            console.log('Mass selection mode - selected items:', newSelected.length);
+            return setMail({ ...mail, bulkSelected: newSelected });
+          }
+          case 'selectAllBelow': {
+            const clickedIndex = items.findIndex((item) => item.id === itemId);
+            console.log(
+              'SelectAllBelow - clicked index:',
+              clickedIndex,
+              'total items:',
+              items.length,
+            );
+
+            if (clickedIndex !== -1) {
+              const itemsBelow = items.slice(clickedIndex);
+              const idsBelow = itemsBelow.map((item) => item.id);
+              console.log('Selecting all items below - count:', idsBelow.length);
+              return setMail({ ...mail, bulkSelected: idsBelow });
+            }
+            console.log('Item not found in list, selecting just this item');
+            return setMail({ ...mail, bulkSelected: [itemId] });
+          }
+          case 'range': {
+            console.log('Range selection mode - not fully implemented');
+            return setMail({ ...mail, bulkSelected: [itemId] });
+          }
+          default: {
+            console.log('Single selection mode');
+            return setMail({ ...mail, bulkSelected: [itemId] });
+          }
+        }
+      },
+      [mail, setMail, getSelectMode, items],
+    );
+
+    const [, setFocusedIndex] = useAtom(focusedIndexAtom);
+
+    const handleMailClick = useCallback(
+      (message: ParsedMessage) => () => {
+        const mode = getSelectMode();
+        console.log('Mail click with mode:', mode);
+
+        if (mode !== 'single') {
+          return handleSelectMail(message);
+        }
+
+        handleMouseEnter(message.id);
+
+        const messageThreadId = message.threadId ?? message.id;
+        const clickedIndex = items.findIndex((item) => item.id === messageThreadId);
+        setFocusedIndex(clickedIndex);
+
+        void setThreadId(messageThreadId);
+        void setDraftId(null);
+        void setActiveReplyId(null);
+      },
+      [mail, items, setFocusedIndex, getSelectMode, handleSelectMail],
+    );
+
+    const isFiltering = searchValue.value.trim().length > 0;
+
+    useEffect(() => {
+      if (isFiltering && !isLoading) {
+        setSearchValue({
+          ...searchValue,
+          isLoading: false,
+        });
+      }
+    }, [isLoading, isFiltering, setSearchValue]);
+
+    const clearFilters = () => {
+      setCategory(null);
       setSearchValue({
-        value: currentCategory.searchValue || '',
+        value: '',
         highlight: '',
         folder: '',
       });
-    }
-  }, [allCategories, category, shouldFilter, searchValue.value, setSearchValue]);
-
-  // Add event listener for refresh
-  useEffect(() => {
-    const handleRefresh = () => {
-      void refetch();
     };
 
-    window.addEventListener('refreshMailList', handleRefresh);
-    return () => window.removeEventListener('refreshMailList', handleRefresh);
-  }, [refetch]);
+    const { resolvedTheme } = useTheme();
 
-  const parentRef = useRef<HTMLDivElement>(null);
+    const filteredItems = useMemo(() => items.filter((item) => item.id), [items]);
 
-  const handleNavigateToThread = useCallback(
-    (threadId: string) => {
-      setThreadId(threadId);
-      // Prevent default navigation
-      return false;
-    },
-    [setThreadId],
-  );
+    const vListRenderer = useCallback(
+      (index: number) => {
+        const item = filteredItems[index];
+        return (
+          <>
+            <Thread
+              onClick={handleMailClick}
+              message={item}
+              key={item.id}
+              isKeyboardFocused={focusedIndex === index && keyboardActive}
+              index={index}
+            />
+            {index === filteredItems.length - 1 && (
+              <Button
+                variant={'ghost'}
+                className="w-full rounded-none"
+                onMouseDown={handleLoadMore}
+                disabled={isLoading || items.length <= 9 || !hasNextPage || isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+                    {t('common.actions.loading')}
+                  </div>
+                ) : (
+                  <span>{t('common.mail.loadMore')}</span>
+                )}
+              </Button>
+            )}
+          </>
+        );
+      },
+      [
+        filteredItems,
+        focusedIndex,
+        keyboardActive,
+        handleMailClick,
+        handleLoadMore,
+        isLoading,
+        isFetching,
+        hasNextPage,
+        t,
+      ],
+    );
 
-  const isFolderDraft = folder === FOLDERS.DRAFT;
-  const {
-    focusedIndex,
-    isQuickActionMode,
-    quickActionIndex,
-    handleMouseEnter,
-    keyboardActive,
-    resetNavigation,
-  } = useMailNavigation({
-    items,
-    containerRef: parentRef,
-    onNavigate: handleNavigateToThread,
-  });
-
-  const handleScroll = useCallback(() => {
-    if (isLoading || isFetching || !hasNextPage) return;
-    console.log('Loading more items...');
-    void loadMore();
-  }, [isLoading, isFetching, loadMore, hasNextPage]);
-
-  const isKeyPressed = useKeyState();
-
-  const getSelectMode = useCallback((): MailSelectMode => {
-    const isAltPressed = isKeyPressed('Alt') || isKeyPressed('AltLeft') || isKeyPressed('AltRight');
-
-    const isShiftPressed =
-      isKeyPressed('Shift') || isKeyPressed('ShiftLeft') || isKeyPressed('ShiftRight');
-
-    if (isKeyPressed('Control') || isKeyPressed('Meta')) {
-      return 'mass';
-    }
-
-    if (isAltPressed && isShiftPressed) {
-      console.log('Select All Below mode activated'); // Debug log
-      return 'selectAllBelow';
-    }
-
-    if (isShiftPressed) {
-      return 'range';
-    }
-
-    return 'single';
-  }, [isKeyPressed]);
-
-  const [, setActiveReplyId] = useQueryState('activeReplyId');
-  const [mail, setMail] = useMail();
-
-  const handleSelectMail = useCallback(
-    (message: ParsedMessage) => {
-      const itemId = message.threadId ?? message.id;
-      const currentMode = getSelectMode();
-      console.log('Selection mode:', currentMode, 'for item:', itemId);
-
-      switch (currentMode) {
-        case 'mass': {
-          const newSelected = mail.bulkSelected.includes(itemId)
-            ? mail.bulkSelected.filter((id) => id !== itemId)
-            : [...mail.bulkSelected, itemId];
-          console.log('Mass selection mode - selected items:', newSelected.length);
-          return setMail({ ...mail, bulkSelected: newSelected });
-        }
-        case 'selectAllBelow': {
-          const clickedIndex = items.findIndex((item) => item.id === itemId);
-          console.log(
-            'SelectAllBelow - clicked index:',
-            clickedIndex,
-            'total items:',
-            items.length,
-          );
-
-          if (clickedIndex !== -1) {
-            const itemsBelow = items.slice(clickedIndex);
-            const idsBelow = itemsBelow.map((item) => item.id);
-            console.log('Selecting all items below - count:', idsBelow.length);
-            return setMail({ ...mail, bulkSelected: idsBelow });
-          }
-          console.log('Item not found in list, selecting just this item');
-          return setMail({ ...mail, bulkSelected: [itemId] });
-        }
-        case 'range': {
-          console.log('Range selection mode - not fully implemented');
-          return setMail({ ...mail, bulkSelected: [itemId] });
-        }
-        default: {
-          console.log('Single selection mode');
-          return setMail({ ...mail, bulkSelected: [itemId] });
-        }
-      }
-    },
-    [mail, setMail, getSelectMode, items],
-  );
-
-  const [, setFocusedIndex] = useAtom(focusedIndexAtom);
-
-  const handleMailClick = useCallback(
-    (message: ParsedMessage) => () => {
-      const mode = getSelectMode();
-      console.log('Mail click with mode:', mode);
-
-      if (mode !== 'single') {
-        return handleSelectMail(message);
-      }
-
-      handleMouseEnter(message.id);
-
-      const messageThreadId = message.threadId ?? message.id;
-      const clickedIndex = items.findIndex((item) => item.id === messageThreadId);
-      setFocusedIndex(clickedIndex);
-
-      void setThreadId(messageThreadId);
-      void setDraftId(null);
-      void setActiveReplyId(null);
-    },
-    [mail, items, setFocusedIndex, getSelectMode, handleSelectMail],
-  );
-
-  const isFiltering = searchValue.value.trim().length > 0;
-
-  useEffect(() => {
-    if (isFiltering && !isLoading) {
-      setSearchValue({
-        ...searchValue,
-        isLoading: false,
-      });
-    }
-  }, [isLoading, isFiltering, setSearchValue]);
-
-  const clearFilters = () => {
-    setCategory(null);
-    setSearchValue({
-      value: '',
-      highlight: '',
-      folder: '',
-    });
-  };
-
-  const { resolvedTheme } = useTheme();
-
-  const filteredItems = useMemo(() => items.filter((item) => item.id), [items]);
-  const selectMode = getSelectMode();
-
-  return (
-    <>
-      <div
-        ref={parentRef}
-        className={cn(
-          'hide-link-indicator flex h-full w-full',
-          getSelectMode() === 'range' && 'select-none',
-        )}
-        onMouseEnter={() => {
-          enableScope('mail-list');
-        }}
-        onMouseLeave={() => {
-          disableScope('mail-list');
-        }}
-      >
-        <>
-          {isLoading ? (
-            <div className="flex h-32 w-full items-center justify-center">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-            </div>
-          ) : !items || items.length === 0 ? (
-            <div className="flex w-full items-center justify-center">
-              <div className="flex flex-col items-center justify-center gap-2 text-center">
-                <img
-                  suppressHydrationWarning
-                  src={resolvedTheme === 'dark' ? '/empty-state.svg' : '/empty-state-light.svg'}
-                  alt="Empty Inbox"
-                  width={200}
-                  height={200}
-                />
-                <div className="mt-5">
-                  <p className="text-lg">It's empty here</p>
-                  <p className="text-md text-[#6D6D6D] dark:text-white/50">
-                    Search for another email or{' '}
-                    <button className="underline" onClick={clearFilters}>
-                      clear filters
-                    </button>
-                  </p>
+    return (
+      <>
+        <div
+          ref={parentRef}
+          className={cn(
+            'hide-link-indicator flex h-full w-full',
+            getSelectMode() === 'range' && 'select-none',
+          )}
+          onMouseEnter={() => {
+            enableScope('mail-list');
+          }}
+          onMouseLeave={() => {
+            disableScope('mail-list');
+          }}
+        >
+          <>
+            {isLoading ? (
+              <div className="flex h-32 w-full items-center justify-center">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+              </div>
+            ) : !items || items.length === 0 ? (
+              <div className="flex w-full items-center justify-center">
+                <div className="flex flex-col items-center justify-center gap-2 text-center">
+                  <img
+                    suppressHydrationWarning
+                    src={resolvedTheme === 'dark' ? '/empty-state.svg' : '/empty-state-light.svg'}
+                    alt="Empty Inbox"
+                    width={200}
+                    height={200}
+                  />
+                  <div className="mt-5">
+                    <p className="text-lg">It's empty here</p>
+                    <p className="text-md text-[#6D6D6D] dark:text-white/50">
+                      Search for another email or{' '}
+                      <button className="underline" onClick={clearFilters}>
+                        clear filters
+                      </button>
+                    </p>
+                  </div>
                 </div>
               </div>
+            ) : (
+              <div className="flex flex-1 flex-col" id="mail-list-scroll">
+                <VList
+                  count={filteredItems.length}
+                  overscan={5}
+                  className="flex-1 overflow-x-hidden"
+                  children={vListRenderer}
+                />
+              </div>
+            )}
+          </>
+        </div>
+        <div className="w-full pt-4 text-center">
+          {isFetching ? (
+            <div className="text-center">
+              <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
             </div>
           ) : (
-            <div className="flex flex-1 flex-col" id="mail-list-scroll">
-              <VList
-                count={filteredItems.length}
-                style={{
-                  flex: 1,
-                  overflowX: 'hidden',
-                }}
-                overscan={5}
-              >
-                {(index) => {
-                  const item = filteredItems[index];
-                  return (
-                    <>
-                      <Thread
-                        onClick={handleMailClick}
-                        selectMode={selectMode}
-                        isCompact={isCompact}
-                        sessionData={sessionData}
-                        message={item}
-                        key={item.id}
-                        isKeyboardFocused={focusedIndex === index && keyboardActive}
-                        isInQuickActionMode={isQuickActionMode && focusedIndex === index}
-                        selectedQuickActionIndex={quickActionIndex}
-                        resetNavigation={resetNavigation}
-                        index={index}
-                      />
-                      {index === filteredItems.length - 1 && (
-                        <Button
-                          variant={'ghost'}
-                          className="w-full rounded-none"
-                          onMouseDown={handleScroll}
-                          disabled={isLoading || items.length <= 9 || !hasNextPage || isFetching}
-                        >
-                          {isLoading || isFetching ? (
-                            <div className="flex items-center gap-2">
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-                              {t('common.actions.loading')}
-                            </div>
-                          ) : (
-                            <>
-                              {t('common.mail.loadMore')} <ChevronDown />
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </>
-                  );
-                }}
-              </VList>
-
-              {/* {items
-                .filter((data) => data.id)
-                .map((data, index) => {
-                  if (!data || !data.id) return null;
-
-                  return isFolderDraft ? (
-                    <Draft key={`${data.id}-${index}`} message={{ id: data.id }} />
-                  ) : (
-
-                  );
-                })} */}
-            </div>
+            <div className="h-4" />
           )}
-        </>
-      </div>
-      <div className="w-full pt-4 text-center">
-        {isLoading || isFetching ? (
-          <div className="text-center">
-            <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-          </div>
-        ) : (
-          <div className="h-4" />
-        )}
-      </div>
-    </>
-  );
-});
-
-MailList.displayName = 'MailList';
+        </div>
+      </>
+    );
+  },
+  () => true,
+);
 
 export const MailLabels = memo(
-  ({ labels }: { labels: { id: string; name: string }[] }) => {
+  function MailListLabels({ labels }: { labels: { id: string; name: string }[] }) {
     const t = useTranslations();
 
     if (!labels?.length) return null;
@@ -1011,7 +857,6 @@ export const MailLabels = memo(
     return JSON.stringify(prev.labels) === JSON.stringify(next.labels);
   },
 );
-MailLabels.displayName = 'MailLabels';
 
 function getNormalizedLabelKey(label: string) {
   return label.toLowerCase().replace(/^category_/i, '');
