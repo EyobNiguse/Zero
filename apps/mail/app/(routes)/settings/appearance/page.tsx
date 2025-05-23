@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Form,
   FormControl,
@@ -23,7 +21,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useSettings } from '@/hooks/use-settings';
 import { Laptop, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { useForm } from 'react-hook-form';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
@@ -73,22 +71,22 @@ export default function AppearancePage() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    setIsSaving(true);
-    try {
-      await saveUserSettings({
-        ...(data?.settings ? data.settings : {}),
-        colorTheme: values.colorTheme as Theme,
-      });
-      await refetch();
-
-      toast.success(t('common.settings.saved'));
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      toast.error(t('common.settings.failedToSave'));
-      await refetch();
-    } finally {
-      setIsSaving(false);
+    if (data) {
+      setIsSaving(true);
+      toast.promise(
+        saveUserSettings({
+          ...data.settings,
+          colorTheme: values.colorTheme as Theme,
+        }),
+        {
+          success: t('common.settings.saved'),
+          error: t('common.settings.failedToSave'),
+          finally: async () => {
+            await refetch();
+            setIsSaving(false);
+          },
+        },
+      );
     }
   }
 

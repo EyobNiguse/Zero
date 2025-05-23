@@ -1,5 +1,5 @@
-import { activeConnectionProcedure, brainServerAvailableMiddleware, router } from '../trpc';
 import { disableBrainFunction, enableBrainFunction, getPrompts } from '../../lib/brain';
+import { activeConnectionProcedure, router } from '../trpc';
 import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 
@@ -37,7 +37,6 @@ export const brainRouter = router({
           .optional(),
       }),
     )
-    .use(brainServerAvailableMiddleware)
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
@@ -54,7 +53,6 @@ export const brainRouter = router({
           .optional(),
       }),
     )
-    .use(brainServerAvailableMiddleware)
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
@@ -62,23 +60,28 @@ export const brainRouter = router({
     }),
 
   generateSummary: activeConnectionProcedure
-    .use(brainServerAvailableMiddleware)
     .input(
       z.object({
         threadId: z.string(),
       }),
     )
     .query(async ({ input }) => {
-      // TODO: Implement loading state
       const { threadId } = input;
-      return (await env.zero.getSummary({ type: 'thread', id: threadId })) as {
-        data: {
-          long: string;
-          short: string;
+      const response = await env.VECTORIZE.getByIds([threadId]);
+      if (response.length && response?.[0]?.metadata?.['content']) {
+        const content = response[0].metadata['content'] as string;
+        const shortResponse = await env.AI.run('@cf/facebook/bart-large-cnn', {
+          input_text: content,
+        });
+        return {
+          data: {
+            short: shortResponse.summary,
+          },
         };
-      };
+      }
+      return null;
     }),
-  getState: activeConnectionProcedure.use(brainServerAvailableMiddleware).query(async ({ ctx }) => {
+  getState: activeConnectionProcedure.query(async ({ ctx }) => {
     const connection = ctx.activeConnection;
     const state = await env.subscribed_accounts.get(connection.id);
     if (!state || state === 'pending') return { enabled: false };
@@ -86,7 +89,6 @@ export const brainRouter = router({
     return { limit, enabled: true };
   }),
   getLabels: activeConnectionProcedure
-    .use(brainServerAvailableMiddleware)
     .output(
       z.array(
         z.object({
@@ -105,14 +107,11 @@ export const brainRouter = router({
         return [];
       }
     }),
-  getPrompts: activeConnectionProcedure
-    .use(brainServerAvailableMiddleware)
-    .query(async ({ ctx }) => {
-      const connection = ctx.activeConnection;
-      return await getPrompts({ connectionId: connection.id });
-    }),
+  getPrompts: activeConnectionProcedure.query(async ({ ctx }) => {
+    const connection = ctx.activeConnection;
+    return await getPrompts({ connectionId: connection.id });
+  }),
   updateLabels: activeConnectionProcedure
-    .use(brainServerAvailableMiddleware)
     .input(
       z.object({
         labels: labelsSchema,

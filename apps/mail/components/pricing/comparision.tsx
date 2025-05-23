@@ -1,51 +1,49 @@
 import { Check, Plus, PurpleThickCheck, ThickCheck } from '../icons/icons';
-import { useBilling } from '@/hooks/use-billing';
-import Image from 'next/image';
 import { useSession, signIn } from '@/lib/auth-client';
+import { useBilling } from '@/hooks/use-billing';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 
 export default function Comparision() {
   const { attach } = useBilling();
   const { data: session } = useSession();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleUpgrade = async () => {
     if (!session) {
-      // User is not logged in, redirect to login page first
       toast.promise(
         signIn.social({
           provider: 'google',
           callbackURL: `${window.location.origin}/pricing`,
         }),
         {
-          loading: 'Redirecting to login...',
           success: 'Redirecting to login...',
           error: 'Login redirect failed',
-        }
+        },
       );
       return;
     }
-    
+
     if (attach) {
-      try {
-        await attach({
+      toast.promise(
+        attach({
           productId: 'pro-example',
           successUrl: `${window.location.origin}/mail/inbox?success=true`,
-          authUrl: `${window.location.origin}/login?redirect=/pricing`,
-        });
-      } catch (error) {
-        console.error('Failed to upgrade:', error);
-      }
+        }),
+        {
+          success: 'Redirecting to payment...',
+          error: 'Failed to process upgrade. Please try again later.',
+        },
+      );
     }
   };
   return (
-    <div className="relative mx-auto hidden max-w-[1200px] flex-col items-center justify-center md:flex">
+    <div className="relative mx-auto mt-20 hidden max-w-[1200px] flex-col items-center justify-center md:flex">
       <Plus className="absolute left-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute bottom-[-21px] left-[-5px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute right-[-5px] top-[-6px] mb-4 h-3 w-3 fill-white" />
       <Plus className="absolute bottom-[-21px] right-[-5px] mb-4 h-3 w-3 fill-white" />
-      <div className="inline-flex items-start justify-start self-stretch border">
+      <div className="inline-flex items-start justify-start self-stretch border border-white/5">
         <div className="inline-flex flex-1 flex-col items-start justify-start">
           <div className="flex h-52 flex-col items-start justify-start gap-2 self-stretch border-b border-white/5 p-8">
             <div className="flex flex-col items-start justify-start gap-2">
@@ -135,7 +133,7 @@ export default function Comparision() {
               <div className="flex flex-col items-start justify-center gap-3 self-stretch">
                 <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-yellow-950 p-2">
                   <div className="relative h-6 w-6 overflow-hidden">
-                    <Image
+                    <img
                       src="/lock.svg"
                       alt="lock"
                       className="h-full w-full"
@@ -148,13 +146,32 @@ export default function Comparision() {
                   Free Plan
                 </div>
               </div>
-              <div className="inline-flex h-[40px] items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10 shadow-[inset_0px_-2px_0px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-white/10">
-                <div className="flex items-center justify-center gap-2.5 px-1">
+              <button
+                onClick={() => {
+                  if (session) {
+                    // User is logged in, redirect to inbox
+                    navigate('/mail/inbox');
+                  } else {
+                    // User is not logged in, show sign-in dialog
+                    toast.promise(
+                      signIn.social({
+                        provider: 'google',
+                        callbackURL: `${window.location.origin}/mail`,
+                      }),
+                      {
+                        error: 'Login redirect failed',
+                      },
+                    );
+                  }
+                }}
+                className="inline-flex h-[40px] items-center justify-center gap-2.5 self-stretch overflow-hidden rounded-lg bg-gradient-to-l from-white/0 to-white/10 p-[3.5px] outline outline-1 outline-offset-[-1px] outline-white/10"
+              >
+                <div className="flex items-center justify-center">
                   <div className="justify-start text-center text-base font-semibold leading-none text-white/80">
-                    Current Plan
+                    Get Started For Free
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
           <div className="flex flex-col items-start justify-start self-stretch pb-6">
@@ -244,7 +261,7 @@ export default function Comparision() {
               <div className="flex flex-col items-start justify-center gap-3 self-stretch">
                 <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-[#3F2776] p-2">
                   <div className="relative h-6 w-6 overflow-hidden">
-                    <Image
+                    <img
                       src="purple-zap.svg"
                       alt="purple-zap"
                       className="h-full w-full"
@@ -263,7 +280,7 @@ export default function Comparision() {
               >
                 <div className="flex items-center justify-center">
                   <div className="justify-start text-center text-base font-semibold leading-none text-white/80">
-                    Get Zero Pro
+                    Start free trial
                   </div>
                 </div>
               </button>
@@ -348,7 +365,7 @@ export default function Comparision() {
                     <PurpleThickCheck className="h-3 w-3" />
                   </div>
                   <div className="justify-center text-base font-normal leading-normal text-violet-400">
-                    $10 per month
+                    $20 per month
                   </div>
                 </div>
               </div>

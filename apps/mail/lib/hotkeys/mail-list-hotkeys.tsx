@@ -1,5 +1,3 @@
-'use client';
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { keyboardShortcuts } from '@/config/shortcuts';
@@ -10,9 +8,9 @@ import { Categories } from '@/components/mail/mail';
 import { useShortcuts } from './use-hotkey-utils';
 import { useThreads } from '@/hooks/use-threads';
 import { cleanSearchValue } from '@/lib/utils';
-import { usePathname } from 'next/navigation';
 import { useStats } from '@/hooks/use-stats';
-import { useTranslations } from 'next-intl';
+import { useLocation } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 
@@ -28,7 +26,7 @@ export function MailListHotkeys() {
   const categories = Categories();
   const [, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());

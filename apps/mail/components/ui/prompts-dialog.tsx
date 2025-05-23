@@ -21,7 +21,7 @@ import { useTRPC } from '@/providers/query-provider';
 import { Button } from '@/components/ui/button';
 import { Paper } from '../icons/icons';
 import { Textarea } from './textarea';
-import Link from 'next/link';
+import { Link } from 'react-router';
 
 export function PromptsDialog() {
   const trpc = useTRPC();
@@ -44,7 +44,7 @@ export function PromptsDialog() {
             <DialogTitle className="flex items-center gap-2">
               ZeroAI System Prompts{' '}
               <Link
-                href={'https://github.com/Mail-0/Zero.git'}
+                to={'https://github.com/Mail-0/Zero.git'}
                 target="_blank"
                 className="flex items-center gap-1 text-xs underline"
               >

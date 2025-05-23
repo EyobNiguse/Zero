@@ -1,5 +1,3 @@
-'use client';
-
 import {
   X,
   FileText,
@@ -30,7 +28,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { ArrowsPointingIn, ArrowsPointingOut, PanelLeftOpen, Phone } from '../icons/icons';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
 import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
-import { usePathname, useSearchParams, useParams } from 'next/navigation';
+import { Link, useLocation, useParams } from 'react-router';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useQueryClient } from '@tanstack/react-query';
 import { AIChat } from '@/components/create/ai-chat';
@@ -43,16 +41,13 @@ import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useLabels } from '@/hooks/use-labels';
 import { Gauge } from '@/components/ui/gauge';
-import { useCustomer } from 'autumn-js/next';
 import { useChat } from '@ai-sdk/react';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
-import { env } from '@/lib/env';
-import Image from 'next/image';
+import posthog from 'posthog-js';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 interface ChatHeaderProps {
   onClose: () => void;
@@ -77,6 +72,7 @@ function ChatHeader({
   onUpgrade,
   onNewChat,
 }: ChatHeaderProps) {
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   return (
     <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
       <TooltipProvider delayDuration={0}>
@@ -129,7 +125,11 @@ function ChatHeader({
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={onToggleViewMode} variant="ghost" className="md:h-fit md:px-2">
+                  <Button
+                    onClick={onToggleViewMode}
+                    variant="ghost"
+                    className="hidden md:flex md:h-fit md:px-2"
+                  >
                     {isPopup ? (
                       <PanelLeftOpen className="dark:fill-iconDark fill-iconLight" />
                     ) : (
@@ -145,22 +145,34 @@ function ChatHeader({
         )}
 
         {!isPro && (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild className="md:h-fit md:px-2">
-                <div>
-                  <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
-                <p className="mb-2">Upgrade for unlimited messages!</p>
-                <Button onClick={onUpgrade} className="h-8 w-full">
-                  Upgrade
-                </Button>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild className="md:h-fit md:px-2">
+                  <div>
+                    <Gauge value={20 - chatMessages.remaining!} size="small" showValue={true} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>You've used {20 - chatMessages.remaining!} out of 20 chat messages.</p>
+                  <p className="mb-2">Upgrade for unlimited messages!</p>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPricingOpen(true);
+                      onUpgrade();
+                    }}
+                    className="h-8 w-full"
+                  >
+                    Upgrade
+                  </Button>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <PricingDialog open={isPricingOpen} onOpenChange={setIsPricingOpen}>
+              <div className="hidden" />
+            </PricingDialog>
+          </>
         )}
 
         <PromptsDialog />
@@ -382,8 +394,8 @@ function AISidebar({ className }: AISidebarProps) {
   } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
   const [showPricing, setShowPricing] = useState(false);
-  const pathname = usePathname();
-  const { attach, customer, chatMessages, track, refetch: refetchBilling } = useBilling();
+  const { isPro, chatMessages, track, refetch: refetchBilling } = useBilling();
+  const pathname = useLocation().pathname;
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const [threadId, setThreadId] = useQueryState('threadId');
@@ -394,7 +406,7 @@ function AISidebar({ className }: AISidebarProps) {
   // Initialize shared chat state that will be used by both desktop and mobile views
   // This ensures conversation continuity when switching between viewport sizes
   const chatState = useChat({
-    api: `${env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+    api: `${import.meta.env.VITE_PUBLIC_BACKEND_URL}/api/chat`,
     fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
     maxSteps: 5,
     body: {
@@ -404,16 +416,36 @@ function AISidebar({ className }: AISidebarProps) {
     },
     onError(error) {
       console.error('Error in useChat', error);
+      posthog.capture('AI Chat Error', {
+        error: error.message,
+        threadId: threadId ?? undefined,
+        currentFolder: folder ?? undefined,
+        currentFilter: searchValue.value ?? undefined,
+        messages: chatState.messages,
+      });
       toast.error('Error, please try again later');
     },
     onResponse: (response) => {
+      posthog.capture('AI Chat Response', {
+        response,
+        threadId: threadId ?? undefined,
+        currentFolder: folder ?? undefined,
+        currentFilter: searchValue.value ?? undefined,
+        messages: chatState.messages,
+      });
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
     },
-    onFinish: () => {},
     async onToolCall({ toolCall }) {
       console.warn('toolCall', toolCall);
+      posthog.capture('AI Chat Tool Call', {
+        toolCall,
+        threadId: threadId ?? undefined,
+        currentFolder: folder ?? undefined,
+        currentFilter: searchValue.value ?? undefined,
+        messages: chatState.messages,
+      });
       switch (toolCall.toolName) {
         case Tools.CreateLabel:
         case Tools.DeleteLabel:
@@ -444,17 +476,6 @@ function AISidebar({ className }: AISidebarProps) {
     },
   });
 
-  const isPro = useMemo(() => {
-    return (
-      customer &&
-      Array.isArray(customer.products) &&
-      customer.products.some(
-        (product: any) =>
-          product.id.includes('pro-example') || product.name.includes('pro-example'),
-      )
-    );
-  }, [customer]);
-
   const handleUpgrade = () => {
     setShowPricing(true);
   };
@@ -478,7 +499,6 @@ function AISidebar({ className }: AISidebarProps) {
 
   return (
     <>
-      <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
       {open && (
         <>
           {/* Desktop view - visible on md and larger screens */}
@@ -486,12 +506,12 @@ function AISidebar({ className }: AISidebarProps) {
             <>
               <div className="w-[1px] opacity-0" />
               <ResizablePanel
-                defaultSize={22}
-                minSize={22}
-                maxSize={22}
-                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(98vh+10px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+                defaultSize={24}
+                minSize={24}
+                maxSize={24}
+                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(100dvh-8px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
               >
-                <div className={cn('h-[calc(98vh+6px)]', 'flex flex-col', '', className)}>
+                <div className={cn('h-[calc(98vh)]', 'flex flex-col', '', className)}>
                   <div className="flex h-full flex-col">
                     <ChatHeader
                       onClose={() => {
@@ -503,7 +523,7 @@ function AISidebar({ className }: AISidebarProps) {
                       isFullScreen={isFullScreen}
                       isPopup={isPopup}
                       chatMessages={chatMessages}
-                      isPro={isPro}
+                      isPro={isPro ?? false}
                       onUpgrade={handleUpgrade}
                       onNewChat={handleNewChat}
                     />
@@ -518,11 +538,13 @@ function AISidebar({ className }: AISidebarProps) {
 
           {/* Popup view - visible on small screens or when popup mode is selected */}
           <div
+            tabIndex={0}
             className={cn(
               'fixed inset-0 z-50 flex items-center justify-center bg-transparent p-4 opacity-40 backdrop-blur-sm transition-opacity duration-150 hover:opacity-100 sm:inset-auto sm:bottom-4 sm:right-4 sm:flex-col sm:items-end sm:justify-end sm:p-0',
               'md:hidden',
               isPopup && !isFullScreen && 'md:flex',
               isFullScreen && '!inset-0 !flex !p-0 !opacity-100 !backdrop-blur-none',
+              'rounded-2xl focus:opacity-100',
             )}
           >
             <div
@@ -549,7 +571,7 @@ function AISidebar({ className }: AISidebarProps) {
                   isFullScreen={isFullScreen}
                   isPopup={isPopup}
                   chatMessages={chatMessages}
-                  isPro={isPro}
+                  isPro={isPro ?? false}
                   onUpgrade={handleUpgrade}
                   onNewChat={handleNewChat}
                 />
@@ -566,21 +588,3 @@ function AISidebar({ className }: AISidebarProps) {
 }
 
 export default AISidebar;
-
-// Add this style to the file to hide scrollbars
-const noScrollbarStyle = `
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-`;
-
-if (typeof document !== 'undefined') {
-  // Add the style to the document head when on client
-  const style = document.createElement('style');
-  style.innerHTML = noScrollbarStyle;
-  document.head.appendChild(style);
-}
