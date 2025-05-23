@@ -66,6 +66,7 @@ export function NavUser() {
   const queryClient = useQueryClient();
   const { data: activeConnection, refetch: refetchActiveConnection } = useActiveConnection();
   const { revalidate } = useRevalidator();
+  const [, setPricingDialog] = useQueryState('pricingDialog');
 
   const getSettingsHref = useCallback(() => {
     const category = searchParams.get('category');
@@ -435,11 +436,12 @@ export function NavUser() {
                 </AddConnectionDialog>
               ) : (
                 <>
-                  <PricingDialog>
-                    <Button className="hover:bg-offsetLight/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]">
-                      <Plus className="size-4" />
-                    </Button>
-                  </PricingDialog>
+                  <Button
+                    onClick={() => setPricingDialog('true')}
+                    className="hover:bg-offsetLight/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]"
+                  >
+                    <Plus className="size-4" />
+                  </Button>
                 </>
               )}
             </div>
@@ -535,17 +537,13 @@ export function NavUser() {
               {isPro ? (
                 <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
               ) : (
-                <PricingDialog>
-                  <button className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent">
-                    <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
-                    <span className="text-muted-foreground text-[10px] uppercase">
-                      Get verified
-                    </span>
-                  </button>
-                </PricingDialog>
+                <button className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent">
+                  <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+                  <span className="text-muted-foreground text-[10px] uppercase">Get verified</span>
+                </button>
               )}
             </div>
-            <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989] h-5">
+            <div className="h-5 max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}
             </div>
           </div>

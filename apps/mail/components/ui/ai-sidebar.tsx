@@ -55,9 +55,7 @@ interface ChatHeaderProps {
   onToggleViewMode: () => void;
   isFullScreen: boolean;
   isPopup: boolean;
-  chatMessages: { remaining: number };
   isPro: boolean;
-  onUpgrade: () => void;
   onNewChat: () => void;
 }
 
@@ -67,12 +65,11 @@ function ChatHeader({
   onToggleViewMode,
   isFullScreen,
   isPopup,
-  chatMessages,
   isPro,
-  onUpgrade,
   onNewChat,
 }: ChatHeaderProps) {
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [, setPricingDialog] = useQueryState('pricingDialog');
+  const { chatMessages } = useBilling();
   return (
     <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
       <TooltipProvider delayDuration={0}>
@@ -150,28 +147,31 @@ function ChatHeader({
               <Tooltip>
                 <TooltipTrigger asChild className="md:h-fit md:px-2">
                   <div>
-                    <Gauge value={20 - chatMessages.remaining!} size="small" showValue={true} />
+                    <Gauge
+                      value={chatMessages.included_usage - chatMessages.remaining!}
+                      size="small"
+                      showValue={true}
+                    />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>You've used {20 - chatMessages.remaining!} out of 20 chat messages.</p>
+                  <p>
+                    You've used {chatMessages.included_usage - chatMessages.remaining!} out of{' '}
+                    {chatMessages.included_usage} chat messages.
+                  </p>
                   <p className="mb-2">Upgrade for unlimited messages!</p>
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIsPricingOpen(true);
-                      onUpgrade();
+                      setPricingDialog('true');
                     }}
                     className="h-8 w-full"
                   >
-                    Upgrade
+                    Start free trial
                   </Button>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <PricingDialog open={isPricingOpen} onOpenChange={setIsPricingOpen}>
-              <div className="hidden" />
-            </PricingDialog>
           </>
         )}
 
@@ -393,9 +393,7 @@ function AISidebar({ className }: AISidebarProps) {
     isPopup,
   } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
-  const [showPricing, setShowPricing] = useState(false);
-  const { isPro, chatMessages, track, refetch: refetchBilling } = useBilling();
-  const pathname = useLocation().pathname;
+  const { isPro, track, refetch: refetchBilling } = useBilling();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const [threadId, setThreadId] = useQueryState('threadId');
@@ -476,10 +474,6 @@ function AISidebar({ className }: AISidebarProps) {
     },
   });
 
-  const handleUpgrade = () => {
-    setShowPricing(true);
-  };
-
   useHotkeys('Meta+0', () => {
     setOpen(!open);
   });
@@ -522,9 +516,7 @@ function AISidebar({ className }: AISidebarProps) {
                       onToggleViewMode={toggleViewMode}
                       isFullScreen={isFullScreen}
                       isPopup={isPopup}
-                      chatMessages={chatMessages}
                       isPro={isPro ?? false}
-                      onUpgrade={handleUpgrade}
                       onNewChat={handleNewChat}
                     />
                     <div className="relative flex-1 overflow-hidden">
@@ -570,9 +562,7 @@ function AISidebar({ className }: AISidebarProps) {
                   onToggleViewMode={toggleViewMode}
                   isFullScreen={isFullScreen}
                   isPopup={isPopup}
-                  chatMessages={chatMessages}
                   isPro={isPro ?? false}
-                  onUpgrade={handleUpgrade}
                   onNewChat={handleNewChat}
                 />
                 <div className="relative flex-1 overflow-hidden">
