@@ -80,16 +80,4 @@ export const labelsRouter = router({
       const { driver } = ctx;
       return await driver.deleteLabel(input.id);
     }),
-  getlaeblCount: activeDriverProcedure
-    .use(
-      createRateLimiterMiddleware({
-        generatePrefix: ({ session }) => `ratelimit:labels-get-message-count-${session?.user.id}`,
-        limiter: Ratelimit.slidingWindow(60, '1m'),
-      }),
-    )
-    .input(z.object({ labelId: z.string() }))
-    .query(async ({ ctx, input }) => {
-        const { driver } = ctx;
-        return await driver.getLabelCount(input.labelId);
-      }),
 });

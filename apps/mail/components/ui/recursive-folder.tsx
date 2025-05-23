@@ -7,10 +7,9 @@ import { Folder } from '../magicui/file-tree';
 import { useNavigate } from 'react-router';
 import { useCallback } from 'react';
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useTRPC } from '@/providers/query-provider';
 
-export const RecursiveFolder = ({ label, activeAccount }: { label: any; activeAccount?: any }) => {
+export const RecursiveFolder = ({ label, activeAccount, count }: { label: any; activeAccount?: any; count?: number }) => {
   const [searchValue, setSearchValue] = useSearchValue();
   const isActive = searchValue.value.includes(`label:${label.name}`);
   const isFolderActive = isActive || window.location.pathname.includes(`/mail/label/${label.id}`);
@@ -19,9 +18,6 @@ export const RecursiveFolder = ({ label, activeAccount }: { label: any; activeAc
   const { data: connections } = useConnections();
   const { data: activeConnection } = useActiveConnection();
   const { setOpenMobile, isMobile } = useSidebar();
-  const { data: labelData, isLoading: isLoadingLabels } = useQuery(trpc.labels.getlabel.queryOptions({ id: label.id }));
-
-  console.log('labels from trpc', labelData);
 
   const handleFilterByLabel = useCallback(
     (labelToFilter: LabelType) => {
@@ -79,15 +75,15 @@ export const RecursiveFolder = ({ label, activeAccount }: { label: any; activeAc
     >
       <Folder
         element={label.name}
-        count={labelData?.count}
         value={label.id}
         key={label.id}
         hasChildren={hasChildren}
         onFolderClick={handleFolderClick}
         isSelect={isFolderActive}
+        count={count}
       >
         {label.labels?.map((childLabel: any) => (
-          <RecursiveFolder key={childLabel.id} label={childLabel} />
+          <RecursiveFolder key={childLabel.id} label={childLabel} count={count} />
         ))}
       </Folder>
     </LabelSidebarContextMenu>

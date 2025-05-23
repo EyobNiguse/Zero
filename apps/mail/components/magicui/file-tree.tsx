@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { FileIcon } from 'lucide-react';
 import { Accordion } from 'radix-ui';
 import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
 
 type TreeViewElement = {
   id: string;
@@ -269,7 +270,7 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
             </div>
           )}
           <span
-            className={cn('flex-1 truncate', {
+            className={cn('flex-1 truncate ', {
               'cursor-pointer': canExpand && isSelectable && onFolderClick,
               'font-bold': isSelect,
             })}
@@ -288,7 +289,11 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
           >
             {element}
           </span>
-          {count && <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">{count}</span>}
+          {count !== 0 &&
+          <Badge className="text-muted-foreground ml-auto shrink-0 rounded-full border-none bg-transparent">
+            {count}
+          </Badge>
+        }
         </div>
         <Accordion.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down relative h-full overflow-hidden text-sm">
           {element && indicator && <TreeIndicator aria-hidden="true" />}

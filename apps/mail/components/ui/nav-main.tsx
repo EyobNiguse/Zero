@@ -83,6 +83,7 @@ export function NavMain({ items }: NavMainProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const { data: session } = useSession();
   const { data: connections } = useConnections();
+  const { data: stats } = useStats();
   const { data: activeConnection } = useActiveConnection();
   const form = useForm<LabelType>({
     defaultValues: {
@@ -440,6 +441,7 @@ export function NavMain({ items }: NavMainProps) {
                             key={label.id}
                             label={label}
                             activeAccount={activeAccount}
+                            count={stats ? stats.find((stat) => stat.label?.toLowerCase() === label.name?.toLowerCase())?.count : 0}
                           />
                         ));
                       }
@@ -483,6 +485,7 @@ export function NavMain({ items }: NavMainProps) {
                               key={groupFolder.id}
                               label={groupFolder}
                               activeAccount={activeAccount}
+                              count={stats ? stats.find((stat) => stat.label?.toLowerCase() === groupFolder.name?.toLowerCase())?.count : 0}
                             />,
                           );
                         });
@@ -497,6 +500,7 @@ export function NavMain({ items }: NavMainProps) {
                                 name: label.name,
                                 originalLabel: label,
                               }}
+                              count={stats ? stats.find((stat) => stat.label?.toLowerCase() === label.name?.toLowerCase())?.count : 0}
                               activeAccount={activeAccount}
                             />,
                           );
@@ -518,6 +522,7 @@ export function NavMain({ items }: NavMainProps) {
                             key={bracketsFolder.id}
                             label={bracketsFolder}
                             activeAccount={activeAccount}
+                            count={stats ? stats.find((stat) => stat.label?.toLowerCase() === bracketsFolder.name?.toLowerCase())?.count : 0}
                           />,
                         );
                       }
