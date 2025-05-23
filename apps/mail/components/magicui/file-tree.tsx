@@ -192,7 +192,7 @@ interface FolderComponentProps extends React.ComponentPropsWithoutRef<typeof Acc
 type FolderProps = {
   expandedItems?: string[];
   element: string;
-  count?: number;
+  count: number;
   isSelectable?: boolean;
   isSelect?: boolean;
   onFolderClick?: (id: string) => void;
@@ -288,7 +288,7 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
           >
             {element}
           </span>
-          {count !== 0 &&
+          {count > 0 &&
           <span
           className={cn(
             'ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium text-muted-foreground bg-transparent'

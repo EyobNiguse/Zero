@@ -52,7 +52,6 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
   startAnimation?: () => void;
   stopAnimation?: () => void;
 }
-
 interface NavItemProps extends NavItem {
   isActive?: boolean;
   isExpanded?: boolean;
@@ -172,6 +171,15 @@ export function NavMain({ items }: NavMainProps) {
     },
     [pathname, category, searchParams, isValidInternalUrl],
   );
+
+  const getLabelCount = React.useMemo(() => {
+    if (!stats) return () => 0;
+
+    return (labelName: string | undefined) => {
+      if (!labelName) return 0;
+      return stats.find((stat) => stat.label?.toLowerCase() === labelName.toLowerCase())?.count ?? 0;
+    };
+  }, [stats]);
 
   const activeAccount = React.useMemo(() => {
     if (!activeConnection?.id || !connections?.connections) return null;
@@ -441,7 +449,7 @@ export function NavMain({ items }: NavMainProps) {
                             key={label.id}
                             label={label}
                             activeAccount={activeAccount}
-                            count={stats ? stats.find((stat) => stat.label?.toLowerCase() === label.name?.toLowerCase())?.count : 0}
+                            count={getLabelCount(label.name)}
                           />
                         ));
                       }
@@ -485,7 +493,7 @@ export function NavMain({ items }: NavMainProps) {
                               key={groupFolder.id}
                               label={groupFolder}
                               activeAccount={activeAccount}
-                              count={stats ? stats.find((stat) => stat.label?.toLowerCase() === groupFolder.name?.toLowerCase())?.count : 0}
+                              count={getLabelCount(groupFolder.name)}
                             />,
                           );
                         });
@@ -500,7 +508,7 @@ export function NavMain({ items }: NavMainProps) {
                                 name: label.name,
                                 originalLabel: label,
                               }}
-                              count={stats ? stats.find((stat) => stat.label?.toLowerCase() === label.name?.toLowerCase())?.count : 0}
+                              count={getLabelCount(label.name)}
                               activeAccount={activeAccount}
                             />,
                           );
