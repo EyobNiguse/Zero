@@ -30,17 +30,6 @@ import {
   parseNaturalLanguageSearch,
 } from '@/lib/utils';
 import {
-  Archive2,
-  Bell,
-  GroupPeople,
-  Lightning,
-  People,
-  Star2,
-  Tag,
-  Trash,
-  User,
-} from '../icons/icons';
-import {
   type ComponentProps,
   memo,
   useCallback,
