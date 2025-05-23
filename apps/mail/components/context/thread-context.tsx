@@ -119,10 +119,8 @@ export function ThreadContextMenu({
   isSpam = false,
   isSent = false,
   isBin = false,
-  refreshCallback,
 }: EmailContextMenuProps) {
   const { folder } = useParams<{ folder: string }>();
-  const navigate = useNavigate();
   const [mail, setMail] = useMail();
   const [{ refetch, isLoading, isFetching }, threads] = useThreads();
   const currentFolder = folder ?? '';

@@ -1,9 +1,10 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { CurvedArrow, Puzzle, Stop } from '../icons/icons';
 import { useRef, useCallback, useEffect } from 'react';
 import { PricingDialog } from '../ui/pricing-dialog';
 import { Markdown } from '@react-email/components';
 import { useAIFullScreen } from '../ui/ai-sidebar';
-import { CurvedArrow, Stop } from '../icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
@@ -152,6 +153,7 @@ export interface AIChatProps {
   status: string;
   stop: () => void;
   className?: string;
+  onModelChange?: (model: string) => void;
 }
 
 export function AIChat({
@@ -162,7 +164,6 @@ export function AIChat({
   handleSubmit,
   status,
   stop,
-  className,
 }: AIChatProps): React.ReactElement {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -170,7 +171,7 @@ export function AIChat({
   const inputRef = useRef<HTMLInputElement>(null);
   const { chatMessages } = useBilling();
   const { isFullScreen } = useAIFullScreen();
-
+  const [, setPricingDialog] = useQueryState('pricingDialog');
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -186,14 +187,15 @@ export function AIChat({
       <div className="no-scrollbar flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-2 py-4">
           {chatMessages && !chatMessages.enabled ? (
-            <PricingDialog>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <TextShimmer className="text-center text-xl font-medium">
-                  Upgrade to Zero Pro for unlimited AI chats
-                </TextShimmer>
-                <Button className="mt-2 h-8 w-52">Upgrade</Button>
-              </div>
-            </PricingDialog>
+            <div
+              onClick={() => setPricingDialog('true')}
+              className="absolute inset-0 flex flex-col items-center justify-center"
+            >
+              <TextShimmer className="text-center text-xl font-medium">
+                Upgrade to Zero Pro for unlimited AI chat
+              </TextShimmer>
+              <Button className="mt-2 h-8 w-52">Start free trial</Button>
+            </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative mb-4 h-[44px] w-[44px]">
@@ -281,7 +283,7 @@ export function AIChat({
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask Zero to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm ring-0 focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg border-none bg-white px-3 py-2 pr-10 text-sm ring-0 focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
                   />
                   {status === 'ready' ? (
                     <button
@@ -310,6 +312,81 @@ export function AIChat({
             </div>
           )}
         </div>
+
+        {/* <div className="flex items-center justify-end gap-1">
+        <div className="mt-1 flex items-center justify-end relative z-10">
+          <Select
+           
+          >
+            <SelectTrigger className="flex h-6 w-fit cursor-pointer items-center justify-between gap-1 border-0 dark:bg-[#141414] px-2 text-xs hover:bg-[#1E1E1E]">
+              <div className="flex items-center gap-1.5 w-full">
+                <Puzzle className="h-3.5 w-3.5 fill-white dark:fill-[#929292]" />
+              </div>
+              
+            </SelectTrigger>
+            <SelectContent className="w-[190px] rounded-md border-0 bg-[#1E1E1E] p-0.5 shadow-md">
+              <SelectItem
+                value="gpt-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/openai.png" alt="OpenAI" className="h-3.5 w-3.5 dark:invert" />
+                  <span className="whitespace-nowrap">GPT 3.5</span>
+                </div>
+              </SelectItem>
+              <SelectItem
+                value="claude-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/claude.png" alt="Claude" className="h-3.5 w-3.5" />
+                  <span className="whitespace-nowrap">Claude 3.5</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="mt-1 flex items-center justify-end relative z-10">
+          <Select
+            value={selectedModel}
+            onValueChange={(value) => {
+              setSelectedModel(value);
+              onModelChange?.(value);
+            }}
+          >
+            <SelectTrigger className="flex h-6 w-fit cursor-pointer items-center justify-between gap-1 border-0 dark:bg-[#141414] px-2 text-xs hover:bg-[#1E1E1E]">
+              <div className="flex items-center gap-1.5 w-full">
+                {selectedModel === 'gpt-3.5' ? (
+                  <img src="/openai.png" alt="OpenAI" className="h-3.5 w-3.5 dark:invert" />
+                ) : (
+                  <img src="/claude.png" alt="Claude" className="h-3.5 w-3.5" />
+                )}
+              </div>
+              
+            </SelectTrigger>
+            <SelectContent className="w-[190px] rounded-md border-0 bg-[#1E1E1E] p-0.5 shadow-md">
+              <SelectItem
+                value="gpt-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/openai.png" alt="OpenAI" className="h-3.5 w-3.5 dark:invert" />
+                  <span className="whitespace-nowrap">GPT 3.5</span>
+                </div>
+              </SelectItem>
+              <SelectItem
+                value="claude-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/claude.png" alt="Claude" className="h-3.5 w-3.5" />
+                  <span className="whitespace-nowrap">Claude 3.5</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        </div> */}
       </div>
     </div>
   );
