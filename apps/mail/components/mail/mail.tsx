@@ -43,6 +43,7 @@ import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import AISidebar from '@/components/ui/ai-sidebar';
 import { cleanSearchValue, cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 import { useThreads } from '@/hooks/use-threads';
 import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -207,26 +208,27 @@ const AutoLabelingSettings = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          disabled={isEnablingBrain || isDisablingBrain}
-          variant="outline"
-          size={'sm'}
-          className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
-        >
-          <div
+        <div className="flex items-center gap-2">
+          {/* <div
             className={cn(
               'h-2 w-2 animate-pulse rounded-full',
               brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
             )}
+          /> */}
+         
+          <Switch
+            disabled={isEnablingBrain || isDisablingBrain}
+            checked={brainState?.enabled}
+           
           />
-          Auto Labeling
-        </Button>
+           <span className="text-muted-foreground text-xs cursor-pointer">Auto label</span>
+        </div>
       </DialogTrigger>
       <DialogContent showOverlay className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Autolabeling Settings</DialogTitle>
         </DialogHeader>
-        <DialogDescription className="mb-4">
+        <DialogDescription className="mb-4 mt-2">
           These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
           however you like. Zero will create a new label in your account for each label you add - if
           it does not exist already.
@@ -257,7 +259,7 @@ const AutoLabelingSettings = () => {
                   className="h-8 w-8"
                   onClick={() => handleDeleteLabel(label.id)}
                 >
-                  <TrashIcon className="h-4 w-4 fill-red-800" />
+                  <Trash className="h-4 w-4 fill-[#F43F5E]" />
                 </Button>
               </div>
             ))}
@@ -285,7 +287,7 @@ const AutoLabelingSettings = () => {
                 onClick={handleAddLabel}
                 disabled={!newLabel.name || !newLabel.usecase}
               >
-                <Plus className="fill-white" />
+                <Plus className="h-4 w-4 fill-white" />
               </Button>
             </div>
           </div>
@@ -445,7 +447,7 @@ export function MailLayout() {
                       ) : null}
                     </div>
                     <AutoLabelingSettings />
-                    <Button
+                    <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7] ml-2" />{' '}                    <Button
                       onClick={() => {
                         refetchThreads();
                       }}

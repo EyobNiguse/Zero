@@ -24,8 +24,14 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
   //     await refetchThreads();
   //   }, [refetchThreads]);
 
-  const labelsDebouncer = funnel(refetchLabels, { minQuietPeriodMs: DEBOUNCE_DELAY });
-  const threadsDebouncer = funnel(refetchThreads, { minQuietPeriodMs: DEBOUNCE_DELAY });
+  const labelsDebouncer = funnel(
+    () => queryClient.invalidateQueries({ queryKey: trpc.labels.list.queryKey() }),
+    { minQuietPeriodMs: DEBOUNCE_DELAY },
+  );
+  const threadsDebouncer = funnel(
+    () => queryClient.invalidateQueries({ queryKey: trpc.mail.listThreads.queryKey() }),
+    { minQuietPeriodMs: DEBOUNCE_DELAY },
+  );
 
   usePartySocket({
     party: 'durable-mailbox',
@@ -38,18 +44,33 @@ export const NotificationProvider = ({ headers }: { headers: Record<string, stri
     },
     host: import.meta.env.VITE_PUBLIC_BACKEND_URL!,
     onMessage: async (message: MessageEvent<string>) => {
-      console.warn('party message', message);
-      const [threadId, type] = message.data.split(':');
-      if (type === 'end') {
-        labelsDebouncer.call();
-        await queryClient.invalidateQueries({
-          queryKey: trpc.mail.get.queryKey({ id: threadId }),
-        });
-        threadsDebouncer.call();
-        console.warn('refetched threads');
-      } else if (type === 'start') {
-        threadsDebouncer.call();
-        console.warn('refetched threads');
+      try {
+        console.warn('party message', message);
+        const { threadIds, type } = JSON.parse(message.data);
+        if (type === 'refresh') {
+          labelsDebouncer.call();
+          await Promise.all(
+            threadIds.map(async (threadId: string) => {
+              await queryClient.invalidateQueries({
+                queryKey: trpc.mail.get.queryKey({ id: threadId }),
+              });
+            }),
+          );
+          console.warn('refetched labels & threads', threadIds);
+        } else if (type === 'list') {
+          threadsDebouncer.call();
+          labelsDebouncer.call();
+          await Promise.all(
+            threadIds.map(async (threadId: string) => {
+              await queryClient.invalidateQueries({
+                queryKey: trpc.mail.get.queryKey({ id: threadId }),
+              });
+            }),
+          );
+          console.warn('refetched threads, added', threadIds);
+        }
+      } catch (error) {
+        console.error('error parsing party message', error);
       }
     },
   });

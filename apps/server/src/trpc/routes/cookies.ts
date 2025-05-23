@@ -1,6 +1,7 @@
 import { COOKIE_CONSENT_KEY, type CookiePreferences } from '../../lib/cookies';
 import { privateProcedure, publicProcedure, router } from '../trpc';
 import { getCookie, setCookie } from 'hono/cookie';
+import { env } from 'cloudflare:workers';
 import type { Context } from 'hono';
 import { z } from 'zod';
 
@@ -58,7 +59,9 @@ export const cookiePreferencesRouter = router({
   setLocaleCookie: publicProcedure
     .input(z.object({ locale: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      setCookie(ctx.c, 'i18n:locale', input.locale);
+      setCookie(ctx.c, 'i18n:locale', input.locale, {
+        domain: env.COOKIE_DOMAIN,
+      });
       return { success: true };
     }),
 });

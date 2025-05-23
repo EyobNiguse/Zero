@@ -72,7 +72,7 @@ export default function PricingPage() {
   const { data: session } = useSession();
 
   return (
-    <main className="relative flex h-screen flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
+    <main className="relative flex min-h-screen flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
       <PixelatedBackground
         className="z-1 absolute left-1/2 top-[-40px] h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover"
         style={{
@@ -136,8 +136,7 @@ export default function PricingPage() {
           </div>
           <div className="flex gap-2">
             <Button
-              variant="ghost"
-              className="h-8 text-white hover:bg-accent/10 hover:text-white"
+              className="h-8 text-black hover:bg-white hover:text-black bg-white"
               onClick={() => {
                 if (session) {
                   // User is logged in, redirect to inbox
@@ -156,12 +155,8 @@ export default function PricingPage() {
                 }
               }}
             >
-              Sign in
+             Sign in
             </Button>
-
-            <a target="_blank" href="https://cal.com/team/0">
-              <Button className="h-8 font-medium bg-white text-black">Contact Us</Button>
-            </a>
           </div>
         </nav>
       </header>
@@ -210,6 +205,7 @@ export default function PricingPage() {
                       alt={resource.platform}
                       width={20}
                       height={20}
+                      
                     />
                   )}
                 </Link>
@@ -219,7 +215,7 @@ export default function PricingPage() {
         </Sheet>
       </div>
 
-      <div className="container mx-auto mb-20 mt-12 h-screen px-4 py-16 md:mt-44">
+      <div className="container mx-auto px-4 py-16 mt-12 md:mt-44">
         <div className="mb-12 text-center">
           <h1 className="mb-2 self-stretch text-5xl font-medium leading-[62px] text-white md:text-6xl">
             Simple, Transparent Pricing
@@ -229,136 +225,14 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="mx-auto max-w-5xl px-4">
-          {/* Free Plan */}
+        <div className="mx-auto max-w-7xl">
           <PricingCard />
-
-          {/* <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
-            <h1 className="mb-4 text-center text-lg font-normal text-white/50">Free</h1>
-            <div className="mb-4 text-center text-3xl font-bold dark:text-white">
-              $0 <span className="text-lg font-medium">/ mo</span>
-            </div>
-            <ul className="mb-6 w-full flex-grow space-y-2 text-left">
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> 1 email connection
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI chat{' '}
-                <span className="text-xs text-white/50">(25 per day)</span>
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI writing assistant
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Auto labeling
-                <span className="text-xs text-white/50">(25 per day)</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" />
-                <span>
-                  AI thread summaries <span className="text-xs text-white/50">(25 per day)</span>
-                </span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleX className="h-4 w-4 fill-white opacity-50" /> Instant thread AI-generated
-                summaries
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleX className="h-4 w-4 fill-white opacity-50" /> Verified checkmark
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleX className="h-4 w-4 fill-white opacity-50" /> Priority customer support
-              </li>
-            </ul>
-            <a href="/login">
-              <Button className="h-8 w-full">Get Started</Button>
-            </a>
-          </div> */}
-
-          {/* Pro Plan */}
-          {/* <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
-            <h1 className="mb-4 text-center text-lg font-normal text-white/50">Pro</h1>
-
-            <div className="mb-4 text-center text-3xl font-bold dark:text-white">
-              $20 <span className="text-lg font-medium">/ mo</span>
-            </div>
-            <ul className="mb-6 w-full flex-grow space-y-2 text-left">
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Unlimited email connections
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI chat
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI writing assistant
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Auto labeling
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI thread summaries
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Verified checkmark
-              </li>
-            </ul>
-            <Button className="h-8 w-full" onClick={handleUpgrade}>
-              Get Started
-            </Button>
-          </div> */}
-
-          {/* Enterprise Plan */}
-          {/* <div className="relative flex h-full flex-col rounded-xl border bg-[#121212] px-8 pb-4 pt-8">
-            <h1 className="mb-4 text-center text-lg font-normal text-white/50">Enterprise</h1>
-
-            <div className="mb-4 text-center text-3xl font-bold dark:text-white">Contact us</div>
-            <ul className="mb-6 w-full flex-grow space-y-2 text-left">
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Unlimited email connections
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI chat
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI writing assistant
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Auto labeling
-              </li>
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> AI thread summaries
-              </li>
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Verified checkmark
-              </li>
-
-              
-
-              <li className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4 fill-[#2FAD71]" /> Priority customer support
-              </li>
-            </ul>
-            <a href="https://cal.com/team/0/chat" target="_blank">
-              <Button className="h-8 w-full" onClick={handleUpgrade}>
-                Contact us
-              </Button>
-            </a>
-          </div> */}
         </div>
       </div>
-      <div className="mx-12 mt-[500px] md:mt-12">
+      <div className="container mx-auto px-4 mb-40">
         <Comparision />
       </div>
-      <div className="mt-20">
+      <div className="mt-auto">
         <Footer />
       </div>
     </main>

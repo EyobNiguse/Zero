@@ -1,5 +1,6 @@
 import { getActiveConnection } from '../server-utils';
 import { getContext } from 'hono/context-storage';
+import type { gmail_v1 } from '@googleapis/gmail';
 import { connection } from '@zero/db/schema';
 import type { HonoContext } from '../../ctx';
 import { createDriver } from '../driver';
@@ -94,4 +95,12 @@ export function sanitizeContext(context?: Record<string, unknown>) {
     }
   }
   return sanitized;
+}
+
+/**
+ * Retrieves the original sender address for a forwarded email from SimpleLogin
+ * from the headers of a Gmail email. Header: `X-SimpleLogin-Original-From`
+ */
+export function getSimpleLoginSender(payload: gmail_v1.Schema$Message['payload']) {
+  return payload?.headers?.find((h) => h.name === 'X-SimpleLogin-Original-From')?.value || null;
 }
