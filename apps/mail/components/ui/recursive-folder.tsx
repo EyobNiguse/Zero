@@ -7,14 +7,12 @@ import { Folder } from '../magicui/file-tree';
 import { useNavigate } from 'react-router';
 import { useCallback } from 'react';
 import * as React from 'react';
-import { useTRPC } from '@/providers/query-provider';
 
 export const RecursiveFolder = ({ label, activeAccount, count }: { label: any; activeAccount?: any; count?: number }) => {
   const [searchValue, setSearchValue] = useSearchValue();
   const isActive = searchValue.value.includes(`label:${label.name}`);
   const isFolderActive = isActive || window.location.pathname.includes(`/mail/label/${label.id}`);
   const navigate = useNavigate();
-  const trpc = useTRPC();
   const { data: connections } = useConnections();
   const { data: activeConnection } = useActiveConnection();
   const { setOpenMobile, isMobile } = useSidebar();
