@@ -36,9 +36,6 @@ export const authProviders = (env: Record<string, string>): ProviderConfig[] => 
       { name: 'GOOGLE_CLIENT_SECRET', source: 'Google Cloud Console' },
     ],
     config: {
-      // TODO: Remove this before going to prod, it's to force to get `refresh_token` from google, some users don't have it yet.
-      prompt:
-        env.NODE_ENV === 'production' && env.FORCE_GMAIL_CONSENT !== 'true' ? undefined : 'consent',
       accessType: 'offline',
       scope: [
         'https://www.googleapis.com/auth/gmail.modify',
