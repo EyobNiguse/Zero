@@ -23,7 +23,7 @@ import { CreateEmail } from '../create/create-email';
 import { PencilCompose, X } from '../icons/icons';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
-import React, { useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useStats } from '@/hooks/use-stats';
 import { useLocation } from 'react-router';
 import { useTranslations } from 'use-intl';
@@ -32,9 +32,20 @@ import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 import { useQueryState } from 'nuqs';
 
+import { Button } from '@/components/ui/button';
+import { PricingDialog } from './pricing-dialog';
 import { useAIFullScreen } from './ai-sidebar';
+import { useBilling } from '@/hooks/use-billing';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isPro } = useBilling();
+  const [showUpgrade, setShowUpgrade] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('hideUpgradeCard') !== 'true'
+    }
+    return true
+  });
+  const [showPricing, setShowPricing] = React.useState(false);
   const { isFullScreen } = useAIFullScreen();
 
   const { data: stats } = useStats();
@@ -116,6 +127,49 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </motion.div>
             </AnimatePresence>
           </SidebarContent>
+
+          {!isPro && showUpgrade && state !== 'collapsed' && (
+            <div className="px-4 py-4 dark:bg-[#1C1C1C] bg-white border rounded-lg mx-3 mb-4 relative backdrop-blur-sm top-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-6 w-6 rounded-full hover:bg-white/10 [&>svg]:h-2.5 [&>svg]:w-2.5"
+                onClick={() => {
+                  setShowUpgrade(false)
+                  localStorage.setItem('hideUpgradeCard', 'true')
+                }}
+              >
+                <X className="h-2.5 w-2.5 fill-black dark:fill-white/50" />
+              </Button>
+              <div className="flex items-start gap-2">
+               
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-black dark:text-white/90 font-semibold text-sm">Get Zero Pro</h3>
+                  </div>
+                  <p className="text-[13px] text-black dark:text-white/50 leading-snug">
+                    Get unlimited AI chats, auto-labeling, writing assistant, and more.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPricing(true)}
+                className="inline-flex h-7 w-full items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-[#8B5CF6] px-2 mt-3"
+              >
+               
+                <div className="flex items-center justify-center gap-2.5 px-0.5">
+                  <div className="text-white justify-start font-['Inter'] text-sm leading-none">
+                    Start free trial
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          <PricingDialog
+            open={showPricing}
+            onOpenChange={setShowPricing}
+          />
 
           <SidebarFooter className={`px-0 pb-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
             <NavMain items={bottomNavItems} />

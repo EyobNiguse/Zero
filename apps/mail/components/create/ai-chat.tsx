@@ -1,9 +1,10 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useRef, useCallback, useEffect } from 'react';
 import { PricingDialog } from '../ui/pricing-dialog';
 import { Markdown } from '@react-email/components';
 import { useAIFullScreen } from '../ui/ai-sidebar';
-import { CurvedArrow, Stop } from '../icons/icons';
+import { CurvedArrow, Puzzle, Stop } from '../icons/icons';
 import { useBilling } from '@/hooks/use-billing';
 import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
@@ -152,6 +153,7 @@ export interface AIChatProps {
   status: string;
   stop: () => void;
   className?: string;
+  onModelChange?: (model: string) => void;
 }
 
 export function AIChat({
@@ -163,8 +165,10 @@ export function AIChat({
   status,
   stop,
   className,
+  onModelChange,
 }: AIChatProps): React.ReactElement {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('gpt-4');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -267,7 +271,7 @@ export function AIChat({
       </div>
 
       {/* Fixed input at bottom */}
-      <div className={cn('mb-4 flex-shrink-0 px-4', isFullScreen ? 'px-0' : '')}>
+      <div className={cn('mb-4 flex-shrink-0 px-4 ', isFullScreen ? 'px-0' : '')}>
         <div className="bg-offsetLight relative rounded-lg dark:bg-[#141414]">
           {showVoiceChat ? (
             <VoiceChat onClose={() => setShowVoiceChat(false)} />
@@ -281,7 +285,7 @@ export function AIChat({
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask Zero to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm ring-0 focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm ring-0 focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#141414] border-none"
                   />
                   {status === 'ready' ? (
                     <button
@@ -310,7 +314,83 @@ export function AIChat({
             </div>
           )}
         </div>
+        
+        {/* <div className="flex items-center justify-end gap-1">
+        <div className="mt-1 flex items-center justify-end relative z-10">
+          <Select
+           
+          >
+            <SelectTrigger className="flex h-6 w-fit cursor-pointer items-center justify-between gap-1 border-0 dark:bg-[#141414] px-2 text-xs hover:bg-[#1E1E1E]">
+              <div className="flex items-center gap-1.5 w-full">
+                <Puzzle className="h-3.5 w-3.5 fill-white dark:fill-[#929292]" />
+              </div>
+              
+            </SelectTrigger>
+            <SelectContent className="w-[190px] rounded-md border-0 bg-[#1E1E1E] p-0.5 shadow-md">
+              <SelectItem
+                value="gpt-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/openai.png" alt="OpenAI" className="h-3.5 w-3.5 dark:invert" />
+                  <span className="whitespace-nowrap">GPT 3.5</span>
+                </div>
+              </SelectItem>
+              <SelectItem
+                value="claude-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/claude.png" alt="Claude" className="h-3.5 w-3.5" />
+                  <span className="whitespace-nowrap">Claude 3.5</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="mt-1 flex items-center justify-end relative z-10">
+          <Select
+            value={selectedModel}
+            onValueChange={(value) => {
+              setSelectedModel(value);
+              onModelChange?.(value);
+            }}
+          >
+            <SelectTrigger className="flex h-6 w-fit cursor-pointer items-center justify-between gap-1 border-0 dark:bg-[#141414] px-2 text-xs hover:bg-[#1E1E1E]">
+              <div className="flex items-center gap-1.5 w-full">
+                {selectedModel === 'gpt-3.5' ? (
+                  <img src="/openai.png" alt="OpenAI" className="h-3.5 w-3.5 dark:invert" />
+                ) : (
+                  <img src="/claude.png" alt="Claude" className="h-3.5 w-3.5" />
+                )}
+              </div>
+              
+            </SelectTrigger>
+            <SelectContent className="w-[190px] rounded-md border-0 bg-[#1E1E1E] p-0.5 shadow-md">
+              <SelectItem
+                value="gpt-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/openai.png" alt="OpenAI" className="h-3.5 w-3.5 dark:invert" />
+                  <span className="whitespace-nowrap">GPT 3.5</span>
+                </div>
+              </SelectItem>
+              <SelectItem
+                value="claude-3.5"
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#2A2A2A]"
+              >
+                <div className="flex items-center gap-1.5 pl-6">
+                  <img src="/claude.png" alt="Claude" className="h-3.5 w-3.5" />
+                  <span className="whitespace-nowrap">Claude 3.5</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        </div> */}
       </div>
+      
     </div>
   );
 }

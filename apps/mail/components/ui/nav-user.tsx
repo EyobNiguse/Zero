@@ -545,7 +545,7 @@ export function NavUser() {
                 </PricingDialog>
               )}
             </div>
-            <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
+            <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989] h-5">
               {activeAccount?.email || session.user.email}
             </div>
           </div>
