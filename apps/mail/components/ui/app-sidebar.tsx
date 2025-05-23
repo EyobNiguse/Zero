@@ -33,7 +33,6 @@ import { NavUser } from './nav-user';
 import { useQueryState } from 'nuqs';
 
 import { useBilling } from '@/hooks/use-billing';
-import { PricingDialog } from './pricing-dialog';
 import { Button } from '@/components/ui/button';
 import { useAIFullScreen } from './ai-sidebar';
 
@@ -45,7 +44,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
     return true;
   });
-  const [showPricing, setShowPricing] = React.useState(false);
+  const [, setPricingDialog] = useQueryState('pricingDialog');
+
   const { isFullScreen } = useAIFullScreen();
 
   const { data: stats } = useStats();
@@ -154,7 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
               </div>
               <button
-                onClick={() => setShowPricing(true)}
+                onClick={() => setPricingDialog('true')}
                 className="mt-3 inline-flex h-7 w-full items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-[#8B5CF6] px-2"
               >
                 <div className="flex items-center justify-center gap-2.5 px-0.5">
@@ -165,8 +165,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </button>
             </div>
           )}
-
-          <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
 
           <SidebarFooter className={`px-0 pb-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
             <NavMain items={bottomNavItems} />
