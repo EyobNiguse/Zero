@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-export const RecursiveFolder = ({ label, activeAccount }: { label: any; activeAccount?: any }) => {
+export const RecursiveFolder = ({ label, activeAccount, count }: { label: any; activeAccount?: any; count?: number }) => {
   const [searchValue, setSearchValue] = useSearchValue();
   const isActive = searchValue.value.includes(`label:${label.name}`);
   const isFolderActive = isActive || window.location.pathname.includes(`/mail/label/${label.id}`);
@@ -78,9 +78,10 @@ export const RecursiveFolder = ({ label, activeAccount }: { label: any; activeAc
         hasChildren={hasChildren}
         onFolderClick={handleFolderClick}
         isSelect={isFolderActive}
+        count={count}
       >
         {label.labels?.map((childLabel: any) => (
-          <RecursiveFolder key={childLabel.id} label={childLabel} />
+          <RecursiveFolder key={childLabel.id} label={childLabel} count={count} />
         ))}
       </Folder>
     </LabelSidebarContextMenu>

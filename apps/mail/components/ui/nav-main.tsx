@@ -52,7 +52,6 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
   startAnimation?: () => void;
   stopAnimation?: () => void;
 }
-
 interface NavItemProps extends NavItem {
   isActive?: boolean;
   isExpanded?: boolean;
@@ -83,6 +82,7 @@ export function NavMain({ items }: NavMainProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const { data: session } = useSession();
   const { data: connections } = useConnections();
+  const { data: stats } = useStats();
   const { data: activeConnection } = useActiveConnection();
   const form = useForm<LabelType>({
     defaultValues: {
@@ -171,6 +171,11 @@ export function NavMain({ items }: NavMainProps) {
     },
     [pathname, category, searchParams, isValidInternalUrl],
   );
+
+  const getLabelCount = useCallback((labelName: string | undefined): number => {
+    if (!stats || !labelName) return 0;
+    return stats.find((stat) => stat.label?.toLowerCase() === labelName.toLowerCase())?.count ?? 0;
+  }, [stats]);
 
   const activeAccount = React.useMemo(() => {
     if (!activeConnection?.id || !connections?.connections) return null;
@@ -440,6 +445,7 @@ export function NavMain({ items }: NavMainProps) {
                             key={label.id}
                             label={label}
                             activeAccount={activeAccount}
+                            count={getLabelCount(label.name)}
                           />
                         ));
                       }
@@ -483,6 +489,7 @@ export function NavMain({ items }: NavMainProps) {
                               key={groupFolder.id}
                               label={groupFolder}
                               activeAccount={activeAccount}
+                              count={getLabelCount(groupFolder.name)}
                             />,
                           );
                         });
@@ -497,6 +504,7 @@ export function NavMain({ items }: NavMainProps) {
                                 name: label.name,
                                 originalLabel: label,
                               }}
+                              count={getLabelCount(label.name)}
                               activeAccount={activeAccount}
                             />,
                           );
@@ -518,6 +526,7 @@ export function NavMain({ items }: NavMainProps) {
                             key={bracketsFolder.id}
                             label={bracketsFolder}
                             activeAccount={activeAccount}
+                            count={stats ? stats.find((stat) => stat.label?.toLowerCase() === bracketsFolder.name?.toLowerCase())?.count : 0}
                           />,
                         );
                       }
