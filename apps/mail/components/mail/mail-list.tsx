@@ -341,7 +341,7 @@ const Thread = memo(
     const content =
       latestMessage && getThreadData ? (
         <div
-          className={'select-none border-b md:border-none'}
+          className={'select-none border-b md:my-2 md:border-none'}
           onClick={onClick ? onClick(latestMessage) : undefined}
         >
           <div
@@ -818,7 +818,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
       <div
         ref={parentRef}
         className={cn(
-          'hide-link-indicator h-full w-full',
+          'hide-link-indicator flex h-full w-full',
           getSelectMode() === 'range' && 'select-none',
         )}
         onMouseEnter={() => {
@@ -828,13 +828,13 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           disableScope('mail-list');
         }}
       >
-        <div>
+        <>
           {isLoading ? (
-            <div className="flex h-32 items-center justify-center">
+            <div className="flex h-32 w-full items-center justify-center">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
             </div>
           ) : !items || items.length === 0 ? (
-            <div className="flex h-[calc(100dvh-9rem)] w-full items-center justify-center md:h-[calc(100dvh-4rem)]">
+            <div className="flex w-full items-center justify-center">
               <div className="flex flex-col items-center justify-center gap-2 text-center">
                 <img
                   suppressHydrationWarning
@@ -855,13 +855,14 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
               </div>
             </div>
           ) : (
-            <div className="flex h-[calc(100dvh-10rem)] flex-col md:gap-2" id="mail-list-scroll">
+            <div className="flex flex-1 flex-col" id="mail-list-scroll">
               <VList
                 count={filteredItems.length}
                 style={{
                   flex: 1,
                   overflowX: 'hidden',
                 }}
+                overscan={5}
               >
                 {(index) => {
                   const item = filteredItems[index];
@@ -917,7 +918,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
                 })} */}
             </div>
           )}
-        </div>
+        </>
       </div>
       <div className="w-full pt-4 text-center">
         {isLoading || isFetching ? (
