@@ -232,7 +232,7 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
             `hover:bg-black/10 flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm dark:hover:bg-[#202020]`,
             className,
             {
-              'bg-muted rounded-md': isSelect && isSelectable,
+              'bg-sidebar-accent rounded-md': isSelect && isSelectable,
               'cursor-pointer': isSelectable,
               'cursor-not-allowed opacity-50': !isSelectable,
             },

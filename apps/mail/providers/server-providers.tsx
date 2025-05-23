@@ -1,5 +1,4 @@
 import type { IntlMessages, Locale } from '@/i18n/config';
-import type { Session } from '@/lib/auth-client';
 import { QueryProvider } from './query-provider';
 import { AutumnProvider } from 'autumn-js/react';
 import type { PropsWithChildren } from 'react';
@@ -9,11 +8,12 @@ export function ServerProviders({
   children,
   messages,
   locale,
-}: PropsWithChildren<{ messages: IntlMessages; locale: Locale }>) {
+  connectionId,
+}: PropsWithChildren<{ messages: IntlMessages; locale: Locale; connectionId: string | null }>) {
   return (
     <AutumnProvider backendUrl={import.meta.env.VITE_PUBLIC_BACKEND_URL}>
       <IntlProvider messages={messages} locale={locale} timeZone={'UTC'}>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider connectionId={connectionId}>{children}</QueryProvider>
       </IntlProvider>
     </AutumnProvider>
   );

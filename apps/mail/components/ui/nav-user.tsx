@@ -20,11 +20,11 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useLocation, useRevalidator, useSearchParams } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CircleCheck, Danger, ThreeDots } from '../icons/icons';
-import { useLocation, useSearchParams } from 'react-router';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
 import { useTRPC } from '@/providers/query-provider';
@@ -65,7 +65,7 @@ export function NavUser() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { data: activeConnection, refetch: refetchActiveConnection } = useActiveConnection();
-  const [{ refetch: refetchThreads }] = useThreads();
+  const { revalidate } = useRevalidator();
 
   const getSettingsHref = useCallback(() => {
     const category = searchParams.get('category');
@@ -99,6 +99,7 @@ export function NavUser() {
     await setDefaultConnection({ connectionId });
     await refetchActiveConnection();
     await refetchConnections();
+    await revalidate();
     refetchSession();
   };
 
