@@ -342,7 +342,7 @@ export function NavMain({ items }: NavMainProps) {
                                     <FormLabel>Color</FormLabel>
                                     <FormControl>
                                       <div className="w-full">
-                                        <div className="g-panelLight dark:bg-panelDark grid grid-cols-7 gap-4">
+                                        <div className="bg-panelLight dark:bg-panelDark grid grid-cols-7 gap-4">
                                           {[
                                             // Row 1 - Grayscale
                                             '#000000',
@@ -430,7 +430,7 @@ export function NavMain({ items }: NavMainProps) {
 
               <div className="mr-0 flex-1 pr-0">
                 <div className="bg-background relative -m-2 flex-1 overflow-auto">
-                  <Tree className="bg-background rounded-md">
+                  <Tree className="bg-background rounded-md hover:">
                     {(() => {
                       if (!data) return null;
                       const isMicrosoftAccount = activeAccount?.providerId === 'microsoft';

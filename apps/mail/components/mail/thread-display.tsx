@@ -19,6 +19,8 @@ import {
   ExclamationCircle,
   Lightning,
   Folders,
+  Sparkles,
+  Mail,
 } from '../icons/icons';
 import {
   DropdownMenu,
@@ -383,15 +385,31 @@ export function ThreadDisplay() {
               <div className="mt-5">
                 <p className="text-lg">It's empty here</p>
                 <p className="text-md text-[#6D6D6D] dark:text-white/50">
-                  Choose an email to view details or
+                  Choose an email to view details
                 </p>
                 <div className="mt-4 grid grid-cols-1 gap-2 xl:grid-cols-2">
-                <Button onClick={toggleAISidebar} variant="outline">
-                      Chat with Zero AI
-                    </Button>
-                  <Button onClick={() => setIsComposeOpen('true')} variant="outline">
-                    Send an email
-                  </Button>
+                  <button
+                    onClick={toggleAISidebar}
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-white dark:bg-[#313131] px-2 border dark:border-none"
+                  >
+                    <Sparkles className="mr-1 h-3.5 w-3.5 fill-[#959595]" />
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="text-base-gray-950  justify-start font-['Inter'] text-sm leading-none">
+                        Zero chat
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setIsComposeOpen('true')}
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-white dark:bg-[#313131] px-2 border dark:border-none"
+                  >
+                    <Mail className="mr-1 h-3.5 w-3.5 fill-[#959595]" />
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="dark:text-base-gray-950  justify-start font-['Inter'] text-sm leading-none">
+                        Send email
+                      </div>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>

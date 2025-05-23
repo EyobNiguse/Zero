@@ -896,7 +896,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
               });
             }}
             className={cn(
-              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-md border transition-all duration-300 ease-out dark:border-none',
+              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-lg border transition-all duration-300 ease-out dark:border-none',
               isSelected
                 ? cn('flex-1 border-none px-3 text-white', bgColor)
                 : 'w-8 bg-white hover:bg-gray-100 dark:bg-[#313131] dark:hover:bg-[#313131]/80',
