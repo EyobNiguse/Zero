@@ -1002,7 +1002,6 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           disableScope('mail-list');
         }}
       >
-
         {isSpamFolder && items.length > 0 && (
           <div className="flex justify-end px-4 py-2 sticky top-0 z-10 bg-background">
             {isDeletingSpam && (
