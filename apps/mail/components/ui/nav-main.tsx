@@ -13,17 +13,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from './sidebar';
+import { SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from './sidebar';
 import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { type MessageKey, type NavItem } from '@/config/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { useSidebar } from '../context/sidebar-context';
 import { useTRPC } from '@/providers/query-provider';
 import { RecursiveFolder } from './recursive-folder';
 import { useMutation } from '@tanstack/react-query';
@@ -42,6 +37,7 @@ import { useCallback, useRef } from 'react';
 import { BASE_URL } from '@/lib/constants';
 import { useTranslations } from 'use-intl';
 import { useForm } from 'react-hook-form';
+import type { Label } from '@/types';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -478,9 +474,11 @@ export function NavMain({ items }: NavMainProps) {
                           const groupFolder = {
                             id: `group-${groupName}`,
                             name: groupName,
+                            type: 'folder',
                             labels: labels.map((label) => ({
                               id: label.id,
                               name: label.name.split('/').slice(1).join('/'),
+                              type: label.type,
                               originalLabel: label,
                             })),
                           };
@@ -502,6 +500,7 @@ export function NavMain({ items }: NavMainProps) {
                               label={{
                                 id: label.id,
                                 name: label.name,
+                                type: label.type,
                                 originalLabel: label,
                               }}
                               count={getLabelCount(label.name)}
@@ -515,9 +514,11 @@ export function NavMain({ items }: NavMainProps) {
                         const bracketsFolder = {
                           id: 'group-other',
                           name: 'Other',
+                          type: 'folder',
                           labels: groups.brackets.map((label) => ({
                             id: label.id,
                             name: label.name.replace(/\[|\]/g, ''),
+                            type: label.type,
                             originalLabel: label,
                           })),
                         };
