@@ -106,23 +106,9 @@ export type MailSelectMode = 'mass' | 'range' | 'single' | 'selectAllBelow';
 
 export type ThreadProps = {
   message: { id: string };
-  selectMode: MailSelectMode;
-  // TODO: enforce types instead of sprinkling "any"
   onClick?: (message: ParsedMessage) => () => void;
-  isCompact?: boolean;
-  folder?: string;
   isKeyboardFocused?: boolean;
-  isInQuickActionMode?: boolean;
-  selectedQuickActionIndex?: number;
-  resetNavigation?: () => void;
-  demoMessage?: ParsedMessage;
 };
-
-export type ConditionalThreadProps = ThreadProps &
-  (
-    | { demo?: true; sessionData?: { userId: string; connectionId: string | null } }
-    | { demo?: false; sessionData: { userId: string; connectionId: string | null } }
-  );
 
 export interface IOutgoingMessage {
   to: Sender[];

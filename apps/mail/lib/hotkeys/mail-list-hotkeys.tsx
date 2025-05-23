@@ -1,18 +1,16 @@
-'use client';
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { keyboardShortcuts } from '@/config/shortcuts';
-import { useCallback, useEffect, useRef } from 'react';
 import { useMail } from '@/components/mail/use-mail';
 import { useTRPC } from '@/providers/query-provider';
 import { Categories } from '@/components/mail/mail';
 import { useShortcuts } from './use-hotkey-utils';
 import { useThreads } from '@/hooks/use-threads';
 import { cleanSearchValue } from '@/lib/utils';
-import { usePathname } from 'next/navigation';
 import { useStats } from '@/hooks/use-stats';
-import { useTranslations } from 'next-intl';
+import { useLocation } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 
@@ -28,7 +26,7 @@ export function MailListHotkeys() {
   const categories = Categories();
   const [, setCategory] = useQueryState('category');
   const [searchValue, setSearchValue] = useSearchValue();
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
   const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
@@ -184,55 +182,61 @@ export function MailListHotkeys() {
   //   }
   // }, []);
 
-  const switchMailListCategory = (category: string | null) => {
-    if (pathname?.includes('/mail/inbox')) {
-      const cat = categories.find((cat) => cat.id === category);
-      if (!cat) {
-        setCategory(null);
+  const switchMailListCategory = useCallback(
+    (category: string | null) => {
+      if (pathname?.includes('/mail/inbox')) {
+        const cat = categories.find((cat) => cat.id === category);
+        if (!cat) {
+          setCategory(null);
+          setSearchValue({
+            value: '',
+            highlight: searchValue.highlight,
+            folder: '',
+          });
+          return;
+        }
+        setCategory(cat.id);
         setSearchValue({
-          value: '',
+          value: `${cat.searchValue} ${cleanSearchValue(searchValue.value).trim().length ? `AND ${cleanSearchValue(searchValue.value)}` : ''}`,
           highlight: searchValue.highlight,
           folder: '',
         });
-        return;
       }
-      setCategory(cat.id);
-      setSearchValue({
-        value: `${cat.searchValue} ${cleanSearchValue(searchValue.value).trim().length ? `AND ${cleanSearchValue(searchValue.value)}` : ''}`,
-        highlight: searchValue.highlight,
-        folder: '',
-      });
-    }
-  };
+    },
+    [categories, pathname, searchValue, setCategory, setSearchValue],
+  );
 
-  const handlers = {
-    markAsRead,
-    markAsUnread,
-    selectAll,
-    archiveEmail,
-    exitSelectionMode,
-    // muteThread,
-    // scrollDown,
-    // scrollUp,
-    showImportant: () => {
-      switchMailListCategory(null);
-    },
-    showAllMail: () => {
-      switchMailListCategory('All Mail');
-    },
-    showPersonal: () => {
-      switchMailListCategory('Personal');
-    },
-    showUpdates: () => {
-      switchMailListCategory('Updates');
-    },
-    showPromotions: () => {
-      switchMailListCategory('Promotions');
-    },
-    showUnread: () => {
-      switchMailListCategory('Unread');
-    },
-  };
+  const handlers = useMemo(
+    () => ({
+      markAsRead,
+      markAsUnread,
+      selectAll,
+      archiveEmail,
+      exitSelectionMode,
+      // muteThread,
+      // scrollDown,
+      // scrollUp,
+      showImportant: () => {
+        switchMailListCategory(null);
+      },
+      showAllMail: () => {
+        switchMailListCategory('All Mail');
+      },
+      showPersonal: () => {
+        switchMailListCategory('Personal');
+      },
+      showUpdates: () => {
+        switchMailListCategory('Updates');
+      },
+      showPromotions: () => {
+        switchMailListCategory('Promotions');
+      },
+      showUnread: () => {
+        switchMailListCategory('Unread');
+      },
+    }),
+    [switchMailListCategory, markAsRead, markAsUnread, selectAll, archiveEmail, exitSelectionMode],
+  );
 
   const mailListShortcuts = keyboardShortcuts.filter((shortcut) => shortcut.scope === scope);
 

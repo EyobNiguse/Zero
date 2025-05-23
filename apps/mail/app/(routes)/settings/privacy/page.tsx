@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Form,
   FormControl,
@@ -13,12 +11,14 @@ import { userSettingsSchema } from '@zero/db/user_settings_default';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTRPC } from '@/providers/query-provider';
+import { useMutation } from '@tanstack/react-query';
 // import { saveUserSettings } from '@/actions/settings';
 import { useSettings } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'use-intl';
 import { useForm } from 'react-hook-form';
 import { XIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,6 +28,8 @@ export default function PrivacyPage() {
   const [isSaving, setIsSaving] = useState(false);
   const t = useTranslations();
   const { data, refetch } = useSettings();
+  const trpc = useTRPC();
+  const { mutateAsync: saveUserSettings } = useMutation(trpc.settings.save.mutationOptions());
 
   const form = useForm<z.infer<typeof userSettingsSchema>>({
     resolver: zodResolver(userSettingsSchema),
@@ -46,20 +48,22 @@ export default function PrivacyPage() {
   }, [form, data]);
 
   async function onSubmit(values: z.infer<typeof userSettingsSchema>) {
-    setIsSaving(true);
-    try {
-      //   await saveUserSettings({
-      //     ...settings,
-      //     ...values,
-      //   });
-      //   await mutate();
-      toast.success(t('common.settings.saved'));
-    } catch (error) {
-      //   console.error('Failed to save settings:', error);
-      //   toast.error(t('common.settings.failedToSave'));
-      //   await mutate();
-    } finally {
-      setIsSaving(false);
+    if (data) {
+      setIsSaving(true);
+      toast.promise(
+        saveUserSettings({
+          ...data.settings,
+          ...values,
+        }),
+        {
+          success: t('common.settings.saved'),
+          error: t('common.settings.failedToSave'),
+          finally: async () => {
+            await refetch();
+            setIsSaving(false);
+          },
+        },
+      );
     }
   }
 

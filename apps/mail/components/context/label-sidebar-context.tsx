@@ -17,7 +17,7 @@ import { useTRPC } from '@/providers/query-provider';
 import { useMutation } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useLabels } from '@/hooks/use-labels';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { Trash } from '../icons/icons';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
@@ -34,9 +34,10 @@ interface LabelAction {
 interface LabelSidebarContextMenuProps {
   children: ReactNode;
   labelId: string;
+  hide?: boolean;
 }
 
-export function LabelSidebarContextMenu({ children, labelId }: LabelSidebarContextMenuProps) {
+export function LabelSidebarContextMenu({ children, labelId, hide }: LabelSidebarContextMenuProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const t = useTranslations();
   const trpc = useTRPC();
@@ -53,6 +54,8 @@ export function LabelSidebarContextMenu({ children, labelId }: LabelSidebarConte
       },
     });
   };
+
+  if (hide) return children;
 
   return (
     <>

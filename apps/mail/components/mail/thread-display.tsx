@@ -1,8 +1,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTheme } from 'next-themes';
-import Image from 'next/image';
 
 import {
   ChevronLeft,
@@ -20,6 +19,8 @@ import {
   ExclamationCircle,
   Lightning,
   Folders,
+  Sparkles,
+  Mail,
 } from '../icons/icons';
 import {
   DropdownMenu,
@@ -28,7 +29,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { CircleAlertIcon, Inbox, ShieldAlertIcon, SidebarOpen, StopCircleIcon, Zap } from 'lucide-react';
+import {
+  CircleAlertIcon,
+  Inbox,
+  ShieldAlertIcon,
+  SidebarOpen,
+  StopCircleIcon,
+  Zap,
+} from 'lucide-react';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -48,8 +56,8 @@ import ThreadSubject from './thread-subject';
 import type { ParsedMessage } from '@/types';
 import ReplyCompose from './reply-composer';
 import { Separator } from '../ui/separator';
-import { useTranslations } from 'next-intl';
 import { useMail } from '../mail/use-mail';
+import { useTranslations } from 'use-intl';
 import { NotesPanel } from './note-panel';
 import { cn, FOLDERS } from '@/lib/utils';
 import MailDisplay from './mail-display';
@@ -71,7 +79,7 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
     <div
       className={cn(
         'flex flex-col',
-        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100vh-2rem)]',
+        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-2rem)]',
       )}
     >
       <div
@@ -155,6 +163,8 @@ export function ThreadDisplay() {
   const isMobile = useIsMobile();
   const { toggleOpen: toggleAISidebar, open: isSidebarOpen } = useAISidebar();
   const params = useParams<{ folder: string }>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const folder = params?.folder ?? 'inbox';
   const [id, setThreadId] = useQueryState('threadId');
   const { data: emailData, isLoading, refetch: refetchThread } = useThread(id ?? null);
@@ -176,10 +186,17 @@ export function ThreadDisplay() {
   const { mutateAsync: toggleImportant } = useMutation(trpc.mail.toggleImportant.mutationOptions());
   const invalidateCount = () =>
     queryClient.invalidateQueries({ queryKey: trpc.mail.count.queryKey() });
+  const invalidateThread = () =>
+    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: id ?? '' }) });
   const { mutateAsync: markAsRead } = useMutation(
-    trpc.mail.markAsRead.mutationOptions({ onSuccess: () => invalidateCount() }),
+    trpc.mail.markAsRead.mutationOptions({
+      onSuccess: () => {
+        return Promise.all([invalidateCount(), invalidateThread()]);
+      },
+    }),
   );
   const [, setIsComposeOpen] = useQueryState('isComposeOpen');
+  const markAsReadRef = useRef<Promise<void> | null>(null);
 
   const handlePrevious = useCallback(() => {
     if (!id || !items.length || focusedIndex === null) return;
@@ -204,42 +221,26 @@ export function ThreadDisplay() {
     }
   }, [items, id, focusedIndex, setThreadId, setActiveReplyId, setFocusedIndex]);
 
-  // Check if thread contains any images (excluding sender avatars)
-  const hasImages = useMemo(() => {
-    if (!emailData) return false;
-    return emailData.messages.some((message) => {
-      const hasAttachments = message.attachments?.some((attachment) =>
-        attachment.mimeType?.startsWith('image/'),
-      );
-      const hasInlineImages =
-        message.processedHtml?.includes('<img') &&
-        !message.processedHtml.includes('data:image/svg+xml;base64'); // Exclude avatar SVGs
-      return hasAttachments || hasInlineImages;
-    });
-  }, [emailData]);
-
-  const hasMultipleParticipants =
-    (emailData?.latest?.to?.length ?? 0) + (emailData?.latest?.cc?.length ?? 0) + 1 > 2;
-
-  /**
-   * Mark email as read if it's unread, if there are no unread emails, mark the current thread as read
-   */
   useEffect(() => {
     if (!emailData || !id) return;
+
     const unreadEmails = emailData.messages.filter((e) => e.unread);
-    console.log({
-      totalReplies: emailData.totalReplies,
-      unreadEmails: unreadEmails.length,
+    if (unreadEmails.length === 0) return;
+
+    const ids = [id, ...unreadEmails.map((e) => e.id)];
+
+    const markAsReadPromise = markAsRead({ ids });
+    markAsReadRef.current = markAsReadPromise;
+
+    void markAsReadPromise.finally(() => {
+      if (markAsReadRef.current === markAsReadPromise) {
+        markAsReadRef.current = null;
+      }
     });
-    if (unreadEmails.length > 0) {
-      const ids = [id, ...unreadEmails.map((e) => e.id)];
-      markAsRead({ ids })
-        .catch((error) => {
-          console.error('Failed to mark email as read:', error);
-          toast.error(t('common.mail.failedToMarkAsRead'));
-        })
-        .then(() => Promise.allSettled([refetchThread(), refetchStats()]));
-    }
+
+    return () => {
+      markAsReadRef.current = null;
+    };
   }, [emailData, id]);
 
   const handleUnsubscribeProcess = () => {
@@ -313,7 +314,7 @@ export function ThreadDisplay() {
     if (isImportant) {
       toast.success(t('common.mail.markedAsImportant'));
     } else {
-      toast.error("Failed to mark as important");
+      toast.error('Failed to mark as important');
     }
   }, [emailData, id]);
 
@@ -375,7 +376,7 @@ export function ThreadDisplay() {
         {!id ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <Image
+              <img
                 src={resolvedTheme === 'dark' ? '/empty-state.svg' : '/empty-state-light.svg'}
                 alt="Empty Thread"
                 width={200}
@@ -384,23 +385,31 @@ export function ThreadDisplay() {
               <div className="mt-5">
                 <p className="text-lg">It's empty here</p>
                 <p className="text-md text-[#6D6D6D] dark:text-white/50">
-                  Choose an email to view details or
+                  Choose an email to view details
                 </p>
-                <div className="mt-4 grid grid-cols-1 gap-2 xl:grid-cols-3">
-                  <Button onClick={toggleAISidebar} variant="outline">
-                    Chat with Zero AI
-                  </Button>
-                  <Button onClick={() => setIsComposeOpen('true')} variant="outline">
-                    Send an email
-                  </Button>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button className="opacity-50" variant="outline">
-                        Label last 50 emails
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Coming soon</TooltipContent>
-                  </Tooltip>
+                <div className="mt-4 grid grid-cols-1 gap-2 xl:grid-cols-2">
+                  <button
+                    onClick={toggleAISidebar}
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-white dark:bg-[#313131] px-2 border dark:border-none"
+                  >
+                    <Sparkles className="mr-1 h-3.5 w-3.5 fill-[#959595]" />
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="text-base-gray-950  justify-start font-['Inter'] text-sm leading-none">
+                        Zero chat
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setIsComposeOpen('true')}
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-white dark:bg-[#313131] px-2 border dark:border-none"
+                  >
+                    <Mail className="mr-1 h-3.5 w-3.5 fill-[#959595]" />
+                    <div className="flex items-center justify-center gap-2.5 px-0.5">
+                      <div className="dark:text-base-gray-950  justify-start font-['Inter'] text-sm leading-none">
+                        Send email
+                      </div>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
@@ -531,7 +540,7 @@ export function ThreadDisplay() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-               
+
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -602,7 +611,7 @@ export function ThreadDisplay() {
                         ) : null}
                       </>
                     )}
-                   {!isImportant && (
+                    {!isImportant && (
                       <DropdownMenuItem onClick={handleToggleImportant}>
                         <Lightning className="fill-iconLight dark:fill-iconDark mr-2" />
                         {t('common.mail.markAsImportant')}

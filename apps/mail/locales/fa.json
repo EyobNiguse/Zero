@@ -29,7 +29,9 @@
       "addingToFavorites": "در حال افزودن به موارد دلخواه...",
       "removingFromFavorites": "در حال حذف از علاقه‌مندی‌ها...",
       "addedToFavorites": "به علاقه‌مندی‌ها اضافه شد",
+      "addedToImportant": "به موارد مهم اضافه شد",
       "removedFromFavorites": "از علاقه‌مندی‌ها حذف شد",
+      "removedFromImportant": "از موارد مهم حذف شد",
       "failedToAddToFavorites": "افزودن به علاقه‌مندی‌ها ناموفق بود",
       "failedToRemoveFromFavorites": "حذف از علاقه‌مندی‌ها ناموفق بود",
       "failedToModifyFavorites": "تغییر علاقه‌مندی‌ها ناموفق بود",
@@ -284,6 +286,10 @@
       "noSearchResults": "نتیجه‌ای برای جستجو یافت نشد",
       "clearSearch": "پاک کردن جستجو",
       "markAsImportant": "علامت‌گذاری به عنوان مهم",
+      "removeFromImportant": "حذف از موارد مهم",
+      "markedAsImportant": "به عنوان مهم علامت‌گذاری شد",
+      "markedAsUnimportant": "علامت مهم برداشته شد",
+      "toggleImportant": "تغییر وضعیت اهمیت",
       "unSubscribeFromAll": "لغو اشتراک از همه",
       "starAll": "ستاره‌دار کردن همه",
       "mute": "بی‌صدا کردن",
@@ -445,7 +451,15 @@
           "goToArchive": "رفتن به آرشیو",
           "goToBin": "رفتن به سطل زباله",
           "scrollDown": "پیمایش به پایین در فهرست ایمیل‌ها",
-          "scrollUp": "پیمایش به بالا در فهرست ایمیل‌ها"
+          "scrollUp": "پیمایش به بالا در فهرست ایمیل‌ها",
+          "goToSettings": "رفتن به تنظیمات",
+          "showImportant": "نمایش مهم",
+          "showAllMail": "نمایش همه ایمیل‌ها",
+          "showPersonal": "نمایش شخصی",
+          "showUpdates": "نمایش به‌روزرسانی‌ها",
+          "showPromotions": "نمایش تبلیغات",
+          "showUnread": "نمایش خوانده‌نشده‌ها",
+          "selectUnderCursor": "انتخاب زیر نشانگر"
         }
       },
       "labels": {

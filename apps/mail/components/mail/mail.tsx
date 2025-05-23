@@ -1,22 +1,3 @@
-'use client';
-
-import {
-  Archive2,
-  Bell,
-  CurvedArrow,
-  Eye,
-  Important,
-  Lightning,
-  Mail,
-  Star2,
-  Tag,
-  User,
-  X,
-  MessageSquare,
-  Trash,
-  ArrowCircle,
-  ScanEye,
-} from '../icons/icons';
 import {
   Dialog,
   DialogContent,
@@ -26,44 +7,60 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Archive2,
+  Bell,
+  CurvedArrow,
+  Eye,
+  Lightning,
+  Mail,
+  Star2,
+  Tag,
+  User,
+  X,
+  Trash,
+  ScanEye,
+  Plus,
+} from '../icons/icons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { ChevronLeft, Command, RefreshCcw, Settings2Icon } from 'lucide-react';
+import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
+import { Command, RefreshCcw, Settings2Icon, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MailList, MailListDemo } from '@/components/mail/mail-list';
-import AISidebar, { useAISidebar } from '@/components/ui/ai-sidebar';
+import { ThreadDisplay } from '@/components/mail/thread-display';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { MailList } from '@/components/mail/mail-list';
 import { useHotkeysContext } from 'react-hotkeys-hook';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useNavigate } from 'react-router';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
+import AISidebar from '@/components/ui/ai-sidebar';
 import { cleanSearchValue, cn } from '@/lib/utils';
 import { useThreads } from '@/hooks/use-threads';
+import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
+import { ScrollArea } from '../ui/scroll-area';
 import { useStats } from '@/hooks/use-stats';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
-import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
-import AIToggleButton from '../ai-toggle-button';
 
-interface Tag {
+interface ITag {
   id: string;
   name: string;
+  usecase: string;
   text: string;
 }
 
@@ -107,125 +104,76 @@ const AutoLabelingSettings = () => {
   const { mutateAsync: updateLabels, isPending } = useMutation(
     trpc.brain.updateLabels.mutationOptions(),
   );
-  const [labels, setLabels] = useState<Tag[]>([]);
-  const [activeTagIndex, setActiveTagIndex] = useState(0);
-
-  useEffect(() => {
-    if (storedLabels) {
-      setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
-    }
-  }, [storedLabels]);
-
-  const handleResetToDefault = useCallback(() => {
-    setLabels(
-      defaultLabels.map((label) => ({ id: label.name, name: label.name, text: label.name })),
-    );
-  }, [storedLabels]);
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="md:h-fit md:px-2">
-          <Settings2Icon className="text-muted-foreground h-4 w-4 cursor-pointer" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent showOverlay>
-        <DialogHeader>
-          <DialogTitle>Autolabeling Settings</DialogTitle>
-        </DialogHeader>
-        <DialogDescription className="mb-4">
-          These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
-          however you like. Zero will create a new label in your account for each label you add - if
-          it does not exist already.
-        </DialogDescription>
-        <TagInput
-          setTags={setLabels as any}
-          tags={labels}
-          activeTagIndex={activeTagIndex}
-          setActiveTagIndex={setActiveTagIndex as any}
-        />
-        <DialogFooter className="mt-4">
-          <Button onClick={handleResetToDefault} variant="outline" size={'sm'}>
-            Use default labels
-          </Button>
-          <Button
-            disabled={isPending}
-            onClick={() => {
-              updateLabels({ labels: labels.map((label) => label.text) }).then(() => {
-                setOpen(false);
-                toast.success('Labels updated successfully, Zero will start using them.');
-              });
-            }}
-          >
-            Save
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export function MailLayout() {
-  const params = useParams<{ folder: string }>();
-  const folder = params?.folder ?? 'inbox';
-  const [mail, setMail] = useMail();
-  const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
-  const isMobile = useIsMobile();
-  const router = useRouter();
-  const { data: session, isPending } = useSession();
-  const t = useTranslations();
-  const prevFolderRef = useRef(folder);
-  const { enableScope, disableScope } = useHotkeysContext();
-  const { data: brainState } = useBrainState();
-
-  useEffect(() => {
-    if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
-      clearBulkSelection();
-    }
-    prevFolderRef.current = folder;
-  }, [folder, mail.bulkSelected.length, clearBulkSelection]);
-
-  useEffect(() => {
-    if (!session?.user && !isPending) {
-      router.push('/login');
-    }
-  }, [session?.user, isPending]);
-
-  const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
-  const trpc = useTRPC();
-  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const [labels, setLabels] = useState<ITag[]>([]);
+  const [newLabel, setNewLabel] = useState({ name: '', usecase: '' });
   const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
     trpc.brain.enableBrain.mutationOptions(),
   );
   const { mutateAsync: DisableBrain, isPending: isDisablingBrain } = useMutation(
     trpc.brain.disableBrain.mutationOptions(),
   );
-  const [threadId, setThreadId] = useQueryState('threadId');
-  const { refetch: refetchBrainState } = useBrainState();
+  const { data: brainState, refetch: refetchBrainState } = useBrainState();
 
   useEffect(() => {
-    if (threadId) {
-      console.log('Enabling thread-display scope, disabling mail-list');
-      enableScope('thread-display');
-      disableScope('mail-list');
-    } else {
-      console.log('Enabling mail-list scope, disabling thread-display');
-      enableScope('mail-list');
-      disableScope('thread-display');
+    if (storedLabels) {
+      setLabels(
+        storedLabels.map((label) => ({
+          id: label.name,
+          name: label.name,
+          text: label.name,
+          usecase: label.usecase,
+        })),
+      );
     }
+  }, [storedLabels]);
 
-    return () => {
-      console.log('Cleaning up mail/thread scopes');
-      disableScope('thread-display');
-      disableScope('mail-list');
-    };
-  }, [threadId, enableScope, disableScope]);
-  const [, setActiveReplyId] = useQueryState('activeReplyId');
+  const handleResetToDefault = useCallback(() => {
+    setLabels(
+      defaultLabels.map((label) => ({
+        id: label.name,
+        name: label.name,
+        text: label.name,
+        usecase: label.usecase,
+      })),
+    );
+  }, [storedLabels]);
 
-  const handleClose = useCallback(() => {
-    setThreadId(null);
-    setActiveReplyId(null);
-  }, [setThreadId]);
+  const handleAddLabel = () => {
+    if (!newLabel.name || !newLabel.usecase) return;
+    setLabels([...labels, { id: newLabel.name, ...newLabel, text: newLabel.name }]);
+    setNewLabel({ name: '', usecase: '' });
+  };
+
+  const handleDeleteLabel = (id: string) => {
+    setLabels(labels.filter((label) => label.id !== id));
+  };
+
+  const handleUpdateLabel = (id: string, field: 'name' | 'usecase', value: string) => {
+    setLabels(
+      labels.map((label) =>
+        label.id === id
+          ? { ...label, [field]: value, text: field === 'name' ? value : label.text }
+          : label,
+      ),
+    );
+  };
+
+  const handleSubmit = async () => {
+    const updatedLabels = labels.map((label) => ({
+      name: label.name,
+      usecase: label.usecase,
+    }));
+
+    if (newLabel.name.trim() && newLabel.usecase.trim()) {
+      updatedLabels.push({
+        name: newLabel.name,
+        usecase: newLabel.usecase,
+      });
+    }
+    await updateLabels({ labels: updatedLabels });
+    setOpen(false);
+    toast.success('Labels updated successfully, Zero will start using them.');
+  };
 
   const handleEnableBrain = useCallback(async () => {
     toast.promise(EnableBrain({}), {
@@ -256,6 +204,174 @@ export function MailLayout() {
       handleEnableBrain();
     }
   }, [brainState?.enabled]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <div className="flex items-center gap-2">
+          {/* <div
+            className={cn(
+              'h-2 w-2 animate-pulse rounded-full',
+              brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
+            )}
+          /> */}
+
+          <Switch
+            disabled={isEnablingBrain || isDisablingBrain}
+            checked={brainState?.enabled ?? false}
+          />
+          <span className="text-muted-foreground cursor-pointer text-xs">Auto label</span>
+        </div>
+      </DialogTrigger>
+      <DialogContent showOverlay className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Autolabeling Settings</DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="mb-4 mt-2">
+          These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
+          however you like. Zero will create a new label in your account for each label you add - if
+          it does not exist already.
+        </DialogDescription>
+        <ScrollArea className="h-[400px]">
+          <div className="space-y-2">
+            {labels.map((label) => (
+              <div key={label.id} className="flex items-start gap-2 rounded-lg border p-3">
+                <div className="flex-1 space-y-2">
+                  <input
+                    type="text"
+                    value={label.name}
+                    onChange={(e) => handleUpdateLabel(label.id, 'name', e.target.value)}
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Label name"
+                  />
+                  <textarea
+                    value={label.usecase}
+                    onChange={(e) => handleUpdateLabel(label.id, 'usecase', e.target.value)}
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Label use case"
+                    rows={2}
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handleDeleteLabel(label.id)}
+                >
+                  <Trash className="h-4 w-4 fill-[#F43F5E]" />
+                </Button>
+              </div>
+            ))}
+            <div className="flex items-start gap-2 rounded-lg border p-3">
+              <div className="flex-1 space-y-2">
+                <input
+                  type="text"
+                  value={newLabel.name}
+                  onChange={(e) => setNewLabel({ ...newLabel, name: e.target.value })}
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="New label name"
+                />
+                <textarea
+                  value={newLabel.usecase}
+                  onChange={(e) => setNewLabel({ ...newLabel, usecase: e.target.value })}
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="New label use case"
+                  rows={2}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleAddLabel}
+                disabled={!newLabel.name || !newLabel.usecase}
+              >
+                <Plus className="h-4 w-4 fill-white" />
+              </Button>
+            </div>
+          </div>
+        </ScrollArea>
+        <DialogFooter className="mt-4">
+          <div className="flex w-full justify-between">
+            <Button onClick={handleToggleAutolabeling} variant="outline" size="sm">
+              {brainState?.enabled ? 'Disable' : 'Enable'}
+            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleResetToDefault} variant="outline" size="sm">
+                Use default labels
+              </Button>
+              <Button disabled={isPending} onClick={handleSubmit} size="sm">
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export function MailLayout() {
+  const params = useParams<{ folder: string }>();
+  const folder = params?.folder ?? 'inbox';
+  const [mail, setMail] = useMail();
+  const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { data: session, isPending } = useSession();
+  const { data: connections } = useConnections();
+  const t = useTranslations();
+  const prevFolderRef = useRef(folder);
+  const { enableScope, disableScope } = useHotkeysContext();
+  const { data: activeConnection } = useActiveConnection();
+
+  const activeAccount = useMemo(() => {
+    if (!activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find((connection) => connection.id === activeConnection?.id);
+  }, [activeConnection?.id, connections?.connections]);
+
+  useEffect(() => {
+    if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
+      clearBulkSelection();
+    }
+    prevFolderRef.current = folder;
+  }, [folder, mail.bulkSelected.length, clearBulkSelection]);
+
+  useEffect(() => {
+    if (!session?.user && !isPending) {
+      navigate('/login');
+    }
+  }, [session?.user, isPending]);
+
+  const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
+  const trpc = useTRPC();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  const [threadId, setThreadId] = useQueryState('threadId');
+
+  useEffect(() => {
+    if (threadId) {
+      console.log('Enabling thread-display scope, disabling mail-list');
+      enableScope('thread-display');
+      disableScope('mail-list');
+    } else {
+      console.log('Enabling mail-list scope, disabling thread-display');
+      enableScope('mail-list');
+      disableScope('thread-display');
+    }
+
+    return () => {
+      console.log('Cleaning up mail/thread scopes');
+      disableScope('thread-display');
+      disableScope('mail-list');
+    };
+  }, [threadId, enableScope, disableScope]);
+  const [, setActiveReplyId] = useQueryState('activeReplyId');
+
+  const handleClose = useCallback(() => {
+    setThreadId(null);
+    setActiveReplyId(null);
+  }, [setThreadId]);
 
   // Add mailto protocol handler registration
   useEffect(() => {
@@ -291,7 +407,7 @@ export function MailLayout() {
             minSize={40}
             maxSize={50}
             className={cn(
-              `bg-panelLight dark:bg-panelDark w-fit border border-[#E7E7E7] shadow-sm md:rounded-2xl lg:flex lg:shadow-sm dark:border-[#252525] mb-1`,
+              `bg-panelLight dark:bg-panelDark mb-1 w-fit shadow-sm md:rounded-2xl md:border md:border-[#E7E7E7] lg:flex lg:shadow-sm dark:border-[#252525]`,
               isDesktop && threadId && 'hidden lg:block',
             )}
           >
@@ -329,22 +445,8 @@ export function MailLayout() {
                         </div>
                       ) : null}
                     </div>
-                    {brainState?.enabled ? <AutoLabelingSettings /> : null}
-                    <Button
-                      disabled={isEnablingBrain || isDisablingBrain}
-                      onClick={handleToggleAutolabeling}
-                      variant="outline"
-                      size={'sm'}
-                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
-                    >
-                      <div
-                        className={cn(
-                          'h-2 w-2 animate-pulse rounded-full',
-                          brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
-                        )}
-                      />
-                      Auto Labeling
-                    </Button>
+                    <AutoLabelingSettings />
+                    <div className="dark:bg-iconDark/20 relative ml-2 h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}
                     <Button
                       onClick={() => {
                         refetchThreads();
@@ -360,7 +462,7 @@ export function MailLayout() {
               <div className="p-2 px-[22px]">
                 <SearchBar />
                 <div className="mt-2">
-                  {folder === 'inbox' && (
+                  {activeAccount?.providerId === 'google' && folder === 'inbox' && (
                     <CategorySelect isMultiSelectMode={mail.bulkSelected.length > 0} />
                   )}
                 </div>
@@ -373,7 +475,7 @@ export function MailLayout() {
                 )}
               />
               <div className="relative z-[1] h-[calc(100dvh-(2px+88px+49px+2px))] overflow-hidden pt-0 md:h-[calc(100dvh-9.8rem)]">
-                <MailList isCompact={true} />
+                <MailList />
               </div>
             </div>
           </ResizablePanel>
@@ -383,14 +485,14 @@ export function MailLayout() {
           {isDesktop && (
             <ResizablePanel
               className={cn(
-                'bg-panelLight dark:bg-panelDark mr-0.5 mb-1 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
+                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
                 // Only show on md screens and larger when there is a threadId
                 !threadId && 'hidden lg:block',
               )}
               defaultSize={30}
               minSize={30}
             >
-              <div className="relative h-[calc(100vh-(10px))] flex-1 lg:h-[calc(100vh-(10px)]">
+              <div className="lg:h-[calc(100dvh-(10px)] relative h-[calc(100dvh-(10px))] flex-1">
                 <ThreadDisplay />
               </div>
             </ResizablePanel>
@@ -776,7 +878,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const primaryCategory = categories[0];
   if (!primaryCategory) return null;
 
-  const renderCategoryButton = (cat: CategoryType, isOverlay = false, idx?: number) => {
+  const renderCategoryButton = (cat: CategoryType, isOverlay = false, idx: number) => {
     const isSelected = cat.id === (category || 'Primary');
     const bgColor = getCategoryColor(cat.id);
 
@@ -794,7 +896,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
               });
             }}
             className={cn(
-              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-md border transition-all duration-300 ease-out dark:border-none',
+              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-lg border transition-all duration-300 ease-out dark:border-none',
               isSelected
                 ? cn('flex-1 border-none px-3 text-white', bgColor)
                 : 'w-8 bg-white hover:bg-gray-100 dark:bg-[#313131] dark:hover:bg-[#313131]/80',
@@ -820,7 +922,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
                 '-me-1 ms-auto inline-flex max-h-full items-center',
               )}
             >
-              {idx ? idx + 1 : ''}
+              {idx + 1}
             </kbd>
           </TooltipContent>
         )}

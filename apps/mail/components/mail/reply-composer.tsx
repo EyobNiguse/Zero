@@ -1,5 +1,4 @@
-'use client';
-
+import { useActiveConnection } from '@/hooks/use-connections';
 import { useEmailAliases } from '@/hooks/use-email-aliases';
 import { EmailComposer } from '../create/email-composer';
 import { useHotkeysContext } from 'react-hotkeys-hook';
@@ -10,8 +9,8 @@ import { useThread } from '@/hooks/use-threads';
 import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { useDraft } from '@/hooks/use-drafts';
-import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'use-intl';
 import type { Sender } from '@/types';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
@@ -32,6 +31,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   const { data: draft, isLoading: isDraftLoading } = useDraft(draftId ?? null);
   const trpc = useTRPC();
   const { mutateAsync: sendEmail } = useMutation(trpc.mail.send.mutationOptions());
+  const { data: activeConnection } = useActiveConnection();
 
   // Find the specific message to reply to
   const replyToMessage =
@@ -39,9 +39,9 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
 
   // Initialize recipients and subject when mode changes
   useEffect(() => {
-    if (!replyToMessage || !mode || !session?.activeConnection?.email) return;
+    if (!replyToMessage || !mode || !activeConnection?.email) return;
 
-    const userEmail = session.activeConnection.email.toLowerCase();
+    const userEmail = activeConnection.email.toLowerCase();
     const senderEmail = replyToMessage.sender.email.toLowerCase();
 
     // Set subject based on mode
@@ -96,7 +96,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
       // For forward, we start with empty recipients
       // Just set the subject and include the original message
     }
-  }, [mode, replyToMessage, session?.activeConnection?.email]);
+  }, [mode, replyToMessage, activeConnection?.email]);
 
   const handleSendEmail = async (data: {
     to: string[];
@@ -106,10 +106,10 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
     message: string;
     attachments: File[];
   }) => {
-    if (!replyToMessage || !session?.activeConnection?.email) return;
+    if (!replyToMessage || !activeConnection?.email) return;
 
     try {
-      const userEmail = session.activeConnection.email.toLowerCase();
+      const userEmail = activeConnection.email.toLowerCase();
 
       // Convert email strings to Sender objects
       const toRecipients: Sender[] = data.to.map((email) => ({
@@ -201,7 +201,7 @@ export default function ReplyCompose({ messageId }: ReplyComposeProps) {
   }
 
   return (
-    <div className="w-full rounded-xl ">
+    <div className="w-full rounded-xl">
       <EmailComposer
         className="w-full !max-w-none border pb-1"
         onSendEmail={handleSendEmail}

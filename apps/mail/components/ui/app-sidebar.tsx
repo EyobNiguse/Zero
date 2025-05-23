@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Dialog,
   DialogClose,
@@ -19,31 +17,45 @@ import {
 } from '@/components/ui/sidebar';
 import { SquarePenIcon, type SquarePenIconHandle } from '../icons/animated/square-pen';
 import { navigationConfig, bottomNavItems } from '@/config/navigation';
-import { AutumnProvider, useAutumn } from 'autumn-js/next';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { CreateEmail } from '../create/create-email';
 import { PencilCompose, X } from '../icons/icons';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSession } from '@/lib/auth-client';
-import React, { useMemo, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useState, useMemo, useRef } from 'react';
 import { useStats } from '@/hooks/use-stats';
-import { useTranslations } from 'next-intl';
+import { useLocation } from 'react-router';
+import { useTranslations } from 'use-intl';
 import { FOLDERS } from '@/lib/utils';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 import { useQueryState } from 'nuqs';
 
+import { Button } from '@/components/ui/button';
+import { PricingDialog } from './pricing-dialog';
+import { useAIFullScreen } from './ai-sidebar';
+import { useBilling } from '@/hooks/use-billing';
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isPro } = useBilling();
+  const [showUpgrade, setShowUpgrade] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('hideUpgradeCard') !== 'true'
+    }
+    return true
+  });
+  const [showPricing, setShowPricing] = React.useState(false);
+  const { isFullScreen } = useAIFullScreen();
+
   const { data: stats } = useStats();
 
-  const pathname = usePathname();
+  const location = useLocation();
   const { data: session } = useSession();
   const { currentSection, navItems } = useMemo(() => {
     // Find which section we're in based on the pathname
     const section = Object.entries(navigationConfig).find(([, config]) =>
-      pathname.startsWith(config.path),
+      location.pathname.startsWith(config.path),
     );
 
     const currentSection = section?.[0] || 'mail';
@@ -68,19 +80,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         navItems: [],
       };
     }
-  }, [pathname, stats]);
+  }, [location.pathname, stats]);
 
   const showComposeButton = currentSection === 'mail';
   const { state } = useSidebar();
 
   return (
     <div>
-      <Sidebar
-        collapsible="icon"
-        {...props}
-        className={`bg-lightBackground dark:bg-darkBackground flex h-screen select-none flex-col items-center  ${state === 'collapsed' ? '' : ''} pb-2`}
-      >
-          <SidebarHeader className={`flex flex-col gap-2 relative top-2.5 ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}>
+      {!isFullScreen && (
+        <Sidebar
+          collapsible="icon"
+          {...props}
+          className={`bg-lightBackground dark:bg-darkBackground flex h-screen select-none flex-col items-center ${state === 'collapsed' ? '' : ''} pb-2`}
+        >
+          <SidebarHeader
+            className={`relative top-2.5 flex flex-col gap-2 ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}
+          >
             {session && <NavUser />}
             <AnimatePresence mode="wait">
               {showComposeButton && (
@@ -96,7 +111,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </AnimatePresence>
           </SidebarHeader>
 
-          <SidebarContent className={`py-0 pt-0 scrollbar scrollbar-w-1 scrollbar-thumb-accent/40 scrollbar-track-transparent hover:scrollbar-thumb-accent scrollbar-thumb-rounded-full  ${state !== 'collapsed' ? 'mt-5 md:px-4' : 'px-2'}`}>
+          <SidebarContent
+            className={`scrollbar scrollbar-w-1 scrollbar-thumb-accent/40 scrollbar-track-transparent hover:scrollbar-thumb-accent scrollbar-thumb-rounded-full overflow-x-hidden py-0 pt-0 ${state !== 'collapsed' ? 'mt-5 md:px-4' : 'px-2'}`}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentSection}
@@ -110,12 +127,55 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </motion.div>
             </AnimatePresence>
           </SidebarContent>
-        
-          <SidebarFooter className={`pb-0 px-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
+
+          {!isPro && showUpgrade && state !== 'collapsed' && (
+            <div className="px-4 py-4 dark:bg-[#1C1C1C] bg-white border rounded-lg mx-3 mb-4 relative backdrop-blur-sm top-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-6 w-6 rounded-full hover:bg-white/10 [&>svg]:h-2.5 [&>svg]:w-2.5"
+                onClick={() => {
+                  setShowUpgrade(false)
+                  localStorage.setItem('hideUpgradeCard', 'true')
+                }}
+              >
+                <X className="h-2.5 w-2.5 fill-black dark:fill-white/50" />
+              </Button>
+              <div className="flex items-start gap-2">
+               
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-black dark:text-white/90 font-semibold text-sm">Get Zero Pro</h3>
+                  </div>
+                  <p className="text-[13px] text-black dark:text-white/50 leading-snug">
+                    Get unlimited AI chats, auto-labeling, writing assistant, and more.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPricing(true)}
+                className="inline-flex h-7 w-full items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-[#8B5CF6] px-2 mt-3"
+              >
+               
+                <div className="flex items-center justify-center gap-2.5 px-0.5">
+                  <div className="text-white justify-start font-['Inter'] text-sm leading-none">
+                    Start free trial
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          <PricingDialog
+            open={showPricing}
+            onOpenChange={setShowPricing}
+          />
+
+          <SidebarFooter className={`px-0 pb-0 ${state === 'collapsed' ? 'md:px-2' : 'md:px-4'}`}>
             <NavMain items={bottomNavItems} />
           </SidebarFooter>
-      
-      </Sidebar>
+        </Sidebar>
+      )}
     </div>
   );
 }
@@ -139,7 +199,7 @@ function ComposeButton() {
         setDraftId(null),
         setTo(null),
         setActiveReplyId(null),
-        setMode(null)
+        setMode(null),
       ]);
     } else {
       setDialogOpen('true');

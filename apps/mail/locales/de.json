@@ -29,7 +29,9 @@
       "addingToFavorites": "Wird zu Favoriten hinzugefügt...",
       "removingFromFavorites": "Wird aus Favoriten entfernt...",
       "addedToFavorites": "Zu Favoriten hinzugefügt",
+      "addedToImportant": "Zu wichtig hinzugefügt",
       "removedFromFavorites": "Aus Favoriten entfernt",
+      "removedFromImportant": "Aus wichtig entfernt",
       "failedToAddToFavorites": "Konnte nicht zu Favoriten hinzugefügt werden",
       "failedToRemoveFromFavorites": "Konnte nicht aus Favoriten entfernt werden",
       "failedToModifyFavorites": "Favoriten konnten nicht geändert werden",
@@ -284,6 +286,10 @@
       "noSearchResults": "Keine Suchergebnisse gefunden",
       "clearSearch": "Suche leeren",
       "markAsImportant": "Als wichtig markieren",
+      "removeFromImportant": "Aus wichtig entfernen",
+      "markedAsImportant": "Als wichtig markiert",
+      "markedAsUnimportant": "Als unwichtig markiert",
+      "toggleImportant": "Wichtig umschalten",
       "unSubscribeFromAll": "Von allen abmelden",
       "starAll": "Alle mit Stern markieren",
       "mute": "Stummschalten",
@@ -445,7 +451,15 @@
           "goToArchive": "Zum Archiv gehen",
           "goToBin": "Zum Papierkorb gehen",
           "scrollDown": "In der Mail-Liste nach unten scrollen",
-          "scrollUp": "In der Mail-Liste nach oben scrollen"
+          "scrollUp": "In der Mail-Liste nach oben scrollen",
+          "goToSettings": "Zu den Einstellungen",
+          "showImportant": "Wichtige anzeigen",
+          "showAllMail": "Alle E-Mails anzeigen",
+          "showPersonal": "Persönliche anzeigen",
+          "showUpdates": "Updates anzeigen",
+          "showPromotions": "Werbeaktionen anzeigen",
+          "showUnread": "Ungelesene anzeigen",
+          "selectUnderCursor": "Unter Cursor auswählen"
         }
       },
       "labels": {

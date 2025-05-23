@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Bold,
   Italic,
@@ -52,8 +50,8 @@ import { TextSelection } from 'prosemirror-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EditorView } from 'prosemirror-view';
-import { useTranslations } from 'next-intl';
 import { Markdown } from 'tiptap-markdown';
+import { useTranslations } from 'use-intl';
 import { Slice } from 'prosemirror-model';
 import { useState } from 'react';
 import React from 'react';
@@ -480,7 +478,7 @@ export default function Editor({
             }),
           ]}
           ref={containerRef}
-          className="hide-scrollbar relative max-h-[500px] min-h-[220px] cursor-text overflow-auto"
+          className="no-scrollbar relative max-h-[500px] min-h-[220px] cursor-text overflow-auto"
           editorProps={{
             editable: () => !readOnly,
             handleDOMEvents: {
