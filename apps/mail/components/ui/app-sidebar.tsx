@@ -158,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                
                 <div className="flex items-center justify-center gap-2.5 px-0.5">
-                  <div className="text-white justify-start font-['Inter'] text-sm leading-none">
+                  <div className="text-white justify-start text-sm leading-none">
                     Start free trial
                   </div>
                 </div>
