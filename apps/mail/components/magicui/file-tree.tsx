@@ -192,6 +192,7 @@ interface FolderComponentProps extends React.ComponentPropsWithoutRef<typeof Acc
 type FolderProps = {
   expandedItems?: string[];
   element: string;
+  count?: number;
   isSelectable?: boolean;
   isSelect?: boolean;
   onFolderClick?: (id: string) => void;
@@ -203,6 +204,7 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
     {
       className,
       element,
+      count,
       value,
       isSelectable = true,
       isSelect,
@@ -286,6 +288,7 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
           >
             {element}
           </span>
+          {count && <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">{count}</span>}
         </div>
         <Accordion.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down relative h-full overflow-hidden text-sm">
           {element && indicator && <TreeIndicator aria-hidden="true" />}

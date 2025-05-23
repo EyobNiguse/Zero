@@ -619,6 +619,22 @@ export class GoogleMailManager implements MailManager {
       },
     });
   }
+  public async getLabelCount(labelId: string) {
+    return this.withErrorHandler(
+      'getLabelMessageCount',
+      async () => {
+        const response = await this.gmail.users.labels.get({
+          userId: 'me',
+          id: labelId
+        });
+        if (response.data.type === 'user') {
+          return Number(response.data.messagesTotal) || 0;
+        }
+        return 0;
+      },
+      { labelId }
+    );
+  }
   public async updateLabel(id: string, label: Label) {
     await this.gmail.users.labels.update({
       userId: 'me',
