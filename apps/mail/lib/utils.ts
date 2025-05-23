@@ -357,8 +357,8 @@ export const createAIJsonContent = (text: string): JSONContent => {
 };
 
 export const getEmailLogo = (email: string) => {
-  if (!process.env.NEXT_PUBLIC_IMAGE_API_URL) return '';
-  return process.env.NEXT_PUBLIC_IMAGE_API_URL + email;
+  if (!import.meta.env.VITE_PUBLIC_IMAGE_API_URL) return '';
+  return import.meta.env.VITE_PUBLIC_IMAGE_API_URL + email;
 };
 
 export const generateConversationId = (): string => {

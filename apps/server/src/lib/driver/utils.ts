@@ -1,4 +1,6 @@
+import { getActiveConnection } from '../server-utils';
 import { getContext } from 'hono/context-storage';
+import type { gmail_v1 } from '@googleapis/gmail';
 import { connection } from '@zero/db/schema';
 import type { HonoContext } from '../../ctx';
 import { createDriver } from '../driver';
@@ -9,13 +11,15 @@ export const FatalErrors = ['invalid_grant'];
 
 export const deleteActiveConnection = async () => {
   const c = getContext<HonoContext>();
+  const activeConnection = await getActiveConnection();
+  if (!activeConnection) return console.log('No connection ID found');
   const session = await c.var.auth.api.getSession({ headers: c.req.raw.headers });
-  if (!session?.connectionId) return console.log('No connection ID found');
+  if (!session) return console.log('No session found');
   try {
     await c.var.auth.api.signOut({ headers: c.req.raw.headers });
     await c.var.db
       .delete(connection)
-      .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
+      .where(and(eq(connection.userId, session.user.id), eq(connection.id, activeConnection.id)));
   } catch (error) {
     console.error('Server: Error deleting connection:', error);
     throw error;
@@ -25,11 +29,9 @@ export const deleteActiveConnection = async () => {
 export const getActiveDriver = async () => {
   const c = getContext<HonoContext>();
   const session = await c.var.auth.api.getSession({ headers: c.req.raw.headers });
-  if (!session || !session.connectionId) throw new Error('Invalid session');
-
-  const activeConnection = await c.var.db.query.connection.findFirst({
-    where: and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)),
-  });
+  if (!session) throw new Error('Invalid session');
+  const activeConnection = await getActiveConnection();
+  if (!activeConnection) throw new Error('Invalid connection');
 
   if (!activeConnection || !activeConnection.accessToken || !activeConnection.refreshToken)
     throw new Error('Invalid connection');
@@ -38,6 +40,7 @@ export const getActiveDriver = async () => {
     auth: {
       accessToken: activeConnection.accessToken,
       refreshToken: activeConnection.refreshToken,
+      userId: activeConnection.userId,
       email: activeConnection.email,
     },
   });
@@ -92,4 +95,12 @@ export function sanitizeContext(context?: Record<string, unknown>) {
     }
   }
   return sanitized;
+}
+
+/**
+ * Retrieves the original sender address for a forwarded email from SimpleLogin
+ * from the headers of a Gmail email. Header: `X-SimpleLogin-Original-From`
+ */
+export function getSimpleLoginSender(payload: gmail_v1.Schema$Message['payload']) {
+  return payload?.headers?.find((h) => h.name === 'X-SimpleLogin-Original-From')?.value || null;
 }

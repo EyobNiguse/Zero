@@ -4,7 +4,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { useTRPC } from '@/providers/query-provider';
 import { useSession } from '@/lib/auth-client';
 import { useAtom, useAtomValue } from 'jotai';
-import { useParams } from 'next/navigation';
+import { useParams } from 'react-router';
 import { useQueryState } from 'nuqs';
 import { useMemo } from 'react';
 
@@ -25,7 +25,7 @@ export const useThreads = () => {
       {
         initialCursor: '',
         getNextPageParam: (lastPage) => lastPage?.nextPageToken ?? null,
-        staleTime: 3000 * 60, // 3 minute
+        staleTime: 60 * 1000 * 60, // 1 minute
         refetchOnMount: true,
         refetchIntervalInBackground: true,
       },

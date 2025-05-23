@@ -1,9 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/apps/*/node_modules
-/packages/*/node_modules
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -16,11 +14,12 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+.next
+out
 
 # production
-/build
+build
+dist
 
 # misc
 .DS_Store
@@ -54,3 +53,4 @@ apps/mail/scripts.ts
 worker-configuration.d.ts
 
 .dev.vars.*
+.react-router

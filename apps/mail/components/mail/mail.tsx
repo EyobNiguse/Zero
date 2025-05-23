@@ -1,22 +1,3 @@
-'use client';
-
-import {
-  Archive2,
-  Bell,
-  CurvedArrow,
-  Eye,
-  Important,
-  Lightning,
-  Mail,
-  Star2,
-  Tag,
-  User,
-  X,
-  MessageSquare,
-  Trash,
-  ArrowCircle,
-  ScanEye,
-} from '../icons/icons';
 import {
   Dialog,
   DialogContent,
@@ -26,43 +7,60 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Archive2,
+  Bell,
+  CurvedArrow,
+  Eye,
+  Lightning,
+  Mail,
+  Star2,
+  Tag,
+  User,
+  X,
+  Trash,
+  ScanEye,
+  Plus,
+} from '../icons/icons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
+import { Command, RefreshCcw, Settings2Icon, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MailList, MailListDemo } from '@/components/mail/mail-list';
-import { Command, RefreshCcw, Settings2Icon } from 'lucide-react';
+import { ThreadDisplay } from '@/components/mail/thread-display';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { MailList } from '@/components/mail/mail-list';
 import { useHotkeysContext } from 'react-hotkeys-hook';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useNavigate } from 'react-router';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
+import AISidebar from '@/components/ui/ai-sidebar';
 import { cleanSearchValue, cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 import { useThreads } from '@/hooks/use-threads';
+import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
+import { ScrollArea } from '../ui/scroll-area';
 import { useStats } from '@/hooks/use-stats';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
-import { TagInput } from 'emblor';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 
-interface Tag {
+interface ITag {
   id: string;
   name: string;
+  usecase: string;
   text: string;
 }
 
@@ -106,58 +104,208 @@ const AutoLabelingSettings = () => {
   const { mutateAsync: updateLabels, isPending } = useMutation(
     trpc.brain.updateLabels.mutationOptions(),
   );
-  const [labels, setLabels] = useState<Tag[]>([]);
-  const [activeTagIndex, setActiveTagIndex] = useState(0);
+  const [labels, setLabels] = useState<ITag[]>([]);
+  const [newLabel, setNewLabel] = useState({ name: '', usecase: '' });
+  const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
+    trpc.brain.enableBrain.mutationOptions(),
+  );
+  const { mutateAsync: DisableBrain, isPending: isDisablingBrain } = useMutation(
+    trpc.brain.disableBrain.mutationOptions(),
+  );
+  const { data: brainState, refetch: refetchBrainState } = useBrainState();
 
   useEffect(() => {
     if (storedLabels) {
-      setLabels(storedLabels.map((label) => ({ id: label, name: label, text: label })));
+      setLabels(
+        storedLabels.map((label) => ({
+          id: label.name,
+          name: label.name,
+          text: label.name,
+          usecase: label.usecase,
+        })),
+      );
     }
   }, [storedLabels]);
 
   const handleResetToDefault = useCallback(() => {
     setLabels(
-      defaultLabels.map((label) => ({ id: label.name, name: label.name, text: label.name })),
+      defaultLabels.map((label) => ({
+        id: label.name,
+        name: label.name,
+        text: label.name,
+        usecase: label.usecase,
+      })),
     );
   }, [storedLabels]);
+
+  const handleAddLabel = () => {
+    if (!newLabel.name || !newLabel.usecase) return;
+    setLabels([...labels, { id: newLabel.name, ...newLabel, text: newLabel.name }]);
+    setNewLabel({ name: '', usecase: '' });
+  };
+
+  const handleDeleteLabel = (id: string) => {
+    setLabels(labels.filter((label) => label.id !== id));
+  };
+
+  const handleUpdateLabel = (id: string, field: 'name' | 'usecase', value: string) => {
+    setLabels(
+      labels.map((label) =>
+        label.id === id
+          ? { ...label, [field]: value, text: field === 'name' ? value : label.text }
+          : label,
+      ),
+    );
+  };
+
+  const handleSubmit = async () => {
+    const updatedLabels = labels.map((label) => ({
+      name: label.name,
+      usecase: label.usecase,
+    }));
+
+    if (newLabel.name.trim() && newLabel.usecase.trim()) {
+      updatedLabels.push({
+        name: newLabel.name,
+        usecase: newLabel.usecase,
+      });
+    }
+    await updateLabels({ labels: updatedLabels });
+    setOpen(false);
+    toast.success('Labels updated successfully, Zero will start using them.');
+  };
+
+  const handleEnableBrain = useCallback(async () => {
+    toast.promise(EnableBrain({}), {
+      loading: 'Enabling autolabeling...',
+      success: 'Autolabeling enabled successfully',
+      error: 'Failed to enable autolabeling',
+      finally: async () => {
+        await refetchBrainState();
+      },
+    });
+  }, []);
+
+  const handleDisableBrain = useCallback(async () => {
+    toast.promise(DisableBrain({}), {
+      loading: 'Disabling autolabeling...',
+      success: 'Autolabeling disabled successfully',
+      error: 'Failed to disable autolabeling',
+      finally: async () => {
+        await refetchBrainState();
+      },
+    });
+  }, []);
+
+  const handleToggleAutolabeling = useCallback(() => {
+    if (brainState?.enabled) {
+      handleDisableBrain();
+    } else {
+      handleEnableBrain();
+    }
+  }, [brainState?.enabled]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="md:h-fit md:px-2">
-          <Settings2Icon className="text-muted-foreground h-4 w-4 cursor-pointer" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* <div
+            className={cn(
+              'h-2 w-2 animate-pulse rounded-full',
+              brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
+            )}
+          /> */}
+         
+          <Switch
+            disabled={isEnablingBrain || isDisablingBrain}
+            checked={brainState?.enabled}
+           
+          />
+           <span className="text-muted-foreground text-xs cursor-pointer">Auto label</span>
+        </div>
       </DialogTrigger>
-      <DialogContent showOverlay>
+      <DialogContent showOverlay className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Autolabeling Settings</DialogTitle>
         </DialogHeader>
-        <DialogDescription className="mb-4">
+        <DialogDescription className="mb-4 mt-2">
           These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
           however you like. Zero will create a new label in your account for each label you add - if
           it does not exist already.
         </DialogDescription>
-        <TagInput
-          setTags={setLabels as any}
-          tags={labels}
-          activeTagIndex={activeTagIndex}
-          setActiveTagIndex={setActiveTagIndex as any}
-        />
+        <ScrollArea className="h-[400px]">
+          <div className="space-y-2">
+            {labels.map((label) => (
+              <div key={label.id} className="flex items-start gap-2 rounded-lg border p-3">
+                <div className="flex-1 space-y-2">
+                  <input
+                    type="text"
+                    value={label.name}
+                    onChange={(e) => handleUpdateLabel(label.id, 'name', e.target.value)}
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Label name"
+                  />
+                  <textarea
+                    value={label.usecase}
+                    onChange={(e) => handleUpdateLabel(label.id, 'usecase', e.target.value)}
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Label use case"
+                    rows={2}
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handleDeleteLabel(label.id)}
+                >
+                  <Trash className="h-4 w-4 fill-[#F43F5E]" />
+                </Button>
+              </div>
+            ))}
+            <div className="flex items-start gap-2 rounded-lg border p-3">
+              <div className="flex-1 space-y-2">
+                <input
+                  type="text"
+                  value={newLabel.name}
+                  onChange={(e) => setNewLabel({ ...newLabel, name: e.target.value })}
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="New label name"
+                />
+                <textarea
+                  value={newLabel.usecase}
+                  onChange={(e) => setNewLabel({ ...newLabel, usecase: e.target.value })}
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="New label use case"
+                  rows={2}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleAddLabel}
+                disabled={!newLabel.name || !newLabel.usecase}
+              >
+                <Plus className="h-4 w-4 fill-white" />
+              </Button>
+            </div>
+          </div>
+        </ScrollArea>
         <DialogFooter className="mt-4">
-          <Button onClick={handleResetToDefault} variant="outline" size={'sm'}>
-            Use default labels
-          </Button>
-          <Button
-            disabled={isPending}
-            onClick={() => {
-              updateLabels({ labels: labels.map((label) => label.id) }).then(() => {
-                setOpen(false);
-                toast.success('Labels updated successfully, Zero will start using them.');
-              });
-            }}
-          >
-            Save
-          </Button>
+          <div className="flex w-full justify-between">
+            <Button onClick={handleToggleAutolabeling} variant="outline" size="sm">
+              {brainState?.enabled ? 'Disable' : 'Enable'}
+            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleResetToDefault} variant="outline" size="sm">
+                Use default labels
+              </Button>
+              <Button disabled={isPending} onClick={handleSubmit} size="sm">
+                Save
+              </Button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -170,12 +318,18 @@ export function MailLayout() {
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
   const isMobile = useIsMobile();
-  const router = useRouter();
+  const navigate = useNavigate();
   const { data: session, isPending } = useSession();
+  const { data: connections } = useConnections();
   const t = useTranslations();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
-  const { data: brainState } = useBrainState();
+  const { data: activeConnection } = useActiveConnection();
+
+  const activeAccount = useMemo(() => {
+    if (!activeConnection?.id || !connections?.connections) return null;
+    return connections.connections.find((connection) => connection.id === activeConnection?.id);
+  }, [activeConnection?.id, connections?.connections]);
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -186,21 +340,15 @@ export function MailLayout() {
 
   useEffect(() => {
     if (!session?.user && !isPending) {
-      router.push('/login');
+      navigate('/login');
     }
   }, [session?.user, isPending]);
 
   const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
   const trpc = useTRPC();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-  const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
-    trpc.brain.enableBrain.mutationOptions(),
-  );
-  const { mutateAsync: DisableBrain, isPending: isDisablingBrain } = useMutation(
-    trpc.brain.disableBrain.mutationOptions(),
-  );
+
   const [threadId, setThreadId] = useQueryState('threadId');
-  const { refetch: refetchBrainState } = useBrainState();
 
   useEffect(() => {
     if (threadId) {
@@ -225,36 +373,6 @@ export function MailLayout() {
     setThreadId(null);
     setActiveReplyId(null);
   }, [setThreadId]);
-
-  const handleEnableBrain = useCallback(async () => {
-    toast.promise(EnableBrain({}), {
-      loading: 'Enabling autolabeling...',
-      success: 'Autolabeling enabled successfully',
-      error: 'Failed to enable autolabeling',
-      finally: () => {
-        refetchBrainState();
-      },
-    });
-  }, []);
-
-  const handleDisableBrain = useCallback(async () => {
-    toast.promise(DisableBrain({}), {
-      loading: 'Disabling autolabeling...',
-      success: 'Autolabeling disabled successfully',
-      error: 'Failed to disable autolabeling',
-      finally: () => {
-        refetchBrainState();
-      },
-    });
-  }, []);
-
-  const handleToggleAutolabeling = useCallback(() => {
-    if (brainState?.enabled) {
-      handleDisableBrain();
-    } else {
-      handleEnableBrain();
-    }
-  }, [brainState?.enabled]);
 
   // Add mailto protocol handler registration
   useEffect(() => {
@@ -289,9 +407,12 @@ export function MailLayout() {
             defaultSize={40}
             minSize={40}
             maxSize={50}
-            className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+            className={cn(
+              `bg-panelLight dark:bg-panelDark mb-1 w-fit shadow-sm md:rounded-2xl md:border md:border-[#E7E7E7] lg:flex lg:shadow-sm dark:border-[#252525]`,
+              isDesktop && threadId && 'hidden lg:block',
+            )}
           >
-            <div className="w-full md:h-[calc(100dvh-0.5rem)]">
+            <div className="w-full md:h-[calc(100dvh-10px)]">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -301,47 +422,32 @@ export function MailLayout() {
                   <div>
                     <SidebarToggle className="h-fit px-2" />
                   </div>
-                 
+
                   <div className="flex items-center gap-2">
-                  <div>
-                    {mail.bulkSelected.length > 0 ? (
-                      <div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => {
-                                setMail({ ...mail, bulkSelected: [] });
-                              }}
-                              className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
-                            >
-                              <X className="h-3 w-3 fill-[#A0A0A0]" />
-                              <span>esc</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t('common.actions.exitSelectionModeEsc')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    ) : null}
-                  </div>
-                    {true ? <AutoLabelingSettings /> : null}
-                    <Button
-                      disabled={isEnablingBrain || isDisablingBrain}
-                      onClick={handleToggleAutolabeling}
-                      variant="outline"
-                      size={'sm'}
-                      className="text-muted-foreground h-fit min-h-0 px-2 py-1 text-[10px] uppercase"
-                    >
-                      <div
-                        className={cn(
-                          'h-2 w-2 animate-pulse rounded-full',
-                          brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
-                        )}
-                      />
-                      Auto Labeling
-                    </Button>
-                    <Button
+                    <div>
+                      {mail.bulkSelected.length > 0 ? (
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  setMail({ ...mail, bulkSelected: [] });
+                                }}
+                                className="flex h-6 items-center gap-1 rounded-md bg-[#313131] px-2 text-xs text-[#A0A0A0] hover:bg-[#252525]"
+                              >
+                                <X className="h-3 w-3 fill-[#A0A0A0]" />
+                                <span>esc</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t('common.actions.exitSelectionModeEsc')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      ) : null}
+                    </div>
+                    <AutoLabelingSettings />
+                    <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7] ml-2" />{' '}                    <Button
                       onClick={() => {
                         refetchThreads();
                       }}
@@ -356,7 +462,7 @@ export function MailLayout() {
               <div className="p-2 px-[22px]">
                 <SearchBar />
                 <div className="mt-2">
-                  {folder === 'inbox' && (
+                  {activeAccount?.providerId === 'google' && folder === 'inbox' && (
                     <CategorySelect isMultiSelectMode={mail.bulkSelected.length > 0} />
                   )}
                 </div>
@@ -373,39 +479,38 @@ export function MailLayout() {
               </div>
             </div>
           </ResizablePanel>
-          <ResizableHandle className="mr-0.5 opacity-0" />
+
+          <ResizableHandle className="mr-0.5 hidden opacity-0 md:block" />
+
           {isDesktop && (
             <ResizablePanel
-              className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+              className={cn(
+                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
+                // Only show on md screens and larger when there is a threadId
+                !threadId && 'hidden lg:block',
+              )}
               defaultSize={30}
               minSize={30}
             >
-              <div className="relative h-[calc(100vh-(10px))] flex-1 lg:h-[calc(100vh-(12px+14px))]">
+              <div className="lg:h-[calc(100dvh-(10px)] relative h-[calc(100dvh-(10px))] flex-1">
                 <ThreadDisplay />
               </div>
             </ResizablePanel>
           )}
 
-          {/* Mobile Drawer */}
-          {isMobile && (
-            <Drawer
-              open={!!threadId}
-              onOpenChange={(isOpen) => {
-                if (!isOpen) handleClose();
-              }}
-            >
-              <DrawerContent className="bg-panelLight dark:bg-panelDark h-[calc(100dvh-3rem)] p-0">
-                <DrawerHeader className="sr-only">
-                  <DrawerTitle>Email Details</DrawerTitle>
-                </DrawerHeader>
-                <div className="flex h-full flex-col">
-                  <div className="h-full overflow-y-auto outline-none">
-                    {threadId ? <ThreadDisplay /> : null}
-                  </div>
+          {/* Mobile Thread View */}
+          {isMobile && threadId && (
+            <div className="bg-panelLight dark:bg-panelDark fixed inset-0 z-50">
+              <div className="flex h-full flex-col">
+                <div className="h-full overflow-y-auto outline-none">
+                  <ThreadDisplay />
                 </div>
-              </DrawerContent>
-            </Drawer>
+              </div>
+            </div>
           )}
+
+          <AISidebar />
+          <AIToggleButton />
         </ResizablePanelGroup>
       </div>
     </TooltipProvider>
@@ -773,7 +878,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const primaryCategory = categories[0];
   if (!primaryCategory) return null;
 
-  const renderCategoryButton = (cat: CategoryType, isOverlay = false, idx?: number) => {
+  const renderCategoryButton = (cat: CategoryType, isOverlay = false, idx: number) => {
     const isSelected = cat.id === (category || 'Primary');
     const bgColor = getCategoryColor(cat.id);
 
@@ -791,7 +896,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
               });
             }}
             className={cn(
-              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-md border transition-all duration-300 ease-out dark:border-none',
+              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-lg border transition-all duration-300 ease-out dark:border-none',
               isSelected
                 ? cn('flex-1 border-none px-3 text-white', bgColor)
                 : 'w-8 bg-white hover:bg-gray-100 dark:bg-[#313131] dark:hover:bg-[#313131]/80',
@@ -810,7 +915,15 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
         </TooltipTrigger>
         {!isSelected && (
           <TooltipContent side="top" className={`${idx === 0 ? 'ml-4' : ''}`}>
-            <span>{cat.name}</span>
+            <span className="mr-2">{cat.name}</span>
+            <kbd
+              className={cn(
+                'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
+                '-me-1 ms-auto inline-flex max-h-full items-center',
+              )}
+            >
+              {idx + 1}
+            </kbd>
           </TooltipContent>
         )}
       </Tooltip>

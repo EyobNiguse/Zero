@@ -1,24 +1,28 @@
 import { authProviders, customProviders, isProviderEnabled } from '@zero/server/auth-providers';
 import { LoginClient } from './login-client';
+import { useLoaderData } from 'react-router';
+import { env } from 'cloudflare:workers';
 
-export default function LoginPage() {
-  const envNodeEnv = process.env.NODE_ENV;
-  const isProd = envNodeEnv === 'production';
+export function loader() {
+  const isProd = !import.meta.env.DEV;
 
-  const authProviderStatus = authProviders(process.env as Record<string, string>).map(
+  const authProviderStatus = authProviders(env as unknown as Record<string, string>).map(
     (provider) => {
       const envVarStatus =
-        provider.envVarInfo?.map((envVar) => ({
-          name: envVar.name,
-          set: !!process.env[envVar.name],
-          source: envVar.source,
-          defaultValue: envVar.defaultValue,
-        })) || [];
+        provider.envVarInfo?.map((envVar) => {
+          const envVarName = envVar.name as keyof typeof env;
+          return {
+            name: envVar.name,
+            set: !!env[envVarName],
+            source: envVar.source,
+            defaultValue: envVar.defaultValue,
+          };
+        }) || [];
 
       return {
         id: provider.id,
         name: provider.name,
-        enabled: isProviderEnabled(provider, process.env as Record<string, string>),
+        enabled: isProviderEnabled(provider, env as unknown as Record<string, string>),
         required: provider.required,
         envVarInfo: provider.envVarInfo,
         envVarStatus,
@@ -38,6 +42,15 @@ export default function LoginPage() {
   });
 
   const allProviders = [...customProviderStatus, ...authProviderStatus];
+
+  return {
+    allProviders,
+    isProd,
+  };
+}
+
+export default function LoginPage() {
+  const { allProviders, isProd } = useLoaderData<typeof loader>();
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-white dark:bg-black">

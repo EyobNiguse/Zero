@@ -31,7 +31,12 @@ const connectionHandlerHook = async (account: Account) => {
   }
 
   const driver = createDriver(account.providerId, {
-    auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
+    auth: {
+      accessToken: account.accessToken,
+      refreshToken: account.refreshToken,
+      userId: account.userId,
+      email: '',
+    },
   });
 
   const userInfo = await driver.getUserInfo().catch(() => {
@@ -133,7 +138,7 @@ export const createAuth = () => {
       sendOnSignUp: false,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, token }) => {
-        const verificationUrl = `${c.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
+        const verificationUrl = `${c.env.VITE_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
 
         await resend().emails.send({
           from: '0.email <onboarding@0.email>',
@@ -216,8 +221,14 @@ const createAuthConfig = () => {
         domain: env.COOKIE_DOMAIN,
       },
     },
-    baseURL: env.NEXT_PUBLIC_BACKEND_URL,
-    trustedOrigins: [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_BACKEND_URL],
+    baseURL: env.VITE_PUBLIC_BACKEND_URL,
+    trustedOrigins: [
+      'https://app.0.email',
+      'https://sapi.0.email',
+      'https://staging.0.email',
+      'https://0.email',
+      'http://localhost:3000',
+    ],
     session: {
       cookieCache: {
         enabled: true,
@@ -234,98 +245,6 @@ const createAuthConfig = () => {
         trustedProviders: ['google', 'microsoft'],
       },
     },
-    plugins: [
-      customSession(async ({ user, session }) => {
-        const foundUser = await db.query.user.findFirst({
-          where: eq(_user.id, user.id),
-        });
-
-        let activeConnection = null;
-
-        if (foundUser?.defaultConnectionId) {
-          // Get the active connection details
-          const [connectionDetails] = await db
-            .select()
-            .from(connection)
-            .where(eq(connection.id, foundUser.defaultConnectionId))
-            .limit(1);
-
-          if (connectionDetails) {
-            activeConnection = {
-              id: connectionDetails.id,
-              name: connectionDetails.name,
-              email: connectionDetails.email,
-              picture: connectionDetails.picture,
-            };
-          } else {
-            await db
-              .update(_user)
-              .set({
-                defaultConnectionId: null,
-              })
-              .where(eq(_user.id, user.id));
-          }
-        }
-
-        if (!foundUser?.defaultConnectionId) {
-          const [defaultConnection] = await db
-            .select()
-            .from(connection)
-            .where(eq(connection.userId, user.id))
-            .limit(1);
-
-          if (defaultConnection) {
-            activeConnection = {
-              id: defaultConnection.id,
-              name: defaultConnection.name,
-              email: defaultConnection.email,
-              picture: defaultConnection.picture,
-            };
-          }
-
-          if (!defaultConnection) {
-            // find the user account the user has
-            const [userAccount] = await db
-              .select()
-              .from(account)
-              .where(eq(account.userId, user.id))
-              .limit(1);
-            if (userAccount) {
-              const newConnectionId = crypto.randomUUID();
-              // create a new connection
-              const [newConnection] = await db.insert(connection).values({
-                id: newConnectionId,
-                userId: user.id,
-                email: user.email,
-                name: user.name,
-                picture: user.image,
-                accessToken: userAccount.accessToken,
-                refreshToken: userAccount.refreshToken,
-                scope: userAccount.scope,
-                providerId: userAccount.providerId,
-                expiresAt: new Date(
-                  Date.now() + (userAccount.accessTokenExpiresAt?.getTime() || 3600000),
-                ),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              } as typeof connection.$inferInsert);
-              // this type error is pissing me tf off
-              if (newConnection) {
-                //   void enableBrainFunction({ id: newConnectionId, providerId: userAccount.providerId });
-                console.warn('Created new connection for user', user.email);
-              }
-            }
-          }
-        }
-
-        return {
-          connectionId: activeConnection?.id || null,
-          activeConnection,
-          user,
-          session,
-        };
-      }),
-    ],
   } satisfies BetterAuthOptions;
 };
 

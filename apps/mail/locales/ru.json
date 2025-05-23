@@ -15,6 +15,7 @@
       "loading": "Загрузка...",
       "featureNotImplemented": "Этот функционал ещё не реализован",
       "moving": "Перемещение...",
+      "moved": "Перемещено",
       "movedToInbox": "Перемещено во входящие",
       "movingToInbox": "Перемещение во входящие...",
       "movedToSpam": "Перемещено в спам",
@@ -28,12 +29,15 @@
       "addingToFavorites": "Добавление в избранное...",
       "removingFromFavorites": "Удаление из избранного...",
       "addedToFavorites": "Добавлено в избранное",
+      "addedToImportant": "Добавлено в важное",
       "removedFromFavorites": "Удалено из избранного",
+      "removedFromImportant": "Удалено из важного",
       "failedToAddToFavorites": "Не удалось добавить в избранное",
       "failedToRemoveFromFavorites": "Не удалось удалить из избранного",
       "failedToModifyFavorites": "Не удалось изменить избранные",
       "movingToBin": "Перемещение в корзину...",
       "movedToBin": "Перемещено в корзину",
+      "Bin": "Корзина",
       "failedToMoveToBin": "Не удалось переместить в корзину",
       "markingAsRead": "Отмечается как прочитанное...",
       "markingAsUnread": "Отмечается как непрочитанное...",
@@ -44,7 +48,8 @@
       "cancel": "Отменить",
       "save": "Сохранить",
       "remove": "Удалить",
-      "settings": "Настройки"
+      "settings": "Настройки",
+      "exitSelectionModeEsc": "Нажмите или нажмите ESC, чтобы выйти из режима выбора"
     },
     "themes": {
       "dark": "Тёмный",
@@ -72,12 +77,13 @@
         "goToBin": "Перейти в Корзину",
         "goToSettings": "Перейти в Настройки",
         "newEmail": "Новое Письмо",
-        "composeMessage": "Сообщение",
+        "composeMessage": "Новое письмо",
         "searchEmails": "Поиск",
         "toggleTheme": "Переключить тему",
         "backToMail": "Вернуться в Почту",
         "goToDocs": "Перейти в Документацию",
-        "helpWithShortcuts": "Помощь с горячими клавишами"
+        "helpWithShortcuts": "Помощь с горячими клавишами",
+        "commandPalette": "Командная палитра"
       }
     },
     "searchBar": {
@@ -112,7 +118,8 @@
       "documentation": "Документация",
       "appTheme": "Тема",
       "accounts": "Аккаунты",
-      "signIn": "Войти"
+      "signIn": "Войти",
+      "otherAccounts": "Другие аккаунты"
     },
     "mailCategories": {
       "primary": "Основные",
@@ -170,7 +177,9 @@
       "muteThread": "Заглушить ветку",
       "favourites": "Избранное",
       "disableImages": "Скрыть изображения",
-      "enableImages": "Показать изображения"
+      "enableImages": "Показать изображения",
+      "star": "Отметить",
+      "unstar": "Снять отметку"
     },
     "notes": {
       "title": "Заметки",
@@ -249,7 +258,6 @@
       "failedToMarkAsUnread": "Не удалось пометить как непрочитанное",
       "selected": "Выбрано {count}",
       "clearSelection": "Очистить выбор",
-      "mute": "Заглушить",
       "moveToSpam": "Переместить в спам",
       "moveToInbox": "Переместить во Входящие",
       "deleteFromBin": "Удалить из корзины",
@@ -276,10 +284,32 @@
       "showImages": "Показать изображения",
       "noEmails": "Нет доступных писем",
       "noSearchResults": "Результаты поиска не найдены",
-      "clearSearch": "Очистить поиск"
+      "clearSearch": "Очистить поиск",
+      "markAsImportant": "Отметить как важное",
+      "removeFromImportant": "Удалить из важного",
+      "markedAsImportant": "Отмечено как важное",
+      "markedAsUnimportant": "Снята отметка как важное",
+      "toggleImportant": "Переключить важность",
+      "unSubscribeFromAll": "Отписаться от всех",
+      "starAll": "Отметить все",
+      "mute": "Заглушить",
+      "unmute": "Включить звук",
+      "muted": "Заглушено",
+      "failedToMute": "Не удалось заглушить",
+      "failedToUnmute": "Не удалось включить звук",
+      "archived": "В архиве",
+      "failedToArchive": "Не удалось архивировать"
     },
     "units": {
       "mb": "{amount} МБ"
+    },
+    "labels": {
+      "deleteLabel": "Удалить метку",
+      "deleteLabelConfirm": "Вы уверены, что хотите удалить эту метку?",
+      "deleteLabelConfirmDescription": "Это действие невозможно отменить.",
+      "deleteLabelConfirmCancel": "Отменить",
+      "deleteLabelConfirmDelete": "Удалить",
+      "deleteLabelSuccess": "Метка успешно удалена"
     }
   },
   "navigation": {
@@ -301,7 +331,9 @@
       "signatures": "Подписи",
       "shortcuts": "Команды",
       "labels": "Ярлыки",
-      "danger-zone": "Опасная зона"
+      "dangerZone": "Опасная зона",
+      "deleteAccount": "Удалить аккаунт",
+      "privacy": "Конфиденциальность"
     }
   },
   "pages": {
@@ -323,10 +355,6 @@
         "selectTimezone": "Выбрать часовой пояс",
         "dynamicContent": "Динамический контент",
         "dynamicContentDescription": "Позволяет электронной почте отображать динамический контент.",
-        "externalImages": "Отображать изображения из внешних источников",
-        "externalImagesDescription": "Позволяет электронной почте отображать изображения из внешних источников.",
-        "trustedSenders": "Доверенные отправители",
-        "trustedSendersDescription": "Всегда отображать изображения от этих отправителей.",
         "languageChangedTo": "Язык изменен на {locale}",
         "customPrompt": "Пользовательский ИИ Запрос",
         "customPromptPlaceholder": "Введите ваш запрос для ИИ...",
@@ -345,7 +373,9 @@
         "addEmail": "Добавить подключение",
         "connectEmail": "Подключить электронную почту",
         "connectEmailDescription": "Выберите поставщика электронной почты для подключения",
-        "moreComingSoon": "Новые функции появятся скоро"
+        "moreComingSoon": "Новые функции появятся скоро",
+        "reconnect": "Переподключить",
+        "disconnected": "Отключено"
       },
       "security": {
         "title": "Безопасность",
@@ -393,15 +423,15 @@
           "reply": "Ответить",
           "replyAll": "Ответить всем",
           "forward": "Переслать",
-          "drafts": "Черновики",
-          "inbox": "Входящие",
-          "sentMail": "Отправленные",
+          "drafts": "Перейти в черновики",
+          "inbox": "Перейти во входящие",
+          "sentMail": "Перейти в отправленные",
           "delete": "Удалить",
           "search": "Поиск",
           "markAsUnread": "Отметить как непрочитанное",
-          "muteThread": "Выключить поток",
+          "muteThread": "Заглушить ветку",
           "printEmail": "Печать письма",
-          "archiveEmail": "Архивировать письмо",
+          "archiveEmail": "Архивировать цепочку",
           "markAsSpam": "Отметить как спам",
           "moveToFolder": "Переместить в папку",
           "undoLastAction": "Отменить последнее действие",
@@ -412,20 +442,47 @@
           "recordHotkey": "Записать горячую клавишу",
           "pressKeys": "Нажмите клавиши",
           "releaseKeys": "Отпустите клавиши",
-          "selectAll": "Выбрать все"
+          "selectAll": "Выбрать все",
+          "commandPalette": "Командная палитра",
+          "markAsRead": "Отметить как прочитанное",
+          "exitSelectionMode": "Выйти из режима выбора",
+          "closeCompose": "Закрыть создание письма",
+          "goToSpam": "Перейти в спам",
+          "goToArchive": "Перейти в архив",
+          "goToBin": "Перейти в корзину",
+          "scrollDown": "Прокрутить вниз в списке писем",
+          "scrollUp": "Прокрутить вверх в списке писем",
+          "goToSettings": "Перейти в настройки",
+          "showImportant": "Показать важное",
+          "showAllMail": "Показать всю почту",
+          "showPersonal": "Показать личное",
+          "showUpdates": "Показать обновления",
+          "showPromotions": "Показать промоакции",
+          "showUnread": "Показать непрочитанное",
+          "selectUnderCursor": "Выбрать под курсором"
         }
       },
       "labels": {
         "title": "Ярлыки",
         "description": "Управляйте ярлыками для лучшей организации ваших писем."
       },
-      "danger-zone": {
-        "title": "Опасная зона",
+      "dangerZone": {
+        "title": "Danger Zone",
         "description": "Навсегда удалите свой аккаунт и все связанные с ним данные.",
         "warning": "Это действие невозможно отменить.",
         "confirmation": "Пожалуйста, введите DELETE для подтверждения удаления аккаунта",
         "deleteAccount": "Удалить аккаунт",
-        "deleting": "Удаление..."
+        "deleting": "Удаление...",
+        "deleted": "Аккаунт успешно удалён",
+        "error": "Не удалось удалить аккаунт"
+      },
+      "privacy": {
+        "title": "Конфиденциальность",
+        "description": "Управляйте настройками конфиденциальности и безопасности для содержимого электронной почты.",
+        "externalImages": "Отображать изображения из внешних источников",
+        "externalImagesDescription": "Позволяет электронной почте отображать изображения из внешних источников.",
+        "trustedSenders": "Доверенные отправители",
+        "trustedSendersDescription": "Всегда отображать изображения от этих отправителей."
       }
     },
     "createEmail": {
@@ -436,6 +493,7 @@
       "addMore": "Добавить ещё",
       "dropFilesToAttach": "Поместите файлы, чтобы прикрепить",
       "writeYourMessageHere": "Напишите свое сообщение здесь...",
+      "emailSent": "Письмо отправлено",
       "emailSentSuccessfully": "Письмо отправлено успешно",
       "failedToSendEmail": "Не удалось отправить письмо. Попробуйте снова.",
       "signature": {
@@ -465,5 +523,10 @@
         }
       }
     }
+  },
+  "errorMessages": {
+    "required_scopes_missing": "У нас отсутствуют разрешения, необходимые для полного использования всех функций. Пожалуйста, войдите снова и предоставьте запрашиваемый доступ.",
+    "early_access_required": "Для входа требуется ранний доступ",
+    "unauthorized": "Zero не удалось загрузить ваши данные от стороннего поставщика. Пожалуйста, попробуйте снова."
   }
 }

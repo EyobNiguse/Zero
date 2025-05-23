@@ -1,5 +1,3 @@
-'use client';
-
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -9,11 +7,10 @@ import {
   ListItem,
 } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
-import Link from 'next/link';
+import { Menu } from 'lucide-react';
+import { Link } from 'react-router';
 import { useState } from 'react';
 
 const resources = [
@@ -70,10 +67,10 @@ export function Navbar() {
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
         <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
           <div className="flex items-center gap-6">
-            <Link href="/" className="relative cursor-pointer">
-              <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
+            <a href="/" className="relative cursor-pointer">
+              <img src="white-icon.svg" alt="Zero Email" width={22} height={22} />
               <span className="absolute right-0 text-[10px]">beta</span>
-            </Link>
+            </a>
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
                 <NavigationMenuItem>
@@ -109,14 +106,14 @@ export function Navbar() {
             </NavigationMenu>
           </div>
           <div className="flex gap-2">
-            <Link href="/login">
+            <a href="/login">
               <Button variant="ghost" className="h-8">
                 Sign in
               </Button>
-            </Link>
-            <Link target="_blank" href="https://cal.com/team/0">
+            </a>
+            <a target="_blank" href="https://cal.com/team/0">
               <Button className="h-8 font-medium">Contact Us</Button>
-            </Link>
+            </a>
           </div>
         </nav>
       </header>
@@ -132,34 +129,41 @@ export function Navbar() {
           <SheetContent side="left" className="w-[300px] bg-[#111111] sm:w-[400px]">
             <SheetHeader className="flex flex-row items-center justify-between">
               <SheetTitle>
-                <Image src="white-icon.svg" alt="Zero Email" width={22} height={22} />
+                <img src="white-icon.svg" alt="Zero Email" width={22} height={22} />
               </SheetTitle>
-              <Link href="/login">
+              <a href="/login">
                 <Button className="w-full">Sign in</Button>
-              </Link>
+              </a>
             </SheetHeader>
             <div className="mt-8 flex flex-col space-y-3">
               <div className="space-y-3">
                 <h4 className="text-muted-foreground text-sm font-medium">Company</h4>
                 {aboutLinks.map((link) => (
-                  <Link key={link.title} href={link.href} className="block font-medium">
+                  <a key={link.title} href={link.href} className="block font-medium">
                     {link.title}
-                  </Link>
+                  </a>
                 ))}
               </div>
-              <Link target="_blank" href="https://cal.com/team/0" className="font-medium">
+              <a target="_blank" href="https://cal.com/team/0" className="font-medium">
                 Contact Us
-              </Link>
+              </a>
             </div>
             <Separator className="mt-8" />
             <div className="mt-8 flex flex-row items-center justify-center gap-4">
               {resources.map((resource) => (
                 <Link
                   key={resource.title}
-                  href={resource.href}
+                  to={resource.href}
                   className="flex items-center gap-2 font-medium"
                 >
-                  {resource.platform && <Image src={`/${resource.platform}.svg`} alt={resource.platform} width={20} height={20} />}
+                  {resource.platform && (
+                    <img
+                      src={`/${resource.platform}.svg`}
+                      alt={resource.platform}
+                      width={20}
+                      height={20}
+                    />
+                  )}
                 </Link>
               ))}
             </div>
@@ -168,4 +172,4 @@ export function Navbar() {
       </div>
     </>
   );
-} 
+}

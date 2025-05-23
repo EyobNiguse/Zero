@@ -3,7 +3,7 @@ import { createAuthClient } from 'better-auth/react';
 import type { Auth } from '@zero/server/auth';
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  baseURL: import.meta.env.VITE_PUBLIC_BACKEND_URL,
   fetchOptions: {
     credentials: 'include',
   },

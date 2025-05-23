@@ -1,9 +1,9 @@
 import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
 import { Ratelimit, type RatelimitConfig } from '@upstash/ratelimit';
 import type { HonoContext, HonoVariables } from '../ctx';
+import { getConnInfo } from 'hono/cloudflare-workers';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { connection } from '@zero/db/schema';
-import { env } from 'cloudflare:workers';
 import { redis } from '../lib/services';
 import { eq, and } from 'drizzle-orm';
 import type { Context } from 'hono';
@@ -77,26 +77,6 @@ export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx,
   return res;
 });
 
-export const brainServerAvailableMiddleware = t.middleware(async ({ next, ctx }) => {
-  return next({
-    ctx: {
-      ...ctx,
-      brainServerAvailable: !!env.BRAIN_URL,
-    },
-  });
-});
-
-export const processIP = (c: Context<HonoContext>) => {
-  const cfIP = c.req.header('CF-Connecting-IP');
-  const ip = c.req.header('x-forwarded-for');
-  if (!ip && !cfIP && env.NODE_ENV === 'production') {
-    console.log('No IP detected');
-    throw new Error('No IP detected');
-  }
-  const cleanIp = ip?.split(',')[0]?.trim() ?? null;
-  return cfIP ?? cleanIp ?? '127.0.0.1';
-};
-
 export const createRateLimiterMiddleware = (config: {
   limiter: RatelimitConfig['limiter'];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,7 +89,7 @@ export const createRateLimiterMiddleware = (config: {
       analytics: true,
       prefix: config.generatePrefix(ctx, input),
     });
-    const finalIp = processIP(ctx.c);
+    const finalIp = getConnInfo(ctx.c).remote.address ?? 'no-ip';
     const { success, limit, reset, remaining } = await ratelimiter.limit(finalIp);
 
     ctx.c.res.headers.append('X-RateLimit-Limit', limit.toString());

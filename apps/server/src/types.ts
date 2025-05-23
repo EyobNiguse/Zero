@@ -8,6 +8,7 @@ export type Label = {
     textColor: string;
   };
   type: string;
+  labels?: Label[];
 };
 
 export interface User {
@@ -30,14 +31,12 @@ export interface ISendEmail {
 
 export interface Account {
   name: string;
-  logo: React.ComponentType<{ className?: string }>;
   email: string;
 }
 
 export interface NavItem {
   title: string;
   url: string;
-  icon?: React.ComponentType<{ className?: string }>;
   isActive?: boolean;
   badge?: number;
 }
@@ -144,4 +143,31 @@ export interface DeleteAllSpamResponse {
   error?: string;
 }
 
+export enum Tools {
+  GetThread = 'getThread',
+  ComposeEmail = 'composeEmail',
+  ListThreads = 'listThreads',
+  DeleteEmail = 'deleteEmail',
+  MarkThreadsRead = 'markThreadsRead',
+  MarkThreadsUnread = 'markThreadsUnread',
+  ModifyLabels = 'modifyLabels',
+  GetUserLabels = 'getUserLabels',
+  SendEmail = 'sendEmail',
+  CreateLabel = 'createLabel',
+  BulkDelete = 'bulkDelete',
+  BulkArchive = 'bulkArchive',
+  DeleteLabel = 'deleteLabel',
+  AskZeroMailbox = 'askZeroMailbox',
+  AskZeroThread = 'askZeroThread',
+  WebSearch = 'webSearch',
+}
+
 export type AppContext = Context<{ Bindings: Env }>;
+
+export enum EPrompts {
+  SummarizeMessage = 'SummarizeMessage',
+  ReSummarizeThread = 'ReSummarizeThread',
+  SummarizeThread = 'SummarizeThread',
+  //   ThreadLabels = 'ThreadLabels',
+  //   Chat = 'Chat',
+}

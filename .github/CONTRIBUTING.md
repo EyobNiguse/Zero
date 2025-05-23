@@ -14,6 +14,7 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
     - [JavaScript/TypeScript Guidelines](#javascripttypescript-guidelines)
     - [React Guidelines](#react-guidelines)
   - [Internationalization (i18n)](#internationalization-i18n)
+    - [Adding Translations for New Features](#adding-translations-for-new-features)
   - [Testing](#testing)
   - [Documentation](#documentation)
   - [Areas of Contribution](#areas-of-contribution)
@@ -28,13 +29,13 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
    - Clone your fork locally: `git clone https://github.com/YOUR-USERNAME/Zero.git`
 
 2. **Set Up Development Environment**
-   - Install [Bun](https://bun.sh)
-   - Clone the repository and install dependencies: `bun install`
-   - Start the database locally: `bun docker:up`
-   - Copy `.env.example` to `.env` in project root
-   - Setup cloudflare with `bun run cf-install`, you will need to run this everytime there is a `.env` change
+   - Install [pnpm](https://pnpm.io)
+   - Clone the repository and install dependencies: `pnpm install`
+   - Start the database locally: `pnpm docker:db:up`
+   - Run `pnpm nizzy env` to setup your environment variables
+   - Run `pnpm nizzy sync` to sync your environment variables and types
    - Set up your Google OAuth credentials (see [README.md](../README.md))
-   - Initialize the database: `bun db:push`
+   - Initialize the database: `pnpm db:push`
 
 ## Development Workflow
 
@@ -42,10 +43,10 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 
    ```bash
    # Start database locally
-   bun docker:up
+   pnpm docker:db:up
 
    # Start the development server
-   bun dev
+   pnpm dev
    ```
 
 2. **Create a New Branch**
@@ -87,8 +88,11 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
 
    ```bash
    git fetch upstream
-   git merge upstream/main
+   git merge upstream/staging
    ```
+
+   > [!IMPORTANT]
+   > Remember to make `staging` branch as your base branch.
 
 7. **Push to Your Fork**
 
@@ -102,6 +106,9 @@ Thank you for your interest in contributing to 0.email! We're excited to have yo
    - Link any relevant issues
    - Add screenshots for UI changes
 
+> [!IMPORTANT]
+> Remember to make your pull request into the `staging` branch
+
 ## Database Management
 
 Zero uses PostgreSQL with Drizzle ORM. Here's how to work with it:
@@ -114,16 +121,16 @@ Zero uses PostgreSQL with Drizzle ORM. Here's how to work with it:
 
    ```bash
    # Apply schema changes to development database
-   bun db:push
+   pnpm db:push
 
    # Create migration files after schema changes
-   bun db:generate
+   pnpm db:generate
 
    # Apply migrations (for production)
-   bun db:migrate
+   pnpm db:migrate
 
    # View and edit data with Drizzle Studio
-   bun db:studio
+   pnpm db:studio
    ```
 
 3. **Database Connection**

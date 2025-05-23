@@ -1,5 +1,5 @@
-import { activeConnectionProcedure, brainServerAvailableMiddleware, router } from '../trpc';
-import { disableBrainFunction, enableBrainFunction } from '../../lib/brain';
+import { disableBrainFunction, enableBrainFunction, getPrompts } from '../../lib/brain';
+import { activeConnectionProcedure, router } from '../trpc';
 import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 
@@ -18,6 +18,13 @@ export const getConnectionLimit = async (connectionId: string): Promise<number> 
   }
 };
 
+const labelSchema = z.object({
+  name: z.string(),
+  usecase: z.string(),
+});
+
+const labelsSchema = z.array(labelSchema);
+
 export const brainRouter = router({
   enableBrain: activeConnectionProcedure
     .input(
@@ -30,7 +37,6 @@ export const brainRouter = router({
           .optional(),
       }),
     )
-    .use(brainServerAvailableMiddleware)
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
@@ -47,7 +53,6 @@ export const brainRouter = router({
           .optional(),
       }),
     )
-    .use(brainServerAvailableMiddleware)
     .mutation(async ({ ctx, input }) => {
       let { connection } = input;
       if (!connection) connection = ctx.activeConnection;
@@ -55,22 +60,28 @@ export const brainRouter = router({
     }),
 
   generateSummary: activeConnectionProcedure
-    .use(brainServerAvailableMiddleware)
     .input(
       z.object({
         threadId: z.string(),
       }),
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const { threadId } = input;
-      return (await env.zero.getSummary({ type: 'thread', id: threadId })) as {
-        data: {
-          long: string;
-          short: string;
+      const response = await env.VECTORIZE.getByIds([threadId]);
+      if (response.length && response?.[0]?.metadata?.['content']) {
+        const content = response[0].metadata['content'] as string;
+        const shortResponse = await env.AI.run('@cf/facebook/bart-large-cnn', {
+          input_text: content,
+        });
+        return {
+          data: {
+            short: shortResponse.summary,
+          },
         };
-      };
+      }
+      return null;
     }),
-  getState: activeConnectionProcedure.use(brainServerAvailableMiddleware).query(async ({ ctx }) => {
+  getState: activeConnectionProcedure.query(async ({ ctx }) => {
     const connection = ctx.activeConnection;
     const state = await env.subscribed_accounts.get(connection.id);
     if (!state || state === 'pending') return { enabled: false };
@@ -78,23 +89,42 @@ export const brainRouter = router({
     return { limit, enabled: true };
   }),
   getLabels: activeConnectionProcedure
-    .use(brainServerAvailableMiddleware)
-    .output(z.array(z.string()))
+    .output(
+      z.array(
+        z.object({
+          name: z.string(),
+          usecase: z.string(),
+        }),
+      ),
+    )
     .query(async ({ ctx }) => {
       const connection = ctx.activeConnection;
       const labels = await env.connection_labels.get(connection.id);
-      return labels?.split(',') ?? [];
+      try {
+        return labels ? (JSON.parse(labels) as z.infer<typeof labelsSchema>) : [];
+      } catch (error) {
+        console.error(`[GET_LABELS] Error parsing labels for ${connection.id}:`, error);
+        return [];
+      }
     }),
+  getPrompts: activeConnectionProcedure.query(async ({ ctx }) => {
+    const connection = ctx.activeConnection;
+    return await getPrompts({ connectionId: connection.id });
+  }),
   updateLabels: activeConnectionProcedure
-    .use(brainServerAvailableMiddleware)
     .input(
       z.object({
-        labels: z.array(z.string()),
+        labels: labelsSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const connection = ctx.activeConnection;
-      await env.connection_labels.put(connection.id, input.labels.join(','));
+      console.log(input.labels);
+
+      const labels = labelsSchema.parse(input.labels);
+      console.log(labels);
+
+      await env.connection_labels.put(connection.id, JSON.stringify(labels));
       return { success: true };
     }),
 });

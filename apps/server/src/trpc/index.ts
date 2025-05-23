@@ -1,4 +1,4 @@
-import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
+import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server';
 import { cookiePreferencesRouter } from './routes/cookies';
 import { connectionsRouter } from './routes/connections';
 import { shortcutRouter } from './routes/shortcut';
@@ -35,5 +35,11 @@ export type Outputs = inferRouterOutputs<AppRouter>;
 
 export const serverTrpc = () => {
   const c = getContext<HonoContext>();
-  return appRouter.createCaller({ c, session: c.var.session, db: c.var.db, auth: c.var.auth });
+  return appRouter.createCaller({
+    c,
+    session: c.var.session,
+    db: c.var.db,
+    auth: c.var.auth,
+    autumn: c.var.autumn,
+  });
 };

@@ -1,9 +1,6 @@
-'use client';
-
-import { PopoverContent, PopoverTrigger } from '@radix-ui/react-popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { Popover } from '../ui/popover';
 import type { Label } from '@/types';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
@@ -41,7 +38,7 @@ export const RenderLabels = ({ count = 1, labels }: { count?: number; labels: La
           key={label.id}
           onClick={handleFilterByLabel(label)}
           className={cn(
-            'dark:bg-subtleBlack bg-subtleWhite text-primary inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium overflow-hidden',
+            'dark:bg-subtleBlack bg-subtleWhite text-primary inline-block overflow-hidden truncate rounded border px-1.5 py-0.5 text-xs font-medium',
             searchValue.value.includes(`label:${label.name}`) &&
               'border-neutral-800 dark:border-white',
           )}
@@ -53,7 +50,7 @@ export const RenderLabels = ({ count = 1, labels }: { count?: number; labels: La
       {hiddenLabels.length > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button className="text-muted-foreground dark:bg-subtleBlack bg-subtleWhite inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium">
+            <button className="text-muted-foreground dark:bg-subtleBlack bg-subtleWhite inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium overflow-hidden">
               +{hiddenLabels.length}
             </button>
           </TooltipTrigger>
@@ -63,7 +60,7 @@ export const RenderLabels = ({ count = 1, labels }: { count?: number; labels: La
                 key={label.id}
                 onClick={handleFilterByLabel(label)}
                 className={cn(
-                  'dark:bg-subtleBlack bg-subtleWhite inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium',
+                  'dark:bg-subtleBlack bg-subtleWhite inline-block truncate rounded border px-1.5 py-0.5 text-xs font-medium overflow-hidden',
                   searchValue.value.includes(`label:${label.name}`) &&
                     'border-neutral-800 dark:border-white',
                 )}

@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Bold,
   Italic,
@@ -36,7 +34,6 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEditor as useEditorContext } from '@/components/providers/editor-provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { TextButtons } from '@/components/create/selectors/text-buttons';
 import { Editor as TiptapEditor, useCurrentEditor } from '@tiptap/react';
 import { suggestionItems } from '@/components/create/slash-command';
 import { defaultExtensions } from '@/components/create/extensions';
@@ -45,6 +42,7 @@ import { handleImageDrop, handleImagePaste } from 'novel';
 import EditorMenu from '@/components/create/editor-menu';
 import { UploadedFileIcon } from './uploaded-file-icon';
 import { Separator } from '@/components/ui/separator';
+import { useReducer, useRef, useEffect } from 'react';
 import { AutoComplete } from './editor-autocomplete';
 import { Editor as CoreEditor } from '@tiptap/core';
 import { cn, truncateFileName } from '@/lib/utils';
@@ -52,9 +50,8 @@ import { TextSelection } from 'prosemirror-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EditorView } from 'prosemirror-view';
-import { useTranslations } from 'next-intl';
 import { Markdown } from 'tiptap-markdown';
-import { useReducer, useRef, useEffect } from 'react';
+import { useTranslations } from 'use-intl';
 import { Slice } from 'prosemirror-model';
 import { useState } from 'react';
 import React from 'react';
@@ -481,7 +478,7 @@ export default function Editor({
             }),
           ]}
           ref={containerRef}
-          className="hide-scrollbar relative max-h-[500px] min-h-[220px] cursor-text overflow-auto"
+          className="no-scrollbar relative max-h-[500px] min-h-[220px] cursor-text overflow-auto"
           editorProps={{
             editable: () => !readOnly,
             handleDOMEvents: {

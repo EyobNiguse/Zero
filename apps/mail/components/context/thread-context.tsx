@@ -30,13 +30,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useSearchValue } from '@/hooks/use-search-value';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useNavigate } from 'react-router';
 import { useTRPC } from '@/providers/query-provider';
+import { ExclamationCircle } from '../icons/icons';
 import { useLabels } from '@/hooks/use-labels';
 import { LABELS, FOLDERS } from '@/lib/utils';
 import { useStats } from '@/hooks/use-stats';
-import { useTranslations } from 'next-intl';
 import { useMail } from '../mail/use-mail';
+import { useTranslations } from 'use-intl';
 import { Checkbox } from '../ui/checkbox';
 import { type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
@@ -121,6 +122,7 @@ export function ThreadContextMenu({
   refreshCallback,
 }: EmailContextMenuProps) {
   const { folder } = useParams<{ folder: string }>();
+  const navigate = useNavigate();
   const [mail, setMail] = useMail();
   const [{ refetch, isLoading, isFetching }, threads] = useThreads();
   const currentFolder = folder ?? '';
@@ -142,6 +144,7 @@ export function ThreadContextMenu({
     trpc.mail.markAsUnread.mutationOptions({ onSuccess: () => invalidateCount() }),
   );
   const { mutateAsync: toggleStar } = useMutation(trpc.mail.toggleStar.mutationOptions());
+  const { mutateAsync: toggleImportant } = useMutation(trpc.mail.toggleImportant.mutationOptions());
   const { mutateAsync: deleteThread } = useMutation(trpc.mail.delete.mutationOptions());
 
   const selectedThreads = useMemo(() => {
@@ -159,6 +162,12 @@ export function ThreadContextMenu({
     // TODO support bulk select
     return threadData?.messages.some((message) =>
       message.tags?.some((tag) => tag.name.toLowerCase() === 'starred'),
+    );
+  }, [threadData]);
+
+  const isImportant = useMemo(() => {
+    return threadData?.messages.some((message) =>
+      message.tags?.some((tag) => tag.name.toLowerCase() === 'important'),
     );
   }, [threadData]);
 
@@ -208,6 +217,13 @@ export function ThreadContextMenu({
       toast.success(t('common.actions.removedFromFavorites'));
     }
     await toggleStar({ ids: targets });
+    setMail((prev) => ({ ...prev, bulkSelected: [] }));
+    return await Promise.allSettled([refetchThread(), refetch()]);
+  };
+
+  const handleToggleImportant = async () => {
+    const targets = mail.bulkSelected.length ? mail.bulkSelected : [threadId];
+    await toggleImportant({ ids: targets });
     setMail((prev) => ({ ...prev, bulkSelected: [] }));
     return await Promise.allSettled([refetchThread(), refetch()]);
   };
@@ -270,19 +286,15 @@ export function ThreadContextMenu({
     },
   ];
   const handleDelete = () => async () => {
-    try {
-      const promise = deleteThread({ id: threadId }).then(() => {
+    toast.promise(deleteThread({ id: threadId }), {
+      loading: t('common.actions.deletingMail'),
+      success: t('common.actions.deletedMail'),
+      error: t('common.actions.failedToDeleteMail'),
+      finally: async () => {
         setMail((prev) => ({ ...prev, bulkSelected: [] }));
-        return refetch();
-      });
-      toast.promise(promise, {
-        loading: t('common.actions.deletingMail'),
-        success: t('common.actions.deletedMail'),
-        error: t('common.actions.failedToDeleteMail'),
-      });
-    } catch (error) {
-      console.error(`Error deleting ${threadId ? 'email' : 'thread'}:`, error);
-    }
+        await Promise.allSettled([refetchThread(), refetch()]);
+      },
+    });
   };
 
   const getActions = () => {
@@ -398,6 +410,12 @@ export function ThreadContextMenu({
       ),
       action: handleReadUnread,
       disabled: false,
+    },
+    {
+      id: 'toggle-important',
+      label: isImportant ? t('common.mail.removeFromImportant') : t('common.mail.markAsImportant'),
+      icon: <ExclamationCircle className={'mr-2.5 h-4 w-4'} />,
+      action: handleToggleImportant,
     },
     {
       id: 'favorite',

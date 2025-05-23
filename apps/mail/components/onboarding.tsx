@@ -1,12 +1,7 @@
-'use client';
-
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useState, useEffect, useMemo } from 'react';
-import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
-import { useCustomer } from 'autumn-js/next';
 import confetti from 'canvas-confetti';
-import Image from 'next/image';
 
 const steps = [
   {
@@ -79,7 +74,7 @@ export function OnboardingDialog({
       <DialogTitle></DialogTitle>
       <DialogContent
         showOverlay
-        className="bg-panelLight mx-auto w-full rounded-xl border p-4 sm:max-w-[690px] dark:bg-[#111111]"
+        className="bg-panelLight w-full max-w-[90%] mx-auto rounded-xl border p-4 sm:max-w-[690px] dark:bg-[#111111]"
       >
         <div className="flex flex-col gap-6 p-6">
           <div className="flex items-center justify-center">
@@ -87,7 +82,7 @@ export function OnboardingDialog({
               {steps.map((_, index) => (
                 <div
                   key={index}
-                  className={`h-1 w-16 rounded-full ${
+                  className={`h-1 w-7 md:w-16 rounded-full ${
                     index === currentStep ? 'bg-primary' : 'bg-muted'
                   }`}
                 />
@@ -113,8 +108,8 @@ export function OnboardingDialog({
                           index === currentStep ? 'opacity-100' : 'opacity-0'
                         }`}
                       >
-                        <Image
-                          priority
+                        <img
+                          loading="eager"
                           width={500}
                           height={500}
                           src={step.video}
@@ -151,17 +146,21 @@ export function OnboardingWrapper() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    const hasOnboarded = localStorage.getItem('hasOnboarded');
-    if (!hasOnboarded) {
+    // Check if the user has already gone through onboarding
+    const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding') === 'true';
+    
+    // Only show onboarding if the user hasn't completed it yet
+    if (!hasCompletedOnboarding) {
       setShowOnboarding(true);
     }
   }, []);
 
   const handleOpenChange = (open: boolean) => {
-    setShowOnboarding(open);
+    // If the dialog is being closed, mark onboarding as completed
     if (!open) {
-      localStorage.setItem('hasOnboarded', 'true');
+      localStorage.setItem('hasCompletedOnboarding', 'true');
     }
+    setShowOnboarding(open);
   };
 
   return <OnboardingDialog open={showOnboarding} onOpenChange={handleOpenChange} />;

@@ -1,6 +1,6 @@
 import { type CoreMessage, generateText, tool } from 'ai';
 import { activeDriverProcedure } from '../../trpc';
-import { type gmail_v1 } from 'googleapis';
+import type { gmail_v1 } from '@googleapis/gmail';
 import { TRPCError } from '@trpc/server';
 import { openai } from '@ai-sdk/openai';
 import dedent from 'dedent';
