@@ -172,13 +172,9 @@ export function NavMain({ items }: NavMainProps) {
     [pathname, category, searchParams, isValidInternalUrl],
   );
 
-  const getLabelCount = React.useMemo(() => {
-    if (!stats) return () => 0;
-
-    return (labelName: string | undefined) => {
-      if (!labelName) return 0;
-      return stats.find((stat) => stat.label?.toLowerCase() === labelName.toLowerCase())?.count ?? 0;
-    };
+  const getLabelCount = useCallback((labelName: string | undefined): number => {
+    if (!stats || !labelName) return 0;
+    return stats.find((stat) => stat.label?.toLowerCase() === labelName.toLowerCase())?.count ?? 0;
   }, [stats]);
 
   const activeAccount = React.useMemo(() => {
