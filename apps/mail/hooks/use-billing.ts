@@ -9,6 +9,7 @@ type FeatureState = {
   usage: number;
   nextResetAt: number | null;
   interval: string;
+  included_usage: number;
 };
 
 type Features = {
@@ -26,6 +27,7 @@ const DEFAULT_FEATURES: Features = {
     usage: 0,
     nextResetAt: null,
     interval: '',
+    included_usage: 0,
   },
   connections: {
     total: 0,
@@ -35,6 +37,7 @@ const DEFAULT_FEATURES: Features = {
     usage: 0,
     nextResetAt: null,
     interval: '',
+    included_usage: 0,
   },
   brainActivity: {
     total: 0,
@@ -44,6 +47,7 @@ const DEFAULT_FEATURES: Features = {
     usage: 0,
     nextResetAt: null,
     interval: '',
+    included_usage: 0,
   },
 };
 
@@ -56,7 +60,7 @@ const FEATURE_IDS = {
 const PRO_PLANS = ['pro-example', 'pro_annual', 'team', 'enterprise'] as const;
 
 export const useBilling = () => {
-  const { customer, refetch } = useCustomer();
+  const { customer, refetch, isLoading } = useCustomer();
   const { attach, track, openBillingPortal } = useAutumn();
 
   const isPro = useMemo(() => {
@@ -81,6 +85,7 @@ export const useBilling = () => {
         usage: feature.usage || 0,
         nextResetAt: feature.next_reset_at ?? null,
         interval: feature.interval || '',
+        included_usage: feature.included_usage || 0,
       };
     }
 
@@ -94,6 +99,7 @@ export const useBilling = () => {
         usage: feature.usage || 0,
         nextResetAt: feature.next_reset_at ?? null,
         interval: feature.interval || '',
+        included_usage: feature.included_usage || 0,
       };
     }
 
@@ -107,6 +113,7 @@ export const useBilling = () => {
         usage: feature.usage || 0,
         nextResetAt: feature.next_reset_at ?? null,
         interval: feature.interval || '',
+        included_usage: feature.included_usage || 0,
       };
     }
 
@@ -114,6 +121,7 @@ export const useBilling = () => {
   }, [customer]);
 
   return {
+    isLoading,
     customer,
     refetch,
     attach,

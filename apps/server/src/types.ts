@@ -9,6 +9,7 @@ export type Label = {
   };
   type: string;
   labels?: Label[];
+  count?: number;
 };
 
 export interface User {

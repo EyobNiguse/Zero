@@ -1,5 +1,3 @@
-'use client';
-
 import React, {
   createContext,
   forwardRef,
@@ -192,10 +190,12 @@ interface FolderComponentProps extends React.ComponentPropsWithoutRef<typeof Acc
 type FolderProps = {
   expandedItems?: string[];
   element: string;
+  count: number;
   isSelectable?: boolean;
   isSelect?: boolean;
   onFolderClick?: (id: string) => void;
   hasChildren?: boolean;
+  color?: number;
 } & FolderComponentProps;
 
 const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTMLDivElement>>(
@@ -203,12 +203,14 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
     {
       className,
       element,
+      count,
       value,
       isSelectable = true,
       isSelect,
       children,
       onFolderClick,
       hasChildren,
+      color,
       ...props
     },
     ref,
@@ -229,7 +231,7 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
       <Accordion.Item {...props} value={value} className="relative h-full overflow-hidden">
         <div
           className={cn(
-            `hover:bg-black/10 flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm dark:hover:bg-[#202020]`,
+            `flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm hover:bg-black/10 dark:hover:bg-[#202020]`,
             className,
             {
               'bg-sidebar-accent rounded-md': isSelect && isSelectable,
@@ -263,11 +265,11 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
             </Accordion.Trigger>
           ) : (
             <div className="flex items-center">
-              <Bookmark className="relative mr-3 size-4" />
+              <Bookmark className={cn(`relative mr-3 size-4 text-[${color}]`)} />
             </div>
           )}
           <span
-            className={cn('flex-1 truncate', {
+            className={cn('max-w-[124px] flex-1 truncate', {
               'cursor-pointer': canExpand && isSelectable && onFolderClick,
               'font-bold': isSelect,
             })}
@@ -286,6 +288,15 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
           >
             {element}
           </span>
+          {count > 0 && (
+            <span
+              className={cn(
+                'text-muted-foreground ml-auto shrink-0 rounded-full bg-transparent px-2 py-0.5 text-xs font-medium',
+              )}
+            >
+              {count}
+            </span>
+          )}
         </div>
         <Accordion.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down relative h-full overflow-hidden text-sm">
           {element && indicator && <TreeIndicator aria-hidden="true" />}
