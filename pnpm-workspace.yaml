@@ -12,5 +12,15 @@ catalog:
   '@trpc/tanstack-react-query': ^11.1.2
   wrangler: ^4.16.0
   typescript: ^5.8.3
+  drizzle-orm: 0.43.1
+  drizzle-kit: 0.31.1
+  '@types/node': 22.15.21
+onlyBuiltDependencies:
+  - core-js
+  - core-js-pure
+  - esbuild
+  - sharp
+  - unrs-resolver
+  - workerd
 patchedDependencies:
   novel: patches/novel.patch

@@ -23,6 +23,7 @@ import { emailProviders } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'use-intl';
+import { useQueryState } from 'nuqs';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -35,7 +36,7 @@ export default function ConnectionsPage() {
   const { mutateAsync: deleteConnection } = useMutation(trpc.connections.delete.mutationOptions());
   const [{ refetch: refetchThreads }] = useThreads();
   const { isPro } = useBilling();
-
+  const [, setPricingDialog] = useQueryState('pricingDialog');
   const disconnectAccount = async (connectionId: string) => {
     await deleteConnection(
       { connectionId },
@@ -212,17 +213,16 @@ export default function ConnectionsPage() {
                 </Button>
               </AddConnectionDialog>
             ) : (
-              <PricingDialog>
-                <Button
-                  variant="outline"
-                  className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
-                >
-                  <Plus className="absolute left-2 h-4 w-4" />
-                  <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                    {t('pages.settings.connections.addEmail')}
-                  </span>
-                </Button>
-              </PricingDialog>
+              <Button
+                onClick={() => setPricingDialog('true')}
+                variant="outline"
+                className="group relative w-9 overflow-hidden transition-all duration-200 hover:w-full sm:hover:w-[32.5%]"
+              >
+                <Plus className="absolute left-2 h-4 w-4" />
+                <span className="whitespace-nowrap pl-7 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  {t('pages.settings.connections.addEmail')}
+                </span>
+              </Button>
             )}
           </div>
         </div>
