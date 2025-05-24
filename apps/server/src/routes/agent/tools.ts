@@ -533,16 +533,21 @@ export const webSearch = tool({
     query: z.string().describe('The query to search the web for'),
   }),
   execute: async ({ query }) => {
-    const { text } = await generateText({
-      model: perplexity('sonar'),
-      messages: [
-        { role: 'system', content: 'Be precise and concise.' },
-        { role: 'user', content: query },
-      ],
-      maxTokens: 1024,
-    });
+    try {
+      const { text } = await generateText({
+        model: perplexity('sonar'),
+        messages: [
+          { role: 'system', content: 'Be precise and concise.' },
+          { role: 'user', content: query },
+        ],
+        maxTokens: 1024,
+      });
 
-    return text;
+      return text;
+    } catch (error) {
+      console.error('Error searching the web:', error);
+      throw new Error('Failed to search the web');
+    }
   },
 });
 
