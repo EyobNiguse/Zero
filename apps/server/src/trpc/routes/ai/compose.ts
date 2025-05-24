@@ -102,8 +102,6 @@ export async function composeEmail(input: ComposeEmailInput) {
     },
   });
 
-  console.log('email', text);
-
   return text;
 }
 
