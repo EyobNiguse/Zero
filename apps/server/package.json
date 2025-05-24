@@ -34,7 +34,7 @@
     "better-auth": "catalog:",
     "date-fns": "^4.1.0",
     "dedent": "^1.6.0",
-    "drizzle-orm": "0.43.1",
+    "drizzle-orm": "catalog:",
     "email-addresses": "^5.0.0",
     "google-auth-library": "9.15.1",
     "he": "^1.2.0",
