@@ -22,6 +22,8 @@ export const user = createTable('user', {
   updatedAt: timestamp('updated_at').notNull(),
   defaultConnectionId: text('default_connection_id'),
   customPrompt: text('custom_prompt'),
+  phoneNumber: text('phone_number'),
+  phoneNumberVerified: boolean('phone_number_verified').default(false),
 });
 
 export const session = createTable('session', {

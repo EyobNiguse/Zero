@@ -13,8 +13,6 @@ export const RecursiveFolder = ({ label, activeAccount, count }: { label: any; a
   const isActive = searchValue.value.includes(`label:${label.name}`);
   const isFolderActive = isActive || window.location.pathname.includes(`/mail/label/${label.id}`);
   const navigate = useNavigate();
-  const { data: connections } = useConnections();
-  const { data: activeConnection } = useActiveConnection();
   const { setOpenMobile, isMobile } = useSidebar();
 
   const handleFilterByLabel = useCallback(
