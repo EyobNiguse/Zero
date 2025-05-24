@@ -3,9 +3,11 @@ import {
   type WritingStyleMatrix,
 } from '../../../services/writing-style-service';
 import { StyledEmailAssistantSystemPrompt } from '../../../lib/prompts';
+import { tools, webSearch } from '../../../routes/agent/tools';
 import { activeConnectionProcedure } from '../../trpc';
 import { stripHtml } from 'string-strip-html';
 import { openai } from '@ai-sdk/openai';
+import { Tools } from '../../../types';
 import { generateText } from 'ai';
 import { z } from 'zod';
 
@@ -87,6 +89,9 @@ export async function composeEmail(input: ComposeEmailInput) {
     frequencyPenalty: 0.2,
     presencePenalty: 0.1,
     maxRetries: 1,
+    tools: {
+      webSearch,
+    },
   });
 
   return text;

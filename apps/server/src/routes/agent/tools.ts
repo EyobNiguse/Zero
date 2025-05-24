@@ -526,7 +526,7 @@ const deleteLabel = (driver: MailManager) =>
     },
   });
 
-const webSearch = tool({
+export const webSearch = tool({
   description: 'Search the web for information using Perplexity AI',
   parameters: z.object({
     query: z.string().describe('The query to search the web for'),
