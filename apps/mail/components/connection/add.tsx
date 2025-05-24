@@ -80,7 +80,7 @@ export const AddConnectionDialog = ({
                 onClick={handleUpgrade}
                 className="hover:bg-subtleWhite hover:text-subtleBlack cursor-pointer underline"
               >
-                Upgrade
+                Start free trial
               </span>{' '}
               to connect more.
             </span>

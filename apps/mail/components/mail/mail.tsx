@@ -39,6 +39,7 @@ import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useParams, useNavigate } from 'react-router';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
+import { PricingDialog } from '../ui/pricing-dialog';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import AISidebar from '@/components/ui/ai-sidebar';
@@ -343,8 +344,7 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
-  const trpc = useTRPC();
+  const [{ isFetching, refetch: refetchThreads }] = useThreads();
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const [threadId, setThreadId] = useQueryState('threadId');
@@ -396,6 +396,7 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
+      <PricingDialog />
       <div className="rounded-inherit relative z-[5] flex p-0 md:mt-1">
         <ResizablePanelGroup
           direction="horizontal"

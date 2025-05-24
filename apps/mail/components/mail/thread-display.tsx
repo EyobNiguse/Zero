@@ -390,22 +390,22 @@ export function ThreadDisplay() {
                 <div className="mt-4 grid grid-cols-1 gap-2 xl:grid-cols-2">
                   <button
                     onClick={toggleAISidebar}
-                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-white dark:bg-[#313131] px-2 border dark:border-none"
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg border bg-white px-2 dark:border-none dark:bg-[#313131]"
                   >
                     <Sparkles className="mr-1 h-3.5 w-3.5 fill-[#959595]" />
                     <div className="flex items-center justify-center gap-2.5 px-0.5">
-                      <div className="text-base-gray-950  justify-start font-['Inter'] text-sm leading-none">
+                      <div className="text-base-gray-950 justify-start text-sm leading-none">
                         Zero chat
                       </div>
                     </div>
                   </button>
                   <button
                     onClick={() => setIsComposeOpen('true')}
-                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-white dark:bg-[#313131] px-2 border dark:border-none"
+                    className="inline-flex h-7 items-center justify-center gap-0.5 overflow-hidden rounded-lg border bg-white px-2 dark:border-none dark:bg-[#313131]"
                   >
                     <Mail className="mr-1 h-3.5 w-3.5 fill-[#959595]" />
                     <div className="flex items-center justify-center gap-2.5 px-0.5">
-                      <div className="dark:text-base-gray-950  justify-start font-['Inter'] text-sm leading-none">
+                      <div className="dark:text-base-gray-950 justify-start text-sm leading-none">
                         Send email
                       </div>
                     </div>
