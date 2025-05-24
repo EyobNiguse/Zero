@@ -1,10 +1,11 @@
 import { connectionToDriver, getActiveConnection } from '../../lib/server-utils';
 import { composeEmail } from '../../trpc/routes/ai/compose';
 import type { MailManager } from '../../lib/driver/types';
+import { perplexity } from '@ai-sdk/perplexity';
 import { colors } from '../../lib/prompts';
 import { env } from 'cloudflare:workers';
+import { generateText, tool } from 'ai';
 import { Tools } from '../../types';
-import { tool } from 'ai';
 import { z } from 'zod';
 
 type ModelTypes = 'summarize' | 'general' | 'chat' | 'vectorize';
@@ -532,30 +533,16 @@ export const webSearch = tool({
     query: z.string().describe('The query to search the web for'),
   }),
   execute: async ({ query }) => {
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        max_tokens: 1024,
-        model: 'sonar',
-        messages: [
-          { role: 'system', content: 'Be precise and concise.' },
-          { role: 'user', content: query },
-        ],
-      }),
-    };
+    const { text } = await generateText({
+      model: perplexity('sonar'),
+      messages: [
+        { role: 'system', content: 'Be precise and concise.' },
+        { role: 'user', content: query },
+      ],
+      maxTokens: 1024,
+    });
 
-    try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', options);
-      const data = (await response.json()) as any;
-      return { result: data };
-    } catch (error) {
-      console.error('Web search error:', error);
-      throw new Error('Failed to perform web search');
-    }
+    return text;
   },
 });
 

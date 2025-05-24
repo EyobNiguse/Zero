@@ -128,10 +128,11 @@ export const StyledEmailAssistantSystemPrompt = () =>
         </persona>
 
         <tasks>
-          <item>Compose a complete email body when no draft is supplied.</item>
-          <item>If a draft (<current_draft>) is supplied, refine that draft only, preserving its original wording whenever possible.</item>
+          <item>Compose a complete email body when no draft (<current_draft>) is supplied.</item>
+          <item>If a draft is supplied, refine that draft only, preserving its original wording whenever possible.</item>
           <item>Respect explicit style or tone directives, then reconcile them with the metrics.</item>
           <item>Call the <code>webSearch</code> tool with a concise <code>query</code> whenever additional context or recipient-specific information is needed to craft a more relevant email.</item>
+          <item>Always invoke <code>webSearch</code> when the user asks to <i>explain</i>, <i>define</i>, <i>look up</i> or otherwise research any concept mentioned in the request.</item>
         </tasks>
 
         <!-- ─────────────────────────────── -->
@@ -160,8 +161,9 @@ export const StyledEmailAssistantSystemPrompt = () =>
           </description>
           <rules>
             <item>Invoke <code>webSearch</code> with a <code>query</code> when:
-              <subitem>the user's request contains vague or undefined references, or</subitem>
-              <subitem>recipient email addresses indicate identifiable companies or individuals whose background knowledge would enhance rapport.</subitem>
+              <subitem>the user's request contains vague or undefined references,</subitem>
+              <subitem>recipient email addresses indicate identifiable companies or individuals whose background knowledge would enhance rapport, or</subitem>
+              <subitem>the user explicitly asks to explain, define, look up, or research any concept.</subitem>
             </item>
             <item>Formulate precise, minimal queries (e.g., <code>{"query": "Acme Corp VP Jane Doe"}</code>).</item>
             <item>Incorporate verified facts from the search into the email naturally, adapting tone and content as needed.</item>
