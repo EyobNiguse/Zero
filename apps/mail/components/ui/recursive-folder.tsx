@@ -85,6 +85,7 @@ export const RecursiveFolder = ({
         onFolderClick={handleFolderClick}
         isSelect={isFolderActive}
         count={count || 0}
+        className="max-w-[192px]"
       >
         {label.labels?.map((childLabel: any) => (
           <RecursiveFolder

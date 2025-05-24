@@ -271,7 +271,7 @@ const Folder = forwardRef<HTMLDivElement, FolderProps & React.HTMLAttributes<HTM
             </div>
           )}
           <span
-            className={cn('flex-1 truncate', {
+            className={cn('max-w-[124px] flex-1 truncate', {
               'cursor-pointer': canExpand && isSelectable && onFolderClick,
               'font-bold': isSelect,
             })}
