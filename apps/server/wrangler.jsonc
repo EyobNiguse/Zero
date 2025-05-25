@@ -39,11 +39,9 @@
         {
           "tag": "v1",
           "new_classes": ["DurableMailbox"],
-          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
         {
           "tag": "v2",
-          "new_classes": ["ZeroMCP", "ZeroAgent"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
       ],
@@ -216,11 +214,9 @@
         {
           "tag": "v1",
           "new_classes": ["DurableMailbox"],
-          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
         {
           "tag": "v2",
-          "new_classes": ["ZeroMCP", "ZeroAgent"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
       ],
