@@ -41,6 +41,11 @@
           "new_classes": ["DurableMailbox"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
+        {
+          "tag": "v2",
+          "new_classes": ["ZeroMCP", "ZeroAgent"],
+          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
+        },
       ],
       "services": [
         {
@@ -119,7 +124,12 @@
       "migrations": [
         {
           "tag": "v1",
-          "new_classes": ["DurableMailbox", "ZeroAgent", "ZeroMCP"],
+          "new_classes": ["DurableMailbox", "ZeroAgent"],
+          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
+        },
+        {
+          "tag": "v2",
+          "new_classes": ["ZeroMCP", "ZeroAgent"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
       ],
@@ -207,7 +217,12 @@
       "migrations": [
         {
           "tag": "v1",
-          "new_classes": ["DurableMailbox", "ZeroAgent", "ZeroMCP"],
+          "new_classes": ["DurableMailbox"],
+          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
+        },
+        {
+          "tag": "v2",
+          "new_classes": ["ZeroMCP", "ZeroAgent"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
       ],
