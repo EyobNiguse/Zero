@@ -124,7 +124,7 @@
       "migrations": [
         {
           "tag": "v1",
-          "new_classes": ["DurableMailbox", "ZeroAgent"],
+          "new_classes": ["DurableMailbox"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
         {
