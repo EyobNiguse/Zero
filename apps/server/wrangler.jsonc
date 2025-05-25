@@ -63,9 +63,6 @@
         "COOKIE_DOMAIN": "localhost",
         "VITE_PUBLIC_BACKEND_URL": "http://localhost:8787",
         "VITE_PUBLIC_APP_URL": "http://localhost:3000",
-        "TWILIO_ACCOUNT_SID": "",
-        "TWILIO_AUTH_TOKEN": "",
-        "TWILIO_PHONE_NUMBER": "",
       },
       "kv_namespaces": [
         {
@@ -122,7 +119,7 @@
       "migrations": [
         {
           "tag": "v1",
-          "new_classes": ["DurableMailbox"],
+          "new_classes": ["DurableMailbox", "ZeroAgent", "ZeroMCP"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
       ],
@@ -147,9 +144,6 @@
         "COOKIE_DOMAIN": "0.email",
         "VITE_PUBLIC_BACKEND_URL": "https://sapi.0.email",
         "VITE_PUBLIC_APP_URL": "https://staging.0.email",
-        "TWILIO_ACCOUNT_SID": "",
-        "TWILIO_AUTH_TOKEN": "",
-        "TWILIO_PHONE_NUMBER": "",
       },
       "kv_namespaces": [
         {
@@ -213,7 +207,7 @@
       "migrations": [
         {
           "tag": "v1",
-          "new_classes": ["DurableMailbox"],
+          "new_classes": ["DurableMailbox", "ZeroAgent", "ZeroMCP"],
           "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
         },
       ],
