@@ -59,14 +59,21 @@ const verificationSchema = z.object({
 });
 
 const CallInboxDialog = () => {
+  const { refetch, data: session } = useSession();
   const [isVerifying, setIsVerifying] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
 
   const maskPhoneNumber = (phone: string) => {
     if (!phone) return '';
-    const lastFour = phone.slice(-4);
-    const maskedPart = '*'.repeat(phone.length - 4);
-    return `${maskedPart}${lastFour}`;
+    if (phone.length < 4) return phone;
+    try {
+      const lastFour = phone.slice(-4);
+      const maskedPart = '*'.repeat(Math.max(0, phone.length - 4));
+      return `${maskedPart}${lastFour}`;
+    } catch (error) {
+      console.error('Error masking phone number:', error);
+      return phone;
+    }
   };
 
   const form = useForm<z.infer<typeof verificationSchema>>({
@@ -92,10 +99,13 @@ const CallInboxDialog = () => {
           phoneNumber: data.phoneNumber,
           code: data.otp,
         });
-        if (isVerified) {
-          toast.success('Phone number verified successfully');
-        } else {
+        console.log('isVerified', isVerified);
+
+        if (isVerified.error) {
           toast.error('Invalid verification code');
+        } else {
+          refetch();
+          toast.success('Phone number verified successfully');
         }
       } else {
         toast.error('Please enter a valid OTP');
@@ -122,7 +132,6 @@ const CallInboxDialog = () => {
           </span>
         </DialogDescription>
         <div className="relative">
-          {JSON.stringify(form.formState.errors)}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -265,7 +274,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               )}
             </AnimatePresence>
           </SidebarHeader>
-          {!session?.user.phoneNumberVerified && !isSessionPending ? <CallInboxDialog /> : null}
+          {/* {!session?.user.phoneNumberVerified && !isSessionPending ? <CallInboxDialog /> : null} */}
           <SidebarContent
             className={`scrollbar scrollbar-w-1 scrollbar-thumb-accent/40 scrollbar-track-transparent hover:scrollbar-thumb-accent scrollbar-thumb-rounded-full overflow-x-hidden py-0 pt-0 ${state !== 'collapsed' ? 'mt-5 md:px-4' : 'px-2'}`}
           >
