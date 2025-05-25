@@ -54,3 +54,4 @@ worker-configuration.d.ts
 
 .dev.vars.*
 .react-router
+.pnpm-store
