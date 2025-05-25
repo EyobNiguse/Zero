@@ -83,7 +83,6 @@ export const createAuth = () => {
   return betterAuth({
     plugins: [
       phoneNumber({
-        // 16137628237
         sendOTP: async (data) => {
           if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_PHONE_NUMBER) {
             throw new APIError('INTERNAL_SERVER_ERROR', {
