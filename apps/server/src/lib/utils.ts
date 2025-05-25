@@ -47,13 +47,6 @@ export const getFolderTags = (folder: string): string[] => {
   return FOLDER_TAGS[folder] || [];
 };
 
-export const getCookie = (key: string): string | null => {
-  const cookies = Object.fromEntries(
-    document.cookie.split('; ').map((v) => v.split(/=(.*)/s).map(decodeURIComponent)),
-  );
-  return cookies?.[key] ?? null;
-};
-
 export const cleanEmailAddress = (email: string = '') => {
   return email.replace(/[<>]/g, '').trim();
 };
