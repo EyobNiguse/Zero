@@ -134,3 +134,4 @@ export interface Note {
   createdAt: Date;
   updatedAt: Date;
 }
+

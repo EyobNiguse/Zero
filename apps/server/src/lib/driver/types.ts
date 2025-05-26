@@ -1,5 +1,6 @@
-import { type IOutgoingMessage, type ParsedMessage, type Label } from '../../types';
-import { type CreateDraftData } from '../schemas';
+import type { IOutgoingMessage, ParsedMessage, Label, DeleteAllSpamResponse } from '../../types';
+import type { CreateDraftData } from '../schemas';
+import type { HonoContext } from '../../ctx';
 
 export interface IGetThreadResponse {
   messages: ParsedMessage[];
@@ -88,4 +89,5 @@ export interface MailManager {
   deleteLabel(id: string): Promise<void>;
   getEmailAliases(): Promise<{ email: string; name?: string; primary?: boolean }[]>;
   revokeRefreshToken(refreshToken: string): Promise<boolean>;
+  deleteAllSpam(): Promise<DeleteAllSpamResponse>;
 }

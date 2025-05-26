@@ -10,7 +10,7 @@ import {
 } from './utils';
 import { mapGoogleLabelColor, mapToGoogleLabelColor } from './google-label-color-map';
 import { parseAddressList, parseFrom, wasSentWithTLS } from '../email-utils';
-import type { IOutgoingMessage, Label, ParsedMessage } from '../../types';
+import type { IOutgoingMessage, Label, ParsedMessage, DeleteAllSpamResponse } from '../../types';
 import { sanitizeTipTapHtml } from '../sanitize-tip-tap-html';
 import type { MailManager, ManagerConfig } from './types';
 import { type gmail_v1, gmail } from '@googleapis/gmail';
@@ -657,6 +657,52 @@ export class GoogleMailManager implements MailManager {
       return false;
     }
   }
+
+  public deleteAllSpam() {
+    return this.withErrorHandler(
+      'deleteAllSpam',
+      async () => {
+        let totalDeleted = 0;
+        let hasMoreSpam = true;
+        let pageToken: string | number | null | undefined = undefined;
+        
+        while (hasMoreSpam) {
+          const spamThreads = await this.list({
+            folder: 'spam',
+            maxResults: 500,
+            pageToken: pageToken as string | undefined,
+          });
+
+          if (!spamThreads.threads || spamThreads.threads.length === 0) {
+            hasMoreSpam = false;
+            break;
+          }
+          
+          const threadIds = spamThreads.threads.map(thread => thread.id);
+          await this.modifyLabels(threadIds, { 
+            addLabels: ['TRASH'], 
+            removeLabels: ['SPAM', 'INBOX'] 
+          });
+          
+          totalDeleted += threadIds.length;
+          pageToken = spamThreads.nextPageToken;
+          
+          if (!pageToken) {
+            hasMoreSpam = false;
+          }
+        }
+        
+        return { 
+          success: true, 
+          message: `Deleted ${totalDeleted} spam emails`, 
+          count: totalDeleted 
+        };
+      },
+      { email: this.config.auth?.email }
+    );
+  }
+
+
   private async modifyThreadLabels(
     threadIds: string[],
     requestBody: gmail_v1.Schema$ModifyThreadRequest,

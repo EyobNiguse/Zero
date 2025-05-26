@@ -1,14 +1,8 @@
 import {
-  cn,
-  FOLDERS,
-  formatDate,
-  getEmailLogo,
-  getMainSearchTerm,
-  parseNaturalLanguageSearch,
-} from '@/lib/utils';
-import {
   Archive2,
   Bell,
+  ChevronDown,
+  ExclamationCircle,
   GroupPeople,
   Lightning,
   People,
@@ -18,6 +12,24 @@ import {
   User,
 } from '../icons/icons';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  cn,
+  FOLDERS,
+  formatDate,
+  getEmailLogo,
+  getMainSearchTerm,
+  parseNaturalLanguageSearch,
+} from '@/lib/utils';
+import {
   type ComponentProps,
   memo,
   useCallback,
@@ -26,6 +38,8 @@ import {
   useRef,
   useState,
 } from 'react';
+import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
+import type { DeleteAllSpamResponse } from '../../../../server/src/types';
 import { useIsFetching, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
@@ -821,9 +835,27 @@ export const MailList = memo(
                     }
                   }}
                 />
+                <div className="mt-5">
+                  <p className="text-lg">It's empty here</p>
+                  <p className="text-md text-[#6D6D6D] dark:text-white/50">
+                    Search for another email or{' '}
+                    <button className="underline" onClick={clearFilters}>
+                      clear filters
+                    </button>
+                  </p>
+                </div>
               </div>
-            )}
-          </>
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col" id="mail-list-scroll">
+              <VList
+                count={filteredItems.length}
+                overscan={5}
+                className="flex-1 overflow-x-hidden"
+                children={vListRenderer}
+              />
+            </div>
+          )}
         </div>
         <div className="w-full pt-4 text-center">
           {isFetching ? (
