@@ -84,12 +84,9 @@ export const createAuth = () => {
   return betterAuth({
     plugins: [
       phoneNumber({
-        sendOTP: async (data) => {
+        sendOTP: async ({ code, phoneNumber }) => {
           await twilioClient.messages
-            .send(
-              data.phoneNumber,
-              `Your verification code is: ${data.code}, do not share it with anyone.`,
-            )
+            .send(phoneNumber, `Your verification code is: ${code}, do not share it with anyone.`)
             .catch((error) => {
               console.error('Failed to send OTP', error);
               throw new APIError('INTERNAL_SERVER_ERROR', {
