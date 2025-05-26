@@ -12,10 +12,10 @@ import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { getBrowserTimezone, isValidTimezone } from './timezones';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
+import { redis, resend, twilio } from './services';
 import { getContext } from 'hono/context-storage';
 import { getActiveDriver } from './driver/utils';
 import { APIError } from 'better-auth/api';
-import { redis, resend } from './services';
 import type { HonoContext } from '../ctx';
 import { env } from 'cloudflare:workers';
 import { createDriver } from './driver';
@@ -79,39 +79,23 @@ const connectionHandlerHook = async (account: Account) => {
 
 export const createAuth = () => {
   const c = getContext<HonoContext>();
+  const twilioClient = twilio();
 
   return betterAuth({
     plugins: [
       phoneNumber({
         sendOTP: async (data) => {
-          if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_PHONE_NUMBER) {
-            throw new APIError('INTERNAL_SERVER_ERROR', {
-              message: 'Twilio configuration missing',
+          await twilioClient.messages
+            .send(
+              data.phoneNumber,
+              `Your verification code is: ${data.code}, do not share it with anyone.`,
+            )
+            .catch((error) => {
+              console.error('Failed to send OTP', error);
+              throw new APIError('INTERNAL_SERVER_ERROR', {
+                message: `Failed to send OTP, ${error.message}`,
+              });
             });
-          }
-
-          const response = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Authorization: `Basic ${btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`)}`,
-              },
-              body: new URLSearchParams({
-                To: data.phoneNumber,
-                From: env.TWILIO_PHONE_NUMBER,
-                Body: `Your verification code is: ${data.code}, do not share it with anyone.`,
-              }),
-            },
-          );
-
-          if (!response.ok) {
-            const error = await response.text();
-            throw new APIError('INTERNAL_SERVER_ERROR', {
-              message: `Failed to send OTP: ${error}`,
-            });
-          }
         },
       }),
     ],
