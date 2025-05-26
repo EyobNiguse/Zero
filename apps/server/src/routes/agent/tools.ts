@@ -1,10 +1,11 @@
 import { connectionToDriver, getActiveConnection } from '../../lib/server-utils';
 import { composeEmail } from '../../trpc/routes/ai/compose';
 import type { MailManager } from '../../lib/driver/types';
+import { perplexity } from '@ai-sdk/perplexity';
 import { colors } from '../../lib/prompts';
 import { env } from 'cloudflare:workers';
+import { generateText, tool } from 'ai';
 import { Tools } from '../../types';
-import { tool } from 'ai';
 import { z } from 'zod';
 
 type ModelTypes = 'summarize' | 'general' | 'chat' | 'vectorize';
@@ -526,56 +527,49 @@ const deleteLabel = (driver: MailManager) =>
     },
   });
 
-const webSearch = tool({
+export const webSearch = tool({
   description: 'Search the web for information using Perplexity AI',
   parameters: z.object({
     query: z.string().describe('The query to search the web for'),
   }),
   execute: async ({ query }) => {
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        max_tokens: 1024,
-        model: 'sonar',
+    try {
+      const { text } = await generateText({
+        model: perplexity('sonar'),
         messages: [
           { role: 'system', content: 'Be precise and concise.' },
           { role: 'user', content: query },
         ],
-      }),
-    };
+        maxTokens: 1024,
+      });
 
-    try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', options);
-      const data = (await response.json()) as any;
-      return { result: data };
+      return text;
     } catch (error) {
-      console.error('Web search error:', error);
-      throw new Error('Failed to perform web search');
+      console.error('Error searching the web:', error);
+      throw new Error('Failed to search the web');
     }
   },
 });
 
-export const tools = (driver: MailManager, connectionId: string) => ({
-  [Tools.GetThread]: getEmail(driver),
-  [Tools.ComposeEmail]: composeEmailTool(connectionId),
-  [Tools.ListThreads]: listEmails(driver),
-  [Tools.MarkThreadsRead]: markAsRead(driver),
-  [Tools.MarkThreadsUnread]: markAsUnread(driver),
-  [Tools.ModifyLabels]: modifyLabels(driver),
-  [Tools.GetUserLabels]: getUserLabels(driver),
-  [Tools.SendEmail]: sendEmail(driver),
-  [Tools.CreateLabel]: createLabel(driver),
-  [Tools.BulkDelete]: bulkDelete(driver),
-  [Tools.BulkArchive]: bulkArchive(driver),
-  [Tools.DeleteLabel]: deleteLabel(driver),
-  [Tools.AskZeroMailbox]: askZeroMailbox(connectionId),
-  [Tools.AskZeroThread]: askZeroThread(connectionId),
-  [Tools.WebSearch]: webSearch,
-});
+export const tools = (driver: MailManager, connectionId: string) => {
+  return {
+    [Tools.GetThread]: getEmail(driver),
+    [Tools.ComposeEmail]: composeEmailTool(connectionId),
+    [Tools.ListThreads]: listEmails(driver),
+    [Tools.MarkThreadsRead]: markAsRead(driver),
+    [Tools.MarkThreadsUnread]: markAsUnread(driver),
+    [Tools.ModifyLabels]: modifyLabels(driver),
+    [Tools.GetUserLabels]: getUserLabels(driver),
+    [Tools.SendEmail]: sendEmail(driver),
+    [Tools.CreateLabel]: createLabel(driver),
+    [Tools.BulkDelete]: bulkDelete(driver),
+    [Tools.BulkArchive]: bulkArchive(driver),
+    [Tools.DeleteLabel]: deleteLabel(driver),
+    [Tools.AskZeroMailbox]: askZeroMailbox(connectionId),
+    [Tools.AskZeroThread]: askZeroThread(connectionId),
+    [Tools.WebSearch]: webSearch,
+  };
+};
 
 export const publicTools = (driver: MailManager, connectionId: string) => ({
   //   [Tools.GetThread]: getEmail(driver),

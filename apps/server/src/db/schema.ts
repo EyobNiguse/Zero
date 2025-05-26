@@ -6,9 +6,9 @@ import {
   integer,
   jsonb,
   primaryKey,
+  unique,
 } from 'drizzle-orm/pg-core';
-import { defaultUserSettings } from '@zero/db/user_settings_default';
-import { unique } from 'drizzle-orm/pg-core';
+import { defaultUserSettings } from '../lib/schemas';
 
 export const createTable = pgTableCreator((name) => `mail0_${name}`);
 
@@ -22,6 +22,8 @@ export const user = createTable('user', {
   updatedAt: timestamp('updated_at').notNull(),
   defaultConnectionId: text('default_connection_id'),
   customPrompt: text('custom_prompt'),
+  phoneNumber: text('phone_number').unique(),
+  phoneNumberVerified: boolean('phone_number_verified'),
 });
 
 export const session = createTable('session', {

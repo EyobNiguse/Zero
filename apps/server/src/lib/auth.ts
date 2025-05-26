@@ -5,22 +5,22 @@ import {
   userSettings,
   session,
   userHotkeys,
-} from '@zero/db/schema';
+} from '../db/schema';
 import { type Account, betterAuth, type BetterAuthOptions } from 'better-auth';
-import { createAuthMiddleware, customSession } from 'better-auth/plugins';
-import { defaultUserSettings } from '@zero/db/user_settings_default';
+import { createAuthMiddleware, phoneNumber } from 'better-auth/plugins';
 import { getBrowserTimezone, isValidTimezone } from './timezones';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
+import { redis, resend, twilio } from './services';
 import { getContext } from 'hono/context-storage';
 import { getActiveDriver } from './driver/utils';
+import { defaultUserSettings } from './schemas';
 import { APIError } from 'better-auth/api';
-import { redis, resend } from './services';
 import type { HonoContext } from '../ctx';
 import { env } from 'cloudflare:workers';
 import { createDriver } from './driver';
-import { createDb } from '@zero/db';
 import { eq } from 'drizzle-orm';
+import { createDb } from '../db';
 
 const connectionHandlerHook = async (account: Account) => {
   const c = getContext<HonoContext>();
@@ -79,8 +79,23 @@ const connectionHandlerHook = async (account: Account) => {
 
 export const createAuth = () => {
   const c = getContext<HonoContext>();
+  const twilioClient = twilio();
 
   return betterAuth({
+    plugins: [
+      phoneNumber({
+        sendOTP: async ({ code, phoneNumber }) => {
+          await twilioClient.messages
+            .send(phoneNumber, `Your verification code is: ${code}, do not share it with anyone.`)
+            .catch((error) => {
+              console.error('Failed to send OTP', error);
+              throw new APIError('INTERNAL_SERVER_ERROR', {
+                message: `Failed to send OTP, ${error.message}`,
+              });
+            });
+        },
+      }),
+    ],
     user: {
       deleteUser: {
         enabled: true,

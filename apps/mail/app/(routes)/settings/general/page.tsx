@@ -15,10 +15,10 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, type ControllerRenderProps } from 'react-hook-form';
-import { userSettingsSchema } from '@zero/db/user_settings_default';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { useState, useEffect, useMemo, memo } from 'react';
+import { userSettingsSchema } from '@zero/server/schemas';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations, useLocale } from 'use-intl';
@@ -195,7 +195,7 @@ export default function GeneralPage() {
                     <FormLabel>{t('pages.settings.general.language')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="w-36">
+                        <SelectTrigger className="w-36 justify-start">
                           <Globe className="mr-2 h-4 w-4" />
                           <SelectValue placeholder={t('pages.settings.general.selectLanguage')} />
                         </SelectTrigger>

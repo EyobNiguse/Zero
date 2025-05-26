@@ -1,6 +1,6 @@
 import { mapToObj, pipe, entries, sortBy, take, fromEntries } from 'remeda';
-import { writingStyleMatrix } from '@zero/db/schema';
 import { getContext } from 'hono/context-storage';
+import { writingStyleMatrix } from '../db/schema';
 import type { HonoContext } from '../ctx';
 import { google } from '@ai-sdk/google';
 import { jsonrepair } from 'jsonrepair';

@@ -1,6 +1,6 @@
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
-import { note } from '@zero/db/schema';
-import type { DB } from '@zero/db';
+import { note } from '../db/schema';
+import type { DB } from '../db';
 
 export interface Note {
   id: string;
