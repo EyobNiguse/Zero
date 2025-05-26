@@ -19,8 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { Spinner } from '@/components/ui/spinner';
 import {
   cn,
   FOLDERS,
@@ -38,8 +36,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { ConditionalThreadProps, MailListProps, MailSelectMode, ParsedMessage } from '@/types';
-import type { DeleteAllSpamResponse } from '../../../../server/src/types';
 import { useIsFetching, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { moveThreadsTo, type ThreadDestination } from '@/lib/thread-actions';
@@ -57,6 +53,8 @@ import { highlightText } from '@/lib/email-utils.client';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useTRPC } from '@/providers/query-provider';
 import { useThreadLabels } from '@/hooks/use-labels';
+import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
 import { useKeyState } from '@/hooks/use-hot-key';
 import { VList, type VListHandle } from 'virtua';
 import { RenderLabels } from './render-labels';
@@ -845,17 +843,8 @@ export const MailList = memo(
                   </p>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-1 flex-col" id="mail-list-scroll">
-              <VList
-                count={filteredItems.length}
-                overscan={5}
-                className="flex-1 overflow-x-hidden"
-                children={vListRenderer}
-              />
-            </div>
-          )}
+            )}
+          </>
         </div>
         <div className="w-full pt-4 text-center">
           {isFetching ? (
