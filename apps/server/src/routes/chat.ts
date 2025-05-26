@@ -6,7 +6,11 @@ import {
   createDataStreamResponse,
   generateText,
 } from 'ai';
-import { AiChatPrompt, GmailSearchAssistantSystemPrompt } from '../lib/prompts';
+import {
+  AiChatPrompt,
+  getCurrentDateContext,
+  GmailSearchAssistantSystemPrompt,
+} from '../lib/prompts';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { type Connection, type ConnectionContext } from 'agents';
 import { createSimpleAuth, type SimpleAuth } from '../lib/auth';
@@ -179,11 +183,23 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
           labelIds: s.labelIds,
           pageToken: s.pageToken,
         });
+        const content = await Promise.all(
+          result.threads.map(async (thread) => {
+            const loadedThread = await driver.get(thread.id);
+            return [
+              {
+                type: 'text' as const,
+                text: loadedThread.latest?.subject ?? '',
+              },
+              {
+                type: 'text' as const,
+                text: `ThreadId: ${thread.id}`,
+              },
+            ];
+          }),
+        );
         return {
-          content: result.threads.map((thread) => ({
-            type: 'text',
-            text: JSON.stringify(thread),
-          })),
+          content: content.flat(),
         };
       },
     );
@@ -200,6 +216,18 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
             {
               type: 'text',
               text: JSON.stringify(thread),
+            },
+            {
+              type: 'text',
+              text: `Subject: ${thread.latest?.subject}`,
+            },
+            {
+              type: 'text',
+              text: `Total Messages: ${thread.totalReplies}`,
+            },
+            {
+              type: 'text',
+              text: `ThreadId: ${s.threadId}`,
             },
           ],
         };
@@ -264,12 +292,23 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
           content: [
             {
               type: 'text',
-              text: 'Labels modified successfully',
+              text: `Successfully modified ${s.threadIds.length} thread(s)`,
             },
           ],
         };
       },
     );
+
+    this.server.tool('getCurrentDate', async () => {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: getCurrentDateContext(),
+          },
+        ],
+      };
+    });
 
     this.server.tool('getUserLabels', async () => {
       const labels = await driver.getUserLabels();
@@ -277,7 +316,9 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
         content: [
           {
             type: 'text',
-            text: JSON.stringify(labels),
+            text: labels
+              .map((label) => `Name: ${label.name} ID: ${label.id} Color: ${label.color}`)
+              .join('\n'),
           },
         ],
       };
@@ -294,7 +335,11 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(label),
+              text: `Name: ${label.name}`,
+            },
+            {
+              type: 'text',
+              text: `ID: ${label.id}`,
             },
           ],
         };
@@ -309,24 +354,35 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
         textColor: z.string().optional(),
       },
       async (s) => {
-        const label = await driver.createLabel({
-          name: s.name,
-          color:
-            s.backgroundColor && s.textColor
-              ? {
-                  backgroundColor: s.backgroundColor,
-                  textColor: s.textColor,
-                }
-              : undefined,
-        });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(label),
-            },
-          ],
-        };
+        try {
+          await driver.createLabel({
+            name: s.name,
+            color:
+              s.backgroundColor && s.textColor
+                ? {
+                    backgroundColor: s.backgroundColor,
+                    textColor: s.textColor,
+                  }
+                : undefined,
+          });
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Label has been created',
+              },
+            ],
+          };
+        } catch (e) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Failed to create label',
+              },
+            ],
+          };
+        }
       },
     );
 
@@ -336,18 +392,29 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
         threadIds: z.array(z.string()),
       },
       async (s) => {
-        await driver.modifyLabels(s.threadIds, {
-          addLabels: ['TRASH'],
-          removeLabels: ['INBOX'],
-        });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: 'Threads moved to trash',
-            },
-          ],
-        };
+        try {
+          await driver.modifyLabels(s.threadIds, {
+            addLabels: ['TRASH'],
+            removeLabels: ['INBOX'],
+          });
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Threads moved to trash',
+              },
+            ],
+          };
+        } catch (e) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Failed to move threads to trash',
+              },
+            ],
+          };
+        }
       },
     );
 
@@ -357,18 +424,29 @@ export class ZeroMCP extends McpAgent<typeof env, {}, { cookie: string }> {
         threadIds: z.array(z.string()),
       },
       async (s) => {
-        await driver.modifyLabels(s.threadIds, {
-          addLabels: [],
-          removeLabels: ['INBOX'],
-        });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: 'Threads archived',
-            },
-          ],
-        };
+        try {
+          await driver.modifyLabels(s.threadIds, {
+            addLabels: [],
+            removeLabels: ['INBOX'],
+          });
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Threads archived',
+              },
+            ],
+          };
+        } catch (e) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Failed to archive threads',
+              },
+            ],
+          };
+        }
       },
     );
   }
