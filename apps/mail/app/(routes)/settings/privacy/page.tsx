@@ -7,8 +7,8 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { userSettingsSchema } from '@zero/db/user_settings_default';
 import { SettingsCard } from '@/components/settings/settings-card';
+import { userSettingsSchema } from '@zero/server/schemas';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTRPC } from '@/providers/query-provider';

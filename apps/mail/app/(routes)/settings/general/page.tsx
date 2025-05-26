@@ -15,10 +15,10 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, type ControllerRenderProps } from 'react-hook-form';
-import { userSettingsSchema } from '@zero/db/user_settings_default';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SettingsCard } from '@/components/settings/settings-card';
 import { useState, useEffect, useMemo, memo } from 'react';
+import { userSettingsSchema } from '@zero/server/schemas';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations, useLocale } from 'use-intl';

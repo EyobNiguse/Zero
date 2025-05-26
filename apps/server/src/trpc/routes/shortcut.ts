@@ -1,6 +1,6 @@
 import { shortcutSchema } from '../../lib/shortcuts';
 import { privateProcedure, router } from '../trpc';
-import { userHotkeys } from '@zero/db/schema';
+import { userHotkeys } from '../../db/schema';
 import { z } from 'zod';
 
 export const shortcutRouter = router({

@@ -1,7 +1,7 @@
 import { getActiveConnection } from '../server-utils';
 import { getContext } from 'hono/context-storage';
 import type { gmail_v1 } from '@googleapis/gmail';
-import { connection } from '@zero/db/schema';
+import { connection } from '../../db/schema';
 import type { HonoContext } from '../../ctx';
 import { createDriver } from '../driver';
 import { toByteArray } from 'base64-js';

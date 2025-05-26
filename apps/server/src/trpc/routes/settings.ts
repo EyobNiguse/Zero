@@ -1,11 +1,7 @@
-import {
-  defaultUserSettings,
-  userSettingsSchema,
-  type UserSettings,
-} from '@zero/db/user_settings_default';
+import { defaultUserSettings, userSettingsSchema, type UserSettings } from '../../lib/schemas';
 import { createRateLimiterMiddleware, privateProcedure, router } from '../trpc';
 import { Ratelimit } from '@upstash/ratelimit';
-import { userSettings } from '@zero/db/schema';
+import { userSettings } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 
 export const settingsRouter = router({

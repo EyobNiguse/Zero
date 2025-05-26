@@ -20,12 +20,12 @@ import { FOLDERS, parseHeaders } from '../lib/utils';
 import { AIChatAgent } from 'agents/ai-chat-agent';
 import { tools as authTools } from './agent/tools';
 import { processToolCalls } from './agent/utils';
-import { connection } from '@zero/db/schema';
+import { connection } from '../db/schema';
 import { env } from 'cloudflare:workers';
 import { openai } from '@ai-sdk/openai';
 import { McpAgent } from 'agents/mcp';
-import { createDb } from '@zero/db';
 import { eq } from 'drizzle-orm';
+import { createDb } from '../db';
 import { z } from 'zod';
 
 export class ZeroAgent extends AIChatAgent<typeof env> {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { defaultUserSettings } from '@zero/db/user_settings_default';
+import { defaultUserSettings } from '@zero/server/schemas';
 import { fixNonReadableColors } from '@/lib/email-utils';
 import { useTRPC } from '@/providers/query-provider';
 import { getBrowserTimezone } from '@/lib/timezones';

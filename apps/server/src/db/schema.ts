@@ -6,9 +6,9 @@ import {
   integer,
   jsonb,
   primaryKey,
+  unique,
 } from 'drizzle-orm/pg-core';
-import { defaultUserSettings } from '@zero/db/user_settings_default';
-import { unique } from 'drizzle-orm/pg-core';
+import { defaultUserSettings } from '../lib/schemas';
 
 export const createTable = pgTableCreator((name) => `mail0_${name}`);
 

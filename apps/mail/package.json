@@ -43,7 +43,6 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
-    "@zero/db": "workspace:*",
     "@zero/server": "workspace:*",
     "accept-language-parser": "^1.5.0",
     "agents": "0.0.93",

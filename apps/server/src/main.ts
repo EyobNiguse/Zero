@@ -8,10 +8,10 @@ import { DurableMailbox } from './lib/party';
 import { autumnApi } from './routes/autumn';
 import type { HonoContext } from './ctx';
 import { createAuth } from './lib/auth';
-import { createDb } from '@zero/db';
 import { Autumn } from 'autumn-js';
 import { appRouter } from './trpc';
 import { cors } from 'hono/cors';
+import { createDb } from './db';
 import { Hono } from 'hono';
 
 const api = new Hono<HonoContext>()

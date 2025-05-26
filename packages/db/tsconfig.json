@@ -1,5 +1,0 @@
-{
-  "extends": "@zero/tsconfig/base",
-  "include": ["src", "migrations"],
-  "exclude": ["node_modules"]
-}

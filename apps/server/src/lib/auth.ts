@@ -5,22 +5,22 @@ import {
   userSettings,
   session,
   userHotkeys,
-} from '@zero/db/schema';
+} from '../db/schema';
 import { type Account, betterAuth, type BetterAuthOptions } from 'better-auth';
 import { createAuthMiddleware, phoneNumber } from 'better-auth/plugins';
-import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { getBrowserTimezone, isValidTimezone } from './timezones';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
 import { redis, resend, twilio } from './services';
 import { getContext } from 'hono/context-storage';
 import { getActiveDriver } from './driver/utils';
+import { defaultUserSettings } from './schemas';
 import { APIError } from 'better-auth/api';
 import type { HonoContext } from '../ctx';
 import { env } from 'cloudflare:workers';
 import { createDriver } from './driver';
-import { createDb } from '@zero/db';
 import { eq } from 'drizzle-orm';
+import { createDb } from '../db';
 
 const connectionHandlerHook = async (account: Account) => {
   const c = getContext<HonoContext>();
