@@ -89,6 +89,9 @@ const CallInboxDialog = () => {
       setIsVerifying(true);
 
       if (!showOtpInput) {
+        await authClient.updateUser({
+          phoneNumber: data.phoneNumber,
+        });
         await authClient.phoneNumber.sendOtp({
           phoneNumber: data.phoneNumber,
         });
