@@ -1,5 +1,5 @@
-import { connection, user } from '@zero/db/schema';
 import { getContext } from 'hono/context-storage';
+import { connection, user } from '../db/schema';
 import type { HonoContext } from '../ctx';
 import { createDriver } from './driver';
 import { and, eq } from 'drizzle-orm';

@@ -3,7 +3,7 @@ import { Ratelimit, type RatelimitConfig } from '@upstash/ratelimit';
 import type { HonoContext, HonoVariables } from '../ctx';
 import { getConnInfo } from 'hono/cloudflare-workers';
 import { initTRPC, TRPCError } from '@trpc/server';
-import { connection } from '@zero/db/schema';
+import { connection } from '../db/schema';
 import { redis } from '../lib/services';
 import { eq, and } from 'drizzle-orm';
 import type { Context } from 'hono';
