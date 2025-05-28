@@ -1,6 +1,7 @@
 import { useOptimisticActions } from '@/hooks/use-optimistic-actions';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { useQueryClient } from '@tanstack/react-query';
 import { keyboardShortcuts } from '@/config/shortcuts';
 import { useLocation, useParams } from 'react-router';
 import { useMail } from '@/components/mail/use-mail';
@@ -99,8 +100,8 @@ export function MailListHotkeys() {
       return;
     }
 
-    const idsToMark = mail.bulkSelected;
-    if (idsToMark.length === 0) {
+    const idsToArchive = mail.bulkSelected;
+    if (idsToArchive.length === 0) {
       toast.info(t('common.mail.noEmailsToSelect'));
       return;
     }
