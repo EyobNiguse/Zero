@@ -105,7 +105,7 @@ export function MailListHotkeys() {
       return;
     }
 
-    optimisticToggleImportant(idsToMark, true);
+    optimisticToggleImportant(idsToArchive, true);
   }, [mail.bulkSelected, optimisticToggleImportant, t, shouldUseHover]);
 
   const archiveEmail = useCallback(async () => {
