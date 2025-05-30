@@ -1,0 +1,43 @@
+name: Deploy Production
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy-to-production:
+    runs-on: ubuntu-latest
+    name: Deploy Production
+    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '/deploy') && github.event.comment.author_association == 'MEMBER'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rebase the main branch on staging
+        id: rebase
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin staging
+          git checkout main
+          git rebase staging
+          echo "rebase_status=$?" >> $GITHUB_OUTPUT
+      - name: Error if rebase was not successful
+        if: ${{ steps.rebase.outputs.rebase_status != 0 }}
+        run: |
+          echo "Rebase failed"
+          git rebase --abort
+          exit 1
+
+      - name: Push changes if rebase was successful
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ steps.rebase.outputs.rebase_status == 0 }}
+        run: git push --force-with-lease origin main
