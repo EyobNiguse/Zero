@@ -15,8 +15,8 @@ export const userRouter = router({
   getIntercomToken: privateProcedure.query(async ({ ctx }) => {
     const token = await jwt.sign(
       {
-        user_id: ctx.session.user.id,
-        email: ctx.session.user.email,
+        user_id: ctx.sessionUser.id,
+        email: ctx.sessionUser.email,
       },
       ctx.c.env.JWT_SECRET,
     );

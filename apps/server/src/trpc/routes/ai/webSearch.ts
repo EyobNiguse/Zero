@@ -1,4 +1,4 @@
-import { activeDriverProcedure, publicProcedure } from '../../trpc';
+import { activeDriverProcedure } from '../../trpc';
 import { perplexity } from '@ai-sdk/perplexity';
 import { generateText } from 'ai';
 import { z } from 'zod';
