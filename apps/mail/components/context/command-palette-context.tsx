@@ -9,8 +9,6 @@ import {
   Info,
   Mail,
   Paperclip,
-  Plus,
-  Save,
   Search,
   Star,
   Tag,
@@ -32,6 +30,7 @@ import {
 import {
   createContext,
   Fragment,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -39,12 +38,7 @@ import {
   useState,
   type ComponentType,
 } from 'react';
-import {
-  cn,
-  getMainSearchTerm,
-  parseNaturalLanguageDate,
-  parseNaturalLanguageSearch,
-} from '@/lib/utils';
+import { getMainSearchTerm, parseNaturalLanguageSearch } from '@/lib/utils';
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { navigationConfig, type MessageKey } from '@/config/navigation';
 import { useSearchValue } from '@/hooks/use-search-value';
@@ -56,11 +50,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { useMutation } from '@tanstack/react-query';
 import { useThreads } from '@/hooks/use-threads';
 import { useLabels } from '@/hooks/use-labels';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { format, subDays } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useTranslations } from 'use-intl';
+import { format, subDays } from 'date-fns';
 import { VisuallyHidden } from 'radix-ui';
 import { Pencil2 } from '../icons/icons';
 import { Button } from '../ui/button';
@@ -71,6 +65,8 @@ type CommandPaletteContext = {
   open: boolean;
   setOpen: (open: boolean) => void;
   openModal: () => void;
+  activeFilters: ActiveFilter[];
+  clearAllFilters: () => void;
 };
 
 interface CommandItem {
@@ -180,7 +176,7 @@ const deleteSavedSearch = (id: string) => {
   }
 };
 
-export function CommandPalette() {
+export function CommandPalette({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [, setIsComposeOpen] = useQueryState('isComposeOpen');
   const [currentView, setCurrentView] = useState<CommandView>('main');
@@ -433,6 +429,19 @@ export function CommandPalette() {
         finalQuery = semanticQuery || query;
       }
 
+      const isFilterSyntax = /^(from:|to:|subject:|has:|is:|after:|before:|label:)/.test(
+        query.trim(),
+      );
+      if (query.trim() && !isFilterSyntax) {
+        const searchFilter: ActiveFilter = {
+          id: `search-${Date.now()}`,
+          type: 'search',
+          value: query,
+          display: `Search: "${query}"`,
+        };
+        addFilter(searchFilter);
+      }
+
       const filterQuery = activeFilters.map((f) => f.value).join(' ');
       if (filterQuery) {
         finalQuery = `${finalQuery} ${filterQuery}`.trim();
@@ -449,7 +458,7 @@ export function CommandPalette() {
         description: finalQuery,
       });
     },
-    [activeFilters, searchValue.folder, setSearchValue],
+    [activeFilters, searchValue.folder, setSearchValue, addFilter],
   );
 
   const quickFilterOptions = useMemo(
@@ -515,59 +524,6 @@ export function CommandPalette() {
     [addFilter, executeSearch],
   );
 
-  const processSearchQuery = useCallback((query: string): string => {
-    let searchTerms = [];
-
-    try {
-      if (query.trim()) {
-        const searchTerm = query.trim();
-
-        const dateRange = parseNaturalLanguageDate(searchTerm);
-        if (dateRange) {
-          if (dateRange.from) {
-            const fromDate = format(dateRange.from, 'yyyy/MM/dd');
-            searchTerms.push(`after:${fromDate}`);
-          }
-          if (dateRange.to) {
-            const toDate = format(dateRange.to, 'yyyy/MM/dd');
-            searchTerms.push(`before:${toDate}`);
-          }
-
-          const cleanedQuery = searchTerm
-            .replace(/emails?\s+from\s+/i, '')
-            .replace(/\b\d{4}\b/g, '')
-            .replace(
-              /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi,
-              '',
-            )
-            .trim();
-
-          if (cleanedQuery) {
-            searchTerms.push(cleanedQuery);
-          }
-        } else {
-          const parsedTerm = parseNaturalLanguageSearch(searchTerm);
-          if (parsedTerm !== searchTerm) {
-            searchTerms.push(parsedTerm);
-          } else {
-            if (searchTerm.includes('@')) {
-              searchTerms.push(`from:${searchTerm}`);
-            } else {
-              searchTerms.push(
-                `(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`,
-              );
-            }
-          }
-        }
-      }
-
-      return searchTerms.join(' ');
-    } catch (error) {
-      console.error('Search processing error:', error);
-      return query;
-    }
-  }, []);
-
   const handleSearch = useCallback(
     async (query: string, useNaturalLanguage = true) => {
       setIsProcessing(true);
@@ -581,6 +537,15 @@ export function CommandPalette() {
           toast.info('Search applied', {
             description: finalQuery,
           });
+
+          const searchFilter: ActiveFilter = {
+            id: `ai-search-${Date.now()}`,
+            type: 'search',
+            value: finalQuery,
+            display: `AI Search: "${query}"`,
+          };
+          addFilter(searchFilter);
+
           return setSearchValue({
             value: finalQuery,
             highlight: getMainSearchTerm(query),
@@ -588,6 +553,19 @@ export function CommandPalette() {
             isAISearching: useNaturalLanguage,
             isLoading: true,
           });
+        }
+
+        const isFilterSyntax = /^(from:|to:|subject:|has:|is:|after:|before:|label:)/.test(
+          query.trim(),
+        );
+        if (query.trim() && !isFilterSyntax) {
+          const searchFilter: ActiveFilter = {
+            id: `search-${Date.now()}`,
+            type: 'search',
+            value: query,
+            display: `Search: "${query}"`,
+          };
+          addFilter(searchFilter);
         }
 
         const filterQuery = activeFilters.map((f) => f.value).join(' ');
@@ -620,7 +598,7 @@ export function CommandPalette() {
         setIsProcessing(false);
       }
     },
-    [activeFilters, processSearchQuery, searchValue.folder, setSearchValue, setOpen],
+    [activeFilters, searchValue.folder, setSearchValue, setOpen, generateSearchQuery, addFilter],
   );
 
   const quickSearchResults = useMemo(() => {
@@ -799,7 +777,7 @@ export function CommandPalette() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs"
+              className="text-muted-foreground hover:text-foreground h-6 px-2 text-xs"
               onClick={clearAllFilters}
             >
               Clear All
@@ -1853,25 +1831,17 @@ export function CommandPalette() {
   };
 
   return (
-    <>
-      <Button
-        variant="outline"
-        className={cn(
-          'text-muted-foreground relative h-9 w-full select-none justify-start rounded-[0.5rem] border bg-white text-sm font-normal shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-[#141414]',
-        )}
-        onClick={() => setOpen(true)}
-      >
-        <span className="hidden lg:inline-flex">Search & Filters</span>
-        <span className="inline-flex lg:hidden">Search...</span>
-        {activeFilters.length > 0 && (
-          <Badge variant="secondary" className="ml-2 h-5 px-1">
-            {activeFilters.length}
-          </Badge>
-        )}
-        <kbd className="bg-muted pointer-events-none absolute right-[0.45rem] top-[0.45rem] hidden h-5 select-none items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
-      </Button>
+    <CommandPaletteContext.Provider
+      value={{
+        open,
+        setOpen,
+        openModal: () => {
+          setOpen(true);
+        },
+        activeFilters,
+        clearAllFilters,
+      }}
+    >
       <CommandDialog
         open={open}
         onOpenChange={(isOpen) => {
@@ -1888,21 +1858,15 @@ export function CommandPalette() {
         </VisuallyHidden.VisuallyHidden>
         {renderView()}
       </CommandDialog>
-    </>
+      {children}
+    </CommandPaletteContext.Provider>
   );
 }
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-
-  const openModal = useCallback(() => {
-    setOpen(true);
-  }, []);
-
   return (
-    <CommandPaletteContext.Provider value={{ open, setOpen, openModal }}>
-      {children}
-      <CommandPalette />
-    </CommandPaletteContext.Provider>
+    <Suspense>
+      <CommandPalette>{children}</CommandPalette>
+    </Suspense>
   );
 }
