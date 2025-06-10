@@ -839,7 +839,7 @@ export const Categories = () => {
     },
     {
       id: 'All Mail',
-      name: 'All Mail',
+      name:  t('common.mailCategories.allMail'),
       searchValue: 'NOT is:draft (is:inbox OR (is:sent AND to:me))',
       icon: (
         <Mail
@@ -880,7 +880,7 @@ export const Categories = () => {
     },
     {
       id: 'Promotions',
-      name: 'Promotions',
+      name: t('common.mailCategories.promotions'),
       searchValue: 'is:promotions NOT is:sent NOT is:draft',
       icon: (
         <Tag
@@ -893,7 +893,7 @@ export const Categories = () => {
     },
     {
       id: 'Unread',
-      name: 'Unread',
+      name: t('common.mailCategories.unread'),
       searchValue: 'is:unread NOT is:sent NOT is:draft',
       icon: (
         <ScanEye
