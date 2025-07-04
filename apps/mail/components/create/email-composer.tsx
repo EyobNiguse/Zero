@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Check, Command, Loader, Paperclip, Plus, X as XIcon } from 'lucide-react';
+
+import { Check, Command, Loader, Paperclip, Plus, Type, X as XIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import { ImageCompressionSettings } from './image-compression-settings';
@@ -40,9 +41,12 @@ import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
+import { Toolbar } from './toolbar';
 import pluralize from 'pluralize';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+
 
 type ThreadContent = {
   from: string;
@@ -147,7 +151,7 @@ export function EmailComposer({
   const [imageQuality, setImageQuality] = useState<ImageQuality>(
     settings?.settings?.imageCompression || 'medium',
   );
-
+  const [toggleToolbar, setToggleToolbar] = useState(false);
   const processAndSetAttachments = async (
     filesToProcess: File[],
     quality: ImageQuality,
@@ -1299,14 +1303,15 @@ export function EmailComposer({
               aiGeneratedMessage !== null ? 'blur-sm' : '',
             )}
           >
-            <EditorContent editor={editor} className="h-full w-full" />
+            <EditorContent editor={editor} className="h-full w-full max-w-full overflow-x-auto" />
           </div>
         </div>
       </div>
 
       {/* Bottom Actions */}
-      <div className="inline-flex w-full shrink-0 items-center justify-between self-stretch rounded-b-2xl bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
-        <div className="flex items-center justify-start gap-2">
+      <div className="inline-flex w-full shrink-0 items-end justify-between self-stretch rounded-b-2xl bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
+        <div className="flex flex-col items-start justify-start gap-2">
+          {toggleToolbar && <Toolbar editor={editor} />}
           <div className="flex items-center justify-start gap-2">
             <Button size={'xs'} onClick={handleSend} disabled={isLoading || settingsLoading}>
               <div className="flex items-center justify-center">
@@ -1452,6 +1457,24 @@ export function EmailComposer({
                 </PopoverContent>
               </Popover>
             )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    tabIndex={-1}
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setToggleToolbar(!toggleToolbar)}
+                    className={`h-auto w-auto rounded p-1.5 ${toggleToolbar ? 'bg-muted' : 'bg-background'} border`}
+                  >
+                  <Type className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Formatting options</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+           
           </div>
         </div>
         <div className="flex items-start justify-start gap-2">
