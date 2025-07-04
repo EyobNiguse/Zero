@@ -1631,6 +1631,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo, threadAttachments }:
                                 <Printer className="fill-iconLight dark:fill-iconDark mr-2 h-4 w-4" />
                                 {m['common.mailDisplay.print']()}
                               </DropdownMenuItem>
+                              {(emailData.attachments?.length ?? 0) > 0 && (
                               <DropdownMenuItem
                                 disabled={!emailData.attachments?.length}
                                 className={!emailData.attachments?.length ? "data-[disabled]:pointer-events-auto" : ""}
@@ -1646,6 +1647,7 @@ const MailDisplay = ({ emailData, index, totalEmails, demo, threadAttachments }:
                                 <HardDriveDownload className="fill-iconLight dark:text-iconDark dark:fill-iconLight mr-2 h-4 w-4" />
                                 Download All Attachments
                               </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
