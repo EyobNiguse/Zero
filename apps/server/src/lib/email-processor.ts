@@ -13,8 +13,11 @@ export function processEmailHtml({ html, shouldLoadImages, theme }: ProcessEmail
 } {
   let hasBlockedImages = false;
 
+  const validatedTheme: 'light' | 'dark' = theme === 'dark' ? 'dark' : 'light';
+  const isDarkTheme = validatedTheme === 'dark';
+
   const sanitizeConfig: sanitizeHtml.IOptions = {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'title']),
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'title', 'details', 'summary']),
 
     allowedAttributes: {
       '*': [
@@ -35,34 +38,6 @@ export function processEmailHtml({ html, shouldLoadImages, theme }: ProcessEmail
       img: ['src', 'alt', 'width', 'height', 'class', 'style'],
     },
 
-    allowedStyles: {
-      '*': {
-        color: [
-          /^#(?:[0-9a-fA-F]{3}){1,2}$/,
-          /^rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\)$/,
-          /^rgba\(\d{1,3},\s?\d{1,3},\s?\d{1,3},\s?(0|1|0?\.\d+)\)$/,
-        ],
-        'background-color': [
-          /^#(?:[0-9a-fA-F]{3}){1,2}$/,
-          /^rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\)$/,
-          /^rgba\(\d{1,3},\s?\d{1,3},\s?\d{1,3},\s?(0|1|0?\.\d+)\)$/,
-        ],
-        'text-align': [/^left$/, /^right$/, /^center$/, /^justify$/],
-        'font-size': [/^\d+(?:px|em|rem|%)$/],
-        'font-weight': [/^(normal|bold|bolder|lighter|[1-9]00)$/],
-        'line-height': [/^\d+(?:px|em|rem|%)$/],
-        'text-decoration': [/^none$/, /^underline$/, /^line-through$/],
-        margin: [/^\d+(?:px|%)?(\s+\d+(?:px|%)?){0,3}$/],
-        padding: [/^\d+(?:px|%)?(\s+\d+(?:px|%)?){0,3}$/],
-        border: [/^\d+px\s+(solid|dashed|dotted|double)\s+#(?:[0-9a-fA-F]{3}){1,2}$/],
-        'border-radius': [/^\d+(?:px|%)$/],
-        width: [/^\d+(?:px|%)$/],
-        height: [/^\d+(?:px|%)$/],
-        'max-width': [/^\d+(?:px|%)$/],
-        'min-width': [/^\d+(?:px|%)$/],
-        display: [/^inline$/, /^block$/, /^inline-block$/, /^none$/],
-      },
-    },
     allowedSchemes: shouldLoadImages
       ? ['http', 'https', 'mailto', 'tel', 'data', 'cid', 'blob']
       : ['http', 'https', 'mailto', 'tel', 'cid'],
@@ -95,6 +70,27 @@ export function processEmailHtml({ html, shouldLoadImages, theme }: ProcessEmail
 
   const $ = cheerio.load(sanitized);
 
+  const collapseQuoted = (selector: string) => {
+    $(selector).each((_, el) => {
+      const $el = $(el);
+      if ($el.parents('details.quoted-toggle').length) return;
+
+      const innerHtml = $el.html();
+      if (typeof innerHtml !== 'string') return;
+      const detailsHtml = `<details class="quoted-toggle" style="margin-top:1em;">
+          <summary style="cursor:pointer; color:${isDarkTheme ? '#9CA3AF' : '#6B7280'};">
+            Show quoted text
+          </summary>
+          ${innerHtml}
+        </details>`;
+
+      $el.replaceWith(detailsHtml);
+    });
+  };
+
+  collapseQuoted('blockquote');
+  collapseQuoted('.gmail_quote');
+
   $('title').remove();
 
   $('img[width="1"][height="1"]').remove();
@@ -124,13 +120,12 @@ export function processEmailHtml({ html, shouldLoadImages, theme }: ProcessEmail
     <style type="text/css">
       :host {
         display: block;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        // width: 100%;
+        // height: 100%;
+        // overflow: auto;
         line-height: 1.5;
-        background-color: ${theme === 'dark' ? '#1A1A1A' : '#ffffff'};
-        color: ${theme === 'dark' ? '#ffffff' : '#000000'};
+        background-color: ${isDarkTheme ? '#1A1A1A' : '#ffffff'};
+        color: ${isDarkTheme ? '#ffffff' : '#000000'};
       }
 
       *, *::before, *::after {
@@ -144,18 +139,8 @@ export function processEmailHtml({ html, shouldLoadImages, theme }: ProcessEmail
 
       a {
         cursor: pointer;
-        color: ${theme === 'dark' ? '#60a5fa' : '#2563eb'};
+        color: ${isDarkTheme ? '#60a5fa' : '#2563eb'};
         text-decoration: underline;
-      }
-
-      a:hover {
-        color: ${theme === 'dark' ? '#93bbfc' : '#1d4ed8'};
-      }
-
-      img {
-        max-width: 100%;
-        height: auto;
-        display: block;
       }
 
       table {
@@ -165,6 +150,24 @@ export function processEmailHtml({ html, shouldLoadImages, theme }: ProcessEmail
       ::selection {
         background: #b3d4fc;
         text-shadow: none;
+      }
+
+      /* Styling for collapsed quoted text */
+      details.quoted-toggle {
+        border-left: 2px solid ${isDarkTheme ? '#374151' : '#d1d5db'};
+        padding-left: 8px;
+        margin-top: 0.75rem;
+      }
+
+      details.quoted-toggle summary {
+        cursor: pointer;
+        color: ${isDarkTheme ? '#9CA3AF' : '#6B7280'};
+        list-style: none;
+        user-select: none;
+      }
+
+      details.quoted-toggle summary::-webkit-details-marker {
+        display: none;
       }
     </style>
   `;
