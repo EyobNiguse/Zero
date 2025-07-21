@@ -345,11 +345,15 @@
         },
         {
           "tag": "v2",
-          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
+          "new_sqlite_classes": ["ZeroMCP"],
         },
         {
           "tag": "v3",
           "new_classes": ["ZeroDB"],
+        },
+        {
+          "tag": "v4",
+          "new_sqlite_classes": ["ZeroAgent"],
         },
       ],
       "vars": {
