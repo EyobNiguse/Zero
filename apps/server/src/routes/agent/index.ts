@@ -28,9 +28,13 @@ import {
   type OutgoingMessage,
 } from './types';
 import { DurableObjectOAuthClientProvider } from 'agents/mcp/do-oauth-client-provider';
+import { EPrompts, type IOutgoingMessage, type ParsedMessage, type ISnoozeBatch } from '../../types';
+import type {
+  MailManager,
+  IGetThreadResponse,
+  IGetThreadsResponse,
+} from '../../lib/driver/types';
 import { AiChatPrompt, GmailSearchAssistantSystemPrompt } from '../../lib/prompts';
-import { EPrompts, type IOutgoingMessage, type ParsedMessage } from '../../types';
-import type { MailManager, IGetThreadResponse } from '../../lib/driver/types';
 import { connectionToDriver } from '../../lib/server-utils';
 import type { CreateDraftData } from '../../lib/schemas';
 import { withRetry } from '../../lib/gmail-rate-limit';
@@ -50,6 +54,7 @@ import { createDb } from '../../db';
 import { DriverRpcDO } from './rpc';
 import { eq } from 'drizzle-orm';
 import { Effect } from 'effect';
+
 const decoder = new TextDecoder();
 
 const shouldDropTables = env.DROP_AGENT_TABLES === 'true';
@@ -58,6 +63,7 @@ const shouldLoop = env.THREAD_SYNC_LOOP !== 'false';
 export class ZeroDriver extends AIChatAgent<typeof env> {
   private foldersInSync: Map<string, boolean> = new Map();
   private syncThreadsInProgress: Map<string, boolean> = new Map();
+  private currentFolder: string | null = 'inbox';
   private driver: MailManager | null = null;
   private agent: DurableObjectStub<ZeroAgent> | null = null;
   constructor(ctx: DurableObjectState, env: Env) {
@@ -163,14 +169,13 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
       this.ctx.waitUntil(this.syncThreads('inbox'));
     }
   }
-
   async rawListThreads(params: {
     folder: string;
     query?: string;
     maxResults?: number;
     labelIds?: string[];
     pageToken?: string;
-  }) {
+  }): Promise<IGetThreadsResponse> {
     if (!this.driver) {
       throw new Error('No driver available');
     }
@@ -608,7 +613,7 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
     q?: string;
     maxResults?: number;
     pageToken?: string;
-  }) {
+  }): Promise<IGetThreadsResponse> {
     const { labelIds = [], folder, q, maxResults = 50, pageToken } = params;
 
     try {
@@ -744,14 +749,14 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
 
       if (result?.length) {
         const threads = result.map((row) => ({
-          id: row.id,
+          id: String(row.id),
           historyId: null,
         }));
 
         // Use latest_received_on for pagination cursor
         const nextPageToken =
           threads.length === maxResults && result.length > 0
-            ? result[result.length - 1].latest_received_on
+            ? String(result[result.length - 1].latest_received_on)
             : null;
 
         return {
@@ -812,6 +817,24 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
       } satisfies IGetThreadResponse;
     } catch (error) {
       console.error('Failed to get thread from database:', error);
+      throw error;
+    }
+  }
+
+  async unsnoozeThreadsHandler(payload: ISnoozeBatch) {
+    const { connectionId, threadIds, keyNames } = payload;
+    try {
+      await this.setupAuth();
+
+      if (threadIds.length) {
+        await this.modifyLabels(threadIds, ['INBOX'], ['SNOOZED']);
+      }
+
+      if (keyNames.length) {
+        await Promise.all(keyNames.map((k: string) => env.snoozed_emails.delete(k)));
+      }
+    } catch (error) {
+      console.error('[AGENT][unsnoozeThreadsHandler] Failed', { connectionId, threadIds, error });
       throw error;
     }
   }
