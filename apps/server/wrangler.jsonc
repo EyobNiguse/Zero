@@ -338,7 +338,20 @@
           },
         ],
       },
-
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_classes": ["DurableMailbox"],
+        },
+        {
+          "tag": "v2",
+          "new_sqlite_classes": ["ZeroAgent", "ZeroMCP"],
+        },
+        {
+          "tag": "v3",
+          "new_classes": ["ZeroDB"],
+        },
+      ],
       "vars": {
         "NODE_ENV": "production",
         "COOKIE_DOMAIN": "0.email",
