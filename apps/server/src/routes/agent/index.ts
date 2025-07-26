@@ -473,19 +473,21 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
   }
 
   async syncThreads(folder: string) {
+    const startTime = Date.now();  
     if (!this.driver) {
       console.error('No driver available for syncThreads');
       throw new Error('No driver available');
     }
 
     if (this.foldersInSync.has(folder)) {
-      console.log('Sync already in progress, skipping...');
+      console.log(`Sync already in progress for ${folder}, skipping...`);
       return { synced: 0, message: 'Sync already in progress' };
     }
 
     const threadCount = await this.getThreadCount();
+    console.log(`Thread count for ${folder}: ${threadCount} (max: ${maxCount}, loop: ${shouldLoop})`);
     if (threadCount >= maxCount && !shouldLoop) {
-      console.log('Threads already synced, skipping...');
+      console.log(`Threads already synced for ${folder}, skipping...`);
       return { synced: 0, message: 'Threads already synced' };
     }
 
@@ -493,14 +495,55 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
 
     const self = this;
 
-    const syncSingleThread = (threadId: string) =>
+    const fetchThread = (threadId: string) =>
       Effect.gen(function* () {
-        yield* Effect.sleep(500); // Rate limiting delay
-        return yield* withRetry(Effect.tryPromise(() => self.syncThread({ threadId })));
+      
+        yield* Effect.sleep(200);
+      
+        const threadData = yield* Effect.tryPromise(() => self.getWithRetry(threadId));
+
+        if (!threadData || !threadData.latest || !threadData.latest.threadId) {
+          return 0 as const;
+        }
+        const latest = threadData.latest!;
+        const id = latest.threadId as string;
+
+        const serialized = JSON.stringify(threadData);
+        yield* Effect.tryPromise(() =>
+          env.THREADS_BUCKET.put(self.getThreadKey(id), serialized, {
+            customMetadata: { threadId: id },
+          }),
+        );
+
+        const normalizedReceivedOn = new Date(latest.receivedOn).toISOString();
+        yield* Effect.try(() =>
+          self.sql`
+            INSERT OR REPLACE INTO threads (
+              id, thread_id, provider_id, latest_sender,
+              latest_received_on, latest_subject, latest_label_ids, updated_at
+            ) VALUES (
+              ${id},
+              ${id},
+              'google',
+              ${JSON.stringify(latest.sender)},
+              ${normalizedReceivedOn},
+              ${latest.subject},
+              ${JSON.stringify(latest.tags.map((tag) => tag.id))},
+              CURRENT_TIMESTAMP
+            )
+          `,
+        );
+
+        self.agent?.broadcastChatMessage({
+          type: OutgoingMessageType.Mail_Get,
+          threadId: id,
+        });
+
+        return 1 as const;
       }).pipe(
         Effect.catchAll((error) => {
-          console.error(`Failed to sync thread ${threadId}:`, error);
-          return Effect.succeed(null);
+          console.error(`Failed to process thread ${threadId} in ${folder}:`, error);
+          return Effect.succeed(0 as const);
         }),
       );
 
@@ -509,13 +552,9 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
         let totalSynced = 0;
         let pageToken: string | null = null;
         let hasMore = true;
-        // let _pageCount = 0;
 
         while (hasMore) {
-          // _pageCount++;
-
-          // Rate limiting delay between pages
-          yield* Effect.sleep(2000);
+          yield* Effect.sleep(1500);
 
           const result: IGetThreadsResponse = yield* Effect.tryPromise(() =>
             self.listWithRetry({
@@ -525,13 +564,15 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
             }),
           );
 
-          // Process threads with controlled concurrency to avoid rate limits
           const threadIds = result.threads.map((thread) => thread.id);
-          const syncEffects = threadIds.map(syncSingleThread);
 
-          yield* Effect.all(syncEffects, { concurrency: 1, discard: true });
+          const processedCounts = yield* Effect.all(threadIds.map(fetchThread), {
+            concurrency: 3,
+          });
 
-          totalSynced += result.threads.length;
+          const batchSynced = processedCounts.filter((c) => c === 1).length;
+          totalSynced += batchSynced;
+
           pageToken = result.nextPageToken;
           hasMore = pageToken !== null && shouldLoop;
         }
@@ -555,8 +596,12 @@ export class ZeroDriver extends AIChatAgent<typeof env> {
           ),
         ),
       );
+      const duration = Date.now() - startTime;
+      console.log(`[TIMING] syncThreads(${folder}) completed in ${duration}ms`);
       return result;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      console.log(`[TIMING] syncThreads(${folder}) errored after ${duration}ms`);
       console.error('Failed to sync inbox threads:', error);
       throw error;
     }
