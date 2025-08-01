@@ -15,7 +15,8 @@ import {
   writingStyleMatrix,
   emailTemplate,
 } from './db/schema';
-import { env, DurableObject, RpcTarget, WorkerEntrypoint } from 'cloudflare:workers';
+import { WorkerEntrypoint, DurableObject, RpcTarget } from 'cloudflare:workers';
+import { env } from './env';
 import { EProviders, type ISubscribeBatch, type IThreadBatch } from './types';
 import { oAuthDiscoveryMetadata } from 'better-auth/plugins';
 import { getZeroDB, verifyToken } from './lib/server-utils';

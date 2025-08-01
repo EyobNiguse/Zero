@@ -1,7 +1,7 @@
 import { getContext } from 'hono/context-storage';
 import { connection } from '../db/schema';
 import type { HonoContext } from '../ctx';
-import { env } from 'cloudflare:workers';
+import { env } from '../env';
 import { createDriver } from './driver';
 import { eq } from 'drizzle-orm';
 import { createDb } from '../db';

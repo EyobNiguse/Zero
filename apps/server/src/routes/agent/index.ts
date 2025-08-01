@@ -49,7 +49,7 @@ import { connection } from '../../db/schema';
 import type { WSMessage } from 'partyserver';
 import { tools as authTools } from './tools';
 import { processToolCalls } from './utils';
-import { env } from 'cloudflare:workers';
+import { env } from '../../env';
 import type { Connection } from 'agents';
 import { openai } from '@ai-sdk/openai';
 import { createDb } from '../../db';
