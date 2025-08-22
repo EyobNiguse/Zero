@@ -391,7 +391,7 @@ export function NavUser() {
                   }`}
                 >
                   <div className="relative">
-                    <Avatar className="size-6 rounded-[5px]">
+                    <Avatar className="size-7 rounded-[5px]">
                       <AvatarImage
                         className="rounded-[5px]"
                         src={activeAccount.picture || undefined}
@@ -509,15 +509,15 @@ export function NavUser() {
 
               {isPro ? (
                 <AddConnectionDialog>
-                  <button className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
+                  <Button className="hover:bg-offsetLight/80 dark:hover:bg-offsetDark/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]">
                     <Plus className="size-4" />
-                  </button>
+                  </Button>
                 </AddConnectionDialog>
               ) : (
                 <>
                   <Button
                     onClick={() => setPricingDialog('true')}
-                    className="hover:bg-offsetLight/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]"
+                    className="hover:bg-offsetLight/80 dark:hover:bg-offsetDark/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]"
                   >
                     <Plus className="size-4" />
                   </Button>
