@@ -13,19 +13,22 @@
           "fallthrough": true,
         },
       ],
-      "ai": {
-        "binding": "AI",
-      },
-      "vectorize": [
-        {
-          "binding": "VECTORIZE",
-          "index_name": "threads-vector-staging",
-        },
-        {
-          "binding": "VECTORIZE_MESSAGE",
-          "index_name": "messages-vector-staging",
-        },
-      ],
+      // AI + Vectorize disabled for local mail-only dev (they require a remote
+      // Cloudflare account / prod index + `wrangler login`). All usage is lazy,
+      // so the inbox runs without them; only AI/search/RAG features are inert.
+      // "ai": {
+      //   "binding": "AI",
+      // },
+      // "vectorize": [
+      //   {
+      //     "binding": "VECTORIZE",
+      //     "index_name": "threads-vector-staging",
+      //   },
+      //   {
+      //     "binding": "VECTORIZE_MESSAGE",
+      //     "index_name": "messages-vector-staging",
+      //   },
+      // ],
       "r2_buckets": [
         {
           "binding": "THREADS_BUCKET",
@@ -151,11 +154,12 @@
       "observability": {
         "enabled": true,
       },
-      "hyperdrive": [
+      "d1_databases": [
         {
-          "binding": "HYPERDRIVE",
-          "id": "57834ddb6716440496c8836f6d99bc9a",
-          "localConnectionString": "postgresql://postgres:postgres@localhost:5432/zerodotemail",
+          "binding": "DB",
+          "database_name": "zerodotemail-local",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "src/db/migrations",
         },
       ],
       "vars": {
@@ -381,11 +385,12 @@
       "observability": {
         "enabled": true,
       },
-      "hyperdrive": [
+      "d1_databases": [
         {
-          "binding": "HYPERDRIVE",
-          "id": "57834ddb6716440496c8836f6d99bc9a",
-          "localConnectionString": "postgresql://postgres:postgres@localhost:5432/zerodotemail",
+          "binding": "DB",
+          "database_name": "zerodotemail-staging",
+          "database_id": "REPLACE_WITH_STAGING_D1_ID",
+          "migrations_dir": "src/db/migrations",
         },
       ],
       "vars": {
@@ -480,11 +485,12 @@
       "observability": {
         "enabled": true,
       },
-      "hyperdrive": [
+      "d1_databases": [
         {
-          "binding": "HYPERDRIVE",
-          "id": "b1be316b45fb439a9e54b74ecc20aa21",
-          "localConnectionString": "postgresql://postgres:postgres@localhost:5432/zerodotemail",
+          "binding": "DB",
+          "database_name": "zerodotemail-prod",
+          "database_id": "REPLACE_WITH_PROD_D1_ID",
+          "migrations_dir": "src/db/migrations",
         },
       ],
       "durable_objects": {
