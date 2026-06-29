@@ -11,6 +11,39 @@ const sanitizeCustomerBody = (body: any) => {
   return bodyCopy;
 };
 
+// When AUTUMN_SECRET_KEY is unset (local dev with billing disabled) we hand the
+// routes a stub that mimics the Autumn SDK and returns benign empty data, so the
+// frontend's AutumnProvider initializes cleanly instead of getting a 503. Feature
+// checks report `allowed: true` so nothing is paywalled locally.
+const createAutumnStub = (sessionUser?: { id: string; name: string; email: string }) => {
+  const customer = {
+    id: sessionUser?.id ?? 'local',
+    name: sessionUser?.name ?? '',
+    email: sessionUser?.email ?? '',
+    products: [],
+    features: {},
+    invoices: [],
+  };
+  const ok = (data: any) => Promise.resolve({ data });
+  return {
+    customers: {
+      create: () => ok(customer),
+      get: () => ok(customer),
+      delete: () => ok({}),
+      billingPortal: () => ok({ url: env.VITE_PUBLIC_APP_URL }),
+    },
+    attach: () => ok({ checkout_url: null }),
+    cancel: () => ok({}),
+    check: () => ok({ allowed: true }),
+    track: () => ok({}),
+    entities: {
+      create: () => ok({}),
+      get: () => ok(customer),
+      delete: () => ok({}),
+    },
+  };
+};
+
 type AutumnContext = {
   Variables: {
     customerData: {
@@ -38,7 +71,12 @@ export const autumnApi = new Hono<AutumnContext>()
             },
           },
     );
-    c.set('autumn', new Autumn({ secretKey: env.AUTUMN_SECRET_KEY }));
+    c.set(
+      'autumn',
+      (env.AUTUMN_SECRET_KEY
+        ? new Autumn({ secretKey: env.AUTUMN_SECRET_KEY })
+        : createAutumnStub(sessionUser)) as any,
+    );
     await next();
   })
   .post('/customers', async (c) => {
@@ -198,6 +236,8 @@ export const autumnApi = new Hono<AutumnContext>()
   })
   .get('/components/pricing_table', async (c) => {
     const { autumn, customerData } = c.var;
+
+    if (!env.AUTUMN_SECRET_KEY) return c.json({ list: [] });
 
     return c.json(
       await fetchPricingTable({

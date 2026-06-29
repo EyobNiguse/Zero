@@ -16,7 +16,7 @@ export type ZeroEnv = {
   THREAD_SYNC_WORKER: DurableObjectNamespace<ThreadSyncWorker>;
   SYNC_THREADS_WORKFLOW: Workflow;
   SYNC_THREADS_COORDINATOR_WORKFLOW: Workflow;
-  HYPERDRIVE: { connectionString: string };
+  DB: D1Database;
   pending_emails_status: KVNamespace;
   pending_emails_payload: KVNamespace;
   scheduled_emails: KVNamespace;
@@ -73,9 +73,6 @@ export type ZeroEnv = {
   AUTUMN_SECRET_KEY: string;
   AI_SYSTEM_PROMPT: string;
   PERPLEXITY_API_KEY: string;
-  TWILIO_ACCOUNT_SID: string;
-  TWILIO_AUTH_TOKEN: string;
-  TWILIO_PHONE_NUMBER: string;
   VITE_PUBLIC_ELEVENLABS_AGENT_ID: string;
   REACT_SCAN: string;
   MICROSOFT_CLIENT_ID: string;
