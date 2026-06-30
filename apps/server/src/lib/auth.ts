@@ -7,13 +7,13 @@ import {
   SuperSearchEmail,
   WelcomeEmail,
 } from './react-emails/email-sequences';
-import { createAuthMiddleware, phoneNumber, jwt, bearer, mcp } from 'better-auth/plugins';
+import { createAuthMiddleware, jwt, bearer, mcp } from 'better-auth/plugins';
 import { type Account, betterAuth, type BetterAuthOptions } from 'better-auth';
 import { getBrowserTimezone, isValidTimezone } from './timezones';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getZeroDB, resetConnection } from './server-utils';
 import { getSocialProviders } from './auth-providers';
-import { redis, resend, twilio } from './services';
+import { redis, resend } from './services';
 import { dubAnalytics } from '@dub/better-auth';
 import { defaultUserSettings } from './schemas';
 import { disableBrainFunction } from './brain';
@@ -158,7 +158,6 @@ const connectionHandlerHook = async (account: Account) => {
 };
 
 export const createAuth = () => {
-  const twilioClient = twilio();
   const dub = new Dub();
 
   return betterAuth({
@@ -171,18 +170,6 @@ export const createAuth = () => {
       }),
       jwt(),
       bearer(),
-      phoneNumber({
-        sendOTP: async ({ code, phoneNumber }) => {
-          await twilioClient.messages
-            .send(phoneNumber, `Your verification code is: ${code}, do not share it with anyone.`)
-            .catch((error) => {
-              console.error('Failed to send OTP', error);
-              throw new APIError('INTERNAL_SERVER_ERROR', {
-                message: `Failed to send OTP, ${error.message}`,
-              });
-            });
-        },
-      }),
     ],
     user: {
       deleteUser: {
@@ -205,12 +192,14 @@ export const createAuth = () => {
           if (!request) throw new APIError('BAD_REQUEST', { message: 'Request object is missing' });
           const db = await getZeroDB(user.id);
           const connections = await db.findManyConnections();
-          const autumn = new Autumn({ secretKey: env.AUTUMN_SECRET_KEY });
-          try {
-            await autumn.customers.delete(user.id);
-          } catch (error) {
-            console.error('Failed to delete Autumn customer:', error);
-            // Continue with deletion process despite Autumn failure
+          if (env.AUTUMN_SECRET_KEY) {
+            const autumn = new Autumn({ secretKey: env.AUTUMN_SECRET_KEY });
+            try {
+              await autumn.customers.delete(user.id);
+            } catch (error) {
+              console.error('Failed to delete Autumn customer:', error);
+              // Continue with deletion process despite Autumn failure
+            }
           }
 
           const revokedAccounts = (
@@ -328,9 +317,9 @@ export const createAuth = () => {
 
 const createAuthConfig = () => {
   const cache = redis();
-  const { db } = createDb(env.HYPERDRIVE.connectionString);
+  const { db } = createDb(env.DB);
   return {
-    database: drizzleAdapter(db, { provider: 'pg' }),
+    database: drizzleAdapter(db, { provider: 'sqlite' }),
     secondaryStorage: {
       get: async (key: string) => {
         const value = await cache.get(key);
@@ -349,10 +338,26 @@ const createAuthConfig = () => {
         disableIpTracking: true,
       },
       cookiePrefix: env.NODE_ENV === 'development' ? 'better-auth-dev' : 'better-auth',
-      crossSubDomainCookies: {
-        enabled: true,
-        domain: env.COOKIE_DOMAIN,
-      },
+      // Browsers reject the `Domain=localhost` attribute, which drops the session
+      // cookie and makes every request after login unauthorized. For local dev keep
+      // the cookie host-only (no Domain), non-secure, lax so it works across ports
+      // on localhost. In real envs use cross-subdomain cookies on COOKIE_DOMAIN.
+      ...(env.COOKIE_DOMAIN === 'localhost'
+        ? {
+            useSecureCookies: false,
+            defaultCookieAttributes: {
+              sameSite: 'lax',
+              secure: false,
+              httpOnly: true,
+              path: '/',
+            },
+          }
+        : {
+            crossSubDomainCookies: {
+              enabled: true,
+              domain: env.COOKIE_DOMAIN,
+            },
+          }),
     },
     baseURL: env.VITE_PUBLIC_BACKEND_URL,
     trustedOrigins: [

@@ -207,8 +207,6 @@ export const AutoComplete = Extension.create<AutoCompleteOptions>({
               console.error('Error applying suggestion:', error);
               return false;
             }
-
-            return true;
           },
           // @ts-expect-error: tiptap types are not compatible with prosemirror
           decorations: (state, view) => {
