@@ -4,13 +4,20 @@ import { useLoaderData } from 'react-router';
 export async function clientLoader() {
   const isProd = !import.meta.env.DEV;
 
-  const response = await fetch(import.meta.env.VITE_PUBLIC_BACKEND_URL + '/api/public/providers');
-  const data = (await response.json()) as { allProviders: any[] };
+  // Browser-first mode: the backend may be absent. Fall back to the two local
+  // providers so the login page still renders and drives browser auth.
+  const localProviders = [
+    { id: 'google', name: 'Google', enabled: true },
+    { id: 'microsoft', name: 'Microsoft', enabled: true },
+  ];
 
-  return {
-    allProviders: data.allProviders,
-    isProd,
-  };
+  try {
+    const response = await fetch(import.meta.env.VITE_PUBLIC_BACKEND_URL + '/api/public/providers');
+    const data = (await response.json()) as { allProviders: any[] };
+    return { allProviders: data.allProviders, isProd };
+  } catch {
+    return { allProviders: localProviders, isProd };
+  }
 }
 
 export default function LoginPage() {

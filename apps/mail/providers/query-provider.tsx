@@ -8,6 +8,7 @@ import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { useMemo, type PropsWithChildren } from 'react';
 import type { AppRouter } from '@zero/server/trpc';
+import { localLink } from '@/app/local/rpc/local-link';
 import { CACHE_BURST_KEY } from '@/lib/constants';
 import { signOut } from '@/lib/auth-client';
 import { get, set, del } from 'idb-keyval';
@@ -87,7 +88,8 @@ export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRou
 
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
-    // loggerLink({ enabled: () => true }),
+    // Answers migrated paths from local SQLite; everything else falls through.
+    localLink,
     httpBatchLink({
       transformer: superjson,
       url: getUrl(),

@@ -334,6 +334,9 @@ export function MailLayout() {
   }, [folder, mail.bulkSelected.length, clearBulkSelection]);
 
   useEffect(() => {
+    // Browser-first (local) mode manages its own session; don't bounce to /login
+    // while LocalMode restores it asynchronously.
+    if (localStorage.getItem('local.provider')) return;
     if (!session?.user && !isPending) {
       navigate('/login');
     }

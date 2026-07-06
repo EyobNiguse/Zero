@@ -34,8 +34,9 @@ export function createMicrosoftProvider(opts: MsalOptions): TokenProvider {
     auth: {
       clientId: opts.clientId,
       authority: opts.authority ?? 'https://login.microsoftonline.com/common',
-      // Return to /local so the app remounts here and completes the redirect.
-      redirectUri: opts.redirectUri ?? `${window.location.origin}/local`,
+      // Return to /mail so MailLayout (which mounts LocalMode) completes the
+      // redirect and restores the session.
+      redirectUri: opts.redirectUri ?? `${window.location.origin}/mail/inbox`,
     },
     // sessionStorage, not localStorage — smaller XSS blast radius.
     cache: { cacheLocation: 'sessionStorage' },
