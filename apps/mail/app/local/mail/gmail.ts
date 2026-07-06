@@ -14,7 +14,6 @@ import type {
   FolderRole,
   SendInput,
   SendResult,
-  ThreadPage,
   NormalizedThread,
   ThreadDetail,
   AttachmentBytes,
@@ -136,7 +135,7 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        ...(init?.headers ?? {}),
+        ...init?.headers,
       },
     });
     if (!res.ok) {

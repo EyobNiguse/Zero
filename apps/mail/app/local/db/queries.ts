@@ -11,7 +11,6 @@
 import { eq, count, inArray, and, sql, desc, asc, lt, like, or } from 'drizzle-orm';
 import { threads, threadLabels, labels, messages, attachments } from './schema';
 import type { LocalDB } from './client';
-import type * as schema from './schema';
 
 export type DB = LocalDB;
 
