@@ -9,7 +9,6 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { GitHub, Twitter, Discord, LinkedIn, Star } from './icons/icons';
 import { AnimatedNumber } from '@/components/ui/animated-number';
-import { signIn, useSession } from '@/lib/auth-client';
 import { Separator } from '@/components/ui/separator';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
@@ -17,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 const resources = [
   {
@@ -83,15 +81,7 @@ interface GitHubApiResponse {
 export function Navigation() {
   const [open, setOpen] = useState(false);
   const [stars, setStars] = useState(0); // Default fallback value
-  const { data: session } = useSession();
   const navigate = useNavigate();
-  // Browser-first session flag (localStorage), read on mount.
-  const [localAccount, setLocalAccount] = useState<string | null>(null);
-  useEffect(() => {
-    if (localStorage.getItem('local.provider')) {
-      setLocalAccount(localStorage.getItem('local.email') || 'your account');
-    }
-  }, []);
 
   const { data: githubData } = useQuery({
     queryKey: ['githubStars'],
