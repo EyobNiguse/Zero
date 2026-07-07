@@ -64,7 +64,9 @@ export const useBilling = () => {
   const { attach, track, openBillingPortal } = useAutumn();
 
   useEffect(() => {
-    if (error) signOut();
+    // In browser-first mode the billing backend is absent; its error must not
+    // sign the user out.
+    if (error && !localStorage.getItem('local.provider')) signOut();
   }, [error]);
 
   const { isPro, ...customerFeatures } = useMemo(() => {

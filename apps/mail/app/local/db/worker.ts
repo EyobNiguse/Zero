@@ -39,10 +39,34 @@ interface RawDb {
 
 let raw: RawDb | null = null;
 
+async function openOpfsDb(sqlite3: Awaited<ReturnType<typeof sqlite3InitModule>>): Promise<RawDb> {
+  // The SAH-pool VFS takes an exclusive OPFS handle. Right after a navigation the
+  // previous worker may not have released it yet, so acquisition throws. Retry a
+  // few times to ride out a slow release.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      const poolUtil = await sqlite3.installOpfsSAHPoolVfs({ name: VFS_NAME });
+      return new poolUtil.OpfsSAHPoolDb(DB_FILENAME) as unknown as RawDb;
+    } catch (err) {
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+  throw lastErr;
+}
+
 async function boot(): Promise<RawDb> {
   const sqlite3 = await sqlite3InitModule();
-  const poolUtil = await sqlite3.installOpfsSAHPoolVfs({ name: VFS_NAME });
-  const db = new poolUtil.OpfsSAHPoolDb(DB_FILENAME) as unknown as RawDb;
+  let db: RawDb;
+  try {
+    db = await openOpfsDb(sqlite3);
+  } catch {
+    // OPFS handle is held elsewhere (another tab/worker) and won't free. Fall back
+    // to an in-memory DB so the app still works — it isn't persisted, but the
+    // provider-first sync repopulates the mirror each session.
+    db = new (sqlite3 as any).oo1.DB(':memory:', 'c') as RawDb;
+  }
   db.exec('PRAGMA foreign_keys = ON;');
   runMigrations(db as unknown as RawSqlite);
   return db;

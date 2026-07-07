@@ -85,6 +85,13 @@ export function Navigation() {
   const [stars, setStars] = useState(0); // Default fallback value
   const { data: session } = useSession();
   const navigate = useNavigate();
+  // Browser-first session flag (localStorage), read on mount.
+  const [localAccount, setLocalAccount] = useState<string | null>(null);
+  useEffect(() => {
+    if (localStorage.getItem('local.provider')) {
+      setLocalAccount(localStorage.getItem('local.email') || 'your account');
+    }
+  }, []);
 
   const { data: githubData } = useQuery({
     queryKey: ['githubStars'],
@@ -190,21 +197,7 @@ export function Navigation() {
             </a>
             <Button
               className="h-8 bg-white text-black hover:bg-white hover:text-black cursor-pointer"
-              onClick={() => {
-                if (session) {
-                  navigate('/mail/inbox');
-                } else {
-                  toast.promise(
-                    signIn.social({
-                      provider: 'google',
-                      callbackURL: `${window.location.origin}/mail`,
-                    }),
-                    {
-                      error: 'Login redirect failed',
-                    },
-                  );
-                }
-              }}
+              onClick={() => navigate('/login?switch=1')}
             >
               Get Started
             </Button>

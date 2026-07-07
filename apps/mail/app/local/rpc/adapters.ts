@@ -15,8 +15,9 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-export function toParsedMessage(m: Message, atts: Attachment[]): ParsedMessage {
+export function toParsedMessage(m: Message, atts: Attachment[], labels: Label[] = []): ParsedMessage {
   const fullHtml = m.bodyHtml ?? m.bodyText ?? '';
+  const unread = labels.some((l) => l.name === 'UNREAD');
   // List rows render `body` as text; keep it a clean, short plain-text preview.
   // The reader renders decodedBody/processedHtml, which stay full HTML.
   const preview = (m.snippet || m.bodyText || stripHtml(m.bodyHtml ?? ''))
@@ -27,14 +28,14 @@ export function toParsedMessage(m: Message, atts: Attachment[]): ParsedMessage {
     id: m.id,
     title: m.subject ?? '',
     subject: m.subject ?? '',
-    tags: [],
+    tags: labels.map((l) => ({ id: l.id, name: l.name, type: 'user' })),
     sender: m.sender ?? { email: '' },
     to: m.toRecipients ?? [],
     cc: m.ccRecipients ?? null,
     bcc: null,
     tls: true,
     receivedOn: m.receivedOn ?? '',
-    unread: false,
+    unread,
     body: preview,
     processedHtml: fullHtml,
     blobUrl: '',
@@ -57,7 +58,7 @@ export function toThreadResponse(messages: ParsedMessage[], labels: Label[]): IG
   return {
     messages,
     latest: messages[messages.length - 1],
-    hasUnread: messages.some((m) => m.unread),
+    hasUnread: labels.some((l) => l.name === 'UNREAD'),
     totalReplies: messages.length,
     labels: labels.map((l) => ({ id: l.id, name: l.name })),
   };

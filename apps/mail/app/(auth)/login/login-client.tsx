@@ -115,9 +115,7 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
       return;
     }
 
-    // Browser-first auth: sign in client-side, register the local driver, then
-    // enter the mail UI (served from local SQLite). Microsoft navigates away and
-    // returns to /mail, where LocalMode restores the session.
+    // Browser-first auth: sign in client-side, register the local driver, then enter the mail UI.
     if (provider.id === 'google' || provider.id === 'microsoft') {
       const id = provider.id as ProviderId;
       try {
@@ -125,7 +123,8 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
         localStorage.setItem('local.provider', id);
         await p.signIn();
         await activateLocal(p);
-        navigate('/mail');
+        // Full-page load (not SPA navigate) so the app boots through the eager session patch.
+        window.location.href = '/mail/inbox';
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Sign-in failed');
       }

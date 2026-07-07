@@ -1,14 +1,6 @@
 /**
  * Microsoft browser auth via MSAL.js — full PKCE, no backend.
- *
- * Uses the REDIRECT flow, not popup: `loginRedirect` navigates the whole tab to
- * Microsoft and back to `/local`, where `handleRedirectPromise` (in ensureInit)
- * completes sign-in on load. Popup flow proved unreliable here — the opener
- * couldn't read the code back, so the popup hung on the redirect page.
- *
- * Requires an Azure app registration with the **SPA** platform (redirect URI =
- * `<origin>/local`), which enables PKCE + SPA refresh tokens. `acquireTokenSilent`
- * then renews access tokens without a round trip.
+ * Uses the redirect flow (loginRedirect + handleRedirectPromise); requires an Azure SPA app registration.
  */
 import {
   PublicClientApplication,
@@ -29,34 +21,44 @@ export interface MsalOptions {
   redirectUri?: string;
 }
 
-export function createMicrosoftProvider(opts: MsalOptions): TokenProvider {
+// Module singleton: separate PublicClientApplication instances race on handleRedirectPromise and drop the auth code.
+let sharedApp: PublicClientApplication | null = null;
+let sharedInit: Promise<void> | null = null;
+
+function getApp(opts: MsalOptions): PublicClientApplication {
+  if (sharedApp) return sharedApp;
   const config: Configuration = {
     auth: {
       clientId: opts.clientId,
       authority: opts.authority ?? 'https://login.microsoftonline.com/common',
-      // Return to /mail so MailLayout (which mounts LocalMode) completes the
-      // redirect and restores the session.
+      // Return to /mail so LocalMode completes the redirect and restores the session.
       redirectUri: opts.redirectUri ?? `${window.location.origin}/mail/inbox`,
     },
-    // sessionStorage, not localStorage — smaller XSS blast radius.
-    cache: { cacheLocation: 'sessionStorage' },
+    // localStorage so the account survives a tab close / refresh (restored by LocalMode).
+    cache: { cacheLocation: 'localStorage' },
   };
+  sharedApp = new PublicClientApplication(config);
+  return sharedApp;
+}
 
-  const msal = new PublicClientApplication(config);
-  let initialized = false;
+export function createMicrosoftProvider(opts: MsalOptions): TokenProvider {
+  const msal = getApp(opts);
   let account: AccountInfo | null = null;
 
   async function ensureInit() {
-    if (initialized) return;
-    await msal.initialize();
-    // Processes the auth code when the tab returns from loginRedirect; resolves
-    // null on a normal load. Also clears any stale interaction state.
-    const result: AuthenticationResult | null = await msal
-      .handleRedirectPromise()
-      .catch(() => null);
-    if (result?.account) msal.setActiveAccount(result.account);
+    // Shared promise: init + handleRedirectPromise run once across all instances (else interaction_in_progress).
+    if (!sharedInit) {
+      sharedInit = (async () => {
+        await msal.initialize();
+        // navigateToLoginRequestUrl:false keeps the tab on the redirect URI instead of bouncing to /login.
+        const result: AuthenticationResult | null = await msal
+          .handleRedirectPromise({ navigateToLoginRequestUrl: false })
+          .catch(() => null);
+        if (result?.account) msal.setActiveAccount(result.account);
+      })();
+    }
+    await sharedInit;
     account = msal.getActiveAccount() ?? msal.getAllAccounts()[0] ?? null;
-    initialized = true;
   }
 
   return {
@@ -64,8 +66,7 @@ export function createMicrosoftProvider(opts: MsalOptions): TokenProvider {
 
     async signIn() {
       await ensureInit();
-      // Navigates the whole tab to Microsoft; this call does not return — the
-      // page reloads at redirectUri and restoreSession() finishes the job.
+      // Navigates the whole tab to Microsoft; does not return — restoreSession() finishes after reload.
       await msal.loginRedirect({ scopes: SCOPES });
     },
 
@@ -99,7 +100,12 @@ export function createMicrosoftProvider(opts: MsalOptions): TokenProvider {
 
     async signOut() {
       await ensureInit();
-      if (account) await msal.logoutPopup({ account });
+      // Clear cached tokens/accounts locally — no popup/redirect (they get blocked and leave the token behind).
+      try {
+        await msal.clearCache();
+      } catch {
+        /* best-effort */
+      }
       account = null;
     },
   };

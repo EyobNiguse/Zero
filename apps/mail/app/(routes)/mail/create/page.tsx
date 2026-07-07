@@ -2,8 +2,11 @@ import { authProxy } from '@/lib/auth-proxy';
 import type { Route } from './+types/page';
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const session = await authProxy.api.getSession({ headers: request.headers });
-  if (!session) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/login`);
+  const localMode = typeof window !== 'undefined' && !!localStorage.getItem('local.provider');
+  if (!localMode) {
+    const session = await authProxy.api.getSession({ headers: request.headers });
+    if (!session) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/login`);
+  }
 
   const url = new URL(request.url);
   const params = Object.fromEntries(url.searchParams.entries()) as {

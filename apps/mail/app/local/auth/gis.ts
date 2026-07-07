@@ -1,12 +1,6 @@
 /**
  * Google browser auth via Google Identity Services (GIS) token client.
- *
- * IMPORTANT LIMITATION: the browser token client issues ~1h access tokens and
- * **never a refresh token** (by Google's design). Silent renewal via
- * `prompt: ''` works only while the user's Google session cookie is alive; it
- * cannot refresh with the tab closed. True offline access / Pub/Sub push
- * requires the server code flow (client secret) — the "server sliver" noted in
- * the plan. This provider covers the live-session case.
+ * Issues ~1h access tokens, no refresh token — silent renewal works only while the Google session cookie is alive.
  */
 import type { TokenProvider } from './types';
 
@@ -39,14 +33,44 @@ function loadGis(): Promise<void> {
   return scriptPromise;
 }
 
+// Cache the access token so a refresh reuses it instead of triggering a GIS popup (blocked without a user gesture).
+const SESSION_KEY = 'local.google.session';
+interface CachedSession {
+  token: string;
+  expiresAt: number;
+  email: string | null;
+}
+function loadCachedSession(): CachedSession | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as CachedSession) : null;
+  } catch {
+    return null;
+  }
+}
+function saveCachedSession(s: CachedSession): void {
+  if (typeof window !== 'undefined') localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+}
+function clearCachedSession(): void {
+  if (typeof window !== 'undefined') localStorage.removeItem(SESSION_KEY);
+}
+
 export function createGoogleProvider(opts: GisOptions): TokenProvider {
   let client: google.accounts.oauth2.TokenClient | null = null;
   let token: string | null = null;
   let expiresAt = 0; // epoch ms
   let email: string | null = null;
 
-  // The token client delivers results through a single callback; route each
-  // requestAccessToken() call to its own promise via this pending pointer.
+  // Seed identity from a cached session so `hint` is available for silent auth.
+  const cached = loadCachedSession();
+  if (cached) email = cached.email;
+
+  function persist() {
+    if (token) saveCachedSession({ token, expiresAt, email });
+  }
+
+  // Token client uses one callback; route each request to its own promise via this pointer.
   let pending: { resolve: (t: string) => void; reject: (e: unknown) => void } | null = null;
 
   async function ensureClient() {
@@ -62,6 +86,7 @@ export function createGoogleProvider(opts: GisOptions): TokenProvider {
           token = resp.access_token;
           // expires_in is seconds; keep a 60s safety margin.
           expiresAt = Date.now() + (Number(resp.expires_in) - 60) * 1000;
+          persist();
           pending?.resolve(resp.access_token);
         }
         pending = null;
@@ -72,7 +97,8 @@ export function createGoogleProvider(opts: GisOptions): TokenProvider {
   function request(prompt: '' | 'consent'): Promise<string> {
     return new Promise((resolve, reject) => {
       pending = { resolve, reject };
-      client!.requestAccessToken({ prompt });
+      // hint lets GIS pick the account silently, improving prompt:'' success.
+      client!.requestAccessToken({ prompt, ...(email ? { hint: email } : {}) });
     });
   }
 
@@ -82,6 +108,7 @@ export function createGoogleProvider(opts: GisOptions): TokenProvider {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (r.ok) email = ((await r.json()) as { email?: string }).email ?? null;
+      persist();
     } catch {
       /* non-fatal */
     }
@@ -97,9 +124,22 @@ export function createGoogleProvider(opts: GisOptions): TokenProvider {
     },
 
     async restoreSession() {
-      // GIS keeps the token in memory only (no refresh token), so there is
-      // nothing to rehydrate on load — the user re-clicks Connect.
-      return false;
+      // Reuse a still-valid cached token first (refresh path must not trigger a blocked GIS popup).
+      const c = loadCachedSession();
+      if (c && Date.now() < c.expiresAt) {
+        token = c.token;
+        expiresAt = c.expiresAt;
+        email = c.email;
+        return true;
+      }
+      try {
+        await ensureClient();
+        const t = await request('');
+        await fetchEmail(t);
+        return true;
+      } catch {
+        return false;
+      }
     },
 
     isSignedIn() {
@@ -107,8 +147,16 @@ export function createGoogleProvider(opts: GisOptions): TokenProvider {
     },
 
     async getAccessToken() {
-      await ensureClient();
       if (token && Date.now() < expiresAt) return token;
+      // Cached token from another tab / this session may still be live.
+      const c = loadCachedSession();
+      if (c && Date.now() < c.expiresAt) {
+        token = c.token;
+        expiresAt = c.expiresAt;
+        email = c.email;
+        return token;
+      }
+      await ensureClient();
       // silent refresh — succeeds only while the Google session is live
       return request('');
     },
@@ -122,6 +170,7 @@ export function createGoogleProvider(opts: GisOptions): TokenProvider {
       token = null;
       expiresAt = 0;
       email = null;
+      clearCachedSession();
     },
   };
 }

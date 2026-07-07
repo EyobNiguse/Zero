@@ -1,11 +1,6 @@
 /**
  * Microsoft Graph driver — browser -> graph.microsoft.com directly (CORS).
- *
- * MAPPING CAVEATS (Graph has no Gmail-equivalent model):
- *  - "thread"  -> Graph `conversationId` (messages grouped by conversation).
- *  - "labels"  -> Graph `categories`. Gmail system labels (INBOX/SPAM/...) have
- *    no direct Graph analog; folder moves (isRead, Archive) are a later concern.
- *  - sendMail returns 202 with no body, so SendResult has no server id yet.
+ * Mapping: thread -> conversationId; labels -> categories; sendMail returns 202 (no id).
  */
 import type { TokenProvider } from '../auth/types';
 import type { InsertMessage, InsertAttachment } from '../db/queries';
@@ -19,16 +14,16 @@ import type {
   NormalizedThread,
   ThreadDetail,
   AttachmentBytes,
+  DraftInput,
+  ParsedDraftResult,
+  DraftList,
+  MailLabel,
+  LabelColor,
 } from './types';
 
 const BASE = 'https://graph.microsoft.com/v1.0';
 
-/**
- * Graph well-known folder aliases -> navigable folder role. Each alias is
- * addressable directly (GET /me/mailFolders/{alias}); the folder's real id and
- * localized displayName come back in the response. (wellKnownName is not a
- * $select-able property on mailFolder in v1.0, so we don't enumerate + guess.)
- */
+/** Graph well-known folder aliases -> navigable folder role (each alias is directly addressable). */
 const WELL_KNOWN: { alias: string; role: FolderRole }[] = [
   { alias: 'inbox', role: 'inbox' },
   { alias: 'archive', role: 'archive' },
@@ -103,8 +98,7 @@ export function createGraphDriver(auth: TokenProvider, providerId: string): Mail
 
   function toNormalized(msg: GraphMessage): NormalizedThread {
     const addr = msg.from?.emailAddress;
-    // Folder membership (parentFolderId) is the primary "label"; a message lives
-    // in exactly one Graph folder. categories are extra multi-value labels.
+    // parentFolderId is the primary "label"; categories are extra multi-value labels.
     const labelIds = [...(msg.parentFolderId ? [msg.parentFolderId] : []), ...(msg.categories ?? [])];
     return {
       thread: {
@@ -119,32 +113,45 @@ export function createGraphDriver(auth: TokenProvider, providerId: string): Mail
     };
   }
 
+  /** Resolve a master category's GUID from its displayName (our label id). */
+  async function categoryGuid(displayName: string): Promise<string | null> {
+    const data = await call<{ value: { id: string; displayName: string }[] }>(
+      `/me/outlook/masterCategories`,
+    );
+    return data?.value?.find((c) => c.displayName === displayName)?.id ?? null;
+  }
+
   return {
     providerId,
 
     async listFolders(): Promise<MailFolder[]> {
-      // Fetch each well-known folder by alias, in parallel. A missing folder
-      // (e.g. archive on some accounts) 404s — tolerate and skip it. User-
-      // created folders are a later concern.
       const select = 'id,displayName,unreadItemCount,totalItemCount';
-      const results = await Promise.all(
+      // Resolve each alias to its real folder id so we can tag roles (missing ones 404 — skip).
+      const wellKnown = await Promise.all(
         WELL_KNOWN.map(async ({ alias, role }) => {
           try {
-            const f = await call<GraphFolder>(`/me/mailFolders/${alias}?$select=${select}`);
-            if (!f) return null;
-            return {
-              id: f.id,
-              name: f.displayName ?? alias,
-              role,
-              unread: f.unreadItemCount ?? null,
-              total: f.totalItemCount ?? null,
-            } as MailFolder;
+            const f = await call<GraphFolder>(`/me/mailFolders/${alias}?$select=id`);
+            return f ? { id: f.id, role } : null;
           } catch {
             return null;
           }
         }),
       );
-      return results.filter((f): f is MailFolder => f != null);
+      const roleById = new Map(
+        wellKnown.filter((w): w is { id: string; role: FolderRole } => w != null).map((w) => [w.id, w.role]),
+      );
+
+      // Enumerate the account's actual top-level folders so the sidebar isn't limited to the aliases.
+      const data = await call<{ value: GraphFolder[] }>(
+        `/me/mailFolders?$top=100&$select=${select}`,
+      );
+      return (data?.value ?? []).map((f) => ({
+        id: f.id,
+        name: f.displayName ?? '',
+        role: roleById.get(f.id) ?? null,
+        unread: f.unreadItemCount ?? null,
+        total: f.totalItemCount ?? null,
+      }));
     },
 
     async listThreads(opts = {}) {
@@ -180,15 +187,21 @@ export function createGraphDriver(auth: TokenProvider, providerId: string): Mail
 
     async getThread(threadId: string): Promise<ThreadDetail> {
       const filter = encodeURIComponent(`conversationId eq '${threadId}'`);
+      // Step 1: list the conversation's message ids (sort client-side; $orderby is rejected with this $filter).
+      const listed = await call<{ value: { id: string; receivedDateTime?: string }[] }>(
+        `/me/messages?$filter=${filter}&$select=id,receivedDateTime`,
+      );
+      const ids = (listed?.value ?? [])
+        .sort((a, b) => (a.receivedDateTime ?? '').localeCompare(b.receivedDateTime ?? ''))
+        .map((m) => m.id);
+
+      // Step 2: fetch each message in full (guarantees body content).
       const select =
         'id,conversationId,subject,from,toRecipients,ccRecipients,body,bodyPreview,receivedDateTime,hasAttachments';
-      const data = await call<{ value: GraphFullMessage[] }>(
-        `/me/messages?$filter=${filter}&$select=${select}`,
+      const fetched = await Promise.all(
+        ids.map((id) => call<GraphFullMessage>(`/me/messages/${id}?$select=${select}`)),
       );
-      // Graph rejects $orderby alongside this $filter, so sort client-side.
-      const msgs = (data?.value ?? []).sort((a, b) =>
-        (a.receivedDateTime ?? '').localeCompare(b.receivedDateTime ?? ''),
-      );
+      const msgs = fetched.filter((m): m is GraphFullMessage => m != null);
 
       const messages: InsertMessage[] = [];
       const attachments: InsertAttachment[] = [];
@@ -268,19 +281,153 @@ export function createGraphDriver(auth: TokenProvider, providerId: string): Mail
     },
 
     async modifyLabels(threadId, addLabelIds, removeLabelIds) {
-      // Apply category changes to every message in the conversation.
+      // System labels map to Graph message properties; everything else is a category. Applied per message.
+      const SYSTEM = new Set(['UNREAD', 'STARRED', 'IMPORTANT']);
+      const add = new Set(addLabelIds);
+      const remove = new Set(removeLabelIds);
+      const addCats = addLabelIds.filter((l) => !SYSTEM.has(l));
+      const removeCats = removeLabelIds.filter((l) => !SYSTEM.has(l));
+
       const data = await call<{ value: { id: string; categories?: string[] }[] }>(
         `/me/messages?$filter=conversationId eq '${threadId}'&$select=id,categories`,
       );
+
       for (const msg of data?.value ?? []) {
-        const next = new Set(msg.categories ?? []);
-        addLabelIds.forEach((l) => next.add(l));
-        removeLabelIds.forEach((l) => next.delete(l));
-        await call(`/me/messages/${msg.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ categories: [...next] }),
+        const patch: Record<string, unknown> = {};
+        // read state (UNREAD present => not read)
+        if (add.has('UNREAD')) patch.isRead = false;
+        if (remove.has('UNREAD')) patch.isRead = true;
+        // star => flag
+        if (add.has('STARRED')) patch.flag = { flagStatus: 'flagged' };
+        if (remove.has('STARRED')) patch.flag = { flagStatus: 'notFlagged' };
+        // important => importance
+        if (add.has('IMPORTANT')) patch.importance = 'high';
+        if (remove.has('IMPORTANT')) patch.importance = 'normal';
+        // remaining labels => categories
+        if (addCats.length || removeCats.length) {
+          const next = new Set(msg.categories ?? []);
+          addCats.forEach((c) => next.add(c));
+          removeCats.forEach((c) => next.delete(c));
+          patch.categories = [...next];
+        }
+        if (Object.keys(patch).length > 0) {
+          await call(`/me/messages/${msg.id}`, { method: 'PATCH', body: JSON.stringify(patch) });
+        }
+      }
+    },
+
+    async trashThread(threadId) {
+      // Graph has no thread trash; move each message to Deleted Items ('deleteditems').
+      const data = await call<{ value: { id: string }[] }>(
+        `/me/messages?$filter=conversationId eq '${threadId}'&$select=id`,
+      );
+      for (const msg of data?.value ?? []) {
+        await call(`/me/messages/${msg.id}/move`, {
+          method: 'POST',
+          body: JSON.stringify({ destinationId: 'deleteditems' }),
         });
       }
+    },
+
+    async createDraft(input: DraftInput): Promise<{ id: string }> {
+      // A Graph draft is a message with isDraft=true; POST creates, PATCH updates.
+      const message = {
+        subject: input.subject,
+        body: { contentType: 'HTML', content: input.html },
+        toRecipients: input.to.map((address) => ({ emailAddress: { address } })),
+        ...(input.cc?.length
+          ? { ccRecipients: input.cc.map((address) => ({ emailAddress: { address } })) }
+          : {}),
+        ...(input.bcc?.length
+          ? { bccRecipients: input.bcc.map((address) => ({ emailAddress: { address } })) }
+          : {}),
+      };
+      const res = input.id
+        ? await call<{ id: string }>(`/me/messages/${input.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(message),
+          })
+        : await call<{ id: string }>(`/me/messages`, {
+            method: 'POST',
+            body: JSON.stringify(message),
+          });
+      return { id: res?.id ?? input.id ?? '' };
+    },
+
+    async getDraft(id: string): Promise<ParsedDraftResult> {
+      const select = 'id,subject,body,toRecipients,ccRecipients,bccRecipients';
+      const m = await call<GraphFullMessage & { bccRecipients?: GraphRecipient[] }>(
+        `/me/messages/${id}?$select=${select}`,
+      );
+      const emails = (list?: GraphRecipient[]) => mapRecipients(list).map((r) => r.email);
+      return {
+        id: m?.id ?? id,
+        to: emails(m?.toRecipients),
+        cc: emails(m?.ccRecipients),
+        bcc: emails(m?.bccRecipients),
+        subject: m?.subject ?? '',
+        content: m?.body?.content ?? '',
+      };
+    },
+
+    async listDrafts(opts = {}): Promise<DraftList> {
+      const { maxResults = 25, pageToken } = opts;
+      const path = pageToken
+        ? pageToken.replace(BASE, '')
+        : `/me/mailFolders/drafts/messages?$top=${maxResults}&$orderby=receivedDateTime desc&$select=id,conversationId`;
+      const data = await call<{ value: { id: string }[]; '@odata.nextLink'?: string }>(path);
+      return {
+        threads: (data?.value ?? []).map((m) => ({ id: m.id, historyId: null, $raw: m })),
+        nextPageToken: data?.['@odata.nextLink'] ?? null,
+      };
+    },
+
+    async deleteDraft(id: string): Promise<void> {
+      await call(`/me/messages/${id}`, { method: 'DELETE' });
+    },
+
+    async getEmailAliases() {
+      // No send-as list; proxyAddresses hold SMTP addresses ("SMTP:" = primary, "smtp:" = alias).
+      const me = await call<{ mail?: string; userPrincipalName?: string; proxyAddresses?: string[] }>(
+        `/me?$select=mail,userPrincipalName,proxyAddresses`,
+      );
+      const primaryEmail = me?.mail ?? me?.userPrincipalName ?? auth.getEmail() ?? '';
+      const smtp = (me?.proxyAddresses ?? []).filter((a) => /^smtp:/i.test(a));
+      const aliases = smtp.map((a) => ({
+        email: a.slice(a.indexOf(':') + 1),
+        name: '',
+        primary: a.startsWith('SMTP:'),
+      }));
+      if (!aliases.some((a) => a.primary) && primaryEmail) {
+        aliases.unshift({ email: primaryEmail, name: '', primary: true });
+      }
+      return aliases.length ? aliases : [{ email: primaryEmail, name: '', primary: true }];
+    },
+
+    async createLabel(input: { name: string; color?: LabelColor }): Promise<MailLabel> {
+      // Graph's label analog is a master category (color is a preset enum; displayName is the id).
+      const res = await call<{ id: string; displayName: string }>(`/me/outlook/masterCategories`, {
+        method: 'POST',
+        body: JSON.stringify({ displayName: input.name, color: 'preset0' }),
+      });
+      return { id: res?.displayName ?? input.name, name: res?.displayName ?? input.name, type: 'user' };
+    },
+
+    async updateLabel(id: string, input: { name: string; color?: LabelColor }): Promise<MailLabel> {
+      // PATCH needs the GUID; resolve from displayName. Renaming doesn't retag existing messages.
+      const guid = await categoryGuid(id);
+      if (guid) {
+        await call(`/me/outlook/masterCategories/${guid}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ displayName: input.name }),
+        });
+      }
+      return { id: input.name, name: input.name, type: 'user' };
+    },
+
+    async deleteLabel(id: string): Promise<void> {
+      const guid = await categoryGuid(id);
+      if (guid) await call(`/me/outlook/masterCategories/${guid}`, { method: 'DELETE' });
     },
   };
 }

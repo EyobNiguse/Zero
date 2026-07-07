@@ -1,7 +1,16 @@
 import { LoginClient } from './login-client';
-import { useLoaderData } from 'react-router';
+import { useLoaderData, redirect } from 'react-router';
+import type { Route } from './+types/page';
 
-export async function clientLoader() {
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  // Already connected in browser-first mode: bounce back to mail UNLESS the user
+  // explicitly asked to switch account (?switch=1 from the Login button). This
+  // absorbs any stray auto-navigation to /login without trapping real switches.
+  if (typeof window !== 'undefined' && localStorage.getItem('local.provider')) {
+    const wantsSwitch = new URL(request.url).searchParams.has('switch');
+    if (!wantsSwitch) throw redirect('/mail/inbox');
+  }
+
   const isProd = !import.meta.env.DEV;
 
   // Browser-first mode: the backend may be absent. Fall back to the two local

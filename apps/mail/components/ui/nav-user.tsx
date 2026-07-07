@@ -25,6 +25,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDoState } from '@/components/mail/use-do-state';
 import { useLoading } from '../context/loading-context';
 import { signOut, useSession } from '@/lib/auth-client';
+import { localSignOut } from '@/app/local/rpc/bridge';
 import { AddConnectionDialog } from '../connection/add';
 import { CircleCheck, ThreeDots } from '../icons/icons';
 import { useTRPC } from '@/providers/query-provider';
@@ -150,6 +151,18 @@ export function NavUser() {
   };
 
   const handleLogout = async () => {
+    // Browser-first mode: tear down the local provider + mirror, then hard-navigate to login.
+    if (typeof window !== 'undefined' && localStorage.getItem('local.provider')) {
+      toast.promise(localSignOut(), {
+        loading: 'Signing out...',
+        success: () => 'Signed out successfully!',
+        error: 'Error signing out',
+        finally() {
+          window.location.href = '/login';
+        },
+      });
+      return;
+    }
     toast.promise(signOut(), {
       loading: 'Signing out...',
       success: () => 'Signed out successfully!',
@@ -163,7 +176,7 @@ export function NavUser() {
 
   const otherConnections = useMemo(() => {
     if (!data || !activeAccount) return [];
-    return data.connections.filter((connection) => connection.id !== activeAccount?.id);
+    return (data.connections ?? []).filter((connection) => connection.id !== activeAccount?.id);
   }, [data, activeAccount]);
 
   const handleThemeToggle = () => {
@@ -386,7 +399,7 @@ export function NavUser() {
                   key={activeAccount.id}
                   onClick={handleAccountSwitch(activeAccount.id)}
                   className={`flex cursor-pointer items-center ${
-                    activeAccount.id === activeConnection?.id && data.connections.length > 1
+                    activeAccount.id === activeConnection?.id && (data.connections?.length ?? 0) > 1
                       ? 'outline-mainBlue rounded-[5px] outline outline-2'
                       : ''
                   }`}
@@ -407,7 +420,7 @@ export function NavUser() {
                           .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    {activeAccount.id === activeConnection?.id && data.connections.length > 1 && (
+                    {activeAccount.id === activeConnection?.id && (data.connections?.length ?? 0) > 1 && (
                       <CircleCheck className="fill-mainBlue absolute -bottom-2 -right-2 size-4 rounded-full bg-white dark:bg-[#141414]" />
                     )}
                   </div>

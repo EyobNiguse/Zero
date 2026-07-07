@@ -33,6 +33,13 @@ export const makeQueryClient = (connectionId: string | null) =>
     queryCache: new QueryCache({
       onError: (err, { meta }) => {
         if (meta && meta.noGlobalError === true) return;
+        // Browser-first mode: never sign out / redirect to /login on query errors
+        // (the backend is intentionally absent).
+        const localMode = typeof window !== 'undefined' && !!localStorage.getItem('local.provider');
+        if (localMode) {
+          console.error(err.message , 'query error (local mode)');
+          return; 
+        }
         if (meta && typeof meta.customError === 'string') console.error(meta.customError);
         else if (
           err.message === 'Required scopes missing' ||

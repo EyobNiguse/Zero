@@ -1,12 +1,6 @@
 /**
- * Ported verbatim from apps/server/src/routes/agent/db/index.ts — only the
- * `DB` type binding changed (durable-sqlite -> browser sqlite-proxy). The
- * Drizzle query builder is dialect-identical, so the bodies are untouched.
- *
- * Read/query functions run today. The write helpers that use `db.transaction`
- * (create, deleteSpamThreads, updateThreadLabels, addThreadLabels,
- * modifyThreadLabels) will throw under sqlite-proxy until they are moved onto
- * the batch path in the write/outbox step. See client.ts.
+ * Ported from apps/server/src/routes/agent/db/index.ts (only the DB type binding changed).
+ * db.transaction helpers throw under sqlite-proxy until moved onto the batch path.
  */
 import { eq, count, inArray, and, sql, desc, asc, lt, like, or } from 'drizzle-orm';
 import { threads, threadLabels, labels, messages, attachments } from './schema';
@@ -19,12 +13,7 @@ export type InsertMessage = typeof messages.$inferInsert;
 export type Attachment = typeof attachments.$inferSelect;
 export type InsertAttachment = typeof attachments.$inferInsert;
 
-/**
- * Structural subset satisfied by both the top-level DB and a transaction
- * handle. Used by helpers that run inside `db.transaction(...)`, since the
- * sqlite-proxy transaction object omits `.batch` and so isn't assignable to
- * the full LocalDB type.
- */
+/** Structural subset shared by the top-level DB and a transaction handle (which omits .batch). */
 type WritableDB = Pick<LocalDB, 'select' | 'insert' | 'delete' | 'update'>;
 
 export type Thread = typeof threads.$inferSelect;
@@ -95,20 +84,14 @@ export async function create(db: DB, thread: InsertThread, labelIds?: string[]):
   });
 }
 
-/**
- * Bulk upsert of provider threads into the local mirror. Runs on the batch
- * path (single BEGIN/COMMIT in client.ts) instead of db.transaction(), which
- * sqlite-proxy does not implement. onConflict guards make it idempotent, so
- * re-hydrating the same page is a no-op and refresh just updates changed rows.
- */
+/** Bulk upsert provider threads into the mirror (batch path, idempotent via onConflict). */
 export async function hydrateThreads(
   db: DB,
   items: { thread: InsertThread; labelIds: string[] }[],
 ): Promise<void> {
   if (items.length === 0) return;
 
-  // One insert for every label referenced across the page (deduped). name/color
-  // are placeholders until a real label sync exists — id is the source of truth.
+  // One insert per referenced label (deduped); name/color are placeholders until a real label sync.
   const labelIdSet = new Set<string>();
   for (const { labelIds } of items) for (const id of labelIds) labelIdSet.add(id);
 
@@ -141,12 +124,7 @@ export async function hydrateThreads(
   await db.batch(stmts as unknown as Parameters<typeof db.batch>[0]);
 }
 
-/**
- * Persist a thread's full messages + attachment metadata. Batch path, so
- * atomic and transaction-free. Re-fetching the same thread re-upserts rows
- * (idempotent). Attachment rows for a message are replaced wholesale to avoid
- * stale metadata when a provider re-numbers parts.
- */
+/** Persist a thread's messages + attachment metadata (batch path, idempotent). */
 export async function hydrateMessages(
   db: DB,
   msgs: InsertMessage[],
@@ -160,8 +138,7 @@ export async function hydrateMessages(
     stmts.push(db.insert(messages).values(m).onConflictDoUpdate({ target: [messages.id], set: m }));
   }
 
-  // Clear then re-insert this message set's attachments (attachments has an
-  // autoincrement PK, so upsert-by-id doesn't apply).
+  // Clear then re-insert attachments (autoincrement PK, so upsert-by-id doesn't apply).
   const messageIds = msgs.map((m) => m.id);
   stmts.push(db.delete(attachments).where(inArray(attachments.messageId, messageIds)));
   if (atts.length > 0) {
@@ -209,6 +186,38 @@ export async function ensureLabelsExist(db: DB, labelIds: string[]): Promise<str
   return labelIds;
 }
 
+/** Add + remove labels on a thread without a transaction (provider call is the source of truth). */
+export async function applyThreadLabels(
+  db: DB,
+  threadId: string,
+  add: string[],
+  remove: string[],
+): Promise<void> {
+  if (remove.length > 0) {
+    await db
+      .delete(threadLabels)
+      .where(and(eq(threadLabels.threadId, threadId), inArray(threadLabels.labelId, remove)));
+  }
+  if (add.length > 0) {
+    await ensureLabelsExist(db, add);
+    await db
+      .insert(threadLabels)
+      .values(add.map((labelId) => ({ threadId, labelId })))
+      .onConflictDoNothing();
+  }
+}
+
+/** Wipe the entire local mirror on sign-out / provider switch (children first). */
+export async function clearMirror(db: DB): Promise<void> {
+  await db.batch([
+    db.delete(threadLabels),
+    db.delete(attachments),
+    db.delete(messages),
+    db.delete(labels),
+    db.delete(threads),
+  ] as unknown as Parameters<typeof db.batch>[0]);
+}
+
 export async function del(db: DB, params: { id: string }): Promise<Thread | null> {
   const [thread] = await db.delete(threads).where(eq(threads.id, params.id)).returning();
   return thread || null;
@@ -244,11 +253,7 @@ export async function get(db: DB, params: { id: string }): Promise<Thread | null
   return result || null;
 }
 
-/**
- * List thread summaries, newest first. Filters keep providers from mixing
- * (opening a Gmail thread under the Graph driver 400s) and scope the view to a
- * folder/label. Both optional; omit for every stored thread.
- */
+/** List thread summaries, newest first; optional provider/label filters. */
 export async function list(
   db: DB,
   opts: { providerId?: string; labelId?: string } = {},
@@ -614,11 +619,17 @@ export async function findThreadsByFolderWithPagination(
   params: {
     pageToken?: string;
     maxResults: number;
+    /** Scope to one provider so a switched account never sees the other's mail. */
+    providerId?: string;
   },
 ): Promise<{ threads: Thread[]; nextPageToken: string | null }> {
-  const { pageToken, maxResults } = params;
+  const { pageToken, maxResults, providerId } = params;
 
   const conditions = [eq(threadLabels.labelId, folderLabel)];
+
+  if (providerId) {
+    conditions.push(eq(threads.providerId, providerId));
+  }
 
   if (pageToken) {
     conditions.push(lt(threads.latestReceivedOn, pageToken));
