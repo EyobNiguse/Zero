@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls apps/server/src/services/call-service/)",
+      "Bash(grep -rln \"elevenlabs\\\\|ElevenLabs\\\\|outbound\\\\|twilio.*call\\\\|/twiml\\\\|stream\" apps/server/src/services/call-service/)"
+    ]
+  }
+}

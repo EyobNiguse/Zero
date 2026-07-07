@@ -11,8 +11,13 @@ const ALLOWED_FOLDERS = new Set(['inbox', 'draft', 'sent', 'spam', 'bin', 'archi
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   if (!params.folder) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/mail/inbox`);
 
-  const session = await authProxy.api.getSession({ headers: request.headers });
-  if (!session) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/login`);
+  // Browser-first mode manages its own session (LocalMode); skip the server check.
+  const localMode =
+    typeof window !== 'undefined' && !!localStorage.getItem('local.provider');
+  if (!localMode) {
+    const session = await authProxy.api.getSession({ headers: request.headers });
+    if (!session) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/login`);
+  }
 
   return {
     folder: params.folder,

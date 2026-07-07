@@ -8,6 +8,7 @@ import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { useMemo, type PropsWithChildren } from 'react';
 import type { AppRouter } from '@zero/server/trpc';
+import { localLink } from '@/app/local/rpc/local-link';
 import { CACHE_BURST_KEY } from '@/lib/constants';
 import { signOut } from '@/lib/auth-client';
 import { get, set, del } from 'idb-keyval';
@@ -32,6 +33,13 @@ export const makeQueryClient = (connectionId: string | null) =>
     queryCache: new QueryCache({
       onError: (err, { meta }) => {
         if (meta && meta.noGlobalError === true) return;
+        // Browser-first mode: never sign out / redirect to /login on query errors
+        // (the backend is intentionally absent).
+        const localMode = typeof window !== 'undefined' && !!localStorage.getItem('local.provider');
+        if (localMode) {
+          console.error(err.message , 'query error (local mode)');
+          return; 
+        }
         if (meta && typeof meta.customError === 'string') console.error(meta.customError);
         else if (
           err.message === 'Required scopes missing' ||
@@ -87,7 +95,8 @@ export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRou
 
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
-    // loggerLink({ enabled: () => true }),
+    // Answers migrated paths from local SQLite; everything else falls through.
+    localLink,
     httpBatchLink({
       transformer: superjson,
       url: getUrl(),

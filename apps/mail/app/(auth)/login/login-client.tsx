@@ -6,6 +6,8 @@ import ErrorMessage from '@/app/(auth)/login/error-message';
 import { Button } from '@/components/ui/button';
 import { TriangleAlert } from 'lucide-react';
 import { signIn } from '@/lib/auth-client';
+import { createTokenProvider, type ProviderId } from '@/app/local/auth';
+import { activateLocal } from '@/app/local/rpc/activate';
 import { useNavigate } from 'react-router';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
@@ -107,20 +109,32 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
 
   const shouldShowSimplifiedMessage = isProd && hasMissingRequiredProviders;
 
-  const handleProviderClick = (provider: Provider) => {
+  const handleProviderClick = async (provider: Provider) => {
     if (provider.isCustom && provider.customRedirectPath) {
       navigate(provider.customRedirectPath);
-    } else {
-      toast.promise(
-        signIn.social({
-          provider: provider.id as any,
-          callbackURL: `${window.location.origin}/mail`,
-        }),
-        {
-          error: 'Login redirect failed',
-        },
-      );
+      return;
     }
+
+    // Browser-first auth: sign in client-side, register the local driver, then enter the mail UI.
+    if (provider.id === 'google' || provider.id === 'microsoft') {
+      const id = provider.id as ProviderId;
+      try {
+        const p = createTokenProvider(id);
+        localStorage.setItem('local.provider', id);
+        await p.signIn();
+        await activateLocal(p);
+        // Full-page load (not SPA navigate) so the app boots through the eager session patch.
+        window.location.href = '/mail/inbox';
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Sign-in failed');
+      }
+      return;
+    }
+
+    toast.promise(
+      signIn.social({ provider: provider.id as any, callbackURL: `${window.location.origin}/mail` }),
+      { error: 'Login redirect failed' },
+    );
   };
 
   const sortedProviders = [...displayProviders].sort((a, b) => {

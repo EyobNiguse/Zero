@@ -17,6 +17,9 @@ export default [
 
   route('/login', '(auth)/login/page.tsx'),
 
+  // Browser-first mail spike — signs in + lists threads directly from provider.
+  route('/local', 'local/page.tsx'),
+
   // Enable this when we have a zero signup page
   // route('/zero/signup', '(auth)/zero/signup/page.tsx'),
   // route('/zero/login', '(auth)/zero/login/page.tsx'),

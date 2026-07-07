@@ -5,6 +5,7 @@ import { useSearchValue } from '@/hooks/use-search-value';
 import { useTRPC } from '@/providers/query-provider';
 import useSearchLabels from './use-labels-search';
 import { useSession } from '@/lib/auth-client';
+import { isLocalActive } from '@/app/local/rpc/bridge';
 import { useAtom, useAtomValue } from 'jotai';
 import { useSettings } from './use-settings';
 import { useParams } from 'react-router';
@@ -76,7 +77,7 @@ export const useThread = (threadId: string | null) => {
         id: id!,
       },
       {
-        enabled: !!id && !!session?.user.id,
+        enabled: !!id && (!!session?.user.id || isLocalActive()),
         staleTime: 1000 * 60 * 60, // 1 minute
       },
     ),

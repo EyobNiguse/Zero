@@ -17,6 +17,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
+import { LogOut } from 'lucide-react';
+import { localSignOut } from '@/app/local/rpc/bridge';
 import { useAIFullScreen } from './ai-sidebar';
 import { useStats } from '@/hooks/use-stats';
 import { useLocation } from 'react-router';
@@ -27,6 +29,27 @@ import { NavUser } from './nav-user';
 import { NavMain } from './nav-main';
 import { useQueryState } from 'nuqs';
 // import { toast } from 'sonner';
+
+/** Local-mode account row + logout, standing in when there's no better-auth session. */
+function LocalLogout() {
+  const email = typeof window !== 'undefined' ? localStorage.getItem('local.email') : null;
+  const handle = async () => {
+    await localSignOut();
+    window.location.href = '/login';
+  };
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-lg border px-2 py-1.5">
+      <span className="text-muted-foreground truncate text-xs">{email || 'Local account'}</span>
+      <button
+        onClick={handle}
+        title="Log out"
+        className="text-muted-foreground hover:text-foreground cursor-pointer"
+      >
+        <LogOut className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isPro, isLoading } = useBilling();
@@ -100,7 +123,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarHeader
             className={`relative top-2.5 flex flex-col gap-2 ${state === 'collapsed' ? 'px-2' : 'md:px-4'}`}
           >
-            {session && <NavUser />}
+            {session ? (
+              <NavUser />
+            ) : (
+              typeof window !== 'undefined' &&
+              localStorage.getItem('local.provider') && <LocalLogout />
+            )}
 
             {showComposeButton && (
               <div className="flex gap-1">

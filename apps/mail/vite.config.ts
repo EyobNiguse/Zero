@@ -60,6 +60,11 @@ export default defineConfig({
   //       include: ['novel', '@tiptap/extension-placeholder'],
   //     },
   //   },
+  // @sqlite.org/sqlite-wasm ships its own .wasm and worker; let it load as-is
+  // instead of being pre-bundled (otherwise the wasm asset URL breaks in dev).
+  optimizeDeps: {
+    exclude: ['@sqlite.org/sqlite-wasm'],
+  },
   esbuild: {
     pure: ['console.log'],
   },
