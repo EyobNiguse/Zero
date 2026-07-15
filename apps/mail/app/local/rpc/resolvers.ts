@@ -9,6 +9,7 @@ import {
   getThreadLabels,
   applyThreadLabels,
   findThreadsByFolderWithPagination,
+  getFolderThreadSenders,
   searchThreads,
   replaceFolders,
   getFolders,
@@ -546,7 +547,65 @@ export async function pollChanges(): Promise<void> {
   if (changed) emitMirrorChanged();
 }
 
+export interface SenderGroup {
+  email: string;
+  name: string | null;
+  threadCount: number;
+}
+export interface DomainGroup {
+  domain: string;
+  threadCount: number;
+  senders: SenderGroup[];
+}
+export interface GroupInput {
+  folder?: string;
+  labelIds?: string[];
+}
+
+async function foldFolderSenders(input: GroupInput | undefined): Promise<SenderGroup[]> {
+  const providerId = getActiveProvider()!.provider;
+  const db = await getLocalDB();
+  const folderId = providerFolder(providerId, input?.folder);
+  const rows = await getFolderThreadSenders(db, folderId, {
+    providerId,
+    labelIds: input?.labelIds ?? [],
+  });
+
+  const byEmail = new Map<string, SenderGroup>();
+  for (const r of rows) {
+    const email = r.latestSender?.email?.trim().toLowerCase();
+    if (!email) continue;
+    const cur = byEmail.get(email);
+    if (cur) cur.threadCount++;
+    else byEmail.set(email, { email, name: r.latestSender?.name?.trim() || null, threadCount: 1 });
+  }
+  return [...byEmail.values()].sort((a, b) => b.threadCount - a.threadCount);
+}
+
+export async function listSenders(input?: GroupInput): Promise<SenderGroup[]> {
+  return foldFolderSenders(input);
+}
+
+export async function listDomains(input?: GroupInput): Promise<DomainGroup[]> {
+  const senders = await foldFolderSenders(input);
+  const byDomain = new Map<string, DomainGroup>();
+  for (const s of senders) {
+    const domain = s.email.slice(s.email.indexOf('@') + 1);
+    let group = byDomain.get(domain);
+    if (!group) {
+      group = { domain, threadCount: 0, senders: [] };
+      byDomain.set(domain, group);
+    }
+    group.threadCount += s.threadCount;
+    group.senders.push(s);
+  }
+  return [...byDomain.values()].sort((a, b) => b.threadCount - a.threadCount);
+}
+
 export const localResolvers: Record<string, (input: any) => Promise<any>> = {
+  'mail.listDomains': async (input) => listDomains(input),
+  'mail.listSenders': async (input) => listSenders(input),
+
   // SQLite is the read path. Cold (nothing mirrored) blocks on the provider because there's nothing
   // to show; warm serves SQLite immediately and refreshes behind the response. The cursor is a
   // SQLite date cursor, not a provider page token, so paging never touches the network.
@@ -578,6 +637,8 @@ export const localResolvers: Record<string, (input: any) => Promise<any>> = {
         maxResults: PAGE_SIZE,
         providerId,
         labelIds,
+        senderEmail: input?.senderEmail,
+        domain: input?.domain,
       });
 
     const toPage = (page: Awaited<ReturnType<typeof read>>) => ({

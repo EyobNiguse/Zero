@@ -12,6 +12,7 @@ import {
   folders,
   syncState,
   outbox,
+  type Sender,
 } from './schema';
 import type { MailFolder } from '../mail/types';
 import type { LocalDB } from './client';
@@ -835,9 +836,11 @@ export async function findThreadsByFolderWithPagination(
     providerId?: string;
     /** Extra labels the thread must ALSO carry (sidebar label filter). */
     labelIds?: string[];
+    senderEmail?: string;
+    domain?: string;
   },
 ): Promise<{ threads: Thread[]; nextPageToken: string | null }> {
-  const { pageToken, maxResults, providerId, labelIds } = params;
+  const { pageToken, maxResults, providerId, labelIds, senderEmail, domain } = params;
 
   const required = [...new Set([folderLabel, ...(labelIds ?? [])])];
 
@@ -846,6 +849,9 @@ export async function findThreadsByFolderWithPagination(
   if (providerId) {
     conditions.push(eq(threads.providerId, providerId));
   }
+
+  if (senderEmail) conditions.push(senderEmailEq(senderEmail));
+  if (domain) conditions.push(senderDomainEq(domain));
 
   // Keyset on (latestReceivedOn, id), not the timestamp alone: Graph's receivedDateTime is only
   // second-precision, so bulk-delivered mail ties, and a strict `<` would skip a tied thread that
@@ -883,6 +889,38 @@ export async function findThreadsByFolderWithPagination(
     hasNextPage && last?.latestReceivedOn ? `${last.latestReceivedOn}|${last.id}` : null;
 
   return { threads: threadResults, nextPageToken };
+}
+
+// --- sender / domain grouping ------------------------------------------------
+
+const senderEmailExpr = sql`lower(json_extract(${threads.latestSender}, '$.email'))`;
+const senderDomainExpr = sql`substr(${senderEmailExpr}, instr(${senderEmailExpr}, '@') + 1)`;
+
+function senderEmailEq(email: string) {
+  return sql`${senderEmailExpr} = ${email.toLowerCase()}`;
+}
+function senderDomainEq(domain: string) {
+  return sql`${senderDomainExpr} = ${domain.toLowerCase()}`;
+}
+
+export async function getFolderThreadSenders(
+  db: DB,
+  folderLabel: string,
+  params: { providerId?: string; labelIds?: string[] },
+): Promise<{ id: string; latestSender: Sender | null }[]> {
+  const { providerId, labelIds } = params;
+  const required = [...new Set([folderLabel, ...(labelIds ?? [])])];
+
+  const conditions = [inArray(threadLabels.labelId, required)];
+  if (providerId) conditions.push(eq(threads.providerId, providerId));
+
+  return db
+    .select({ id: threads.id, latestSender: threads.latestSender })
+    .from(threads)
+    .innerJoin(threadLabels, eq(threads.id, threadLabels.threadId))
+    .where(and(...conditions))
+    .groupBy(threads.id)
+    .having(sql`count(distinct ${threadLabels.labelId}) = ${required.length}`);
 }
 
 // --- folders -----------------------------------------------------------------

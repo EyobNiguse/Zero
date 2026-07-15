@@ -26,6 +26,14 @@ import { useOptimisticActions } from '@/hooks/use-optimistic-actions';
 import { useMail, type Config } from '@/components/mail/use-mail';
 import { type ThreadDestination } from '@/lib/thread-actions';
 import { useThread, useThreads } from '@/hooks/use-threads';
+import {
+  useDomains,
+  useSenders,
+  useGroupThreads,
+  type DomainGroup,
+  type SenderGroup,
+} from '@/hooks/use-thread-groups';
+import { isLocalActive } from '@/app/local/rpc/bridge';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { EmptyStateIcon } from '../icons/empty-state-svg';
 import { highlightText } from '@/lib/email-utils.client';
@@ -39,7 +47,7 @@ import { BimiAvatar } from '../ui/bimi-avatar';
 import { RenderLabels } from './render-labels';
 import { Badge } from '@/components/ui/badge';
 import { useDraft } from '@/hooks/use-drafts';
-import { Check, Star } from 'lucide-react';
+import { Check, ChevronRight, Star } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { m } from '@/paraglide/messages';
 import { useParams } from 'react-router';
@@ -703,6 +711,199 @@ const Draft = memo(({ message, index }: { message: { id: string }; index: number
 
 Draft.displayName = 'Draft';
 
+type GroupView = 'list' | 'senders' | 'domains';
+type OnMailClick = (message: ParsedMessage) => () => void;
+
+const Spinner = () => (
+  <div className="flex w-full justify-center py-4">
+    <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+  </div>
+);
+
+const GroupThreadRows = memo(function GroupThreadRows({
+  filter,
+  onMailClick,
+}: {
+  filter: { senderEmail?: string; domain?: string };
+  onMailClick: OnMailClick;
+}) {
+  const { threads, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useGroupThreads(filter);
+
+  if (isLoading) return <Spinner />;
+  if (!threads.length)
+    return <div className="px-4 py-2 text-xs text-muted-foreground">No threads</div>;
+
+  return (
+    <div>
+      {threads.map((t, i) => (
+        <Thread
+          key={t.id}
+          message={t}
+          index={i}
+          isKeyboardFocused={false}
+          onClick={onMailClick}
+        />
+      ))}
+      {hasNextPage ? (
+        <button
+          type="button"
+          className="w-full py-2 text-xs text-muted-foreground hover:underline"
+          disabled={isFetchingNextPage}
+          onClick={() => void fetchNextPage()}
+        >
+          {isFetchingNextPage ? 'Loading…' : 'Load more'}
+        </button>
+      ) : null}
+    </div>
+  );
+});
+
+const NodeChevron = ({ open }: { open: boolean }) => (
+  <ChevronRight
+    className={cn('h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform', open && 'rotate-90')}
+  />
+);
+
+const SenderNode = memo(function SenderNode({
+  sender,
+  onMailClick,
+  indent = false,
+}: {
+  sender: SenderGroup;
+  onMailClick: OnMailClick;
+  indent?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          'flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50',
+          indent && 'pl-8',
+        )}
+      >
+        <NodeChevron open={open} />
+        <span className="truncate text-sm font-medium">{sender.name || sender.email}</span>
+        {sender.name ? (
+          <span className="truncate text-xs text-muted-foreground">{sender.email}</span>
+        ) : null}
+        <Badge className="ml-auto rounded-md" variant="secondary">
+          {sender.threadCount}
+        </Badge>
+      </button>
+      {open ? (
+        <div className="border-l border-border/60 pl-2">
+          <GroupThreadRows filter={{ senderEmail: sender.email }} onMailClick={onMailClick} />
+        </div>
+      ) : null}
+    </div>
+  );
+});
+
+const DomainNode = memo(function DomainNode({
+  domain,
+  onMailClick,
+}: {
+  domain: DomainGroup;
+  onMailClick: OnMailClick;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50"
+      >
+        <NodeChevron open={open} />
+        <span className="truncate text-sm font-medium">{domain.domain}</span>
+        <span className="text-xs text-muted-foreground">
+          {domain.senders.length} sender{domain.senders.length === 1 ? '' : 's'}
+        </span>
+        <Badge className="ml-auto rounded-md" variant="secondary">
+          {domain.threadCount}
+        </Badge>
+      </button>
+      {open ? (
+        <div className="border-l border-border/60 pl-2">
+          {domain.senders.map((s) => (
+            <SenderNode key={s.email} sender={s} onMailClick={onMailClick} indent />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+});
+
+const GroupedList = memo(function GroupedList({
+  view,
+  onMailClick,
+}: {
+  view: 'senders' | 'domains';
+  onMailClick: OnMailClick;
+}) {
+  const senders = useSenders();
+  const domains = useDomains();
+  const query = view === 'senders' ? senders : domains;
+
+  if (query.isLoading) return <Spinner />;
+
+  const empty = view === 'senders' ? !senders.data?.length : !domains.data?.length;
+  if (empty)
+    return (
+      <div className="flex w-full justify-center py-8 text-sm text-muted-foreground">
+        Nothing to group here yet
+      </div>
+    );
+
+  return (
+    <div className="flex-1 divide-y divide-border/60 overflow-y-auto scrollbar-none">
+      {view === 'senders'
+        ? senders.data!.map((s) => (
+            <SenderNode key={s.email} sender={s} onMailClick={onMailClick} />
+          ))
+        : domains.data!.map((d) => (
+            <DomainNode key={d.domain} domain={d} onMailClick={onMailClick} />
+          ))}
+    </div>
+  );
+});
+
+const GROUP_TABS: { value: GroupView; label: string }[] = [
+  { value: 'list', label: 'List' },
+  { value: 'senders', label: 'By User' },
+  { value: 'domains', label: 'By Domain' },
+];
+
+const GroupTabs = ({
+  view,
+  onChange,
+}: {
+  view: GroupView;
+  onChange: (v: GroupView) => void;
+}) => (
+  <div className="flex shrink-0 items-center gap-1 border-b border-border/60 px-2 py-1.5">
+    {GROUP_TABS.map((t) => (
+      <button
+        key={t.value}
+        type="button"
+        onClick={() => onChange(t.value)}
+        className={cn(
+          'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+          view === t.value
+            ? 'bg-muted text-foreground'
+            : 'text-muted-foreground hover:text-foreground',
+        )}
+      >
+        {t.label}
+      </button>
+    ))}
+  </div>
+);
+
 export const MailList = memo(
   function MailList() {
     const { folder } = useParams<{ folder: string }>();
@@ -711,6 +912,10 @@ export const MailList = memo(
     const [, setDraftId] = useQueryState('draftId');
     const [searchValue, setSearchValue] = useSearchValue();
     const [anchorIndex, setAnchorIndex] = useState<number | null>(null);
+    const [viewRaw, setView] = useQueryState('view');
+    const localGrouping = isLocalActive();
+    const view: GroupView =
+      localGrouping && (viewRaw === 'senders' || viewRaw === 'domains') ? viewRaw : 'list';
 
     useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
@@ -947,11 +1152,19 @@ export const MailList = memo(
     );
 
     return (
-      <>
+      <div className="flex h-full w-full flex-col overflow-hidden">
+        {localGrouping ? (
+          <GroupTabs view={view} onChange={(v) => void setView(v === 'list' ? null : v)} />
+        ) : null}
+        {view !== 'list' ? (
+          <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+            <GroupedList view={view} onMailClick={handleMailClick} />
+          </div>
+        ) : (
         <div
           ref={parentRef}
           className={cn(
-            'hide-link-indicator flex h-full w-full',
+            'hide-link-indicator flex min-h-0 w-full flex-1',
             getSelectMode() === 'range' && 'select-none',
           )}
         >
@@ -1004,7 +1217,8 @@ export const MailList = memo(
             )}
           </>
         </div>
-        <div className="w-full pt-2 text-center">
+        )}
+        <div className="w-full shrink-0 pt-2 text-center">
           {isFetching ? (
             <div className="text-center">
               <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
@@ -1013,7 +1227,7 @@ export const MailList = memo(
             <div className="h-2" />
           )}
         </div>
-      </>
+      </div>
     );
   },
   () => true,
