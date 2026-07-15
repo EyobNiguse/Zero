@@ -36,12 +36,12 @@ import { memo, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { EmailVerificationBadge } from './email-verification-badge';
-import type { Sender, ParsedMessage, Attachment } from '@/types';
+import type { Sender, ParsedMessage, ThreadAttachment } from '@/types';
 import { useActiveConnection } from '@/hooks/use-connections';
 import { useAttachments } from '@/hooks/use-attachments';
 import { useTRPC } from '@/providers/query-provider';
 import { useThreadLabels } from '@/hooks/use-labels';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Markdown } from '@react-email/components';
 import { useSummary } from '@/hooks/use-summary';
 import { TextShimmer } from '../ui/text-shimmer';
@@ -156,7 +156,7 @@ type Props = {
   onReply?: () => void;
   onReplyAll?: () => void;
   onForward?: () => void;
-  threadAttachments?: Attachment[];
+  threadAttachments?: ThreadAttachment[];
 };
 
 const MailDisplayLabels = ({ labels }: { labels: string[] }) => {
@@ -253,13 +253,31 @@ const cleanNameDisplay = (name?: string) => {
   return name.trim();
 };
 
-const ThreadAttachments = ({ attachments }: { attachments: Attachment[] }) => {
+const ThreadAttachments = ({ attachments }: { attachments: ThreadAttachment[] }) => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
   if (!attachments || attachments.length === 0) return null;
 
-  const handleDownload = async (attachment: Attachment) => {
+  const handleDownload = async (attachment: ThreadAttachment) => {
     try {
-      // Convert base64 to blob
-      const byteCharacters = atob(attachment.body);
+      // The thread payload carries attachment metadata without the bytes, so fetch them here.
+      // staleTime 0 on purpose: useAttachments caches this key for an hour, and it may well have
+      // cached an empty list from before the thread finished syncing. Trusting that cache is what
+      // made this throw "not found" for an attachment sitting right there in the list.
+      let body = attachment.body;
+      if (!body) {
+        const fetched = await queryClient.fetchQuery(
+          trpc.mail.getMessageAttachments.queryOptions(
+            { messageId: attachment.messageId },
+            { staleTime: 0 },
+          ),
+        );
+        body = fetched?.find((a) => a.attachmentId === attachment.attachmentId)?.body ?? '';
+      }
+      if (!body) throw new Error('Attachment data not found');
+
+      const byteCharacters = atob(body);
       const byteNumbers: number[] = Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -278,6 +296,7 @@ const ThreadAttachments = ({ attachments }: { attachments: Attachment[] }) => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading attachment:', error);
+      toast.error('Failed to download attachment');
     }
   };
 

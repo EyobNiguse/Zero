@@ -5,6 +5,11 @@ import type { InsertThread, InsertMessage, InsertAttachment } from '../db/querie
 export interface NormalizedThread {
   thread: InsertThread;
   labelIds: string[];
+  /**
+   * The thread's newest message, without a body. Lets the list render a row from the mirror
+   * instead of fetching the whole thread; the real messages land when the thread is opened.
+   */
+  latestMessage?: InsertMessage;
 }
 
 /** A navigable mail folder/label (Gmail label or Graph mailFolder). */
@@ -25,6 +30,8 @@ export interface MailFolder {
   role: FolderRole | null;
   unread?: number | null;
   total?: number | null;
+  /** Nested child folders (Graph childFolders); empty/undefined for a leaf. */
+  children?: MailFolder[];
 }
 
 export interface ThreadPage {
@@ -36,6 +43,16 @@ export interface ThreadPage {
 export interface ThreadDetail {
   messages: InsertMessage[];
   attachments: InsertAttachment[];
+}
+
+/** Incremental changes to one folder since `cursor`. */
+export interface FolderChanges {
+  threads: NormalizedThread[];
+  removedMessageIds: string[];
+  /** Opaque; hand back verbatim next round. Null when the provider gave none. */
+  cursor: string | null;
+  /** The cursor aged out — drop it and do a full sync instead. */
+  resyncRequired: boolean;
 }
 
 /** Raw attachment bytes, fetched on demand for download / inline render. */
@@ -128,6 +145,23 @@ export interface MailDriver {
   /** Full contents of one thread: messages + bodies + attachment metadata. */
   getThread(threadId: string): Promise<ThreadDetail>;
 
+  /**
+   * Changes since `cursor`. Absent on providers with no delta API.
+   *
+   * `folderId: null` means the whole mailbox — Gmail's history is mailbox-wide, so one read covers
+   * every label. Graph's delta only exists per folder, so it requires an id.
+   */
+  listChanges?(folderId: string | null, cursor: string | null): Promise<FolderChanges>;
+
+  /**
+   * Several folders' changes in one round trip, keyed by folder id. Only worth implementing where
+   * delta is per-folder and the API can batch (Graph), since keeping N folders fresh would otherwise
+   * cost N requests per poll. Callers fall back to looping `listChanges` when this is absent.
+   */
+  listChangesMany?(
+    scopes: { folderId: string; cursor: string | null }[],
+  ): Promise<Record<string, FolderChanges>>;
+
   /** Raw bytes for one attachment, fetched on demand. */
   getAttachment(messageId: string, attachmentId: string): Promise<AttachmentBytes>;
 
@@ -135,7 +169,7 @@ export interface MailDriver {
 
   modifyLabels(threadId: string, addLabelIds: string[], removeLabelIds: string[]): Promise<void>;
 
-  /** Move a whole thread/conversation to the provider's trash. */
+  /** Move a whole thread/conversation to the provider's trash (Deleted Items / TRASH). */
   trashThread(threadId: string): Promise<void>;
 
   /** Create a draft, or replace it in place when input.id is set. */

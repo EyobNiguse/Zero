@@ -20,6 +20,12 @@ const SETTINGS_KEY = 'local.settings';
 const TEMPLATES_KEY = 'local.templates';
 const NOTES_KEY = 'local.notes';
 
+/** Everything the user authored locally. Sign-out keeps this; deleting the account must not. */
+export function clearAll(): void {
+  if (typeof window === 'undefined') return;
+  for (const key of [SETTINGS_KEY, TEMPLATES_KEY, NOTES_KEY]) localStorage.removeItem(key);
+}
+
 // --- settings (singleton) ---
 export function getSettings(): UserSettings {
   return { ...defaultUserSettings, ...read<Partial<UserSettings>>(SETTINGS_KEY, {}) };

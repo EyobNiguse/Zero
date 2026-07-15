@@ -29,7 +29,7 @@ import { useThread, useThreads } from '@/hooks/use-threads';
 import { useAISidebar } from '@/components/ui/ai-sidebar';
 import { EmptyStateIcon } from '../icons/empty-state-svg';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { ParsedMessage, Attachment } from '@/types';
+import type { ParsedMessage, ThreadAttachment } from '@/types';
 import { useAnimations } from '@/hooks/use-animations';
 import { AnimatePresence, motion } from 'motion/react';
 import { MailDisplaySkeleton } from './mail-skeleton';
@@ -170,9 +170,10 @@ export function ThreadDisplay() {
   // Collect all attachments from all messages in the thread
   const allThreadAttachments = useMemo(() => {
     if (!emailData?.messages) return [];
-    return emailData.messages.reduce<Attachment[]>((acc, message) => {
+    return emailData.messages.reduce<ThreadAttachment[]>((acc, message) => {
       if (message.attachments && message.attachments.length > 0) {
-        acc.push(...message.attachments);
+        // The thread payload has no attachment bytes — keep the message id so the download can fetch them.
+        acc.push(...message.attachments.map((a) => ({ ...a, messageId: message.id })));
       }
       return acc;
     }, []);
@@ -1005,7 +1006,7 @@ interface MessageListProps {
   messages: ParsedMessage[];
   isFullscreen: boolean;
   totalReplies?: number;
-  allThreadAttachments?: Attachment[];
+  allThreadAttachments?: ThreadAttachment[];
   mode?: string;
   activeReplyId?: string;
   isMobile: boolean;

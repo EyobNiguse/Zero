@@ -71,6 +71,10 @@ export const useThread = (threadId: string | null) => {
   const { data: settings } = useSettings();
   const { theme: systemTheme } = useTheme();
 
+  // The list already cached this thread's row-level stub under the same key. Without dropping
+  // staleTime for the opened thread, clicking it would serve that stub and never fetch the bodies.
+  const isOpen = !!id && id === _threadId;
+
   const threadQuery = useQuery(
     trpc.mail.get.queryOptions(
       {
@@ -78,7 +82,7 @@ export const useThread = (threadId: string | null) => {
       },
       {
         enabled: !!id && (!!session?.user.id || isLocalActive()),
-        staleTime: 1000 * 60 * 60, // 1 minute
+        staleTime: isOpen ? 0 : 1000 * 60 * 60,
       },
     ),
   );

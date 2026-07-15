@@ -13,9 +13,10 @@ import type { Label as LabelType } from '@/types';
 import { Link, useLocation } from 'react-router';
 import { m } from '../../paraglide/messages.js';
 import { Button } from '@/components/ui/button';
-import { useLabels } from '@/hooks/use-labels';
+import { useLabels, useRoleSubfolders } from '@/hooks/use-labels';
 import { Badge } from '@/components/ui/badge';
 import { useStats } from '@/hooks/use-stats';
+import { RecursiveFolder } from './recursive-folder';
 import SidebarLabels from './sidebar-labels';
 import { useCallback, useRef } from 'react';
 import { BASE_URL } from '@/lib/constants';
@@ -69,7 +70,8 @@ export function NavMain({ items }: NavMainProps) {
 
   const { mutateAsync: createLabel } = useMutation(trpc.labels.create.mutationOptions());
 
-  const { userLabels, refetch } = useLabels();
+  const { folderLabels, refetch } = useLabels();
+  const roleSubfolders = useRoleSubfolders();
 
   const { state } = useSidebar();
 
@@ -222,16 +224,33 @@ export function NavMain({ items }: NavMainProps) {
                 <div className="bg-muted-foreground/50 mx-2 mb-4 mt-2 h-[0.5px] dark:bg-[#262626]" />
               )}
               <div className="z-20 space-y-1 pb-2">
-                {section.items.map((item) => (
-                  <NavItem
-                    key={item.url}
-                    {...item}
-                    isActive={isUrlActive(item.url)}
-                    href={getHref(item)}
-                    target={item.target}
-                    title={item.title}
-                  />
-                ))}
+                {section.items.map((item) => {
+                  // Outlook nests user folders under Inbox/Archive/Sent. Hang them off the matching
+                  // nav item so they're reachable without listing Inbox twice.
+                  const subfolders = item.id ? roleSubfolders.get(item.id) : undefined;
+                  return (
+                    <React.Fragment key={item.url}>
+                      <NavItem
+                        {...item}
+                        isActive={isUrlActive(item.url)}
+                        href={getHref(item)}
+                        target={item.target}
+                        title={item.title}
+                      />
+                      {subfolders?.length && state !== 'collapsed' ? (
+                        <div className="ml-3">
+                          {subfolders.map((folder) => (
+                            <RecursiveFolder
+                              key={folder.id}
+                              label={folder}
+                              activeAccount={activeAccount}
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </SidebarMenuItem>
           </Collapsible>
@@ -243,7 +262,8 @@ export function NavMain({ items }: NavMainProps) {
                 <span className="text-muted-foreground text-[13px] dark:text-[#898989]">
                   {activeAccount?.providerId === 'google' ? 'Labels' : 'Folders'}
                 </span>
-                {activeAccount?.providerId === 'google' ? (
+                {/* Google only: on Graph, createLabel makes an Outlook category, not a folder. */}
+                {activeAccount?.providerId === 'google' && (
                   <LabelDialog
                     trigger={
                       <Button
@@ -256,10 +276,10 @@ export function NavMain({ items }: NavMainProps) {
                     }
                     onSubmit={onSubmit}
                   />
-                ) : activeAccount?.providerId === 'microsoft' ? null : null}
+                )}
               </div>
 
-              {activeAccount ? <SidebarLabels data={userLabels ?? []} /> : null}
+              {activeAccount ? <SidebarLabels data={folderLabels ?? []} /> : null}
             </SidebarMenuItem>
           </Collapsible>
         )}

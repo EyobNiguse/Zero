@@ -7,6 +7,10 @@ export type Label = {
   };
   type: string;
   labels?: Label[];
+  /** Local mode only; server mode omits these. */
+  role?: string | null;
+  unread?: number;
+  total?: number;
 };
 
 export interface User {
@@ -103,6 +107,13 @@ export interface Attachment {
   body: string;
   headers: { name?: string | null; value?: string | null }[];
 }
+
+/**
+ * Thread-level attachment view. The thread payload carries metadata only — `body` is empty — so the
+ * message it belongs to has to travel with it, to fetch the bytes on demand.
+ */
+export type ThreadAttachment = Attachment & { messageId: string };
+
 export interface MailListProps {
   isCompact?: boolean;
 }

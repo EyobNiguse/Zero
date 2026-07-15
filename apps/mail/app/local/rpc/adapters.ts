@@ -1,6 +1,6 @@
 import type { ParsedMessage } from '../../../../server/src/types';
 import type { IGetThreadResponse } from '../../../../server/src/lib/driver/types';
-import type { Message, Attachment, Label } from '../db';
+import type { Message, AttachmentMeta, Label } from '../db';
 
 /** Strip tags/entities down to readable text for the list-row preview. */
 function stripHtml(html: string): string {
@@ -15,7 +15,11 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-export function toParsedMessage(m: Message, atts: Attachment[], labels: Label[] = []): ParsedMessage {
+export function toParsedMessage(
+  m: Message,
+  atts: AttachmentMeta[],
+  labels: Label[] = [],
+): ParsedMessage {
   const fullHtml = m.bodyHtml ?? m.bodyText ?? '';
   const unread = labels.some((l) => l.name === 'UNREAD');
   // List rows render `body` as text; keep it a clean, short plain-text preview.
@@ -54,12 +58,18 @@ export function toParsedMessage(m: Message, atts: Attachment[], labels: Label[] 
   };
 }
 
-export function toThreadResponse(messages: ParsedMessage[], labels: Label[]): IGetThreadResponse {
+export function toThreadResponse(
+  messages: ParsedMessage[],
+  labels: Label[],
+  /** The thread row's count. Only the mirrored messages are known otherwise, which is 1 for a
+   *  thread the list has seen but nobody has opened. */
+  replyCount?: number | null,
+): IGetThreadResponse {
   return {
     messages,
     latest: messages[messages.length - 1],
     hasUnread: labels.some((l) => l.name === 'UNREAD'),
-    totalReplies: messages.length,
+    totalReplies: Math.max(replyCount ?? 0, messages.length),
     labels: labels.map((l) => ({ id: l.id, name: l.name })),
   };
 }

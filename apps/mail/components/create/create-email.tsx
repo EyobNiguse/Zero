@@ -11,7 +11,7 @@ import { EmailComposer } from './email-composer';
 import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { useDraft } from '@/hooks/use-drafts';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { Attachment } from '@/types';
 import { useQueryState } from 'nuqs';
@@ -50,16 +50,31 @@ export function CreateEmail({
 
   const { data: aliases } = useEmailAliases();
   const [draftId, setDraftId] = useQueryState('draftId');
-  const {
-    data: draft,
-    isLoading: isDraftLoading,
-    error: draftError,
-  } = useDraft(draftId ?? propDraftId ?? null);
+  const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
+
+  /**
+   * The draft to *load* — snapshotted when the composer opens.
+   *
+   * ?draftId means two different things: the draft the user opened, and the draft autosave just
+   * created out of what they're typing. Loading the second one remounts the composer mid-compose
+   * (it is keyed on the draft below), which silently throws away anything not in the saved draft —
+   * attachments most visibly. So adopt the id the composer opened with, and ignore autosave's.
+   */
+  const [loadDraftId, setLoadDraftId] = useState<string | null>(null);
+  const wasOpen = useRef(false);
+
+  useEffect(() => {
+    const open = isComposeOpen === 'true';
+    if (open && !wasOpen.current) setLoadDraftId(draftId ?? propDraftId ?? null);
+    if (!open) setLoadDraftId(null);
+    wasOpen.current = open;
+  }, [isComposeOpen, draftId, propDraftId]);
+
+  const { data: draft, isLoading: isDraftLoading, error: draftError } = useDraft(loadDraftId);
 
   const [, setIsDraftFailed] = useState(false);
   const trpc = useTRPC();
   const { mutateAsync: sendEmail } = useMutation(trpc.mail.send.mutationOptions());
-  const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
   const [, setThreadId] = useQueryState('threadId');
   const [, setActiveReplyId] = useQueryState('activeReplyId');
   const { data: activeConnection } = useActiveConnection();
@@ -226,7 +241,10 @@ export function CreateEmail({
             </div>
           ) : (
             <EmailComposer
-              key={typedDraft?.id || undoEmailData?.to?.join(',') || 'composer'}
+              // Keyed so opening a different draft re-initializes the form. It must not key on the
+              // *loaded* draft: that id appears asynchronously — including the one autosave mints
+              // mid-compose — and remounting then wipes whatever hasn't been saved yet.
+              key={loadDraftId || undoEmailData?.to?.join(',') || 'composer'}
               className="mb-12 rounded-2xl border"
               onSendEmail={handleSendEmail}
               initialMessage={

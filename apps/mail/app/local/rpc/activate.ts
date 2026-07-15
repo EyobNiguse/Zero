@@ -1,4 +1,4 @@
-import { setActiveProvider } from './bridge';
+import { setActiveProvider, getLocalDB } from './bridge';
 import { getSession } from '@/lib/auth-client';
 import { resetSyncState } from './sync-state';
 import type { TokenProvider } from '../auth';
@@ -34,7 +34,10 @@ export async function activateLocal(p: TokenProvider) {
   localStorage.setItem('local.email', email);
   installLocalSessionPatch();
   setActiveProvider(p);
-  // Fresh login: drop stale sync timestamps so the first read re-syncs.
-  resetSyncState();
+  try {
+    await resetSyncState(await getLocalDB());
+  } catch {
+    /* mirror may not exist yet on a first login */
+  }
   await getSession();
 }

@@ -68,6 +68,9 @@ async function boot(): Promise<RawDb> {
     db = new (sqlite3 as any).oo1.DB(':memory:', 'c') as RawDb;
   }
   db.exec('PRAGMA foreign_keys = ON;');
+  // Mail bodies live in this file. Without this, a DELETE only unlinks the page — the plaintext
+  // stays on disk until something reuses it, so sign-out would leave the mailbox recoverable.
+  db.exec('PRAGMA secure_delete = ON;');
   runMigrations(db as unknown as RawSqlite);
   return db;
 }

@@ -12,6 +12,7 @@ import type {
   SendInput,
   SendResult,
   NormalizedThread,
+  FolderChanges,
   ThreadDetail,
   AttachmentBytes,
   DraftInput,
@@ -21,7 +22,14 @@ import type {
   LabelColor,
 } from './types';
 
-const BASE = 'https://gmail.googleapis.com/gmail/v1/users/me';
+const API_PATH = '/gmail/v1/users/me';
+const BASE = `https://gmail.googleapis.com${API_PATH}`;
+const BATCH_URL = 'https://gmail.googleapis.com/batch/gmail/v1';
+/** Google allows 100 per batch but advises staying under 50. */
+const BATCH_LIMIT = 50;
+
+const THREAD_METADATA =
+  '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date';
 
 /** Gmail system-label id -> navigable folder role. */
 const GMAIL_ROLE: Record<string, FolderRole> = {
@@ -33,6 +41,20 @@ const GMAIL_ROLE: Record<string, FolderRole> = {
   STARRED: 'starred',
   IMPORTANT: 'important',
 };
+
+interface GmailHistoryMessage {
+  message: { id: string; threadId: string };
+}
+
+interface GmailHistoryPage {
+  history?: {
+    messagesAdded?: GmailHistoryMessage[];
+    messagesDeleted?: GmailHistoryMessage[];
+    labelsAdded?: GmailHistoryMessage[];
+    labelsRemoved?: GmailHistoryMessage[];
+  }[];
+  historyId?: string;
+}
 
 interface GmailLabel {
   id: string;
@@ -64,6 +86,57 @@ interface GmailMessage {
 interface GmailThread {
   id: string;
   messages?: GmailMessage[];
+}
+
+/** Gmail has no hierarchy — nesting lives in the label name ('Work/Clients/Acme'). Rebuild the tree. */
+function nestGmailLabels(flat: MailFolder[]): MailFolder[] {
+  const byPath = new Map<string, MailFolder>();
+  const roots: MailFolder[] = [];
+
+  // Shallowest first, so a parent exists before its child looks for it.
+  const sorted = [...flat].sort((a, b) => a.name.split('/').length - b.name.split('/').length);
+
+  const ensure = (path: string): MailFolder => {
+    const existing = byPath.get(path);
+    if (existing) return existing;
+
+    const segments = path.split('/');
+    // 'a/b' can exist with no 'a' label. No provider folder backs this, so it must not be navigable.
+    const node: MailFolder = {
+      id: `virtual:${path}`,
+      name: segments[segments.length - 1]!,
+      role: null,
+      children: [],
+    };
+    byPath.set(path, node);
+    attach(node, segments);
+    return node;
+  };
+
+  const attach = (node: MailFolder, segments: string[]) => {
+    if (segments.length === 1) {
+      roots.push(node);
+      return;
+    }
+    const parent = ensure(segments.slice(0, -1).join('/'));
+    (parent.children ??= []).push(node);
+  };
+
+  for (const f of sorted) {
+    const segments = f.name.split('/');
+    const node: MailFolder = { ...f, name: segments[segments.length - 1]!, children: [] };
+
+    const placeholder = byPath.get(f.name);
+    if (placeholder) {
+      Object.assign(placeholder, { ...node, children: placeholder.children });
+      continue;
+    }
+
+    byPath.set(f.name, node);
+    attach(node, segments);
+  }
+
+  return roots;
 }
 
 function headerOf(part: GmailPart | undefined, name: string): string | undefined {
@@ -129,6 +202,16 @@ function walkParts(part: GmailPart | undefined, acc: WalkAcc): void {
   else if (mime === 'text/plain') acc.text = (acc.text ?? '') + text;
 }
 
+class GmailError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'GmailError';
+  }
+}
+
 export function createGmailDriver(auth: TokenProvider, providerId: string): MailDriver {
   async function call<T>(path: string, init?: RequestInit): Promise<T> {
     const token = await auth.getAccessToken();
@@ -141,12 +224,70 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
       },
     });
     if (!res.ok) {
-      throw new Error(`gmail ${init?.method ?? 'GET'} ${path} -> ${res.status} ${await res.text()}`);
+      throw new GmailError(
+        res.status,
+        `gmail ${init?.method ?? 'GET'} ${path} -> ${res.status} ${await res.text()}`,
+      );
     }
     // DELETE (drafts) and other 204s return no body.
     if (res.status === 204) return null as T;
     const text = await res.text();
     return (text ? JSON.parse(text) : null) as T;
+  }
+
+  /**
+   * Many GETs as one multipart/mixed batch. Results keep the input order via Content-ID — the docs
+   * warn the server may run the parts in any order. A part that failed comes back null.
+   */
+  async function batchGet<T>(paths: string[]): Promise<(T | null)[]> {
+    const out: (T | null)[] = Array.from({ length: paths.length }, () => null);
+
+    for (let start = 0; start < paths.length; start += BATCH_LIMIT) {
+      const chunk = paths.slice(start, start + BATCH_LIMIT);
+      const token = await auth.getAccessToken();
+      const boundary = `zero_batch_${start}_${chunk.length}`;
+
+      const body =
+        chunk
+          .map(
+            (p, i) =>
+              `--${boundary}\r\n` +
+              `Content-Type: application/http\r\n` +
+              `Content-ID: <${start + i}>\r\n\r\n` +
+              `GET ${API_PATH}${p}\r\n\r\n`,
+          )
+          .join('') + `--${boundary}--\r\n`;
+
+      const res = await fetch(BATCH_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': `multipart/mixed; boundary=${boundary}`,
+        },
+        body,
+      });
+      if (!res.ok) {
+        throw new GmailError(res.status, `gmail batch -> ${res.status} ${await res.text()}`);
+      }
+
+      const text = await res.text();
+      const declared = /boundary=(?:"([^"]+)"|([^;\s]+))/.exec(res.headers.get('Content-Type') ?? '');
+      const sep = `--${declared?.[1] ?? declared?.[2] ?? boundary}`;
+
+      for (const part of text.split(sep)) {
+        const id = /Content-ID:\s*<response-(\d+)>/i.exec(part);
+        const open = part.indexOf('{');
+        const close = part.lastIndexOf('}');
+        if (!id || open === -1 || close < open) continue;
+        try {
+          out[Number(id[1])] = JSON.parse(part.slice(open, close + 1)) as T;
+        } catch {
+          // Leave the slot null; the caller drops it.
+        }
+      }
+    }
+
+    return out;
   }
 
   function toNormalized(thread: GmailThread): NormalizedThread | null {
@@ -158,17 +299,34 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
     const latestReceivedOn = receivedMs ? new Date(receivedMs).toISOString() : null;
     // Union of label ids across the thread's messages.
     const labelIds = [...new Set(msgs.flatMap((m) => m.labelIds ?? []))];
+    const sender = parseSender(header(last, 'From'));
+    const subject = header(last, 'Subject') ?? null;
 
     return {
       thread: {
         id: thread.id,
         threadId: thread.id,
         providerId,
-        latestSender: parseSender(header(last, 'From')),
+        latestSender: sender,
         latestReceivedOn,
-        latestSubject: header(last, 'Subject') ?? null,
+        latestSubject: subject,
+        replyCount: msgs.length,
       },
       labelIds,
+      latestMessage: {
+        id: last.id,
+        threadId: thread.id,
+        providerId,
+        sender,
+        toRecipients: [],
+        ccRecipients: [],
+        subject,
+        snippet: last.snippet ?? null,
+        bodyHtml: null,
+        bodyText: null,
+        receivedOn: latestReceivedOn,
+        hasAttachments: false,
+      },
     };
   }
 
@@ -179,7 +337,7 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
       const data = await call<{ labels?: GmailLabel[] }>(`/labels`);
       const labels = data.labels ?? [];
       // Keep user labels + folder-like system labels; drop internal ones (CATEGORY_*, CHAT, UNREAD).
-      return labels
+      const flat = labels
         .filter((l) => l.type === 'user' || l.id in GMAIL_ROLE)
         .map((l) => ({
           id: l.id,
@@ -188,6 +346,7 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
           unread: l.messagesUnread ?? null,
           total: l.messagesTotal ?? null,
         }));
+      return nestGmailLabels(flat);
     },
 
     async listThreads(opts = {}) {
@@ -204,16 +363,61 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
       }>(`/threads?${qs.toString()}`);
 
       const ids = (listed.threads ?? []).map((t) => t.id);
-      const full = await Promise.all(
-        ids.map((id) =>
-          call<GmailThread>(
-            `/threads/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
-          ),
-        ),
+      const full = await batchGet<GmailThread>(ids.map((id) => `/threads/${id}${THREAD_METADATA}`));
+
+      const threads = full
+        .filter((t): t is GmailThread => t != null)
+        .map(toNormalized)
+        .filter((t): t is NormalizedThread => t != null);
+      return { threads, nextPageToken: listed.nextPageToken ?? null };
+    },
+
+    async listChanges(folderId: string | null, cursor: string | null): Promise<FolderChanges> {
+      const empty = { threads: [], removedMessageIds: [] };
+
+      if (!cursor) {
+        const profile = await call<{ historyId?: string }>('/profile');
+        return { ...empty, cursor: profile.historyId ?? null, resyncRequired: false };
+      }
+
+      // History is mailbox-wide; labelId only narrows it. Omitting it reports changes in every
+      // folder in one read — including the labelRemoved events that say a thread has left one.
+      const qs = new URLSearchParams({ startHistoryId: cursor });
+      if (folderId) qs.set('labelId', folderId);
+      for (const t of ['messageAdded', 'messageDeleted', 'labelAdded', 'labelRemoved']) {
+        qs.append('historyTypes', t);
+      }
+
+      let data: GmailHistoryPage;
+      try {
+        data = await call<GmailHistoryPage>(`/history?${qs.toString()}`);
+      } catch (err) {
+        // Gmail keeps history for ~a week; past that startHistoryId 404s.
+        if (err instanceof GmailError && err.status === 404) {
+          return { ...empty, cursor: null, resyncRequired: true };
+        }
+        throw err;
+      }
+
+      const touched = new Set<string>();
+      const removedMessageIds: string[] = [];
+      for (const h of data.history ?? []) {
+        for (const m of h.messagesDeleted ?? []) removedMessageIds.push(m.message.id);
+        for (const group of [h.messagesAdded, h.labelsAdded, h.labelsRemoved]) {
+          for (const m of group ?? []) touched.add(m.message.threadId);
+        }
+      }
+
+      const fetched = await batchGet<GmailThread>(
+        [...touched].map((id) => `/threads/${id}${THREAD_METADATA}`),
       );
 
-      const threads = full.map(toNormalized).filter((t): t is NormalizedThread => t != null);
-      return { threads, nextPageToken: listed.nextPageToken ?? null };
+      const threads = fetched
+        .filter((t): t is GmailThread => t != null)
+        .map(toNormalized)
+        .filter((t): t is NormalizedThread => t != null);
+
+      return { threads, removedMessageIds, cursor: data.historyId ?? cursor, resyncRequired: false };
     },
 
     async getThread(threadId: string): Promise<ThreadDetail> {

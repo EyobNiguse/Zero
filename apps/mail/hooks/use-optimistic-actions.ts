@@ -75,8 +75,16 @@ export function useOptimisticActions() {
     `pending_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
   const refreshData = useCallback(async () => {
-    return await queryClient.refetchQueries({ queryKey: trpc.labels.list.queryKey() });
-  }, [queryClient]);
+    // Re-read the thread list from the mirror too — otherwise a moved/deleted row (already
+    // persisted in SQLite) stays in the cached list, reappears when the optimistic overlay
+    // clears, and survives refresh via the persisted query cache. Labels alone isn't enough.
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: trpc.labels.list.queryKey() }),
+      // Active-only: refetch the mounted folder list before the overlay clears (no reappear flash);
+      // other cached folders are left stale and refetch on next view.
+      queryClient.refetchQueries({ queryKey: [['mail', 'listThreads']], type: 'active' }),
+    ]);
+  }, [queryClient, trpc]);
 
   function createPendingAction({
     type,
@@ -158,26 +166,10 @@ export function useOptimisticActions() {
       }
     }
 
+
+    doAction();
     if (toastMessage.trim().length) {
-      toast(bulkActionMessage, {
-        onAutoClose: () => {
-          doAction();
-        },
-        onDismiss: () => {
-          doAction();
-        },
-        action: {
-          label: 'Undo',
-          onClick: () => {
-            undo();
-            optimisticActionsManager.pendingActions.delete(pendingActionId);
-            optimisticActionsManager.pendingActionsByType.get(type)?.delete(pendingActionId);
-          },
-        },
-        duration: 5000,
-      });
-    } else {
-      doAction();
+      toast(bulkActionMessage, { duration: 3000 });
     }
 
     return pendingActionId;

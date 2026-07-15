@@ -2,8 +2,18 @@
  * Ported from apps/server/src/routes/agent/db/index.ts (only the DB type binding changed).
  * db.transaction helpers throw under sqlite-proxy until moved onto the batch path.
  */
-import { eq, count, inArray, and, sql, desc, asc, lt, like, or } from 'drizzle-orm';
-import { threads, threadLabels, labels, messages, attachments } from './schema';
+import { eq, count, inArray, notInArray, and, sql, desc, asc, lt, like, or } from 'drizzle-orm';
+import {
+  threads,
+  threadLabels,
+  labels,
+  messages,
+  attachments,
+  folders,
+  syncState,
+  outbox,
+} from './schema';
+import type { MailFolder } from '../mail/types';
 import type { LocalDB } from './client';
 
 export type DB = LocalDB;
@@ -12,6 +22,9 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = typeof messages.$inferInsert;
 export type Attachment = typeof attachments.$inferSelect;
 export type InsertAttachment = typeof attachments.$inferInsert;
+export type AttachmentMeta = Omit<Attachment, 'body'>;
+export type Folder = typeof folders.$inferSelect;
+export type InsertFolder = typeof folders.$inferInsert;
 
 /** Structural subset shared by the top-level DB and a transaction handle (which omits .batch). */
 type WritableDB = Pick<LocalDB, 'select' | 'insert' | 'delete' | 'update'>;
@@ -31,6 +44,18 @@ const threadSelect = {
   latestSender: threads.latestSender,
   latestReceivedOn: threads.latestReceivedOn,
   latestSubject: threads.latestSubject,
+  replyCount: threads.replyCount,
+} as const;
+
+const attachmentMetaSelect = {
+  id: attachments.id,
+  messageId: attachments.messageId,
+  attachmentId: attachments.attachmentId,
+  filename: attachments.filename,
+  mimeType: attachments.mimeType,
+  size: attachments.size,
+  inline: attachments.inline,
+  contentId: attachments.contentId,
 } as const;
 
 async function createMissingLabels(db: WritableDB, labelIds: string[]): Promise<void> {
@@ -84,10 +109,21 @@ export async function create(db: DB, thread: InsertThread, labelIds?: string[]):
   });
 }
 
-/** Bulk upsert provider threads into the mirror (batch path, idempotent via onConflict). */
+/** Labels the provider knows nothing about — a replace must not sweep them away. */
+const LOCAL_ONLY_LABELS = ['SNOOZED'];
+
+/**
+ * Bulk upsert provider threads into the mirror (batch path, idempotent via onConflict).
+ *
+ * `replaceLabels` makes the provider's label set authoritative: labels the thread no longer carries
+ * are deleted. Without it a sync can only ever add, so a thread that left a folder keeps that
+ * folder's label forever — which is why binned mail went on showing in Sent. Only pass it when the
+ * driver reports a thread's *complete* label set (Gmail does; Graph reports one message's folder).
+ */
 export async function hydrateThreads(
   db: DB,
   items: { thread: InsertThread; labelIds: string[] }[],
+  opts: { replaceLabels?: boolean } = {},
 ): Promise<void> {
   if (items.length === 0) return;
 
@@ -112,6 +148,19 @@ export async function hydrateThreads(
     );
   }
 
+  if (opts.replaceLabels) {
+    for (const { thread, labelIds } of items) {
+      const keep = [...labelIds, ...LOCAL_ONLY_LABELS];
+      stmts.push(
+        db
+          .delete(threadLabels)
+          .where(
+            and(eq(threadLabels.threadId, thread.id), notInArray(threadLabels.labelId, keep)),
+          ),
+      );
+    }
+  }
+
   const threadLabelRows: InsertThreadLabel[] = [];
   for (const { thread, labelIds } of items) {
     for (const labelId of labelIds) threadLabelRows.push({ threadId: thread.id, labelId });
@@ -122,6 +171,44 @@ export async function hydrateThreads(
 
   // stmts is a dynamic array; drizzle's batch signature wants a non-empty tuple.
   await db.batch(stmts as unknown as Parameters<typeof db.batch>[0]);
+}
+
+/**
+ * Drop a folder's label from threads that are no longer in it. For providers whose listing can't
+ * carry a thread's whole folder membership (Graph: a conversation spans folders, and each message
+ * only knows its own), this is the only way the mirror learns a thread has left.
+ *
+ * Bounded by `since` — the oldest thread in the page we just synced. Older threads simply weren't in
+ * the window we can speak for, so their membership is left alone.
+ */
+export async function pruneFolderMembership(
+  db: DB,
+  folderId: string,
+  presentThreadIds: string[],
+  since: string,
+): Promise<void> {
+  const stale = await db
+    .select({ id: threads.id })
+    .from(threads)
+    .innerJoin(threadLabels, eq(threadLabels.threadId, threads.id))
+    .where(
+      and(
+        eq(threadLabels.labelId, folderId),
+        sql`${threads.latestReceivedOn} >= ${since}`,
+        presentThreadIds.length ? notInArray(threads.id, presentThreadIds) : sql`1 = 1`,
+      ),
+    );
+  if (stale.length === 0) return;
+
+  await db.delete(threadLabels).where(
+    and(
+      eq(threadLabels.labelId, folderId),
+      inArray(
+        threadLabels.threadId,
+        stale.map((t) => t.id),
+      ),
+    ),
+  );
 }
 
 /** Persist a thread's messages + attachment metadata (batch path, idempotent). */
@@ -138,14 +225,61 @@ export async function hydrateMessages(
     stmts.push(db.insert(messages).values(m).onConflictDoUpdate({ target: [messages.id], set: m }));
   }
 
-  // Clear then re-insert attachments (autoincrement PK, so upsert-by-id doesn't apply).
-  const messageIds = msgs.map((m) => m.id);
-  stmts.push(db.delete(attachments).where(inArray(attachments.messageId, messageIds)));
-  if (atts.length > 0) {
-    stmts.push(db.insert(attachments).values(atts));
+  // Upsert attachments on (message_id, attachment_id) instead of clearing the message's rows: a
+  // re-sync must not throw away the cached `body` of an attachment the user already downloaded.
+  // Rows the provider no longer lists are dropped separately, below.
+  const keepByMessage = new Map<string, string[]>();
+  for (const a of atts) {
+    const ids = keepByMessage.get(a.messageId) ?? [];
+    ids.push(a.attachmentId);
+    keepByMessage.set(a.messageId, ids);
+  }
+
+  for (const m of msgs) {
+    const keep = keepByMessage.get(m.id) ?? [];
+    stmts.push(
+      db
+        .delete(attachments)
+        .where(
+          keep.length
+            ? and(eq(attachments.messageId, m.id), notInArray(attachments.attachmentId, keep))
+            : eq(attachments.messageId, m.id),
+        ),
+    );
+  }
+
+  for (const a of atts) {
+    stmts.push(
+      db
+        .insert(attachments)
+        .values(a)
+        .onConflictDoUpdate({
+          target: [attachments.messageId, attachments.attachmentId],
+          set: {
+            filename: a.filename ?? null,
+            mimeType: a.mimeType ?? null,
+            size: a.size ?? null,
+            inline: a.inline ?? false,
+            contentId: a.contentId ?? null,
+          },
+        }),
+    );
   }
 
   await db.batch(stmts as unknown as Parameters<typeof db.batch>[0]);
+}
+
+/** Persist the fetched bytes of one attachment so it opens offline next time. */
+export async function setAttachmentBody(
+  db: DB,
+  messageId: string,
+  attachmentId: string,
+  body: string,
+): Promise<void> {
+  await db
+    .update(attachments)
+    .set({ body })
+    .where(and(eq(attachments.messageId, messageId), eq(attachments.attachmentId, attachmentId)));
 }
 
 export async function getThreadMessages(db: DB, threadId: string): Promise<Message[]> {
@@ -156,8 +290,25 @@ export async function getThreadMessages(db: DB, threadId: string): Promise<Messa
     .orderBy(asc(messages.receivedOn));
 }
 
-export async function getMessageAttachments(db: DB, messageId: string): Promise<Attachment[]> {
-  return await db.select().from(attachments).where(eq(attachments.messageId, messageId));
+/** Metadata only. Cached bytes are megabytes wide, so they are never in a thread-render read. */
+export async function getMessageAttachments(db: DB, messageId: string): Promise<AttachmentMeta[]> {
+  return await db
+    .select(attachmentMetaSelect)
+    .from(attachments)
+    .where(eq(attachments.messageId, messageId));
+}
+
+/** Cached base64 bytes for one attachment, or null if it was never fetched (or was too big to keep). */
+export async function getAttachmentBody(
+  db: DB,
+  messageId: string,
+  attachmentId: string,
+): Promise<string | null> {
+  const [row] = await db
+    .select({ body: attachments.body })
+    .from(attachments)
+    .where(and(eq(attachments.messageId, messageId), eq(attachments.attachmentId, attachmentId)));
+  return row?.body ?? null;
 }
 
 export async function createLabel(db: DB, label: InsertLabel): Promise<Label> {
@@ -215,6 +366,10 @@ export async function clearMirror(db: DB): Promise<void> {
     db.delete(messages),
     db.delete(labels),
     db.delete(threads),
+    db.delete(folders),
+    db.delete(syncState),
+    // Drafts and queued sends are mailbox content too — sign-out must not leave them on the device.
+    db.delete(outbox),
   ] as unknown as Parameters<typeof db.batch>[0]);
 }
 
@@ -501,6 +656,63 @@ export async function findThreadsWithLabel(db: DB, labelId: string): Promise<Thr
   return results;
 }
 
+/**
+ * Mailbox-wide text search over the mirror, matching both providers' semantics ($search / q are
+ * mailbox-wide, not folder-scoped). Same composite keyset as the folder listing.
+ */
+export async function searchThreads(
+  db: DB,
+  params: {
+    searchText: string;
+    maxResults: number;
+    providerId?: string;
+    pageToken?: string;
+  },
+): Promise<{ threads: Thread[]; nextPageToken: string | null }> {
+  const { searchText, maxResults, providerId, pageToken } = params;
+  const term = `%${searchText}%`;
+
+  const conditions = [
+    or(
+      like(threads.latestSubject, term),
+      like(threads.latestSender, term),
+      // Body/snippet live on messages; a thread matches if any of its messages does.
+      sql`exists (select 1 from ${messages} where ${messages.threadId} = ${threads.id} and (${messages.snippet} like ${term} or ${messages.bodyText} like ${term} or ${messages.subject} like ${term}))`,
+    )!,
+  ];
+
+  if (providerId) conditions.push(eq(threads.providerId, providerId));
+
+  if (pageToken) {
+    const split = pageToken.lastIndexOf('|');
+    const ts = split === -1 ? pageToken : pageToken.slice(0, split);
+    const id = split === -1 ? null : pageToken.slice(split + 1);
+    conditions.push(
+      id === null
+        ? lt(threads.latestReceivedOn, ts)
+        : or(
+            lt(threads.latestReceivedOn, ts),
+            and(eq(threads.latestReceivedOn, ts), lt(threads.id, id)),
+          )!,
+    );
+  }
+
+  const results = await db
+    .select(threadSelect)
+    .from(threads)
+    .where(and(...conditions))
+    .orderBy(desc(threads.latestReceivedOn), desc(threads.id))
+    .limit(maxResults + 1);
+
+  const hasNextPage = results.length > maxResults;
+  const threadResults = hasNextPage ? results.slice(0, maxResults) : results;
+  const last = threadResults[threadResults.length - 1];
+  const nextPageToken =
+    hasNextPage && last?.latestReceivedOn ? `${last.latestReceivedOn}|${last.id}` : null;
+
+  return { threads: threadResults, nextPageToken };
+}
+
 export async function findThreadsWithTextSearch(db: DB, searchText: string): Promise<Thread[]> {
   const results = await db
     .select(threadSelect)
@@ -621,31 +833,329 @@ export async function findThreadsByFolderWithPagination(
     maxResults: number;
     /** Scope to one provider so a switched account never sees the other's mail. */
     providerId?: string;
+    /** Extra labels the thread must ALSO carry (sidebar label filter). */
+    labelIds?: string[];
   },
 ): Promise<{ threads: Thread[]; nextPageToken: string | null }> {
-  const { pageToken, maxResults, providerId } = params;
+  const { pageToken, maxResults, providerId, labelIds } = params;
 
-  const conditions = [eq(threadLabels.labelId, folderLabel)];
+  const required = [...new Set([folderLabel, ...(labelIds ?? [])])];
+
+  const conditions = [inArray(threadLabels.labelId, required)];
 
   if (providerId) {
     conditions.push(eq(threads.providerId, providerId));
   }
 
+  // Keyset on (latestReceivedOn, id), not the timestamp alone: Graph's receivedDateTime is only
+  // second-precision, so bulk-delivered mail ties, and a strict `<` would skip a tied thread that
+  // landed on a page boundary.
   if (pageToken) {
-    conditions.push(lt(threads.latestReceivedOn, pageToken));
+    const split = pageToken.lastIndexOf('|');
+    const ts = split === -1 ? pageToken : pageToken.slice(0, split);
+    const id = split === -1 ? null : pageToken.slice(split + 1);
+    conditions.push(
+      id === null
+        ? lt(threads.latestReceivedOn, ts)
+        : or(
+            lt(threads.latestReceivedOn, ts),
+            and(eq(threads.latestReceivedOn, ts), lt(threads.id, id)),
+          )!,
+    );
   }
 
+  // AND across labels, not OR: keep only threads matching every required label. A thread joins
+  // once per matching label, so counting distinct matches == required.length is the intersection.
   const results = await db
     .select(threadSelect)
     .from(threads)
     .innerJoin(threadLabels, eq(threads.id, threadLabels.threadId))
     .where(and(...conditions))
-    .orderBy(desc(threads.latestReceivedOn))
+    .groupBy(threads.id)
+    .having(sql`count(distinct ${threadLabels.labelId}) = ${required.length}`)
+    .orderBy(desc(threads.latestReceivedOn), desc(threads.id))
     .limit(maxResults + 1);
 
   const hasNextPage = results.length > maxResults;
   const threadResults = hasNextPage ? results.slice(0, maxResults) : results;
-  const nextPageToken = hasNextPage ? results[maxResults - 1].latestReceivedOn : null;
+  const last = threadResults[threadResults.length - 1];
+  const nextPageToken =
+    hasNextPage && last?.latestReceivedOn ? `${last.latestReceivedOn}|${last.id}` : null;
 
   return { threads: threadResults, nextPageToken };
+}
+
+// --- folders -----------------------------------------------------------------
+
+function flattenFolders(
+  tree: MailFolder[],
+  providerId: string,
+  syncedAt: string,
+  parentId: string | null = null,
+): InsertFolder[] {
+  const rows: InsertFolder[] = [];
+  for (const f of tree) {
+    rows.push({
+      id: f.id,
+      providerId,
+      name: f.name,
+      role: f.role ?? null,
+      parentId,
+      unread: f.unread ?? null,
+      total: f.total ?? null,
+      syncedAt,
+    });
+    if (f.children?.length) rows.push(...flattenFolders(f.children, providerId, syncedAt, f.id));
+  }
+  return rows;
+}
+
+/** Delete-then-insert, so a folder removed at the provider disappears locally. */
+export async function replaceFolders(
+  db: DB,
+  providerId: string,
+  tree: MailFolder[],
+  now: string,
+): Promise<void> {
+  const rows = flattenFolders(tree, providerId, now);
+
+  // Carry deltaCursor across the replace — a tree refresh must not reset a folder's delta position.
+  const existing = await db
+    .select({ id: folders.id, deltaCursor: folders.deltaCursor })
+    .from(folders)
+    .where(eq(folders.providerId, providerId));
+  const cursors = new Map(existing.map((f) => [f.id, f.deltaCursor]));
+  for (const row of rows) row.deltaCursor = cursors.get(row.id) ?? null;
+
+  const stmts: unknown[] = [db.delete(folders).where(eq(folders.providerId, providerId))];
+  if (rows.length > 0) stmts.push(db.insert(folders).values(rows));
+
+  await db.batch(stmts as unknown as Parameters<typeof db.batch>[0]);
+}
+
+export async function getFolders(db: DB, providerId: string): Promise<Folder[]> {
+  return await db
+    .select()
+    .from(folders)
+    .where(eq(folders.providerId, providerId))
+    .orderBy(asc(folders.name));
+}
+
+export async function getFolderByRole(
+  db: DB,
+  providerId: string,
+  role: NonNullable<Folder['role']>,
+): Promise<Folder | null> {
+  const [res] = await db
+    .select()
+    .from(folders)
+    .where(and(eq(folders.providerId, providerId), eq(folders.role, role)));
+  return res ?? null;
+}
+
+export async function setFolderDeltaCursor(
+  db: DB,
+  folderId: string,
+  cursor: string | null,
+): Promise<void> {
+  await db.update(folders).set({ deltaCursor: cursor }).where(eq(folders.id, folderId));
+}
+
+/**
+ * Body-less latest-message rows from a folder listing. onConflictDoNothing so a stub can never
+ * overwrite a message already fetched in full.
+ */
+export async function hydrateMessageStubs(db: DB, msgs: InsertMessage[]): Promise<void> {
+  if (msgs.length === 0) return;
+  const stmts = msgs.map((m) => db.insert(messages).values(m).onConflictDoNothing());
+  await db.batch(stmts as unknown as Parameters<typeof db.batch>[0]);
+}
+
+/** Delta tombstones carry only a message id; the thread survives if other messages remain. */
+export async function deleteMessagesByIds(db: DB, messageIds: string[]): Promise<void> {
+  if (messageIds.length === 0) return;
+  await db.delete(attachments).where(inArray(attachments.messageId, messageIds));
+  await db.delete(messages).where(inArray(messages.id, messageIds));
+}
+
+/**
+ * Drop a thread's messages that the provider no longer reports. Graph re-ids a message when it moves
+ * folders, so without this a trash/archive leaves the pre-move rows behind: the thread shows every
+ * message twice, and the stale attachment ids 404 on download.
+ */
+export async function pruneThreadMessages(
+  db: DB,
+  threadId: string,
+  keepIds: string[],
+): Promise<void> {
+  const stale = await db
+    .select({ id: messages.id })
+    .from(messages)
+    .where(
+      and(
+        eq(messages.threadId, threadId),
+        keepIds.length ? notInArray(messages.id, keepIds) : sql`1 = 1`,
+      ),
+    );
+  await deleteMessagesByIds(
+    db,
+    stale.map((m) => m.id),
+  );
+}
+
+// --- sync cursors ------------------------------------------------------------
+
+export type SyncScope = typeof syncState.$inferSelect;
+
+export async function getSyncState(db: DB, scope: string): Promise<SyncScope | null> {
+  const [res] = await db.select().from(syncState).where(eq(syncState.scope, scope));
+  return res ?? null;
+}
+
+export async function setSyncState(
+  db: DB,
+  scope: string,
+  providerId: string,
+  syncedAt: string,
+  cursor?: string | null,
+): Promise<void> {
+  // Omitting `cursor` leaves the stored one intact; passing null clears it.
+  const row = { scope, providerId, syncedAt, ...(cursor !== undefined ? { cursor } : {}) };
+  await db
+    .insert(syncState)
+    .values(row)
+    .onConflictDoUpdate({ target: [syncState.scope], set: row });
+}
+
+/** Pass no scopes to reset everything. */
+export async function clearSyncState(db: DB, scopes?: string[]): Promise<void> {
+  if (scopes && scopes.length === 0) return;
+  await db.delete(syncState).where(scopes ? inArray(syncState.scope, scopes) : sql`1 = 1`);
+}
+
+export async function clearSyncStateByPrefix(db: DB, prefix: string): Promise<void> {
+  await db.delete(syncState).where(like(syncState.scope, `${prefix}%`));
+}
+
+export async function listSyncStateByPrefix(db: DB, prefix: string): Promise<SyncScope[]> {
+  return await db.select().from(syncState).where(like(syncState.scope, `${prefix}%`));
+}
+
+// --- outbox: local-first drafts + queued sends -------------------------------
+
+export type OutboxRow = typeof outbox.$inferSelect;
+export type InsertOutbox = typeof outbox.$inferInsert;
+export type { OutboxKind, OutboxStatus, OutboxPayload, OutboxAttachment } from './schema';
+
+export async function upsertOutbox(db: DB, row: InsertOutbox): Promise<void> {
+  await db.insert(outbox).values(row).onConflictDoUpdate({ target: [outbox.id], set: row });
+}
+
+export async function updateOutbox(
+  db: DB,
+  id: string,
+  patch: Partial<InsertOutbox>,
+): Promise<void> {
+  await db
+    .update(outbox)
+    .set({ ...patch, updatedAt: new Date().toISOString() })
+    .where(eq(outbox.id, id));
+}
+
+export async function deleteOutbox(db: DB, id: string): Promise<void> {
+  await db.delete(outbox).where(eq(outbox.id, id));
+}
+
+/** Resolves either identity: the composer holds the local id, the mail list the provider's. */
+export async function getOutbox(db: DB, id: string): Promise<OutboxRow | null> {
+  const [res] = await db
+    .select()
+    .from(outbox)
+    .where(or(eq(outbox.id, id), eq(outbox.remoteId, id)));
+  return res ?? null;
+}
+
+/** What the Drafts folder shows: saved drafts, plus sends that gave up and fell back to a draft. */
+export async function listOutboxDrafts(
+  db: DB,
+  providerId: string,
+  maxResults: number,
+): Promise<OutboxRow[]> {
+  return await db
+    .select()
+    .from(outbox)
+    .where(and(eq(outbox.providerId, providerId), inArray(outbox.status, ['draft', 'failed'])))
+    .orderBy(desc(outbox.updatedAt))
+    .limit(maxResults);
+}
+
+/** Queued sends whose undo window (or schedule) has elapsed. */
+export async function dueSends(db: DB, now: number): Promise<OutboxRow[]> {
+  return await db
+    .select()
+    .from(outbox)
+    .where(
+      and(
+        eq(outbox.kind, 'send'),
+        eq(outbox.status, 'queued'),
+        or(sql`${outbox.sendAfter} is null`, lt(outbox.sendAfter, now + 1)),
+      ),
+    )
+    .orderBy(asc(outbox.createdAt));
+}
+
+/**
+ * Sends left mid-flight by a reload or a crashed tab. `attempts` was already incremented before the
+ * provider call, so requeuing them can't loop forever — MAX_SEND_ATTEMPTS still caps it.
+ */
+export async function stalledSends(db: DB, olderThan: string): Promise<OutboxRow[]> {
+  return await db
+    .select()
+    .from(outbox)
+    .where(and(eq(outbox.status, 'sending'), lt(outbox.updatedAt, olderThan)));
+}
+
+/** Drafts with local edits the provider hasn't seen, and drafts deleted while offline. */
+export async function pendingDraftWrites(db: DB): Promise<OutboxRow[]> {
+  return await db
+    .select()
+    .from(outbox)
+    .where(
+      or(
+        and(eq(outbox.kind, 'draft'), eq(outbox.status, 'draft'), eq(outbox.dirty, true)),
+        eq(outbox.status, 'deleting'),
+      ),
+    )
+    .orderBy(asc(outbox.updatedAt));
+}
+
+/** Provider draft ids currently represented by a local row — used to skip them on a drafts sync. */
+export async function outboxRemoteIds(db: DB): Promise<string[]> {
+  const rows = await db
+    .select({ remoteId: outbox.remoteId })
+    .from(outbox)
+    .where(sql`${outbox.remoteId} is not null`);
+  return rows.map((r) => r.remoteId).filter((id): id is string => id != null);
+}
+
+/**
+ * Drop provider-backed drafts that no longer exist upstream (sent or deleted elsewhere). Matched on
+ * remoteId, not id — a local draft we pushed keeps its client-generated id. Rows with unpushed local
+ * edits are kept regardless: the user's work outranks the provider's view.
+ */
+export async function pruneRemoteDrafts(
+  db: DB,
+  providerId: string,
+  remoteIds: string[],
+): Promise<void> {
+  await db
+    .delete(outbox)
+    .where(
+      and(
+        eq(outbox.providerId, providerId),
+        eq(outbox.kind, 'draft'),
+        eq(outbox.dirty, false),
+        remoteIds.length ? notInArray(outbox.remoteId, remoteIds) : sql`1 = 1`,
+      ),
+    );
 }

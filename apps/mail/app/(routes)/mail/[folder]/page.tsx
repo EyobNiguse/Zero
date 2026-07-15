@@ -31,7 +31,9 @@ export default function MailPage() {
 
   const isStandardFolder = ALLOWED_FOLDERS.has(folder);
 
-  const { userLabels, isLoading: isLoadingLabels } = useLabels();
+  // Walk the full tree, not just userLabels: an Outlook folder nested under a system folder
+  // (Inbox/Receipts) is navigable but never appears in userLabels, which is top-level user only.
+  const { data: allLabels, isLoading: isLoadingLabels } = useLabels();
 
   useEffect(() => {
     if (isStandardFolder) {
@@ -41,7 +43,7 @@ export default function MailPage() {
 
     if (isLoadingLabels) return;
 
-    if (userLabels) {
+    if (allLabels) {
       const checkLabelExists = (labels: any[]): boolean => {
         for (const label of labels) {
           if (label.id === folder) return true;
@@ -52,7 +54,7 @@ export default function MailPage() {
         return false;
       };
 
-      const labelExists = checkLabelExists(userLabels);
+      const labelExists = checkLabelExists(allLabels);
       setIsLabelValid(labelExists);
 
       if (!labelExists) {
@@ -64,7 +66,7 @@ export default function MailPage() {
     } else {
       setIsLabelValid(false);
     }
-  }, [folder, userLabels, isLoadingLabels, isStandardFolder, navigate]);
+  }, [folder, allLabels, isLoadingLabels, isStandardFolder, navigate]);
 
   if (!isLabelValid) {
     return (

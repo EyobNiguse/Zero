@@ -3,24 +3,62 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTRPC } from '@/providers/query-provider';
 import { createTokenProvider, type ProviderId } from '../auth';
 import { isLocalActive } from './bridge';
+import { onMirrorChanged } from './mirror';
 import { activateLocal } from './activate';
+import { pollChanges } from './resolvers';
+import { flushOutbox } from './outbox';
 
-// Matches the resolver's SYNC_TTL: re-invalidate the thread list on this cadence.
-const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+const POLL_INTERVAL_MS = 2 * 60 * 1000;
+/** Queued mail should not wait on the delta poll — a send is due within its undo window. */
+const OUTBOX_INTERVAL_MS = 15 * 1000;
 
 /** Re-activates local mode on every load so the session survives a refresh. */
 export function LocalMode() {
   const qc = useQueryClient();
   const trpc = useTRPC();
 
-  // Idle auto-refresh: invalidate the thread list while local-active and visible.
+  // Reads serve SQLite and refresh behind the response — this is how that refresh reaches the UI.
+  useEffect(
+    () =>
+      onMirrorChanged(() => {
+        qc.invalidateQueries({ queryKey: trpc.mail.listThreads.infiniteQueryKey() });
+        qc.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
+        // A thread's attachments land with its bodies, and this query holds them for an hour — so a
+        // row read before the sync would otherwise stay "no attachments" long after they arrived.
+        qc.invalidateQueries({ queryKey: trpc.mail.getMessageAttachments.queryKey() });
+        // Drafts and queued sends live in the outbox, and the flusher moves them behind the UI's back.
+        qc.invalidateQueries({ queryKey: trpc.drafts.get.queryKey() });
+        qc.invalidateQueries({ queryKey: trpc.drafts.list.queryKey() });
+      }),
+    [qc, trpc],
+  );
+
+  // Delta poll: pulls only what changed into SQLite. emitMirrorChanged drives the UI re-read.
   useEffect(() => {
-    const timer = setInterval(() => {
+    const tick = () => {
       if (!isLocalActive() || document.hidden) return;
-      qc.invalidateQueries({ queryKey: trpc.mail.listThreads.infiniteQueryKey() });
-    }, REFRESH_INTERVAL_MS);
+      void pollChanges();
+    };
+    tick();
+    const timer = setInterval(tick, POLL_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [qc, trpc]);
+  }, []);
+
+  // Drain the outbox: queued sends, draft pushes, draft deletes. Runs while hidden — a send the user
+  // fired before switching tabs still has to go out — and again the moment the network returns.
+  useEffect(() => {
+    const flush = () => {
+      if (!isLocalActive()) return;
+      void flushOutbox();
+    };
+    flush();
+    const timer = setInterval(flush, OUTBOX_INTERVAL_MS);
+    window.addEventListener('online', flush);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('online', flush);
+    };
+  }, []);
 
   useEffect(() => {
     if (isLocalActive()) return;

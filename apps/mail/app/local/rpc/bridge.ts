@@ -1,7 +1,6 @@
 import type { TokenProvider } from '../auth';
 import { createMailDriver, type MailDriver } from '../mail';
 import { getLocalDB, clearMirror, type LocalDB } from '../db';
-import { resetSyncState } from './sync-state';
 import { clear as idbClear } from 'idb-keyval';
 
 let provider: TokenProvider | null = null;
@@ -51,8 +50,8 @@ export async function localSignOut(): Promise<void> {
     /* revoke is best-effort */
   }
   setActiveProvider(null);
-  resetSyncState();
   try {
+    // Drops sync_state along with the rest of the mirror.
     await clearMirror(await getLocalDB());
   } catch {
     /* mirror may be empty / uninitialised */

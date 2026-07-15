@@ -88,6 +88,57 @@ export const MIGRATIONS: string[][] = [
     `CREATE INDEX attachments_message_id_idx ON attachments (message_id)`,
     `CREATE UNIQUE INDEX attachments_message_id_attachment_id_unique ON attachments (message_id, attachment_id)`,
   ],
+  // 0002 — folder tree + persisted sync cursors.
+  [
+    `CREATE TABLE folders (
+       id text PRIMARY KEY NOT NULL,
+       provider_id text NOT NULL,
+       name text NOT NULL,
+       role text,
+       parent_id text,
+       unread integer,
+       total integer,
+       delta_cursor text,
+       synced_at text
+     )`,
+    `CREATE INDEX folders_provider_id_idx ON folders (provider_id)`,
+    `CREATE INDEX folders_role_idx ON folders (role)`,
+    `CREATE INDEX folders_parent_id_idx ON folders (parent_id)`,
+    `CREATE TABLE sync_state (
+       scope text PRIMARY KEY NOT NULL,
+       provider_id text NOT NULL,
+       cursor text,
+       synced_at text
+     )`,
+  ],
+
+  // 0003 — conversation size, so a list row can show [N] without fetching the thread
+  [`ALTER TABLE threads ADD COLUMN reply_count integer`],
+
+  // 0004 — cached attachment bytes (base64), so an opened attachment survives going offline
+  [`ALTER TABLE attachments ADD COLUMN body text`],
+
+  // 0005 — outbox: local-first drafts and queued sends, drained by ../rpc/outbox
+  [
+    `CREATE TABLE outbox (
+       id text PRIMARY KEY NOT NULL,
+       provider_id text NOT NULL,
+       kind text NOT NULL,
+       status text NOT NULL,
+       remote_id text,
+       thread_id text,
+       payload text NOT NULL,
+       dirty integer DEFAULT 1 NOT NULL,
+       attempts integer DEFAULT 0 NOT NULL,
+       last_error text,
+       send_after integer,
+       created_at text NOT NULL,
+       updated_at text NOT NULL
+     )`,
+    `CREATE INDEX outbox_status_idx ON outbox (status)`,
+    `CREATE INDEX outbox_provider_id_idx ON outbox (provider_id)`,
+    `CREATE INDEX outbox_updated_at_idx ON outbox (updated_at)`,
+  ],
 ];
 
 function currentVersion(raw: RawSqlite): number {
