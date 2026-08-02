@@ -1,11 +1,3 @@
-/**
- * Picks the signed-in provider's codec — the translation between that provider's way of organising
- * mail and the mirror's, which is labels all the way down.
- *
- * The codecs are pure data and pure functions, so this is a lookup, not a factory: nothing to build,
- * nothing to cache, nothing to invalidate on reconnect. The fetching and the SQLite writes that use
- * them live in ../local-utils.
- */
 import type { Folder } from '../../db';
 import { getTokenProvider } from '../bridge';
 import { googleCodec } from './google';

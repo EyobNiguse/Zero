@@ -497,7 +497,7 @@
       <li><a href="#s1"><span class="num">1</span><span>The shape</span></a></li>
       <li><a href="#s2"><span class="num">2</span><span>Storage</span></a></li>
       <li><a href="#s3"><span class="num">3</span><span>The tRPC layer</span></a></li>
-      <li><a href="#s4"><span class="num">4</span><span>Providers</span></a></li>
+      <li><a href="#s4"><span class="num">4</span><span>Codecs</span></a></li>
       <li><a href="#s5"><span class="num">5</span><span>Client &amp; driver</span></a></li>
       <li><a href="#s6"><span class="num">6</span><span>Reading a list</span></a></li>
       <li><a href="#s7"><span class="num">7</span><span>Cursors</span></a></li>
@@ -572,7 +572,7 @@
         <pre class="diagram">  UI            hooks/use-threads.ts, components/mail/*
                   │  useQuery(trpc.mail.listThreads)
                   ▼
-  LINK          <span class="c-key">rpc/local-link.ts</span>        intercepts tRPC, runs it in-browser
+  LINK          <span class="c-key">unstable_localLink</span>       runs the router in-browser, no HTTP
                   ▼
   ROUTER        <span class="c-key">rpc/router.ts</span>            namespaces → procedures
                 <span class="c-key">rpc/trpc.ts</span>              publicProcedure / dbProcedure / driverProcedure
@@ -581,7 +581,7 @@
                   │
                   ├──► <span class="c-loc">db/queries.ts</span>  ──► SQLite          ← the common path
                   │
-                  └──► <span class="c-key">rpc/providers/</span>       which provider's rules apply
+                  └──► <span class="c-key">rpc/codecs/</span>          which provider's rules apply
                           │
                           ├──► <span class="c-pro">mail/gmail.ts</span>   (driver)  normalize wire → rows
                           │       └──► <span class="c-pro">mail/gmail-client.ts</span>  HTTP
@@ -607,7 +607,7 @@
               <td>Import from <code>rpc/</code> — that would invert the layering</td>
             </tr>
             <tr>
-              <td><code>rpc/providers/</code></td>
+              <td><code>rpc/codecs/</code></td>
               <td>What does that mean for us?</td>
               <td>Contain a second <code>if provider ===</code></td>
             </tr>
@@ -628,10 +628,10 @@
       <div class="note">
         <div class="note-h">The naming trap</div>
         <p>
-          <code>mail/graph*.ts</code> is <em>Microsoft Graph, the API</em>. <code>rpc/providers/microsoft/</code>
+          <code>mail/graph*.ts</code> is <em>Microsoft Graph, the API</em>. <code>rpc/codecs/microsoft.ts</code>
           is <em>the Microsoft account, our rules</em>. Same company, different layers. There is no
-          <code>graph/</code> folder under <code>providers/</code> — only <code>google/</code> and
-          <code>microsoft/</code>.
+          <code>graph.ts</code> under <code>codecs/</code> — the files are named after the account
+          (<code>google.ts</code>, <code>microsoft.ts</code>), not after the API.
         </p>
       </div>
     </section>
@@ -719,24 +719,47 @@ MIGRATIONS[6] = [
 
       <p>
         The UI calls <code>trpc.mail.listThreads.useInfiniteQuery(...)</code> exactly as it would
-        against a server. <a class="ref" href="apps/mail/app/local/rpc/local-link.ts">local-link.ts</a>
-        intercepts the operation before any HTTP happens.
+        against a server. There is no interception step and no fallthrough: tRPC's own
+        <code>unstable_localLink</code> is the only link configured, and it invokes the procedure
+        in-process.
       </p>
 
       <div class="block">
-        <div class="block-h"><b>rpc/local-link.ts</b><span>the interception</span></div>
-        <pre><span class="c-key">const</span> routed = ROUTED_NAMESPACES.has(op.path.split(<span class="c-key">'.'</span>)[0]!);
-<span class="c-key">const</span> resolver = routed ? <span class="c-key">null</span> : localResolvers[op.path];
-<span class="c-key">if</span> (!routed &amp;&amp; !resolver) <span class="c-key">return</span> next(op);        <span class="c-com">// unknown → real backend</span>
-<span class="c-key">if</span> (!isLocalActive() &amp;&amp; !isLocalPending()) <span class="c-key">return</span> next(op);</pre>
+        <div class="block-h"><b>providers/query-provider.tsx</b><span>the whole "transport"</span></div>
+        <pre><span class="c-key">const</span> localRouterLink = unstable_localLink({
+  router: localRouter,
+  createContext: <span class="c-key">async</span> () =&gt; ({}),        <span class="c-com">// db/driver ctx is built per call by the middleware</span>
+}) <span class="c-key">as unknown as</span> TRPCLink&lt;AppRouter&gt;;
+
+<span class="c-key">export const</span> trpcClient = createTRPCClient&lt;AppRouter&gt;({ links: [localRouterLink] });</pre>
       </div>
 
       <p>
-        Two destinations exist because the port is mid-flight.
-        <strong>Ported namespaces</strong> (<code>labels</code>, <code>mail</code>, <code>notes</code>)
-        go to the real local router. <strong>The rest</strong> are still flat handler functions in
-        <code>rpc/resolvers.ts</code> — no Zod, no context, no middleware.
+        No HTTP, no serialization, no transformer. The cast is the last thread back to the server:
+        the client is still <em>typed</em> against <code>AppRouter</code> while the router it actually
+        runs is <code>localRouter</code>. That goes when the type flips to
+        <code>typeof localRouter</code>.
       </p>
+
+      <p>
+        Every namespace the UI calls is in <a class="ref" href="apps/mail/app/local/rpc/router.ts">rpc/router.ts</a>
+        — twelve of them, including stubs for <code>ai</code>, <code>bimi</code>, <code>brain</code>
+        and <code>meet</code>. Nothing falls through to a backend, so a namespace that is missing is
+        a runtime error rather than a silent network call.
+      </p>
+
+      <div class="note bug">
+        <div class="note-h">initTRPC refuses to run in a browser</div>
+        <p>
+          <code>initTRPC.create()</code> throws <em>"You're trying to use @trpc/server in a non-server
+          environment"</em> unless you opt out. Running in the browser is the entire point here, so
+          <code>rpc/trpc.ts</code> passes <code>{ allowOutsideOfServer: true }</code>. It throws at
+          <em>module evaluation</em>, which is worth knowing: the failure surfaces later and elsewhere
+          as <code>useTRPC() can only be used inside of a &lt;TRPCProvider&gt;</code>, because
+          <code>query-provider.tsx</code> imports the router above the line that creates the context,
+          so the module dies before <code>TRPCProvider</code> is ever assigned.
+        </p>
+      </div>
 
       <h3><span class="sub">3.1</span>The three procedure types</h3>
 
@@ -764,7 +787,7 @@ MIGRATIONS[6] = [
             </tr>
             <tr>
               <td><code>driverProcedure</code></td>
-              <td><code>ctx.db</code>, <code>ctx.sync</code>, <code>ctx.provider</code>, <code>ctx.driver</code></td>
+              <td><code>ctx.db</code>, <code>ctx.codec</code>, <code>ctx.driver</code></td>
               <td>Anything provider-aware — including folder naming.</td>
             </tr>
           </tbody>
@@ -784,17 +807,21 @@ MIGRATIONS[6] = [
   <span class="c-key">try</span> { <span class="c-key">await</span> whenActive(); }                    <span class="c-com">// parks until a driver exists</span>
   <span class="c-key">catch</span> (err) { <span class="c-key">throw new</span> TRPCError({ code: <span class="c-key">'TIMEOUT'</span>, ... }); }
 
-  <span class="c-key">const</span> provider = getActiveProvider();
-  <span class="c-key">if</span> (!provider) <span class="c-key">throw new</span> TRPCError({ code: <span class="c-key">'UNAUTHORIZED'</span>, ... });
-  <span class="c-key">return</span> next({ ctx: { sync: activeSync(), provider, driver: getActiveDriver() } });
+  <span class="c-key">if</span> (!getTokenProvider()) <span class="c-key">throw new</span> TRPCError({ code: <span class="c-key">'UNAUTHORIZED'</span>, ... });
+  <span class="c-key">return</span> next({ ctx: { codec: codec(), driver: getActiveDriver() } });
 });</pre>
       </div>
 
       <p>
-        There is no transport and no transformer — procedures run in-process through
-        <code>createCaller</code>. What the router buys over the flat map it is replacing: Zod parses
-        the input and applies defaults, the middleware chain supplies context, and errors carry real
-        <code>TRPCError</code> codes.
+        What the router buys over the flat resolver map it replaced: Zod parses the input and applies
+        defaults, the middleware chain supplies context, and errors carry real
+        <code>TRPCError</code> codes instead of whatever the handler happened to throw.
+      </p>
+
+      <p>
+        A handful of callers bypass the client and invoke a procedure directly through
+        <code>localCaller</code> (<code>rpc/router.ts</code>) because they want to own their own query
+        key — <code>hooks/use-thread-groups.ts</code> is the one to look at.
       </p>
 
       <div class="note bug">
@@ -811,12 +838,13 @@ MIGRATIONS[6] = [
 
     <!-- ============================================ 4 -->
     <section id="s4">
-      <h2><span class="sec">§4</span><span>Providers</span></h2>
+      <h2><span class="sec">§4</span><span>Codecs</span></h2>
 
       <p>
-        Gmail and Graph disagree about nearly everything, and each disagreement cascades. This
-        directory is where each provider's answers live, written once, in files named after who they
-        belong to.
+        Gmail and Graph disagree about nearly everything, and each disagreement cascades. A codec is
+        the translation between one provider's way of organising mail and the mirror's, which is
+        labels all the way down. <code>rpc/codecs/</code> is where each provider's answers live,
+        written once, in a file named after the account it belongs to.
       </p>
 
       <div class="table-wrap">
@@ -865,106 +893,108 @@ MIGRATIONS[6] = [
         </table>
       </div>
 
-      <h3><span class="sub">4.1</span>Three files per provider</h3>
+      <h3><span class="sub">4.1</span>One file per provider</h3>
 
       <p>
-        <code>google/</code> and <code>microsoft/</code> hold the <em>same three filenames with the
-        same exports</em>. That is deliberate — you can diff them.
+        <code>google.ts</code> and <code>microsoft.ts</code> export the <em>same six members with the
+        same signatures</em>. That is deliberate — you can diff them side by side.
       </p>
 
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>File</th><th>Pure?</th><th>Direction</th><th>Exports</th></tr>
+            <tr><th>Member</th><th>Direction</th><th>Decides</th></tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>folders.ts</code></td>
-              <td>yes</td>
-              <td>provider → mirror</td>
-              <td><code>folderKey</code>, <code>toFolderRows</code>, <code>mirrorLabels</code>, <code>pollTargets</code></td>
+              <td><code>id</code></td>
+              <td>—</td>
+              <td><code>'google' | 'microsoft'</code>, also the <code>providerId</code> written to rows</td>
             </tr>
             <tr>
-              <td><code>labels.ts</code></td>
-              <td>yes</td>
+              <td><code>folderKey(name)</code></td>
               <td>UI → mirror</td>
-              <td><code>mirrorEdit</code></td>
+              <td><code>'bin'</code> → <code>TRASH</code> / <code>deleteditems</code></td>
             </tr>
             <tr>
-              <td><code>sync.ts</code></td>
-              <td><strong>no</strong></td>
-              <td>the wiring</td>
-              <td><code>createGoogleSync</code> / <code>createMicrosoftSync</code></td>
+              <td><code>mirrorLabels(ids, listedUnder?)</code></td>
+              <td>provider → mirror</td>
+              <td>What labels a fetched thread is filed under</td>
+            </tr>
+            <tr>
+              <td><code>mirrorEdit(add, remove)</code></td>
+              <td>UI → mirror</td>
+              <td>Translation, exclusivity, and the <code>folderMove</code> flag</td>
+            </tr>
+            <tr>
+              <td><code>toFolderRows(...)</code></td>
+              <td>provider → mirror</td>
+              <td>Label list / folder tree → sidebar rows</td>
+            </tr>
+            <tr>
+              <td><code>pollTargets(folders)</code></td>
+              <td>mirror → provider</td>
+              <td>Which folders to delta-poll, under what key</td>
+            </tr>
+            <tr>
+              <td><code>replaceLabels</code></td>
+              <td>flag</td>
+              <td>Replace vs merge on a mirror write</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <p>
-        Purity is not decoration. <code>folders.ts</code> and <code>labels.ts</code> import types only,
-        which is why <code>folders.check.ts</code> and <code>labels.check.ts</code> run as plain Node
-        scripts with no mocks. These bugs are <em>silent</em> — a wrong parent nests a folder wrongly,
-        a wrong exclusivity leaves a thread in two places. Nothing throws.
+        Both files are <strong>pure</strong> — types only, no client, no db. That is not decoration:
+        it is what lets every provider decision be read in one sitting, and what keeps the fetching
+        and the SQLite writes in one shared place (<code>rpc/local-utils.ts</code>) instead of
+        duplicated per provider. These bugs are <em>silent</em> — a wrong parent nests a folder
+        wrongly, a wrong exclusivity leaves a thread in two places. Nothing throws.
       </p>
 
       <h3><span class="sub">4.2</span>The one branch</h3>
 
       <div class="block">
-        <div class="block-h"><b>rpc/providers/sync.ts</b><span>the only <code>if provider ===</code> in the local layer</span></div>
-        <pre><span class="c-key">export function</span> activeSync(): MailSync {
-  <span class="c-key">const</span> provider = getActiveProvider();
-  <span class="c-key">if</span> (!provider) <span class="c-key">throw new</span> Error(<span class="c-key">'local mail: not signed in'</span>);
-  <span class="c-key">if</span> (cached?.key === provider) <span class="c-key">return</span> cached.sync;   <span class="c-com">// memoized per provider object</span>
-
-  <span class="c-key">const</span> driver = getActiveDriver();
-  <span class="c-key">const</span> sync: MailSync = provider.provider === <span class="c-key">'microsoft'</span>
-    ? createMicrosoftSync(driver, createGraphClient(provider))
-    : createGoogleSync(driver, createGmailClient(provider));
-
-  cached = { key: provider, sync };
-  <span class="c-key">return</span> sync;
+        <div class="block-h"><b>rpc/codecs/index.ts</b><span>the only <code>if provider ===</code> in the local layer</span></div>
+        <pre><span class="c-key">export function</span> codec(): Codec {
+  <span class="c-key">const</span> token = getTokenProvider();
+  <span class="c-key">if</span> (!token) <span class="c-key">throw new</span> Error(<span class="c-key">'local mail: not signed in'</span>);
+  <span class="c-key">return</span> token.provider === <span class="c-key">'microsoft'</span> ? microsoftCodec : googleCodec;
 }</pre>
       </div>
 
-      <p>The <code>MailSync</code> contract — eight members, the whole provider surface:</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Member</th><th>Does</th></tr></thead>
-          <tbody>
-            <tr><td><code>id</code></td><td><code>'google' | 'microsoft'</code> — also the <code>providerId</code> written to rows</td></tr>
-            <tr><td><code>folderKey(name)</code></td><td>UI word → mirror key. <code>'bin'</code> → <code>TRASH</code> / <code>deleteditems</code></td></tr>
-            <tr><td><code>syncFolders(db)</code></td><td>Pull the sidebar tree</td></tr>
-            <tr><td><code>mirrorThreads(db, threads, listedUnder?)</code></td><td>Apply label rules + write, replace-or-merge</td></tr>
-            <tr><td><code>syncThreadPage(db, key, pageToken?)</code></td><td>One provider page → mirror. Returns the next token</td></tr>
-            <tr><td><code>syncSearch(db, q, pageToken?)</code></td><td>Mirror search hits</td></tr>
-            <tr><td><code>applyLabels(db, id, add, remove)</code></td><td>Record an accepted edit. Returns <code>folderMove</code></td></tr>
-            <tr><td><code>pollTargets(folders)</code></td><td>Which folders to delta-poll, under what key</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <p>
+        A lookup, not a factory. The codecs are frozen objects of pure functions, so there is nothing
+        to build, nothing to memoize, and nothing to invalidate on reconnect — which is the whole
+        reason the earlier <code>createGoogleSync(driver, client)</code> wiring went away.
+      </p>
 
       <h3><span class="sub">4.3</span>The cascade, side by side</h3>
 
-      <div class="block">
-        <div class="block-h"><b>syncThreadPage</b><span>same slots, opposite answers</span></div>
-        <pre><span class="c-loc">// google/sync.ts</span>
-<span class="c-key">const</span> selector = key === <span class="c-key">'archive'</span> ? { q: <span class="c-key">'in:archive'</span> } : { labelId: key };
-<span class="c-key">const</span> page = <span class="c-key">await</span> withRetry(() =&gt; driver.listThreads({ ...selector, maxResults: 25 }));
-<span class="c-key">await</span> mirrorThreads(db, page.threads, key);   <span class="c-com">// replaceLabels: true</span>
-<span class="c-key">await</span> hydrateStubs(db, page.threads);
-<span class="c-com">// no prune — replacing already removed what left</span>
-<span class="c-key">await</span> setPageCursor(db, <span class="c-key">'google'</span>, key, page.nextPageToken);
+      <p>
+        The fetching lives once in <code>syncThreadPage</code>; the codec supplies the two answers
+        that differ.
+      </p>
 
-<span class="c-pro">// microsoft/sync.ts</span>
-<span class="c-key">const</span> page = <span class="c-key">await</span> withRetry(() =&gt; driver.listThreads({ labelId: key, maxResults: 25 }));
-<span class="c-key">await</span> mirrorThreads(db, page.threads, key);   <span class="c-com">// replaceLabels: false — MERGE</span>
+      <div class="block">
+        <div class="block-h"><b>rpc/local-utils.ts</b><span>syncThreadPage — one body, two answers</span></div>
+        <pre><span class="c-key">const</span> c = codec();
+<span class="c-com">// Archive is not a Gmail label but "filed nowhere else", so it is fetched as a search.</span>
+<span class="c-key">const</span> selector = c.id === <span class="c-key">'google'</span> &amp;&amp; key === <span class="c-key">'archive'</span>
+  ? { q: <span class="c-key">'in:archive'</span> } : { labelId: key };
+
+<span class="c-key">const</span> page = <span class="c-key">await</span> withRetry(() =&gt; getActiveDriver().listThreads({ ...selector, maxResults: 25 }));
+<span class="c-key">await</span> mirrorThreads(db, page.threads, key);   <span class="c-com">// applies c.mirrorLabels + c.replaceLabels</span>
 <span class="c-key">await</span> hydrateStubs(db, page.threads);
-<span class="c-key">if</span> (!pageToken) {                             <span class="c-com">// ...therefore PRUNE</span>
-  <span class="c-key">const</span> since = <span class="c-com">/* oldest date in this page */</span>;
+
+<span class="c-loc">// google  </span>  replaceLabels: <span class="c-key">true</span>  — REPLACE, so no prune: replacing already removed what left
+<span class="c-pro">// microsoft</span>  replaceLabels: <span class="c-key">false</span> — MERGE, and merging never removes...
+<span class="c-key">if</span> (c.id === <span class="c-key">'microsoft'</span> &amp;&amp; !pageToken) {      <span class="c-com">// ...therefore PRUNE</span>
+  <span class="c-key">const</span> since = <span class="c-com">/* oldest latestReceivedOn in this page */</span>;
   <span class="c-key">await</span> pruneFolderMembership(db, key, ids, since);
 }
-<span class="c-key">await</span> setPageCursor(db, <span class="c-key">'microsoft'</span>, key, page.nextPageToken);</pre>
+<span class="c-key">await</span> setPageCursor(db, c.id, key, page.nextPageToken);</pre>
       </div>
 
       <p>
@@ -982,7 +1012,7 @@ MIGRATIONS[6] = [
       </p>
 
       <div class="block">
-        <div class="block-h"><b>labels.ts</b><span>mirrorEdit</span></div>
+        <div class="block-h"><b>codecs/{google,microsoft}.ts</b><span>mirrorEdit</span></div>
         <pre><span class="c-com">// 1. TRANSLATE — the UI speaks Gmail's vocabulary to both providers</span>
 <span class="c-loc">google</span>:    nothing to do
 <span class="c-pro">microsoft</span>: TRASH→deleteditems, SPAM→junkemail, INBOX→inbox
@@ -1023,28 +1053,36 @@ MIGRATIONS[6] = [
 
       <p>
         A Gmail API change touches <code>gmail-client.ts</code>. A rule change — where archived mail
-        files, what counts as a move — touches <code>providers/google/</code>. The
-        <code>MailDriver</code> interface is what lets <code>providers/</code> stay ignorant of both.
+        files, what counts as a move — touches <code>codecs/google.ts</code>. The
+        <code>MailDriver</code> interface is what lets <code>codecs/</code> stay ignorant of both.
       </p>
 
-      <h3><span class="sub">5.1</span>Why sync modules take both</h3>
+      <h3><span class="sub">5.1</span>Where sync reaches past the driver</h3>
 
       <p>
-        <code>createGoogleSync(driver, client)</code> receives both because they answer different
-        needs. Threads and messages go through the <strong>driver</strong>, already normalized for
-        both providers. Folders reach past it to the <strong>client</strong>, because
-        <code>driver.listFolders()</code> returns a nested tree and the folder mapper needs the raw
-        flat labels to reconstruct parentage itself.
+        Threads and messages go through the <strong>driver</strong>, already normalized for both
+        providers. The folder tree is the one read that does not: <code>syncFolderTree</code> calls
+        <code>getActiveClient()</code> directly, because a folder tree only ever becomes mirror rows,
+        so each codec maps its own provider's raw listing straight to them. Normalizing it first
+        would strip exactly the parentage the mapper needs.
       </p>
 
       <div class="block">
         <div class="block-h"><b>Two paths out</b><span>the driver is not always the answer</span></div>
-        <pre>sync.syncThreadPage() ──► driver.listThreads() ──► client.listThreadIds()  ──► HTTP
-                              (mapping)               (transport)
+        <pre>syncThreadPage()  ──► driver.listThreads()  ──► client.listThreadIds()  ──► HTTP
+                        (mapping)                (transport)
 
-sync.syncFolders()    ──────────────────────────► client.listLabels()      ──► HTTP
-                                                    (raw, keeps parentage)</pre>
+syncFolderTree()  ──────────────────────────► client.listLabels()      ──► HTTP
+                                                 (raw, keeps parentage)
+                                             ──► codec.toFolderRows()</pre>
       </div>
+
+      <p>
+        This is also the only place the codec lookup is done by module rather than through
+        <code>codec()</code> — <code>syncFolderTree</code> imports both codecs by name, because the
+        two <code>toFolderRows</code> take different argument types (Gmail's flat labels vs Graph's
+        tree roots) and a shared signature would be a lie.
+      </p>
     </section>
 
     <!-- ============================================ 6 -->
@@ -1060,7 +1098,7 @@ sync.syncFolders()    ───────────────────�
         <div class="block-h"><b>rpc/routes/mail.ts</b><span>the dispatcher</span></div>
         <pre>listThreads: driverProcedure.input(listThreadsInput).query(({ ctx, input }) =&gt; {
   <span class="c-key">const</span> folder = input.folder.toLowerCase();
-  <span class="c-key">if</span> (folder === <span class="c-key">'draft'</span> || folder === <span class="c-key">'drafts'</span>) <span class="c-key">return</span> draftPage(ctx.db, ctx.sync.id);
+  <span class="c-key">if</span> (folder === <span class="c-key">'draft'</span> || folder === <span class="c-key">'drafts'</span>) <span class="c-key">return</span> draftPage(ctx.db, ctx.codec.id);
 
   <span class="c-key">const</span> isSnoozed = folder === <span class="c-key">'snoozed'</span>;
   <span class="c-key">const</span> args: ListArgs = { db, providerId, folderId, labelIds, cursor, senderEmail, domain };
@@ -1424,16 +1462,19 @@ folders.filter((f) =&gt; f.role &amp;&amp; POLLED_ROLES.has(f.role))
 
       <div class="block">
         <div class="block-h"><b>rpc/local-utils.ts</b><span>pollChanges, annotated</span></div>
-        <pre><span class="c-key">const</span> sync = activeSync();
-<span class="c-key">const</span> inboxFolder = sync.folderKey(<span class="c-key">'inbox'</span>);
+        <pre><span class="c-com">// 0. Tabs share one mirror: a second poller is duplicate API calls and two writers
+//    racing the same delta cursors. pollChanges() = withTabLock('zero-poll', ...).</span>
+<span class="c-key">const</span> c = codec();
+<span class="c-key">const</span> inboxFolder = c.folderKey(<span class="c-key">'inbox'</span>);
 
 <span class="c-com">// 1. Snoozes are local, so they wake with or without a network.</span>
 <span class="c-key">const</span> woke = <span class="c-key">await</span> wakeSnoozed(db, inboxFolder);
 <span class="c-key">if</span> (woke) emitMirrorChanged();
 <span class="c-key">if</span> (isOffline()) <span class="c-key">return</span>;
 
-<span class="c-com">// 2. Ask the provider module which folders are worth polling.</span>
-<span class="c-key">const</span> polled = sync.pollTargets(<span class="c-key">await</span> getFolders(db, sync.id));
+<span class="c-com">// 2. Ask the codec which folders are worth polling.
+//    google → [inbox] with folderKey: null   microsoft → five folders, own keys</span>
+<span class="c-key">const</span> polled = c.pollTargets(<span class="c-key">await</span> getFolders(db, c.id));
 
 <span class="c-com">// 3. Graph's delta is per-folder: N folders = N reads, unless the driver can batch.
 //    Gmail needs none of this — one history read covers every label.</span>
@@ -1460,10 +1501,10 @@ folders.filter((f) =&gt; f.role &amp;&amp; POLLED_ROLES.has(f.role))
   <span class="c-key">continue</span>;
 }
 
-<span class="c-key">await</span> sync.mirrorThreads(db, changes.threads, folderKey ?? <span class="c-key">undefined</span>);
+<span class="c-key">await</span> mirrorThreads(db, changes.threads, folderKey ?? <span class="c-key">undefined</span>);
 <span class="c-key">await</span> deleteMessagesByIds(db, changes.removedMessageIds);
 <span class="c-key">await</span> setFolderDeltaCursor(db, folder.id, changes.cursor);        <span class="c-com">// ← advance</span>
-<span class="c-key">await</span> markFolderSynced(db, sync.id, folderKey ?? inboxFolder, changes.cursor);
+<span class="c-key">await</span> markFolderSynced(db, c.id, folderKey ?? inboxFolder, changes.cursor);
 markRevalidated(folderKey ?? inboxFolder);</pre>
       </div>
 
@@ -1483,12 +1524,14 @@ markRevalidated(folderKey ?? inboxFolder);</pre>
       <h3><span class="sub">9.2</span>How a background sync reaches the screen</h3>
 
       <div class="block">
-        <div class="block-h"><b>rpc/mirror.ts → local-mode.tsx</b><span>the notification loop</span></div>
+        <div class="block-h"><b>rpc/dedupe.ts → local-mode.tsx</b><span>the notification loop</span></div>
         <pre>sync writes SQLite
    │
    ▼
-emitMirrorChanged()          <span class="c-com">// coalesced, 200 ms — 25 threads landing = 1 notification</span>
+emitMirrorChanged()          <span class="c-com">// batched, 200 ms — 25 threads landing = 1 notification</span>
    │
+   ├──► broadcastMirrorChanged() ──► other tabs (SharedWorker port)
+   │                                    └─► their listeners fire immediately, no re-batch
    ▼
 LocalMode's onMirrorChanged listener
    │
@@ -1501,11 +1544,20 @@ React Query re-runs the resolver ──► reads SQLite ──► UI updates</pr
       </div>
 
       <p>
-        Two throttles guard this loop against itself.
+        The 200 ms window is a <strong>trailing throttle, not a debounce</strong>: the first call arms
+        the timer and later calls are dropped rather than resetting it, so a steady stream of emits
+        still lands on time. The receiving tab does not re-batch — the writing tab already waited out
+        its window before broadcasting.
+      </p>
+
+      <p>
+        Three guards keep this loop from feeding itself, all in
+        <a class="ref" href="apps/mail/app/local/rpc/dedupe.ts">rpc/dedupe.ts</a> except the last.
         <code>dedupe(key, fn)</code> collapses concurrent syncs of the same target onto one promise —
         clicking through folders must not fan out N fetches.
-        <code>claimRevalidate(key)</code> is a 5-second-per-target gate, which is what stops the
-        invalidate → resolver → sync → emit cycle from running forever.
+        <code>withTabLock(name, fn)</code> does the same one scope up, across tabs.
+        <code>claimRevalidate(key)</code> (in <code>local-utils.ts</code>) is a 5-second-per-target
+        gate, which is what stops the invalidate → resolver → sync → emit cycle from running forever.
       </p>
     </section>
 
@@ -1519,13 +1571,18 @@ React Query re-runs the resolver ──► reads SQLite ──► UI updates</pr
         <div class="block-h"><b>modifyThread</b><span>rpc/local-utils.ts</span></div>
         <pre><span class="c-key">const</span> db = <span class="c-key">await</span> getLocalDB();
 <span class="c-key">await</span> getActiveDriver().modifyLabels(threadId, add, remove);   <span class="c-com">// 1. provider is truth</span>
-<span class="c-key">const</span> moved = <span class="c-key">await</span> activeSync().applyLabels(db, threadId, add, remove);  <span class="c-com">// 2. mirror follows</span>
-<span class="c-key">await</span> afterThreadWrite(db, threadId, moved);                   <span class="c-com">// 3. re-read behind</span></pre>
+
+<span class="c-key">const</span> edit = codec().mirrorEdit(add, remove);                  <span class="c-com">// 2. translate…</span>
+<span class="c-key">await</span> applyThreadLabels(db, threadId, edit.add, edit.remove);  <span class="c-com">//    …then mirror follows</span>
+
+<span class="c-key">await</span> afterThreadWrite(db, threadId, edit.folderMove);          <span class="c-com">// 3. re-read behind</span></pre>
       </div>
 
       <p>
-        Order matters. If the provider rejects the change, nothing else should happen. And
-        <code>moved</code> — the <code>folderMove</code> flag from <code>mirrorEdit</code> — decides
+        Order matters. If the provider rejects the change, nothing else should happen — the mirror
+        only ever records what the provider has already accepted, so it cannot drift into claiming a
+        state the server refused. Optimistic UI is React Query's job, not the mirror's. And
+        <code>edit.folderMove</code> — from <code>mirrorEdit</code> — decides
         whether step 3 does a full thread re-read: Graph re-ids every message when a thread changes
         folder, so the ids in the mirror go stale.
       </p>
@@ -1576,7 +1633,7 @@ drain() picks it up once sendAfter has passed
         <div class="block-h"><b>The reload sequence</b></div>
         <pre>t=0ms     page loads. driver = null
 t=5ms     React mounts, useThreads fires mail.listThreads
-t=5ms     local-link: isLocalPending() true (localStorage flag set) → do not fall through
+t=5ms     unstable_localLink routes it to localRouter — there is nowhere else to go
 t=5ms     driverProcedure → whenActive() → no driver → <strong>parks</strong>
           <span class="c-com">// creates a promise, stores its resolve in activeWaiters, suspends</span>
 t=400ms   restoreSession() resolves → activateLocal → setActiveProvider(p)
@@ -1614,6 +1671,15 @@ t=401ms   parked calls resume, read SQLite, mailbox renders</pre>
         because the persisted cache is keyed by a null <code>connectionId</code>, so without it one
         account's mail would bleed into the next.
       </p>
+
+      <p>
+        <code>connectionId</code> is a leftover from server mode, where a user could hold several
+        linked mailboxes and the active one had a row id to scope the cache by. Local mode has one
+        provider at a time, so <code>root.tsx</code> passes <code>null</code> and nothing ever
+        computes it: every query key gets the same constant prefix and the persister always lands in
+        the <code>-default</code> bucket. That is exactly why the <code>idbClear()</code> above has to
+        be explicit — with a real id, switching accounts would change buckets by itself.
+      </p>
     </section>
 
     <!-- ============================================ 12 -->
@@ -1629,7 +1695,7 @@ t=401ms   parked calls resume, read SQLite, mailbox renders</pre>
             <tr><td>New data to store</td><td><code>db/schema.ts</code> + <code>db/migrations.ts</code></td></tr>
             <tr><td>New way to read stored data</td><td><code>db/queries.ts</code></td></tr>
             <tr><td>New thing the UI can call</td><td><code>rpc/routes/*.ts</code></td></tr>
-            <tr><td>"Gmail does X, Graph does Y"</td><td><code>rpc/providers/{google,microsoft}/</code></td></tr>
+            <tr><td>"Gmail does X, Graph does Y"</td><td><code>rpc/codecs/{google,microsoft}.ts</code></td></tr>
             <tr><td>New provider API endpoint</td><td><code>mail/*-client.ts</code></td></tr>
             <tr><td>New field from that endpoint</td><td><code>mail/gmail.ts</code> / <code>graph.ts</code></td></tr>
           </tbody>
@@ -1653,7 +1719,8 @@ t=401ms   parked calls resume, read SQLite, mailbox renders</pre>
       </ol>
 
       <p>
-        Step 3 has real logic, so leave a check behind. Mapping bugs are silent.
+        Step 3 has real logic and mapping bugs are silent — exercise both providers by hand before
+        calling it done.
       </p>
 
       <h3><span class="sub">12.3</span>Add an endpoint — top down</h3>
@@ -1669,30 +1736,26 @@ t=401ms   parked calls resume, read SQLite, mailbox renders</pre>
       <p>The rule that keeps this from rotting:</p>
 
       <ol class="body-list">
-        <li>Never write <code>if (provider === 'microsoft')</code> outside <code>providers/sync.ts</code></li>
-        <li>Add the method to <code>MailSync</code> with a comment saying what it decides</li>
-        <li>Implement in <strong>both</strong> sync modules — always, even if one is trivial</li>
-        <li>If the decision is pure, put it in <code>folders.ts</code> or <code>labels.ts</code> and let
-          <code>sync.ts</code> just call it</li>
-        <li>Add cases to the matching <code>.check.ts</code></li>
+        <li>Never write <code>if (provider === 'microsoft')</code> outside <code>codecs/index.ts</code></li>
+        <li>Add the member to <strong>both</strong> codecs with the same signature — always, even if
+          one side is a no-op. A member on one codec only is a branch in disguise</li>
+        <li>Keep it pure. If the decision needs a client or a db handle, the <em>decision</em> belongs
+          in the codec and the <em>doing</em> in <code>rpc/local-utils.ts</code></li>
+        <li>Widen the <code>Codec</code> type by adding the member, not by casting at the call site</li>
       </ol>
 
       <h3><span class="sub">12.5</span>Verification</h3>
 
       <div class="block">
-        <div class="block-h"><b>After any change under app/local</b><span>no test framework — assert scripts</span></div>
-        <pre>cd apps/mail &amp;&amp; npx tsc --noEmit -p tsconfig.json 2&gt;&amp;1 | grep app/local
-
-npx tsx apps/mail/app/local/rpc/providers/folders.check.ts   <span class="c-com"># naming, tree, poll targets</span>
-npx tsx apps/mail/app/local/rpc/providers/labels.check.ts    <span class="c-com"># write translation, exclusivity</span>
-npx tsx apps/mail/app/local/rpc/adapters.check.ts            <span class="c-com"># mirror → UI render</span>
-npx tsx apps/mail/app/local/rpc/bridge.check.ts              <span class="c-com"># activation queue</span>
-npx tsx apps/mail/app/local/rpc/router.check.ts              <span class="c-com"># Zod defaults, routed namespaces</span></pre>
+        <div class="block-h"><b>After any change under app/local</b><span>no test framework</span></div>
+        <pre>cd apps/mail &amp;&amp; npx tsc --noEmit -p tsconfig.json 2&gt;&amp;1 | grep app/local</pre>
       </div>
 
       <p>
-        They run in bare Node because the code they cover is pure. Keeping the deciding pure is what
-        makes that possible — and these are exactly the failures that never throw.
+        Types are the only automated gate. That leaves the silent failures uncovered by construction
+        — a wrong <code>parentId</code> nests a folder wrongly, a wrong exclusivity leaves a thread in
+        two places, neither throws — so the codecs being pure (types only, no client, no db) is what
+        makes them cheap to exercise by hand in a scratch script when you touch one.
       </p>
     </section>
 
@@ -1702,7 +1765,7 @@ npx tsx apps/mail/app/local/rpc/router.check.ts              <span class="c-com"
 
       <div class="qa">
         <details>
-          <summary>Why does <code>mirrorPage</code> prune for Graph but not Gmail?</summary>
+          <summary>Why does <code>syncThreadPage</code> prune for Graph but not Gmail?</summary>
           <p>
             Because Gmail returns a thread's complete label set, so the mirror <em>replaces</em> —
             which already removes anything that left. Graph reports only one message's folder, so the
@@ -1729,7 +1792,7 @@ npx tsx apps/mail/app/local/rpc/router.check.ts              <span class="c-com"
           <p>
             On the <strong>inbox folder row's</strong> <code>deltaCursor</code> column. It is odd
             because the cursor is not per-folder at all — but <code>deltaCursor</code> is a per-folder
-            column, and <code>google/folders.ts</code>'s <code>pollTargets</code> returns only the
+            column, and <code>codecs/google.ts</code>'s <code>pollTargets</code> returns only the
             inbox row, tagged <code>folderKey: null</code> to signal "this speaks for the whole
             mailbox".
           </p>
@@ -1790,7 +1853,7 @@ npx tsx apps/mail/app/local/rpc/router.check.ts              <span class="c-com"
           <summary>Which procedure type would you use for a route that only reads the mirror?</summary>
           <p>
             <code>dbProcedure</code> — unless it needs folder naming. <code>folderKey()</code> lives on
-            <code>ctx.sync</code>, which only <code>driverProcedure</code> supplies, so anything
+            <code>ctx.codec</code>, which only <code>driverProcedure</code> supplies, so anything
             translating a UI folder name needs the driver tier even if it never touches the network.
           </p>
         </details>
