@@ -2,7 +2,27 @@
   "permissions": {
     "allow": [
       "Bash(ls apps/server/src/services/call-service/)",
-      "Bash(grep -rln \"elevenlabs\\\\|ElevenLabs\\\\|outbound\\\\|twilio.*call\\\\|/twiml\\\\|stream\" apps/server/src/services/call-service/)"
+      "Bash(grep -rln \"elevenlabs\\\\|ElevenLabs\\\\|outbound\\\\|twilio.*call\\\\|/twiml\\\\|stream\" apps/server/src/services/call-service/)",
+      "Bash(cd \"c:/Users/eyobn/Documents/Projects/vella/Zero\" && wc -l apps/mail/app/local/rpc/resolvers.ts apps/mail/app/local/rpc/local-utils.ts apps/mail/app/local/rpc/routes/*.ts && rm -f /tmp/old-keys.txt /tmp/new-keys.txt)",
+      "Bash(npx tsx *)",
+      "Bash(grep -oE '`/[a-zA-Z/$][^`]*`' gmail-client.ts)",
+      "Bash(grep -oE '`/[a-zA-Z/$][^`]*`' gmail.ts)",
+      "Bash(sed -n '/^\\\\/\\\\*\\\\* .Name <a@b/,/^}/p' /tmp/gmail-orig.ts)",
+      "Bash(sed -n '/^\\\\/\\\\*\\\\* Split on commas/,/^}/p' /tmp/gmail-orig.ts)",
+      "Bash(sed -n '/^\\\\/\\\\*\\\\* Depth-first walk/,/^}/p' /tmp/gmail-orig.ts)",
+      "Bash(awk '/^function parseSender\\\\\\(/,/^}/' /tmp/gmail-orig.ts)",
+      "Bash(awk '/^function parseSenderList\\\\\\(/,/^}/' /tmp/gmail-orig.ts)",
+      "Bash(grep -nB2 \"^function parseSender\" /tmp/gmail-orig.ts)",
+      "Bash(sed -n '/^export async function replaceFolders/,/^}/p' db/queries.ts)",
+      "Bash(sed -n '/export async function syncFolderTree/,/^}/p' rpc/local-utils.ts)",
+      "Bash(sed -i \"/^\\\\/\\\\*\\\\* Freshness key for the folder tree itself; distinct from any real folder id\\\\. \\\\*\\\\/$/,+1d\" app/local/rpc/local-utils.ts)",
+      "Bash(sed -i \"s/^import {$/import {\\\\n  TREE_SCOPE,/\" /dev/null)",
+      "Bash(sed -i -e 's/\\\\bsync\\\\.folderKey/provider.folderKey/g' -e 's/\\\\bsync\\\\.pollTargets/provider.pollTargets/g' -e 's/\\\\bsync\\\\.id\\\\b/provider.id/g' -e 's/\\\\bsync\\\\.mirrorThreads/provider.mirrorThreads/g' -e 's/\\\\bsync\\\\.syncThreadPage/provider.syncThreadPage/g' -e 's/\\\\bsync\\\\.syncSearch/provider.syncSearch/g' local-utils.ts)",
+      "Bash(sed -i -e 's/const sync = activeProvider\\(\\);/const provider = activeProvider\\(\\);/g' local-utils.ts)",
+      "Bash(node -e \"import\\('@trpc/client'\\).then\\(m => console.log\\('unstable_localLink:', typeof m.unstable_localLink, '| splitLink:', typeof m.splitLink\\)\\)\")"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

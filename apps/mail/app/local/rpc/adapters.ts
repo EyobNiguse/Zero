@@ -1,6 +1,6 @@
 import type { ParsedMessage } from '../../../../server/src/types';
 import type { IGetThreadResponse } from '../../../../server/src/lib/driver/types';
-import type { Message, AttachmentMeta, Label } from '../db';
+import type { Message, AttachmentMeta, Label, ThreadBundle } from '../db';
 
 /** Strip tags/entities down to readable text for the list-row preview. */
 function stripHtml(html: string): string {
@@ -22,8 +22,7 @@ export function toParsedMessage(
 ): ParsedMessage {
   const fullHtml = m.bodyHtml ?? m.bodyText ?? '';
   const unread = labels.some((l) => l.name === 'UNREAD');
-  // List rows render `body` as text; keep it a clean, short plain-text preview.
-  // The reader renders decodedBody/processedHtml, which stay full HTML.
+
   const preview = (m.snippet || m.bodyText || stripHtml(m.bodyHtml ?? ''))
     .replace(/\s+/g, ' ')
     .trim()
@@ -58,10 +57,18 @@ export function toParsedMessage(
   };
 }
 
+/** One thread's mirrored rows, rendered. The single path from SQLite to what the UI holds. */
+export function toThreadDetail(bundle: ThreadBundle): IGetThreadResponse {
+  const messages = bundle.messages.map((m) =>
+    toParsedMessage(m, bundle.attachments.get(m.id) ?? [], bundle.labels),
+  );
+  return toThreadResponse(messages, bundle.labels, bundle.thread?.replyCount);
+}
+
 export function toThreadResponse(
   messages: ParsedMessage[],
   labels: Label[],
-  /** The thread row's count. Only the mirrored messages are known otherwise, which is 1 for a
+  /** The thread row's . Only the mirrored messages are known otherwise, which is 1 for a
    *  thread the list has seen but nobody has opened. */
   replyCount?: number | null,
 ): IGetThreadResponse {

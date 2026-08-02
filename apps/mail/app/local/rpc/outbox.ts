@@ -20,9 +20,11 @@ import {
   type OutboxRow,
   type OutboxPayload,
 } from '../db';
-import { getActiveDriver, getActiveProvider, isLocalActive } from './bridge';
+import { getActiveDriver, getTokenProvider, isLocalActive } from './bridge';
+import { codec } from './codecs';
+import type { ProviderId } from '../auth';
 import { invalidateAllFolders, markFolderSynced, markThreadSynced } from './sync-state';
-import { dedupe, emitMirrorChanged } from './mirror';
+import { dedupe, emitMirrorChanged, withTabLock } from './dedupe';
 import { toast } from 'sonner';
 
 /** A send that keeps failing is parked as a draft rather than retried forever — a timeout after the
@@ -36,10 +38,8 @@ const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine ===
 const now = () => new Date().toISOString();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Where a folder's mail lives in the mirror. Mirrors providerFolder() in ./resolvers. */
-function sentFolder(providerId: string): string {
-  return providerId === 'google' ? 'SENT' : 'sentitems';
-}
+/** Where a sent message lands in the mirror. */
+const sentFolder = (): string => codec().folderKey('sent');
 
 // --- writes from the resolvers -----------------------------------------------
 
@@ -51,7 +51,7 @@ export interface DraftInput {
 
 /** Save a draft locally. Returns the id the composer should keep using. */
 export async function saveDraft(db: LocalDB, input: DraftInput): Promise<string> {
-  const providerId = getActiveProvider()!.provider;
+  const providerId = getTokenProvider()!.provider;
   const existing = input.id ? await getOutbox(db, input.id) : null;
   const id = existing?.id ?? input.id ?? crypto.randomUUID();
 
@@ -80,7 +80,7 @@ export async function queueSend(
   db: LocalDB,
   input: { draftId?: string | null; threadId?: string | null; payload: OutboxPayload; sendAfter: number },
 ): Promise<string> {
-  const providerId = getActiveProvider()!.provider;
+  const providerId = getTokenProvider()!.provider;
   // Reuse the draft's row: sending it must not leave the draft behind in the folder.
   const draft = input.draftId ? await getOutbox(db, input.draftId) : null;
   const id = draft?.id ?? crypto.randomUUID();
@@ -136,11 +136,11 @@ export async function discardDraft(db: LocalDB, id: string): Promise<void> {
  */
 async function mirrorPendingSend(
   db: LocalDB,
-  providerId: string,
+  providerId: ProviderId,
   id: string,
   payload: OutboxPayload,
 ): Promise<void> {
-  const me = getActiveProvider()?.getEmail() ?? '';
+  const me = getTokenProvider()?.getEmail() ?? '';
   const sender = { name: payload.fromEmail ?? me, email: me };
   const timestamp = now();
 
@@ -155,7 +155,7 @@ async function mirrorPendingSend(
         latestSubject: payload.subject,
         replyCount: null,
       },
-      labelIds: [sentFolder(providerId)],
+      labelIds: [sentFolder()],
     },
   ]);
 
@@ -206,8 +206,8 @@ async function readSentFolder(
   row: OutboxRow,
   sentThreadId?: string,
 ): Promise<string | null> {
-  const providerId = getActiveProvider()!.provider;
-  const folderId = sentFolder(providerId);
+  const providerId = getTokenProvider()!.provider;
+  const folderId = sentFolder();
   const driver = getActiveDriver();
 
   const page = await driver.listThreads({ labelId: folderId, maxResults: 10 });
@@ -243,7 +243,7 @@ async function reconcileSent(db: LocalDB, row: OutboxRow, sentThreadId?: string)
         continue;
       }
 
-      const providerId = getActiveProvider()!.provider;
+      const providerId = getTokenProvider()!.provider;
       const detail = await getActiveDriver().getThread(threadId);
       await hydrateMessages(db, detail.messages, detail.attachments);
       await markThreadSynced(db, providerId, threadId);
@@ -267,12 +267,13 @@ async function reconcileSent(db: LocalDB, row: OutboxRow, sentThreadId?: string)
 // --- the flusher -------------------------------------------------------------
 
 /**
- * Drain the queue: push draft edits, delete discarded drafts, send what's due. Coalesced, so the
+ * Drain the queue: push draft edits, delete discarded drafts, send what's due. Deduped, so the
  * interval tick, the `online` event and a fresh send can all call it without racing each other.
  */
 export function flushOutbox(): Promise<void> {
   if (!isLocalActive() || isOffline()) return Promise.resolve();
-  return dedupe('outbox', drain);
+  // dedupe collapses this tab's callers; the tab lock keeps a second tab off the same rows.
+  return dedupe('outbox', () => withTabLock('zero-outbox', drain));
 }
 
 async function drain(): Promise<void> {
@@ -398,7 +399,7 @@ async function send(db: LocalDB, row: OutboxRow): Promise<boolean> {
  */
 export async function syncDrafts(db: LocalDB, maxResults: number): Promise<void> {
   const driver = getActiveDriver();
-  const providerId = getActiveProvider()!.provider;
+  const providerId = getTokenProvider()!.provider;
 
   const page = await driver.listDrafts({ maxResults });
   const localRemoteIds = new Set(await outboxRemoteIds(db));

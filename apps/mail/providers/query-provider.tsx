@@ -5,14 +5,13 @@ import {
 } from '@tanstack/react-query-persist-client';
 import { QueryCache, QueryClient, hashKey, type InfiniteData } from '@tanstack/react-query';
 import { createTRPCContext } from '@trpc/tanstack-react-query';
-import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import { createTRPCClient, unstable_localLink, type TRPCLink } from '@trpc/client';
 import { useMemo, type PropsWithChildren } from 'react';
 import type { AppRouter } from '@zero/server/trpc';
-import { localLink } from '@/app/local/rpc/local-link';
+import { localRouter } from '@/app/local/rpc/router';
 import { CACHE_BURST_KEY } from '@/lib/constants';
 import { signOut } from '@/lib/auth-client';
 import { get, set, del } from 'idb-keyval';
-import superjson from 'superjson';
 
 function createIDBPersister(idbValidKey: IDBValidKey = 'zero-query-cache') {
   return {
@@ -89,31 +88,23 @@ const getQueryClient = (connectionId: string | null) => {
   }
 };
 
-const getUrl = () => import.meta.env.VITE_PUBLIC_BACKEND_URL + '/api/trpc';
-
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 
+/**
+ * The whole backend: every procedure runs in-process against browser SQLite. No HTTP, no transport,
+ * no transformer.
+ *
+ * The cast is because the client is still typed against the server's AppRouter; it goes when that
+ * flips to `typeof localRouter`.
+ */
+const localRouterLink = unstable_localLink({
+  router: localRouter,
+  // dbProcedure/driverProcedure build the real ctx per call.
+  createContext: async () => ({}),
+}) as unknown as TRPCLink<AppRouter>;
+
 export const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    // Answers migrated paths from local SQLite; everything else falls through.
-    localLink,
-    httpBatchLink({
-      transformer: superjson,
-      url: getUrl(),
-      methodOverride: 'POST',
-      maxItems: 1,
-      fetch: (url, options) =>
-        fetch(url, { ...options, credentials: 'include' }).then((res) => {
-          const currentPath = new URL(window.location.href).pathname;
-          const redirectPath = res.headers.get('X-Zero-Redirect');
-          if (!!redirectPath && redirectPath !== currentPath) {
-            window.location.href = redirectPath;
-            res.headers.delete('X-Zero-Redirect');
-          }
-          return res;
-        }),
-    }),
-  ],
+  links: [localRouterLink],
 });
 
 type TrpcHook = ReturnType<typeof useTRPC>;

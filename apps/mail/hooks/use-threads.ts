@@ -1,5 +1,6 @@
 import { backgroundQueueAtom, isThreadInBackgroundQueueAtom } from '@/store/backgroundQueue';
-import { useInfiniteQuery, useQuery, useMutation } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import type { IGetThreadResponse } from '../../server/src/lib/driver/types';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useTRPC } from '@/providers/query-provider';
@@ -37,6 +38,21 @@ export const useThreads = () => {
       },
     ),
   );
+
+  // Local mode reads rows from the same mirror mail.get would, so the page already carries each
+  // row's thread — seeding them is what stops 25 rows firing 25 queries for data just read. Absent
+  // on the server's response, so this is a no-op there; the cast goes when AppRouter flips local.
+  // Fill-only: an existing entry may be a thread the user opened, holding bodies a row copy lacks.
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    for (const page of threadsQuery.data?.pages ?? []) {
+      const rows = (page as { rows?: { id: string; thread: IGetThreadResponse }[] })?.rows;
+      for (const row of rows ?? []) {
+        const key = trpc.mail.get.queryKey({ id: row.id });
+        if (queryClient.getQueryData(key) === undefined) queryClient.setQueryData(key, row.thread);
+      }
+    }
+  }, [threadsQuery.data, queryClient, trpc]);
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
 

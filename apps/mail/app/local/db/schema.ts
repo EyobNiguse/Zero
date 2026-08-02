@@ -46,7 +46,6 @@ export const labels = sqliteTable(
   (table) => [index('labels_name_idx').on(table.name)],
 );
 
-/** The navigable folder tree (Gmail labels / Graph mailFolders), from the driver's listFolders(). */
 export const folders = sqliteTable(
   'folders',
   {
@@ -68,7 +67,6 @@ export const folders = sqliteTable(
   ],
 );
 
-/** `scope` is 'mailbox' (Gmail's single historyId), or `folder:<id>` / `thread:<id>`. */
 export const syncState = sqliteTable('sync_state', {
   scope: text('scope').notNull().primaryKey(),
   providerId: text('provider_id').notNull(),

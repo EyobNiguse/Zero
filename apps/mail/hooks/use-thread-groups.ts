@@ -1,11 +1,11 @@
 import {
   listDomains,
   listSenders,
-  localResolvers,
   type DomainGroup,
   type SenderGroup,
-} from '@/app/local/rpc/resolvers';
+} from '@/app/local/rpc/local-utils';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { localCaller } from '@/app/local/rpc/router';
 import { isLocalActive } from '@/app/local/rpc/bridge';
 import useSearchLabels from './use-labels-search';
 import { useParams } from 'react-router';
@@ -43,7 +43,7 @@ export const useGroupThreads = (filter: { senderEmail?: string; domain?: string 
   const query = useInfiniteQuery({
     queryKey: ['local', 'group-threads', folder, labels, senderEmail, domain],
     queryFn: ({ pageParam }) =>
-      localResolvers['mail.listThreads']!({
+      localCaller.mail.listThreads({
         folder,
         labelIds: labels,
         senderEmail,

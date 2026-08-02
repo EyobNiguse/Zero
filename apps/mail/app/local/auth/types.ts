@@ -10,11 +10,7 @@ export type ProviderId = 'google' | 'microsoft';
 export interface TokenProvider {
   readonly provider: ProviderId;
 
-  /**
-   * Interactive sign-in. Popup providers resolve once an account is
-   * established; a redirect provider navigates the tab away and never resolves
-   * (the page reloads and `restoreSession` completes it).
-   */
+ 
   signIn(): Promise<void>;
 
   /**

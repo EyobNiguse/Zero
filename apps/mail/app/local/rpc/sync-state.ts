@@ -11,6 +11,9 @@ import {
 
 export const SYNC_TTL_MS = 2 * 60 * 1000;
 
+/** Freshness key for the folder tree itself; distinct from any real folder id. */
+export const TREE_SCOPE = '__tree__';
+
 const folderScope = (folderId: string) => `folder:${folderId}`;
 const threadScope = (threadId: string) => `thread:${threadId}`;
 /** Where the provider's own paging left off, so scroll can pull the next page. */
@@ -32,7 +35,6 @@ export function clearSnooze(db: LocalDB, threadId: string): Promise<void> {
   return clearSyncState(db, [snoozeScope(threadId)]);
 }
 
-/** Threads whose wake time has passed. */
 export async function dueSnoozes(db: LocalDB, now: number): Promise<string[]> {
   const rows = await listSyncStateByPrefix(db, 'snooze:');
   return rows

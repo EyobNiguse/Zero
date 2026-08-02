@@ -5,14 +5,10 @@ import type { InsertThread, InsertMessage, InsertAttachment } from '../db/querie
 export interface NormalizedThread {
   thread: InsertThread;
   labelIds: string[];
-  /**
-   * The thread's newest message, without a body. Lets the list render a row from the mirror
-   * instead of fetching the whole thread; the real messages land when the thread is opened.
-   */
   latestMessage?: InsertMessage;
 }
 
-/** A navigable mail folder/label (Gmail label or Graph mailFolder). */
+/** A well-known role for a navigable mail folder/label (Gmail label or Graph mailFolder). */
 export type FolderRole =
   | 'inbox'
   | 'sent'
@@ -22,17 +18,6 @@ export type FolderRole =
   | 'archive'
   | 'starred'
   | 'important';
-
-export interface MailFolder {
-  id: string;
-  name: string;
-  /** Mapped well-known role, or null for a plain user folder/label. */
-  role: FolderRole | null;
-  unread?: number | null;
-  total?: number | null;
-  /** Nested child folders (Graph childFolders); empty/undefined for a leaf. */
-  children?: MailFolder[];
-}
 
 export interface ThreadPage {
   threads: NormalizedThread[];
@@ -119,7 +104,6 @@ export interface LabelColor {
   textColor: string;
 }
 
-/** A user label/category, matching the labels router's output shape. */
 export interface MailLabel {
   id: string;
   name: string;
@@ -130,55 +114,36 @@ export interface MailLabel {
 export interface MailDriver {
   readonly providerId: string;
 
-  /** Enumerate the account's folders / labels for the navigation sidebar. */
-  listFolders(): Promise<MailFolder[]>;
-
   listThreads(opts?: {
     pageToken?: string;
     maxResults?: number;
-    /** Provider label/folder id to scope to (e.g. Gmail 'INBOX'). */
     labelId?: string;
-    /** Provider search query (Gmail `q`, e.g. 'in:archive'); overrides labelId. */
     q?: string;
   }): Promise<ThreadPage>;
 
-  /** Full contents of one thread: messages + bodies + attachment metadata. */
   getThread(threadId: string): Promise<ThreadDetail>;
 
-  /**
-   * Changes since `cursor`. Absent on providers with no delta API.
-   *
-   * `folderId: null` means the whole mailbox — Gmail's history is mailbox-wide, so one read covers
-   * every label. Graph's delta only exists per folder, so it requires an id.
-   */
+
   listChanges?(folderId: string | null, cursor: string | null): Promise<FolderChanges>;
 
-  /**
-   * Several folders' changes in one round trip, keyed by folder id. Only worth implementing where
-   * delta is per-folder and the API can batch (Graph), since keeping N folders fresh would otherwise
-   * cost N requests per poll. Callers fall back to looping `listChanges` when this is absent.
-   */
+ 
   listChangesMany?(
-    scopes: { folderId: string; cursor: string | null }[],
+    folders: { folderId: string; cursor: string | null }[],
   ): Promise<Record<string, FolderChanges>>;
 
-  /** Raw bytes for one attachment, fetched on demand. */
   getAttachment(messageId: string, attachmentId: string): Promise<AttachmentBytes>;
 
   sendMessage(input: SendInput): Promise<SendResult>;
 
   modifyLabels(threadId: string, addLabelIds: string[], removeLabelIds: string[]): Promise<void>;
 
-  /** Move a whole thread/conversation to the provider's trash (Deleted Items / TRASH). */
   trashThread(threadId: string): Promise<void>;
 
-  /** Create a draft, or replace it in place when input.id is set. */
   createDraft(input: DraftInput): Promise<{ id: string }>;
   getDraft(id: string): Promise<ParsedDraftResult>;
   listDrafts(opts?: { maxResults?: number; pageToken?: string }): Promise<DraftList>;
   deleteDraft(id: string): Promise<void>;
 
-  /** Send-as identities for the account (primary + configured aliases). */
   getEmailAliases(): Promise<{ email: string; name: string; primary?: boolean }[]>;
 
   createLabel(input: { name: string; color?: LabelColor }): Promise<MailLabel>;

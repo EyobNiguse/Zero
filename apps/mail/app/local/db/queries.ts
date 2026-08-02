@@ -14,7 +14,6 @@ import {
   outbox,
   type Sender,
 } from './schema';
-import type { MailFolder } from '../mail/types';
 import type { LocalDB } from './client';
 
 export type DB = LocalDB;
@@ -113,14 +112,7 @@ export async function create(db: DB, thread: InsertThread, labelIds?: string[]):
 /** Labels the provider knows nothing about — a replace must not sweep them away. */
 const LOCAL_ONLY_LABELS = ['SNOOZED'];
 
-/**
- * Bulk upsert provider threads into the mirror (batch path, idempotent via onConflict).
- *
- * `replaceLabels` makes the provider's label set authoritative: labels the thread no longer carries
- * are deleted. Without it a sync can only ever add, so a thread that left a folder keeps that
- * folder's label forever — which is why binned mail went on showing in Sent. Only pass it when the
- * driver reports a thread's *complete* label set (Gmail does; Graph reports one message's folder).
- */
+
 export async function hydrateThreads(
   db: DB,
   items: { thread: InsertThread; labelIds: string[] }[],
@@ -174,14 +166,6 @@ export async function hydrateThreads(
   await db.batch(stmts as unknown as Parameters<typeof db.batch>[0]);
 }
 
-/**
- * Drop a folder's label from threads that are no longer in it. For providers whose listing can't
- * carry a thread's whole folder membership (Graph: a conversation spans folders, and each message
- * only knows its own), this is the only way the mirror learns a thread has left.
- *
- * Bounded by `since` — the oldest thread in the page we just synced. Older threads simply weren't in
- * the window we can speak for, so their membership is left alone.
- */
 export async function pruneFolderMembership(
   db: DB,
   folderId: string,
@@ -289,6 +273,67 @@ export async function getThreadMessages(db: DB, threadId: string): Promise<Messa
     .from(messages)
     .where(eq(messages.threadId, threadId))
     .orderBy(asc(messages.receivedOn));
+}
+
+export interface ThreadBundle {
+  thread: Thread | null;
+  messages: Message[];
+  labels: Label[];
+  /** Keyed by message id. Metadata only — cached bytes never enter a render read. */
+  attachments: Map<string, AttachmentMeta[]>;
+}
+
+export async function getThreadBundles(
+  db: DB,
+  threadIds: string[],
+): Promise<Map<string, ThreadBundle>> {
+  const out = new Map<string, ThreadBundle>();
+  if (threadIds.length === 0) return out;
+  for (const id of threadIds) {
+    out.set(id, { thread: null, messages: [], labels: [], attachments: new Map() });
+  }
+
+  const threadRows = await db.select().from(threads).where(inArray(threads.id, threadIds));
+  for (const t of threadRows) out.get(t.id)!.thread = t;
+
+  const messageRows = await db
+    .select()
+    .from(messages)
+    .where(inArray(messages.threadId, threadIds))
+    .orderBy(asc(messages.receivedOn));
+  for (const m of messageRows) out.get(m.threadId)?.messages.push(m);
+
+  const labelRows = await db
+    .select({
+      threadId: threadLabels.threadId,
+      id: labels.id,
+      name: labels.name,
+      color: labels.color,
+    })
+    .from(labels)
+    .innerJoin(threadLabels, eq(labels.id, threadLabels.labelId))
+    .where(inArray(threadLabels.threadId, threadIds));
+  for (const { threadId, ...label } of labelRows) out.get(threadId)?.labels.push(label);
+
+  if (messageRows.length > 0) {
+    const threadOfMessage = new Map(messageRows.map((m) => [m.id, m.threadId]));
+    const attachmentRows = await db
+      .select(attachmentMetaSelect)
+      .from(attachments)
+      .where(
+        inArray(
+          attachments.messageId,
+          messageRows.map((m) => m.id),
+        ),
+      );
+    for (const a of attachmentRows) {
+      const bundle = out.get(threadOfMessage.get(a.messageId)!);
+      if (!bundle) continue;
+      bundle.attachments.set(a.messageId, [...(bundle.attachments.get(a.messageId) ?? []), a]);
+    }
+  }
+
+  return out;
 }
 
 /** Metadata only. Cached bytes are megabytes wide, so they are never in a thread-render read. */
@@ -832,9 +877,7 @@ export async function findThreadsByFolderWithPagination(
   params: {
     pageToken?: string;
     maxResults: number;
-    /** Scope to one provider so a switched account never sees the other's mail. */
     providerId?: string;
-    /** Extra labels the thread must ALSO carry (sidebar label filter). */
     labelIds?: string[];
     senderEmail?: string;
     domain?: string;
@@ -849,13 +892,9 @@ export async function findThreadsByFolderWithPagination(
   if (providerId) {
     conditions.push(eq(threads.providerId, providerId));
   }
-
   if (senderEmail) conditions.push(senderEmailEq(senderEmail));
   if (domain) conditions.push(senderDomainEq(domain));
 
-  // Keyset on (latestReceivedOn, id), not the timestamp alone: Graph's receivedDateTime is only
-  // second-precision, so bulk-delivered mail ties, and a strict `<` would skip a tied thread that
-  // landed on a page boundary.
   if (pageToken) {
     const split = pageToken.lastIndexOf('|');
     const ts = split === -1 ? pageToken : pageToken.slice(0, split);
@@ -870,8 +909,6 @@ export async function findThreadsByFolderWithPagination(
     );
   }
 
-  // AND across labels, not OR: keep only threads matching every required label. A thread joins
-  // once per matching label, so counting distinct matches == required.length is the intersection.
   const results = await db
     .select(threadSelect)
     .from(threads)
@@ -923,39 +960,22 @@ export async function getFolderThreadSenders(
     .having(sql`count(distinct ${threadLabels.labelId}) = ${required.length}`);
 }
 
-// --- folders -----------------------------------------------------------------
 
-function flattenFolders(
-  tree: MailFolder[],
-  providerId: string,
-  syncedAt: string,
-  parentId: string | null = null,
-): InsertFolder[] {
-  const rows: InsertFolder[] = [];
-  for (const f of tree) {
-    rows.push({
-      id: f.id,
-      providerId,
-      name: f.name,
-      role: f.role ?? null,
-      parentId,
-      unread: f.unread ?? null,
-      total: f.total ?? null,
-      syncedAt,
-    });
-    if (f.children?.length) rows.push(...flattenFolders(f.children, providerId, syncedAt, f.id));
-  }
-  return rows;
-}
+/** What a provider's sync module supplies; providerId/syncedAt/deltaCursor are stamped here. */
+export type FolderRow = Omit<InsertFolder, 'providerId' | 'syncedAt' | 'deltaCursor'>;
 
-/** Delete-then-insert, so a folder removed at the provider disappears locally. */
+/**
+ * Delete-then-insert, so a folder removed at the provider disappears locally. Rows arrive already
+ * flat with `parentId` set — each provider derives nesting its own way (Gmail from '/' in the label
+ * name, Graph from childFolders), so there is no shared tree shape to flatten here.
+ */
 export async function replaceFolders(
   db: DB,
   providerId: string,
-  tree: MailFolder[],
+  input: FolderRow[],
   now: string,
 ): Promise<void> {
-  const rows = flattenFolders(tree, providerId, now);
+  const rows: InsertFolder[] = input.map((r) => ({ ...r, providerId, syncedAt: now }));
 
   // Carry deltaCursor across the replace — a tree refresh must not reset a folder's delta position.
   const existing = await db

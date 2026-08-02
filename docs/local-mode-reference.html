@@ -1,0 +1,1855 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local Mode — Engineering Reference</title>
+<style>
+  /* reset */
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; padding: 0; }
+  img, picture, video, canvas, svg { display: block; max-width: 100%; }
+  input, button, textarea, select { font: inherit; }
+  p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
+</style>
+
+<style>
+  :root {
+    --paper: #f5f6f9;
+    --card: #ffffff;
+    --ink: #11141c;
+    --ink-soft: #4a5163;
+    --ink-faint: #767d90;
+    --rule: #d9dde7;
+    --rule-soft: #e7eaf1;
+    --accent: #3b4d94;
+    --accent-soft: #eceffa;
+    --local: #0d6e63;
+    --local-soft: #e2f2ef;
+    --provider: #9a5a06;
+    --provider-soft: #fbf0dd;
+    --warn: #9b2c2c;
+    --warn-soft: #fbeaea;
+
+    --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+    --measure: 70ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0d1016;
+      --card: #141822;
+      --ink: #dfe3ec;
+      --ink-soft: #a2aabd;
+      --ink-faint: #7b8398;
+      --rule: #262c39;
+      --rule-soft: #1c212c;
+      --accent: #93a6ea;
+      --accent-soft: #1a2035;
+      --local: #4fd1c5;
+      --local-soft: #102b29;
+      --provider: #e0a445;
+      --provider-soft: #2c2213;
+      --warn: #f08a8a;
+      --warn-soft: #2d1717;
+    }
+  }
+
+  :root[data-theme='dark'] {
+    --paper: #0d1016;
+    --card: #141822;
+    --ink: #dfe3ec;
+    --ink-soft: #a2aabd;
+    --ink-faint: #7b8398;
+    --rule: #262c39;
+    --rule-soft: #1c212c;
+    --accent: #93a6ea;
+    --accent-soft: #1a2035;
+    --local: #4fd1c5;
+    --local-soft: #102b29;
+    --provider: #e0a445;
+    --provider-soft: #2c2213;
+    --warn: #f08a8a;
+    --warn-soft: #2d1717;
+  }
+
+  :root[data-theme='light'] {
+    --paper: #f5f6f9;
+    --card: #ffffff;
+    --ink: #11141c;
+    --ink-soft: #4a5163;
+    --ink-faint: #767d90;
+    --rule: #d9dde7;
+    --rule-soft: #e7eaf1;
+    --accent: #3b4d94;
+    --accent-soft: #eceffa;
+    --local: #0d6e63;
+    --local-soft: #e2f2ef;
+    --provider: #9a5a06;
+    --provider-soft: #fbf0dd;
+    --warn: #9b2c2c;
+    --warn-soft: #fbeaea;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  @media (min-width: 1100px) {
+    .shell {
+      grid-template-columns: 232px minmax(0, 1fr);
+      gap: 56px;
+      padding-right: 48px;
+    }
+  }
+
+  /* ---------- rail ---------- */
+
+  .rail {
+    display: none;
+  }
+
+  @media (min-width: 1100px) {
+    .rail {
+      display: block;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 40px 0;
+      border-right: 1px solid var(--rule);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+  }
+
+  .rail-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+  }
+
+  .rail ol {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-right: 18px;
+  }
+
+  .rail a {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 3px 0;
+    border-radius: 3px;
+  }
+
+  .rail a:hover { color: var(--accent); }
+  .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .rail .num { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    padding: 72px 0 40px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 48px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(38px, 6vw, 62px);
+    line-height: 1.02;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin-bottom: 22px;
+  }
+
+  .standfirst {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: var(--measure);
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px 44px;
+    margin-top: 34px;
+    padding-top: 26px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .fact-k {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+
+  .fact-v {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { margin-bottom: 68px; scroll-margin-top: 24px; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(26px, 3.4vw, 34px);
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 26px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    align-items: baseline;
+  }
+
+  h2 .sec {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+    margin: 36px 0 12px;
+    color: var(--ink);
+  }
+
+  h3 .sub {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-weight: 400;
+    margin-right: 8px;
+  }
+
+  p { max-width: var(--measure); margin-bottom: 16px; }
+  p + p { margin-top: -4px; }
+
+  ul, ol.body-list { max-width: var(--measure); padding-left: 20px; margin-bottom: 18px; }
+  li { margin-bottom: 7px; }
+
+  strong { font-weight: 650; }
+
+  a.ref {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  a.ref:hover { border-bottom-color: var(--accent); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.875em;
+    background: var(--rule-soft);
+    padding: 1px 5px;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+
+  /* ---------- code + diagram blocks ---------- */
+
+  .block {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    margin: 20px 0 24px;
+    overflow: hidden;
+  }
+
+  .block-h {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--rule-soft);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .block-h b { color: var(--ink-soft); font-weight: 600; }
+
+  pre {
+    overflow-x: auto;
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    tab-size: 2;
+  }
+
+  pre.diagram { font-size: 12px; line-height: 1.5; }
+
+  .c-key { color: var(--accent); }
+  .c-com { color: var(--ink-faint); font-style: italic; }
+  .c-loc { color: var(--local); font-weight: 600; }
+  .c-pro { color: var(--provider); font-weight: 600; }
+  .c-warn { color: var(--warn); font-weight: 600; }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap { overflow-x: auto; margin: 20px 0 26px; border: 1px solid var(--rule); border-radius: 5px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+
+  th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 11px 14px;
+    background: var(--rule-soft);
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  td code { background: none; padding: 0; font-size: 12.5px; }
+  .num-col { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---------- tags + callouts ---------- */
+
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    vertical-align: 1px;
+    white-space: nowrap;
+  }
+
+  .t-local { background: var(--local-soft); color: var(--local); }
+  .t-provider { background: var(--provider-soft); color: var(--provider); }
+  .t-both { background: var(--accent-soft); color: var(--accent); }
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 15px 18px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+    max-width: var(--measure);
+  }
+
+  .note.bug { border-left-color: var(--warn); background: var(--warn-soft); }
+
+  .note-h {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+    color: var(--accent);
+  }
+
+  .note.bug .note-h { color: var(--warn); }
+  .note p { margin-bottom: 8px; font-size: 15px; }
+  .note p:last-child { margin-bottom: 0; }
+
+  /* ---------- exam Q&A ---------- */
+
+  .qa { border-top: 1px solid var(--rule); max-width: var(--measure); }
+
+  details {
+    border-bottom: 1px solid var(--rule-soft);
+    padding: 13px 0;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    list-style: none;
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 10px;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: '+';
+    font-family: var(--mono);
+    color: var(--accent);
+    font-weight: 400;
+  }
+  details[open] summary::before { content: '\2212'; }
+  summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  details > *:not(summary) { margin-left: 30px; margin-top: 10px; }
+  details p { font-size: 15px; color: var(--ink-soft); }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 2px solid var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- print ---------- */
+
+  @media print {
+    :root {
+      --paper: #fff; --card: #fff; --ink: #000; --ink-soft: #333; --ink-faint: #666;
+      --rule: #bbb; --rule-soft: #eee; --accent: #24356f; --accent-soft: #f2f4fb;
+      --local: #06534a; --provider: #7a4705; --warn: #8a1f1f;
+    }
+    body { font-size: 10.5pt; line-height: 1.5; }
+    .shell { display: block; max-width: none; padding: 0; }
+    .rail { display: none; }
+    .masthead { padding-top: 0; }
+    h1 { font-size: 30pt; }
+    h2 { font-size: 17pt; page-break-after: avoid; }
+    h3 { page-break-after: avoid; }
+    section { margin-bottom: 30px; page-break-inside: auto; }
+    .block, .table-wrap, .note { page-break-inside: avoid; }
+    pre { font-size: 8.5pt; white-space: pre-wrap; word-break: break-word; }
+    table { font-size: 9pt; }
+    details { page-break-inside: avoid; }
+    details > *:not(summary) { display: block !important; }
+    a.ref { color: #000; border: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="rail" aria-label="Contents">
+    <div class="rail-title">Contents</div>
+    <ol>
+      <li><a href="#s1"><span class="num">1</span><span>The shape</span></a></li>
+      <li><a href="#s2"><span class="num">2</span><span>Storage</span></a></li>
+      <li><a href="#s3"><span class="num">3</span><span>The tRPC layer</span></a></li>
+      <li><a href="#s4"><span class="num">4</span><span>Providers</span></a></li>
+      <li><a href="#s5"><span class="num">5</span><span>Client &amp; driver</span></a></li>
+      <li><a href="#s6"><span class="num">6</span><span>Reading a list</span></a></li>
+      <li><a href="#s7"><span class="num">7</span><span>Cursors</span></a></li>
+      <li><a href="#s8"><span class="num">8</span><span>Sync state</span></a></li>
+      <li><a href="#s9"><span class="num">9</span><span>Delta poll</span></a></li>
+      <li><a href="#s10"><span class="num">10</span><span>Writing</span></a></li>
+      <li><a href="#s11"><span class="num">11</span><span>Lifecycle</span></a></li>
+      <li><a href="#s12"><span class="num">12</span><span>Adding features</span></a></li>
+      <li><a href="#s13"><span class="num">13</span><span>Exam drill</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="masthead">
+      <div class="eyebrow">apps/mail/app/local · engineering reference</div>
+      <h1>Local Mode</h1>
+      <p class="standfirst">
+        A mail client whose source of truth is a SQLite file in your browser. The provider is
+        something it reconciles against, not something it waits for. This is how every layer of
+        that works — storage, routing, provider rules, and the three independent cursor systems
+        that make sync resumable.
+      </p>
+      <div class="facts">
+        <div>
+          <div class="fact-k">Database</div>
+          <div class="fact-v">SQLite / OPFS</div>
+        </div>
+        <div>
+          <div class="fact-k">Runs in</div>
+          <div class="fact-v">Web Worker</div>
+        </div>
+        <div>
+          <div class="fact-k">Providers</div>
+          <div class="fact-v">Gmail · Graph</div>
+        </div>
+        <div>
+          <div class="fact-k">Freshness TTL</div>
+          <div class="fact-v">120 s</div>
+        </div>
+        <div>
+          <div class="fact-k">Poll interval</div>
+          <div class="fact-v">120 s</div>
+        </div>
+        <div>
+          <div class="fact-k">Page size</div>
+          <div class="fact-v">25</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============================================ 1 -->
+    <section id="s1">
+      <h2><span class="sec">§1</span><span>The shape</span></h2>
+
+      <p>
+        Two colour codes run through this whole document and through the code itself.
+        <span class="tag t-local">local</span> means SQLite — the mirror, instant, works offline.
+        <span class="tag t-provider">provider</span> means the network — Gmail or Microsoft Graph,
+        slow, fallible, authoritative.
+      </p>
+
+      <p>
+        Every read serves <span class="tag t-local">local</span> and refreshes from
+        <span class="tag t-provider">provider</span> behind the response. Every write goes to
+        <span class="tag t-provider">provider</span> first, then updates
+        <span class="tag t-local">local</span>. Hold those two sentences and most of the codebase
+        follows.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>Layer map</b><span>each layer calls only downward</span></div>
+        <pre class="diagram">  UI            hooks/use-threads.ts, components/mail/*
+                  │  useQuery(trpc.mail.listThreads)
+                  ▼
+  LINK          <span class="c-key">rpc/local-link.ts</span>        intercepts tRPC, runs it in-browser
+                  ▼
+  ROUTER        <span class="c-key">rpc/router.ts</span>            namespaces → procedures
+                <span class="c-key">rpc/trpc.ts</span>              publicProcedure / dbProcedure / driverProcedure
+                  ▼
+  ROUTES        <span class="c-key">rpc/routes/mail.ts</span>       what the feature IS
+                  │
+                  ├──► <span class="c-loc">db/queries.ts</span>  ──► SQLite          ← the common path
+                  │
+                  └──► <span class="c-key">rpc/providers/</span>       which provider's rules apply
+                          │
+                          ├──► <span class="c-pro">mail/gmail.ts</span>   (driver)  normalize wire → rows
+                          │       └──► <span class="c-pro">mail/gmail-client.ts</span>  HTTP
+                          └──► <span class="c-loc">db/queries.ts</span>  write the result back</pre>
+      </div>
+
+      <h3><span class="sub">1.1</span>Why the layers split where they do</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>Answers</th><th>Must not</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>mail/*-client.ts</code></td>
+              <td>How do I call this API?</td>
+              <td>Know about SQLite or our row types</td>
+            </tr>
+            <tr>
+              <td><code>mail/gmail.ts</code>, <code>graph.ts</code></td>
+              <td>What did the provider say, in our shapes?</td>
+              <td>Import from <code>rpc/</code> — that would invert the layering</td>
+            </tr>
+            <tr>
+              <td><code>rpc/providers/</code></td>
+              <td>What does that mean for us?</td>
+              <td>Contain a second <code>if provider ===</code></td>
+            </tr>
+            <tr>
+              <td><code>rpc/routes/</code></td>
+              <td>What is the feature?</td>
+              <td>Know which provider is signed in</td>
+            </tr>
+            <tr>
+              <td><code>db/queries.ts</code></td>
+              <td>How is it stored and read?</td>
+              <td>Know a provider exists at all</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <div class="note-h">The naming trap</div>
+        <p>
+          <code>mail/graph*.ts</code> is <em>Microsoft Graph, the API</em>. <code>rpc/providers/microsoft/</code>
+          is <em>the Microsoft account, our rules</em>. Same company, different layers. There is no
+          <code>graph/</code> folder under <code>providers/</code> — only <code>google/</code> and
+          <code>microsoft/</code>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================ 2 -->
+    <section id="s2">
+      <h2><span class="sec">§2</span><span>Storage</span></h2>
+
+      <h3><span class="sub">2.1</span>Why a Web Worker</h3>
+
+      <p>
+        The database is SQLite compiled to WASM, stored in OPFS. It runs in a worker for one
+        hard reason: the SAH-pool VFS needs
+        <code>FileSystemFileHandle.createSyncAccessHandle</code>, which browsers expose only in
+        workers — never on the main thread.
+      </p>
+
+      <p>
+        <a class="ref" href="apps/mail/app/local/db/client.ts">db/client.ts</a> spawns that worker and
+        wires Drizzle's <code>sqlite-proxy</code> driver to it over <code>postMessage</code>. Every
+        query is an async round trip.
+      </p>
+
+      <div class="note bug">
+        <div class="note-h">Constraint you will hit</div>
+        <p>
+          <code>sqlite-proxy</code> does <strong>not</strong> implement <code>db.transaction()</code> —
+          it throws. Multi-statement atomic writes must use <code>db.batch([...])</code>. Reads are
+          unaffected.
+        </p>
+      </div>
+
+      <h3><span class="sub">2.2</span>Tables</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Table</th><th>Holds</th><th>Notable</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>threads</code></td><td>One row per conversation</td><td><code>latestSender</code>, <code>latestSubject</code>, <code>latestReceivedOn</code>, <code>replyCount</code></td></tr>
+            <tr><td><code>messages</code></td><td>Bodies, recipients, snippet</td><td>Stubs (no body) land from list syncs</td></tr>
+            <tr><td><code>attachments</code></td><td>Metadata + cached base64</td><td><code>body</code> null until fetched; ≤10 MB kept</td></tr>
+            <tr><td><code>labels</code> / <code>thread_labels</code></td><td>Join table, thread ↔ label</td><td>Folder membership is a label row</td></tr>
+            <tr><td><code>folders</code></td><td>Sidebar tree</td><td><strong><code>deltaCursor</code></strong> — see §7</td></tr>
+            <tr><td><code>sync_state</code></td><td>Freshness + cursors</td><td>Key-value on <code>scope</code>; see §8</td></tr>
+            <tr><td><code>outbox</code></td><td>Drafts and queued sends</td><td>The write queue; see §10</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Folder membership being a label row is why one query can filter by folder <em>and</em> label
+        — and why the SQL in §6.2 has to count distinct matches rather than just filter.
+      </p>
+
+      <h3><span class="sub">2.3</span>Migrations</h3>
+
+      <p>
+        drizzle-kit's file migrator does not run in a browser, so
+        <a class="ref" href="apps/mail/app/local/db/migrations.ts">db/migrations.ts</a> is an ordered
+        array checked against <code>PRAGMA user_version</code>. After entry <em>N</em> (0-indexed)
+        applies, <code>user_version</code> becomes <em>N+1</em>.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>The one rule</b><span>append only</span></div>
+        <pre><span class="c-com">// Entries 0000–0005 have shipped. user_version is 6. Never edit or reorder
+// a shipped entry — a browser that already applied it will never re-run it.</span>
+MIGRATIONS[6] = [
+  `ALTER TABLE threads ADD COLUMN is_read integer NOT NULL DEFAULT 0`,
+];</pre>
+      </div>
+
+      <p>
+        Existing users already hold a populated mirror, so <code>ADD COLUMN</code> gives every stored
+        row the default. Choose a default that is safe when wrong, or invalidate the folder TTLs so
+        the data re-pulls.
+      </p>
+    </section>
+
+    <!-- ============================================ 3 -->
+    <section id="s3">
+      <h2><span class="sec">§3</span><span>The tRPC layer</span></h2>
+
+      <p>
+        The UI calls <code>trpc.mail.listThreads.useInfiniteQuery(...)</code> exactly as it would
+        against a server. <a class="ref" href="apps/mail/app/local/rpc/local-link.ts">local-link.ts</a>
+        intercepts the operation before any HTTP happens.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/local-link.ts</b><span>the interception</span></div>
+        <pre><span class="c-key">const</span> routed = ROUTED_NAMESPACES.has(op.path.split(<span class="c-key">'.'</span>)[0]!);
+<span class="c-key">const</span> resolver = routed ? <span class="c-key">null</span> : localResolvers[op.path];
+<span class="c-key">if</span> (!routed &amp;&amp; !resolver) <span class="c-key">return</span> next(op);        <span class="c-com">// unknown → real backend</span>
+<span class="c-key">if</span> (!isLocalActive() &amp;&amp; !isLocalPending()) <span class="c-key">return</span> next(op);</pre>
+      </div>
+
+      <p>
+        Two destinations exist because the port is mid-flight.
+        <strong>Ported namespaces</strong> (<code>labels</code>, <code>mail</code>, <code>notes</code>)
+        go to the real local router. <strong>The rest</strong> are still flat handler functions in
+        <code>rpc/resolvers.ts</code> — no Zod, no context, no middleware.
+      </p>
+
+      <h3><span class="sub">3.1</span>The three procedure types</h3>
+
+      <p>
+        <a class="ref" href="apps/mail/app/local/rpc/trpc.ts">rpc/trpc.ts</a> is our own
+        <code>initTRPC.create()</code>. Procedures are stacked middleware, and picking the right one
+        is most of what writing a route involves.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Procedure</th><th>Adds to ctx</th><th>Use when</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>publicProcedure</code></td>
+              <td>nothing</td>
+              <td>Pure or localStorage-backed. Stubs.</td>
+            </tr>
+            <tr>
+              <td><code>dbProcedure</code></td>
+              <td><code>ctx.db</code></td>
+              <td>Touches the mirror only. Boots the worker on first use.</td>
+            </tr>
+            <tr>
+              <td><code>driverProcedure</code></td>
+              <td><code>ctx.db</code>, <code>ctx.sync</code>, <code>ctx.provider</code>, <code>ctx.driver</code></td>
+              <td>Anything provider-aware — including folder naming.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        <code>driverProcedure</code> also does something invisible but essential: it
+        <strong>waits for activation</strong>. On a page reload React Query fires before the session
+        has been restored, so the driver does not exist yet. Rather than fail, the call parks — see
+        §11.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/trpc.ts</b><span>driverProcedure</span></div>
+        <pre><span class="c-key">export const</span> driverProcedure = dbProcedure.use(<span class="c-key">async</span> ({ next }) =&gt; {
+  <span class="c-key">try</span> { <span class="c-key">await</span> whenActive(); }                    <span class="c-com">// parks until a driver exists</span>
+  <span class="c-key">catch</span> (err) { <span class="c-key">throw new</span> TRPCError({ code: <span class="c-key">'TIMEOUT'</span>, ... }); }
+
+  <span class="c-key">const</span> provider = getActiveProvider();
+  <span class="c-key">if</span> (!provider) <span class="c-key">throw new</span> TRPCError({ code: <span class="c-key">'UNAUTHORIZED'</span>, ... });
+  <span class="c-key">return</span> next({ ctx: { sync: activeSync(), provider, driver: getActiveDriver() } });
+});</pre>
+      </div>
+
+      <p>
+        There is no transport and no transformer — procedures run in-process through
+        <code>createCaller</code>. What the router buys over the flat map it is replacing: Zod parses
+        the input and applies defaults, the middleware chain supplies context, and errors carry real
+        <code>TRPCError</code> codes.
+      </p>
+
+      <div class="note bug">
+        <div class="note-h">Zod strips what it does not declare</div>
+        <p>
+          An input schema narrower than what callers actually send will <em>silently drop fields</em>.
+          This is why <code>mail.send</code> declares recipients as
+          <code>z.union([z.string(), z.array(...)])</code> and attachments with both
+          <code>base64</code> and <code>data</code> keys — the schema must be at least as wide as the
+          function that consumes it.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================ 4 -->
+    <section id="s4">
+      <h2><span class="sec">§4</span><span>Providers</span></h2>
+
+      <p>
+        Gmail and Graph disagree about nearly everything, and each disagreement cascades. This
+        directory is where each provider's answers live, written once, in files named after who they
+        belong to.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Question</th><th>Gmail</th><th>Graph</th><th>Cascades into</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Folders or labels?</td>
+              <td>Labels — many per thread</td>
+              <td>Folders — exactly one per message</td>
+              <td>Move exclusivity</td>
+            </tr>
+            <tr>
+              <td>Is there an Archive?</td>
+              <td>No — "filed nowhere else"</td>
+              <td>Yes, a real folder</td>
+              <td>Fetch by search vs by id</td>
+            </tr>
+            <tr>
+              <td>Complete label set?</td>
+              <td>Yes</td>
+              <td>No — one message's folder</td>
+              <td><strong>Replace vs merge</strong></td>
+            </tr>
+            <tr>
+              <td>Can absence mean removal?</td>
+              <td>No — replacing covers it</td>
+              <td>Yes — the only signal there is</td>
+              <td><strong>Pruning</strong></td>
+            </tr>
+            <tr>
+              <td>Folder hierarchy?</td>
+              <td>Naming convention <code>a/b</code></td>
+              <td>A real tree</td>
+              <td>Tree reconstruction</td>
+            </tr>
+            <tr>
+              <td>Delta scope?</td>
+              <td>Whole mailbox, one cursor</td>
+              <td>Per folder, N cursors</td>
+              <td>Poll targets, batching</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="sub">4.1</span>Three files per provider</h3>
+
+      <p>
+        <code>google/</code> and <code>microsoft/</code> hold the <em>same three filenames with the
+        same exports</em>. That is deliberate — you can diff them.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>File</th><th>Pure?</th><th>Direction</th><th>Exports</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>folders.ts</code></td>
+              <td>yes</td>
+              <td>provider → mirror</td>
+              <td><code>folderKey</code>, <code>toFolderRows</code>, <code>mirrorLabels</code>, <code>pollTargets</code></td>
+            </tr>
+            <tr>
+              <td><code>labels.ts</code></td>
+              <td>yes</td>
+              <td>UI → mirror</td>
+              <td><code>mirrorEdit</code></td>
+            </tr>
+            <tr>
+              <td><code>sync.ts</code></td>
+              <td><strong>no</strong></td>
+              <td>the wiring</td>
+              <td><code>createGoogleSync</code> / <code>createMicrosoftSync</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Purity is not decoration. <code>folders.ts</code> and <code>labels.ts</code> import types only,
+        which is why <code>folders.check.ts</code> and <code>labels.check.ts</code> run as plain Node
+        scripts with no mocks. These bugs are <em>silent</em> — a wrong parent nests a folder wrongly,
+        a wrong exclusivity leaves a thread in two places. Nothing throws.
+      </p>
+
+      <h3><span class="sub">4.2</span>The one branch</h3>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/providers/sync.ts</b><span>the only <code>if provider ===</code> in the local layer</span></div>
+        <pre><span class="c-key">export function</span> activeSync(): MailSync {
+  <span class="c-key">const</span> provider = getActiveProvider();
+  <span class="c-key">if</span> (!provider) <span class="c-key">throw new</span> Error(<span class="c-key">'local mail: not signed in'</span>);
+  <span class="c-key">if</span> (cached?.key === provider) <span class="c-key">return</span> cached.sync;   <span class="c-com">// memoized per provider object</span>
+
+  <span class="c-key">const</span> driver = getActiveDriver();
+  <span class="c-key">const</span> sync: MailSync = provider.provider === <span class="c-key">'microsoft'</span>
+    ? createMicrosoftSync(driver, createGraphClient(provider))
+    : createGoogleSync(driver, createGmailClient(provider));
+
+  cached = { key: provider, sync };
+  <span class="c-key">return</span> sync;
+}</pre>
+      </div>
+
+      <p>The <code>MailSync</code> contract — eight members, the whole provider surface:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Member</th><th>Does</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td><code>'google' | 'microsoft'</code> — also the <code>providerId</code> written to rows</td></tr>
+            <tr><td><code>folderKey(name)</code></td><td>UI word → mirror key. <code>'bin'</code> → <code>TRASH</code> / <code>deleteditems</code></td></tr>
+            <tr><td><code>syncFolders(db)</code></td><td>Pull the sidebar tree</td></tr>
+            <tr><td><code>mirrorThreads(db, threads, listedUnder?)</code></td><td>Apply label rules + write, replace-or-merge</td></tr>
+            <tr><td><code>syncThreadPage(db, key, pageToken?)</code></td><td>One provider page → mirror. Returns the next token</td></tr>
+            <tr><td><code>syncSearch(db, q, pageToken?)</code></td><td>Mirror search hits</td></tr>
+            <tr><td><code>applyLabels(db, id, add, remove)</code></td><td>Record an accepted edit. Returns <code>folderMove</code></td></tr>
+            <tr><td><code>pollTargets(folders)</code></td><td>Which folders to delta-poll, under what key</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="sub">4.3</span>The cascade, side by side</h3>
+
+      <div class="block">
+        <div class="block-h"><b>syncThreadPage</b><span>same slots, opposite answers</span></div>
+        <pre><span class="c-loc">// google/sync.ts</span>
+<span class="c-key">const</span> selector = key === <span class="c-key">'archive'</span> ? { q: <span class="c-key">'in:archive'</span> } : { labelId: key };
+<span class="c-key">const</span> page = <span class="c-key">await</span> withRetry(() =&gt; driver.listThreads({ ...selector, maxResults: 25 }));
+<span class="c-key">await</span> mirrorThreads(db, page.threads, key);   <span class="c-com">// replaceLabels: true</span>
+<span class="c-key">await</span> hydrateStubs(db, page.threads);
+<span class="c-com">// no prune — replacing already removed what left</span>
+<span class="c-key">await</span> setPageCursor(db, <span class="c-key">'google'</span>, key, page.nextPageToken);
+
+<span class="c-pro">// microsoft/sync.ts</span>
+<span class="c-key">const</span> page = <span class="c-key">await</span> withRetry(() =&gt; driver.listThreads({ labelId: key, maxResults: 25 }));
+<span class="c-key">await</span> mirrorThreads(db, page.threads, key);   <span class="c-com">// replaceLabels: false — MERGE</span>
+<span class="c-key">await</span> hydrateStubs(db, page.threads);
+<span class="c-key">if</span> (!pageToken) {                             <span class="c-com">// ...therefore PRUNE</span>
+  <span class="c-key">const</span> since = <span class="c-com">/* oldest date in this page */</span>;
+  <span class="c-key">await</span> pruneFolderMembership(db, key, ids, since);
+}
+<span class="c-key">await</span> setPageCursor(db, <span class="c-key">'microsoft'</span>, key, page.nextPageToken);</pre>
+      </div>
+
+      <p>
+        Two guards on the prune, both load-bearing. <strong>Bounded by date</strong> — older threads
+        were never in the window, so their absence proves nothing. <strong>First page only</strong> —
+        a paged read is not the current top of the folder and would prune threads that are simply on
+        an earlier page.
+      </p>
+
+      <h3><span class="sub">4.4</span>The write direction</h3>
+
+      <p>
+        <code>mirrorEdit(add, remove)</code> runs <em>after</em> the provider accepted an edit and
+        decides what the mirror should record. Three jobs:
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>labels.ts</b><span>mirrorEdit</span></div>
+        <pre><span class="c-com">// 1. TRANSLATE — the UI speaks Gmail's vocabulary to both providers</span>
+<span class="c-loc">google</span>:    nothing to do
+<span class="c-pro">microsoft</span>: TRASH→deleteditems, SPAM→junkemail, INBOX→inbox
+
+<span class="c-com">// 2. EXCLUSIVITY — which other folders does this move clear?</span>
+<span class="c-loc">google</span>:    only TRASH and SPAM; every other label stacks
+<span class="c-pro">microsoft</span>: any folder move clears the other five
+
+<span class="c-com">// 3. folderMove — the signal to re-read rather than trust the edit</span>
+
+<span class="c-com">// Graph-only case: "Archive" from the UI is remove INBOX, add nothing.
+// Graph has no such operation — it is a move, and a move needs a destination.</span>
+<span class="c-key">const</span> mAdd = renamed.length === 0 &amp;&amp; remove.includes(<span class="c-key">'INBOX'</span>) ? [<span class="c-key">'archive'</span>] : renamed;</pre>
+      </div>
+    </section>
+
+    <!-- ============================================ 5 -->
+    <section id="s5">
+      <h2><span class="sec">§5</span><span>Client &amp; driver</span></h2>
+
+      <p>
+        Inside <code>mail/</code> the split is one line: <strong>the client knows the wire, the driver
+        knows our row types.</strong> Neither touches SQLite.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Lines</th><th>Job</th></tr></thead>
+          <tbody>
+            <tr><td><code>gmail-client.ts</code></td><td class="num-col">355</td><td>Auth header, URL building, multipart <code>/batch</code>, <code>GmailError</code> with status</td></tr>
+            <tr><td><code>graph-client.ts</code></td><td class="num-col">582</td><td>JSON <code>$batch</code> (limit 20), 429 retry, 3-way concurrency semaphore, <code>$select</code>, folder-id resolution</td></tr>
+            <tr><td><code>gmail.ts</code></td><td class="num-col">393</td><td>MIME part walking, header parsing, <code>toNormalized</code></td></tr>
+            <tr><td><code>graph.ts</code></td><td class="num-col">448</td><td>Recipients, delta pages, category GUIDs</td></tr>
+            <tr><td><code>types.ts</code></td><td class="num-col">187</td><td>The shared vocabulary: <code>NormalizedThread</code>, <code>ThreadPage</code>, <code>FolderChanges</code>, <code>MailDriver</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        A Gmail API change touches <code>gmail-client.ts</code>. A rule change — where archived mail
+        files, what counts as a move — touches <code>providers/google/</code>. The
+        <code>MailDriver</code> interface is what lets <code>providers/</code> stay ignorant of both.
+      </p>
+
+      <h3><span class="sub">5.1</span>Why sync modules take both</h3>
+
+      <p>
+        <code>createGoogleSync(driver, client)</code> receives both because they answer different
+        needs. Threads and messages go through the <strong>driver</strong>, already normalized for
+        both providers. Folders reach past it to the <strong>client</strong>, because
+        <code>driver.listFolders()</code> returns a nested tree and the folder mapper needs the raw
+        flat labels to reconstruct parentage itself.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>Two paths out</b><span>the driver is not always the answer</span></div>
+        <pre>sync.syncThreadPage() ──► driver.listThreads() ──► client.listThreadIds()  ──► HTTP
+                              (mapping)               (transport)
+
+sync.syncFolders()    ──────────────────────────► client.listLabels()      ──► HTTP
+                                                    (raw, keeps parentage)</pre>
+      </div>
+    </section>
+
+    <!-- ============================================ 6 -->
+    <section id="s6">
+      <h2><span class="sec">§6</span><span>Reading a list</span></h2>
+
+      <p>
+        <code>mail.listThreads</code> is a dispatcher over four modes. The procedure body itself is a
+        table of contents; each mode is a named function that reads top to bottom.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/routes/mail.ts</b><span>the dispatcher</span></div>
+        <pre>listThreads: driverProcedure.input(listThreadsInput).query(({ ctx, input }) =&gt; {
+  <span class="c-key">const</span> folder = input.folder.toLowerCase();
+  <span class="c-key">if</span> (folder === <span class="c-key">'draft'</span> || folder === <span class="c-key">'drafts'</span>) <span class="c-key">return</span> draftPage(ctx.db, ctx.sync.id);
+
+  <span class="c-key">const</span> isSnoozed = folder === <span class="c-key">'snoozed'</span>;
+  <span class="c-key">const</span> args: ListArgs = { db, providerId, folderId, labelIds, cursor, senderEmail, domain };
+
+  <span class="c-com">// SNOOZED is a label only the mirror knows about, so this view reads and never syncs.</span>
+  <span class="c-key">if</span> (isSnoozed) <span class="c-key">return</span> readFolder(args).then((page) =&gt; toPage(ctx.db, page));
+
+  <span class="c-key">const</span> q = input.q.trim();
+  <span class="c-key">return</span> q ? searchPage(args, q) : folderPage(args);
+}),</pre>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Reads</th><th>Syncs</th></tr></thead>
+          <tbody>
+            <tr><td>Drafts</td><td><code>outbox</code> table</td><td><code>refreshDrafts</code>, blocking only when nothing is local</td></tr>
+            <tr><td>Snoozed</td><td><code>SNOOZED</code> label in the mirror</td><td><strong>Never</strong> — the provider has not heard of it</td></tr>
+            <tr><td>Search</td><td><code>searchThreads</code></td><td><strong>Awaits</strong> the refresh</td></tr>
+            <tr><td>Folder</td><td><code>findThreadsByFolderWithPagination</code></td><td>Behind the response, unless the mirror is empty</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="sub">6.1</span>Why search blocks and a folder does not</h3>
+
+      <div class="block">
+        <div class="block-h"><b>The deliberate divergence</b></div>
+        <pre><span class="c-com">// searchPage — awaits</span>
+<span class="c-key">if</span> (claimRevalidate(key)) <span class="c-key">await</span> dedupe(key, () =&gt; syncSearch(a.db, q));
+<span class="c-key">return</span> toPage(a.db, <span class="c-key">await</span> read());
+
+<span class="c-com">// folderPage — does not</span>
+revalidateTargets(a.db, targets);      <span class="c-com">// no await</span>
+<span class="c-key">return</span> toPage(a.db, cached);</pre>
+      </div>
+
+      <p>
+        Stale hits for a term the user just typed read as <em>broken</em>. A slightly stale folder
+        reads as <em>instant</em>. Same machinery, opposite call.
+      </p>
+
+      <h3><span class="sub">6.2</span>The SQL, two mechanisms</h3>
+
+      <div class="block">
+        <div class="block-h"><b>Labels are AND, not OR</b><span>db/queries.ts</span></div>
+        <pre><span class="c-key">const</span> required = [...<span class="c-key">new</span> Set([folderLabel, ...(labelIds ?? [])])];
+.where(inArray(threadLabels.labelId, required))
+.groupBy(threads.id)
+.having(sql`count(distinct ${threadLabels.labelId}) = ${required.length}`)</pre>
+      </div>
+
+      <p>
+        <code>thread_labels</code> is a join table — one row per (thread, label). Matching
+        <code>INBOX</code> <em>and</em> <code>IMPORTANT</code> means matching two different rows for
+        the same thread. So: pull rows matching either, group by thread, keep only threads that
+        matched all of them. The <code>new Set</code> matters — a duplicate would inflate
+        <code>required.length</code> and match nothing.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>Keyset pagination, not OFFSET</b></div>
+        <pre>.orderBy(desc(threads.latestReceivedOn), desc(threads.id))
+.limit(maxResults + 1)                       <span class="c-com">// 26 to answer "is there more?"</span>
+
+<span class="c-key">const</span> nextPageToken = `${last.latestReceivedOn}|${last.id}`;
+
+<span class="c-com">// next page asks: older than that timestamp, OR same timestamp and lower id</span>
+or(lt(latestReceivedOn, ts), and(eq(latestReceivedOn, ts), lt(id, id)))</pre>
+      </div>
+
+      <p>
+        <code>OFFSET 25</code> would break: new mail arrives between pages, shifts everything down,
+        and you see row 25 twice. Keyset asks "older than <em>this specific row</em>", which is
+        stable no matter what lands above it. The id is the tiebreaker — two mails in the same second
+        would otherwise repeat or skip.
+      </p>
+
+      <h3><span class="sub">6.3</span>Batched rendering</h3>
+
+      <p>
+        Rendering a page used to be a nested N+1: 25 rows, each calling <code>mail.get</code>, each
+        running 3 queries plus one per message — roughly <strong>100 worker round trips</strong>.
+        <code>getThreadBundles</code> replaced it with four flat queries regardless of N:
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>db/queries.ts</b><span>getThreadBundles</span></div>
+        <pre>threads      where inArray(threads.id, threadIds)
+messages     where inArray(messages.threadId, threadIds)  order by receivedOn
+labels       join threadLabels where inArray(threadLabels.threadId, threadIds)
+attachments  where inArray(attachments.messageId, &lt;ids from the message rows&gt;)</pre>
+      </div>
+
+      <p>
+        <code>listThreads</code> returns those rendered rows alongside the ids, and
+        <code>use-threads.ts</code> seeds them into <code>mail.get</code>'s cache. The seeding is
+        <strong>fill-only</strong> — an existing entry may be a thread the user opened, holding real
+        bodies the row copy lacks. Clobbering it would blank the reader on every list refetch.
+      </p>
+    </section>
+
+    <!-- ============================================ 7 -->
+    <section id="s7">
+      <h2><span class="sec">§7</span><span>Cursors</span></h2>
+
+      <p>
+        Three independent cursor systems, easy to confuse, doing genuinely different jobs. This is
+        the section to know cold.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Cursor</th><th>Answers</th><th>Format</th><th>Stored in</th><th>Survives reload</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Keyset</strong></td>
+              <td>How far has the <em>UI</em> scrolled the mirror?</td>
+              <td><code>ts|id</code></td>
+              <td>React Query pages (memory)</td>
+              <td class="num-col">no</td>
+            </tr>
+            <tr>
+              <td><strong>Page token</strong></td>
+              <td>How far has <em>sync</em> read the provider?</td>
+              <td>opaque, provider's own</td>
+              <td><code>sync_state</code> · <code>page:&lt;id&gt;</code></td>
+              <td class="num-col">see §8.3</td>
+            </tr>
+            <tr>
+              <td><strong>Delta</strong></td>
+              <td>What has <em>changed</em> since last poll?</td>
+              <td>historyId / deltaLink</td>
+              <td><code>folders.deltaCursor</code></td>
+              <td class="num-col">yes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="sub">7.1</span>Where the first two meet</h3>
+
+      <p>
+        Only one code path touches both, and it is the one that makes infinite scroll deepen the
+        mirror:
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>folderPage</b><span>keyset runs out → page token advances</span></div>
+        <pre><span class="c-key">if</span> (a.cursor) {                              <span class="c-com">// a KEYSET cursor from the UI</span>
+  <span class="c-key">const</span> page = <span class="c-key">await</span> read();
+  <span class="c-key">if</span> (page.threads.length &gt; 0 || isOffline()) <span class="c-key">return</span> toPage(a.db, page);
+
+  <span class="c-com">// Mirror is dry. Pull the next PROVIDER page using the stored page token...</span>
+  <span class="c-key">await</span> dedupe(`page:${a.folderId}`, () =&gt; syncNextPage(a.db, a.folderId));
+  <span class="c-key">return</span> toPage(a.db, <span class="c-key">await</span> read());   <span class="c-com">// ...then re-read with the SAME keyset cursor</span>
+}</pre>
+      </div>
+
+      <p>
+        The keyset cursor never changes during that exchange. What changed is how much the mirror
+        holds. That is the entire mechanic: <strong>scroll deepens storage, and the depth is
+        permanent.</strong>
+      </p>
+
+      <h3><span class="sub">7.2</span>Setting a page cursor</h3>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/sync-state.ts</b></div>
+        <pre><span class="c-key">const</span> pageScope = (folderId: string) =&gt; `page:${folderId}`;
+
+<span class="c-key">export function</span> setPageCursor(db, providerId, folderId, cursor: string | <span class="c-key">null</span>) {
+  <span class="c-key">return</span> setSyncState(db, pageScope(folderId), providerId, <span class="c-key">new</span> Date().toISOString(), cursor);
+}
+
+<span class="c-key">export async function</span> getPageCursor(db, folderId): Promise&lt;string | <span class="c-key">null</span>&gt; {
+  <span class="c-key">return</span> (<span class="c-key">await</span> getSyncState(db, pageScope(folderId)))?.cursor ?? <span class="c-key">null</span>;
+}</pre>
+      </div>
+
+      <p>
+        A search reuses the same mechanism under a different key —
+        <code>setPageCursor(db, id, \`search:${q}\`, token)</code> produces scope
+        <code>page:search:&lt;q&gt;</code>. Each query term paginates independently.
+      </p>
+
+      <p>
+        When the provider returns <code>nextPageToken: null</code>, that null is stored. A subsequent
+        <code>syncNextPage</code> reads null and returns <code>false</code> — the folder is fully
+        mirrored, stop asking.
+      </p>
+
+      <h3><span class="sub">7.3</span>The delta cursor lives elsewhere</h3>
+
+      <p>
+        Delta cursors are a column on <code>folders</code>, not a <code>sync_state</code> row:
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>db/queries.ts</b></div>
+        <pre><span class="c-key">export async function</span> setFolderDeltaCursor(db, folderId, cursor: string | <span class="c-key">null</span>) {
+  <span class="c-key">await</span> db.update(folders).set({ deltaCursor: cursor }).where(eq(folders.id, folderId));
+}</pre>
+      </div>
+
+      <div class="note">
+        <div class="note-h">Gmail's cursor has a surprising home</div>
+        <p>
+          Gmail's history is <em>mailbox-wide</em> — one cursor covers every label. But
+          <code>deltaCursor</code> is a per-folder column. So Gmail's single historyId is stored on
+          <strong>the inbox folder row</strong>, because <code>google/folders.ts</code>'s
+          <code>pollTargets</code> returns only that row, tagged <code>folderKey: null</code> to mean
+          "this cursor speaks for the whole account".
+        </p>
+      </div>
+
+      <div class="block">
+        <div class="block-h"><b>pollTargets</b><span>same signature, different arity</span></div>
+        <pre><span class="c-loc">// google/folders.ts — one target, null key</span>
+folders.filter((f) =&gt; f.role === <span class="c-key">'inbox'</span>).map((f) =&gt; ({ folder: f, folderKey: <span class="c-key">null</span> }))
+
+<span class="c-pro">// microsoft/folders.ts — one target per tracked role, each with its own key</span>
+folders.filter((f) =&gt; f.role &amp;&amp; POLLED_ROLES.has(f.role))
+       .map((f) =&gt; ({ folder: f, folderKey: FOLDER_KEYS[f.role!] ?? f.role! }))</pre>
+      </div>
+
+      <p>
+        <code>POLLED_ROLES</code> is <code>inbox, sent, archive, trash, spam</code>. Drafts are
+        excluded — they are the outbox's business.
+      </p>
+    </section>
+
+    <!-- ============================================ 8 -->
+    <section id="s8">
+      <h2><span class="sec">§8</span><span>Sync state</span></h2>
+
+      <p>
+        <a class="ref" href="apps/mail/app/local/rpc/sync-state.ts">rpc/sync-state.ts</a> is a thin
+        namespaced layer over one table. Four columns:
+        <code>scope</code> (primary key), <code>providerId</code>, <code>cursor</code>,
+        <code>syncedAt</code>.
+      </p>
+
+      <p>
+        Everything is keyed by a <strong>prefixed scope string</strong>, which is what makes
+        selective invalidation possible.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scope</th><th><code>syncedAt</code> means</th><th><code>cursor</code> holds</th></tr></thead>
+          <tbody>
+            <tr><td><code>folder:&lt;id&gt;</code></td><td>Last listing of that folder</td><td>Copy of the delta cursor (optional)</td></tr>
+            <tr><td><code>folder:__tree__</code></td><td>Last sidebar tree pull</td><td>—</td></tr>
+            <tr><td><code>thread:&lt;id&gt;</code></td><td>Last full thread read</td><td>—</td></tr>
+            <tr><td><code>page:&lt;folderId&gt;</code></td><td>When the token was written</td><td><strong>Provider page token</strong></td></tr>
+            <tr><td><code>page:search:&lt;q&gt;</code></td><td>Same, per query term</td><td><strong>Provider page token</strong></td></tr>
+            <tr><td><code>snooze:&lt;threadId&gt;</code></td><td>When snoozed</td><td><strong>wakeAt</strong>, ISO string</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="sub">8.1</span>Freshness</h3>
+
+      <div class="block">
+        <div class="block-h"><b>The TTL gate</b><span>SYNC_TTL_MS = 2 minutes</span></div>
+        <pre><span class="c-key">async function</span> isStale(db, scope, now) {
+  <span class="c-key">const</span> row = <span class="c-key">await</span> getSyncState(db, scope);
+  <span class="c-key">if</span> (!row?.syncedAt) <span class="c-key">return true</span>;              <span class="c-com">// never synced === stale</span>
+  <span class="c-key">return</span> now - Date.parse(row.syncedAt) &gt;= SYNC_TTL_MS;
+}</pre>
+      </div>
+
+      <p>
+        <code>markFolderSynced</code> and <code>markThreadSynced</code> stamp <code>syncedAt</code>.
+        A subtlety in <code>setSyncState</code>: <strong>omitting <code>cursor</code> leaves the
+        stored one intact; passing <code>null</code> clears it.</strong> That distinction is what lets
+        <code>markFolderSynced</code> refresh a TTL without destroying a cursor.
+      </p>
+
+      <h3><span class="sub">8.2</span>Invalidation is prefix-scoped</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Call</th><th>Deletes</th><th>Used after</th></tr></thead>
+          <tbody>
+            <tr><td><code>invalidateThread(id)</code></td><td><code>thread:&lt;id&gt;</code></td><td>A targeted change</td></tr>
+            <tr><td><code>invalidateAllFolders()</code></td><td><code>LIKE 'folder:%'</code></td><td>Any write — thread freshness survives</td></tr>
+            <tr><td><code>resetSyncState()</code></td><td><strong>everything</strong></td><td><code>mail.forceSync</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        <code>invalidateAllFolders</code> being prefix-scoped is the point: after a label write, every
+        folder listing is suspect but the threads themselves are not, so their TTLs are left alone.
+      </p>
+
+      <h3><span class="sub">8.3</span>Resume — and where it currently breaks</h3>
+
+      <p>
+        The design intent is stated at the top of <code>sync-state.ts</code>: <em>"Persisted, not
+        in-memory, so a reload resumes instead of re-pulling every folder."</em> The table does live
+        in OPFS and does survive a reload.
+      </p>
+
+      <p>But activation wipes it. On <strong>every</strong> page load:</p>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/activate.ts</b><span>called from LocalMode's restore effect</span></div>
+        <pre><span class="c-key">export async function</span> activateLocal(p: TokenProvider) {
+  localStorage.setItem(<span class="c-key">'local.email'</span>, email);
+  installLocalSessionPatch();
+  setActiveProvider(p);
+  <span class="c-key">try</span> {
+    <span class="c-key">await</span> resetSyncState(<span class="c-key">await</span> getLocalDB());   <span class="c-warn">// ← DELETE FROM sync_state WHERE 1=1</span>
+  } <span class="c-key">catch</span> { <span class="c-com">/* mirror may not exist yet on a first login */</span> }
+  <span class="c-key">await</span> getSession();
+}</pre>
+      </div>
+
+      <div class="note bug">
+        <div class="note-h">Finding · verified in source</div>
+        <p>
+          <code>resetSyncState</code> is <code>clearSyncState(db)</code> with no scope argument, which
+          issues <code>DELETE FROM sync_state WHERE 1 = 1</code>. Because <code>LocalMode</code> calls
+          <code>activateLocal</code> after every successful <code>restoreSession()</code>, this runs
+          on every reload.
+        </p>
+        <p>
+          <strong>Consequences.</strong> Every folder re-syncs on load (TTLs gone). Scroll depth
+          restarts from provider page 1 (<code>page:</code> tokens gone). Most seriously,
+          <strong>snoozed threads never wake</strong> — the <code>SNOOZED</code> label persists on the
+          thread but the <code>snooze:&lt;id&gt;</code> row holding <code>wakeAt</code> is deleted, so
+          <code>dueSnoozes</code> finds nothing and the thread stays out of the inbox permanently.
+        </p>
+        <p>
+          <strong>What still survives:</strong> all mirrored mail, the folder tree, and
+          <code>folders.deltaCursor</code> — because the delta cursor is a column on
+          <code>folders</code>, not a <code>sync_state</code> row. Delta polling does resume correctly.
+        </p>
+      </div>
+
+      <p>
+        The narrow fix is to scope the reset — clear <code>folder:</code> and <code>page:</code> on
+        activation if a cold start is wanted, and leave <code>snooze:</code> alone. Or drop the call
+        entirely and let the TTLs do their job, which is what they exist for.
+      </p>
+    </section>
+
+    <!-- ============================================ 9 -->
+    <section id="s9">
+      <h2><span class="sec">§9</span><span>Delta poll</span></h2>
+
+      <p>
+        Every 120 seconds, and once on mount, <code>LocalMode</code> calls
+        <code>pollChanges()</code> — skipped when the tab is hidden or the driver is inactive.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/local-utils.ts</b><span>pollChanges, annotated</span></div>
+        <pre><span class="c-key">const</span> sync = activeSync();
+<span class="c-key">const</span> inboxFolder = sync.folderKey(<span class="c-key">'inbox'</span>);
+
+<span class="c-com">// 1. Snoozes are local, so they wake with or without a network.</span>
+<span class="c-key">const</span> woke = <span class="c-key">await</span> wakeSnoozed(db, inboxFolder);
+<span class="c-key">if</span> (woke) emitMirrorChanged();
+<span class="c-key">if</span> (isOffline()) <span class="c-key">return</span>;
+
+<span class="c-com">// 2. Ask the provider module which folders are worth polling.</span>
+<span class="c-key">const</span> polled = sync.pollTargets(<span class="c-key">await</span> getFolders(db, sync.id));
+
+<span class="c-com">// 3. Graph's delta is per-folder: N folders = N reads, unless the driver can batch.
+//    Gmail needs none of this — one history read covers every label.</span>
+<span class="c-key">if</span> (driver.listChangesMany &amp;&amp; polled.length &gt; 1) {
+  byFolder = <span class="c-key">await</span> driver.listChangesMany(
+    polled.map(({ folder }) =&gt; ({ folderId: folder.id, cursor: folder.deltaCursor ?? <span class="c-key">null</span> })),
+  );
+} <span class="c-key">else for</span> (<span class="c-key">const</span> { folder, folderKey } <span class="c-key">of</span> polled) {
+  byFolder[folder.id] = <span class="c-key">await</span> driver.listChanges!(
+    folderKey === <span class="c-key">null</span> ? <span class="c-key">null</span> : folder.id,   <span class="c-com">// null = whole mailbox (Gmail)</span>
+    folder.deltaCursor ?? <span class="c-key">null</span>,
+  );
+}</pre>
+      </div>
+
+      <h3><span class="sub">9.1</span>Applying a delta page</h3>
+
+      <div class="block">
+        <div class="block-h"><b>per folder</b></div>
+        <pre><span class="c-key">if</span> (changes.resyncRequired) {              <span class="c-com">// cursor aged out at the provider</span>
+  <span class="c-key">await</span> setFolderDeltaCursor(db, folder.id, <span class="c-key">null</span>);
+  <span class="c-key">await</span> syncFolder(db, folderKey ?? inboxFolder);   <span class="c-com">// full re-read instead</span>
+  markRevalidated(full);
+  <span class="c-key">continue</span>;
+}
+
+<span class="c-key">await</span> sync.mirrorThreads(db, changes.threads, folderKey ?? <span class="c-key">undefined</span>);
+<span class="c-key">await</span> deleteMessagesByIds(db, changes.removedMessageIds);
+<span class="c-key">await</span> setFolderDeltaCursor(db, folder.id, changes.cursor);        <span class="c-com">// ← advance</span>
+<span class="c-key">await</span> markFolderSynced(db, sync.id, folderKey ?? inboxFolder, changes.cursor);
+markRevalidated(folderKey ?? inboxFolder);</pre>
+      </div>
+
+      <p>
+        <code>resyncRequired</code> is the provider saying <em>"that cursor is too old, I can no
+        longer tell you what changed."</em> Graph signals it with a specific error code; the driver
+        translates it into this flag. The recovery is to drop the cursor and do a full folder read —
+        the next poll starts a fresh delta chain.
+      </p>
+
+      <p>
+        <code>markRevalidated</code> is subtle but load-bearing: it stamps the target as
+        just-refreshed <em>without asking</em>, so the <code>emitMirrorChanged</code> at the end does
+        not re-enter <code>listThreads</code> and fire a redundant full sync.
+      </p>
+
+      <h3><span class="sub">9.2</span>How a background sync reaches the screen</h3>
+
+      <div class="block">
+        <div class="block-h"><b>rpc/mirror.ts → local-mode.tsx</b><span>the notification loop</span></div>
+        <pre>sync writes SQLite
+   │
+   ▼
+emitMirrorChanged()          <span class="c-com">// coalesced, 200 ms — 25 threads landing = 1 notification</span>
+   │
+   ▼
+LocalMode's onMirrorChanged listener
+   │
+   ▼
+queryClient.invalidateQueries(mail.listThreads, mail.get,
+                              mail.getMessageAttachments, drafts.*)
+   │
+   ▼
+React Query re-runs the resolver ──► reads SQLite ──► UI updates</pre>
+      </div>
+
+      <p>
+        Two throttles guard this loop against itself.
+        <code>dedupe(key, fn)</code> collapses concurrent syncs of the same target onto one promise —
+        clicking through folders must not fan out N fetches.
+        <code>claimRevalidate(key)</code> is a 5-second-per-target gate, which is what stops the
+        invalidate → resolver → sync → emit cycle from running forever.
+      </p>
+    </section>
+
+    <!-- ============================================ 10 -->
+    <section id="s10">
+      <h2><span class="sec">§10</span><span>Writing</span></h2>
+
+      <h3><span class="sub">10.1</span>Label edits — provider first</h3>
+
+      <div class="block">
+        <div class="block-h"><b>modifyThread</b><span>rpc/local-utils.ts</span></div>
+        <pre><span class="c-key">const</span> db = <span class="c-key">await</span> getLocalDB();
+<span class="c-key">await</span> getActiveDriver().modifyLabels(threadId, add, remove);   <span class="c-com">// 1. provider is truth</span>
+<span class="c-key">const</span> moved = <span class="c-key">await</span> activeSync().applyLabels(db, threadId, add, remove);  <span class="c-com">// 2. mirror follows</span>
+<span class="c-key">await</span> afterThreadWrite(db, threadId, moved);                   <span class="c-com">// 3. re-read behind</span></pre>
+      </div>
+
+      <p>
+        Order matters. If the provider rejects the change, nothing else should happen. And
+        <code>moved</code> — the <code>folderMove</code> flag from <code>mirrorEdit</code> — decides
+        whether step 3 does a full thread re-read: Graph re-ids every message when a thread changes
+        folder, so the ids in the mirror go stale.
+      </p>
+
+      <h3><span class="sub">10.2</span>Sends and drafts — outbox first</h3>
+
+      <p>
+        Everything the user composes lands in the <code>outbox</code> table synchronously and the
+        procedure returns. That is what makes composing, saving and sending work with no network.
+        <a class="ref" href="apps/mail/app/local/rpc/outbox.ts">rpc/outbox.ts</a> drains it in the
+        background every 15 seconds and on the <code>online</code> event.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>The send lifecycle</b></div>
+        <pre>queueSend()          row: kind=send, status=queued, sendAfter=now+15s (undo window)
+   │                 mirrorPendingSend() → placeholder thread appears in Sent
+   ▼
+drain() picks it up once sendAfter has passed
+   │
+   ├─ success ──► delete draft copy, delete outbox row, invalidateAllFolders
+   │              reconcileSent() polls Sent at 0/1.5/4/10/20 s
+   │              <span class="c-com">// Graph answers 202 Accepted — the message lands *later*</span>
+   │
+   └─ failure ──► attempts++, backoff [0, 30s, 2min]
+                  after 3 attempts → parked as a draft with the error, toast shown
+                  <span class="c-com">// never retried forever: a timeout after the provider accepted would send twice</span></pre>
+      </div>
+
+      <p>
+        The placeholder holds the body <em>and</em> the attachment bytes, and is not dropped until the
+        real message is mirrored in full. Dropping it early is what previously left sent mail with
+        its attachments missing — a folder listing yields only stubs, and a stub has no attachment
+        rows.
+      </p>
+    </section>
+
+    <!-- ============================================ 11 -->
+    <section id="s11">
+      <h2><span class="sec">§11</span><span>Lifecycle</span></h2>
+
+      <p>
+        On reload, two things race: React Query fires immediately, while
+        <code>restoreSession()</code> takes a few hundred milliseconds to refresh the token.
+      </p>
+
+      <div class="block">
+        <div class="block-h"><b>The reload sequence</b></div>
+        <pre>t=0ms     page loads. driver = null
+t=5ms     React mounts, useThreads fires mail.listThreads
+t=5ms     local-link: isLocalPending() true (localStorage flag set) → do not fall through
+t=5ms     driverProcedure → whenActive() → no driver → <strong>parks</strong>
+          <span class="c-com">// creates a promise, stores its resolve in activeWaiters, suspends</span>
+t=400ms   restoreSession() resolves → activateLocal → setActiveProvider(p)
+          → settleWaiters(null) → every stored resolve() fires
+t=401ms   parked calls resume, read SQLite, mailbox renders</pre>
+      </div>
+
+      <p>
+        "Parked" means suspended, not polling: the request is alive but frozen on an
+        <code>await</code> until one event releases all of them at once.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Outcome</th><th>Waiters get</th></tr></thead>
+          <tbody>
+            <tr><td>Driver arrives</td><td><code>resolve()</code> — carry on</td></tr>
+            <tr><td>Sign-out / failed restore</td><td><code>reject('local mail: activation cancelled')</code></td></tr>
+            <tr><td>15 s with neither</td><td><code>reject('activation timed out')</code>, self-removes from the list</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Every exit path settles the queue. An earlier version skipped the flush when the driver was
+        null, so a failed restore left promises that never settled and array entries that never
+        cleared.
+      </p>
+
+      <h3><span class="sub">11.1</span>Sign-out</h3>
+
+      <p>
+        <code>localSignOut()</code> revokes at the provider (best-effort), clears the driver, drops
+        the whole mirror, <strong>and clears the IndexedDB React Query cache</strong> — that last one
+        because the persisted cache is keyed by a null <code>connectionId</code>, so without it one
+        account's mail would bleed into the next.
+      </p>
+    </section>
+
+    <!-- ============================================ 12 -->
+    <section id="s12">
+      <h2><span class="sec">§12</span><span>Adding features</span></h2>
+
+      <h3><span class="sub">12.1</span>Which layer?</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>The change is…</th><th>File</th></tr></thead>
+          <tbody>
+            <tr><td>New data to store</td><td><code>db/schema.ts</code> + <code>db/migrations.ts</code></td></tr>
+            <tr><td>New way to read stored data</td><td><code>db/queries.ts</code></td></tr>
+            <tr><td>New thing the UI can call</td><td><code>rpc/routes/*.ts</code></td></tr>
+            <tr><td>"Gmail does X, Graph does Y"</td><td><code>rpc/providers/{google,microsoft}/</code></td></tr>
+            <tr><td>New provider API endpoint</td><td><code>mail/*-client.ts</code></td></tr>
+            <tr><td>New field from that endpoint</td><td><code>mail/gmail.ts</code> / <code>graph.ts</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="sub">12.2</span>Add a field — bottom up</h3>
+
+      <p>Say <code>isRead</code> on threads. Six steps, in this order:</p>
+
+      <ol class="body-list">
+        <li><strong>Migration</strong> — append entry <code>0006</code>, never edit a shipped one</li>
+        <li><strong>Schema</strong> — must match the migration exactly</li>
+        <li><strong>Driver</strong> — populate it on both sides. Gmail:
+          <code>!labelIds.includes('UNREAD')</code>. Graph: <code>msg.isRead</code>, and add the field
+          to <code>MESSAGE_SELECT</code> or Graph will not return it</li>
+        <li><strong>Writer</strong> — check <code>hydrateThreads</code>' upsert <code>set</code> clause
+          carries the new column, or it inserts once and never updates</li>
+        <li><strong>Reader</strong> — whichever query the UI uses</li>
+        <li><strong>Route</strong> — pass it through</li>
+      </ol>
+
+      <p>
+        Step 3 has real logic, so leave a check behind. Mapping bugs are silent.
+      </p>
+
+      <h3><span class="sub">12.3</span>Add an endpoint — top down</h3>
+
+      <p>
+        Opposite direction. Write the route against SQLite first, assuming the driver has what you
+        need. Then the query, then the <code>MailDriver</code> method (in <code>mail/types.ts</code>,
+        implemented in <strong>both</strong> drivers), then the client call.
+      </p>
+
+      <h3><span class="sub">12.4</span>When the providers disagree</h3>
+
+      <p>The rule that keeps this from rotting:</p>
+
+      <ol class="body-list">
+        <li>Never write <code>if (provider === 'microsoft')</code> outside <code>providers/sync.ts</code></li>
+        <li>Add the method to <code>MailSync</code> with a comment saying what it decides</li>
+        <li>Implement in <strong>both</strong> sync modules — always, even if one is trivial</li>
+        <li>If the decision is pure, put it in <code>folders.ts</code> or <code>labels.ts</code> and let
+          <code>sync.ts</code> just call it</li>
+        <li>Add cases to the matching <code>.check.ts</code></li>
+      </ol>
+
+      <h3><span class="sub">12.5</span>Verification</h3>
+
+      <div class="block">
+        <div class="block-h"><b>After any change under app/local</b><span>no test framework — assert scripts</span></div>
+        <pre>cd apps/mail &amp;&amp; npx tsc --noEmit -p tsconfig.json 2&gt;&amp;1 | grep app/local
+
+npx tsx apps/mail/app/local/rpc/providers/folders.check.ts   <span class="c-com"># naming, tree, poll targets</span>
+npx tsx apps/mail/app/local/rpc/providers/labels.check.ts    <span class="c-com"># write translation, exclusivity</span>
+npx tsx apps/mail/app/local/rpc/adapters.check.ts            <span class="c-com"># mirror → UI render</span>
+npx tsx apps/mail/app/local/rpc/bridge.check.ts              <span class="c-com"># activation queue</span>
+npx tsx apps/mail/app/local/rpc/router.check.ts              <span class="c-com"># Zod defaults, routed namespaces</span></pre>
+      </div>
+
+      <p>
+        They run in bare Node because the code they cover is pure. Keeping the deciding pure is what
+        makes that possible — and these are exactly the failures that never throw.
+      </p>
+    </section>
+
+    <!-- ============================================ 13 -->
+    <section id="s13">
+      <h2><span class="sec">§13</span><span>Exam drill</span></h2>
+
+      <div class="qa">
+        <details>
+          <summary>Why does <code>mirrorPage</code> prune for Graph but not Gmail?</summary>
+          <p>
+            Because Gmail returns a thread's complete label set, so the mirror <em>replaces</em> —
+            which already removes anything that left. Graph reports only one message's folder, so the
+            mirror must <em>merge</em>; merging never removes, so absence from a folder listing
+            becomes the only removal signal available. The prune follows from the merge, which
+            follows from what the API reports.
+          </p>
+        </details>
+
+        <details>
+          <summary>Name the three cursors and where each is stored.</summary>
+          <p>
+            <strong>Keyset</strong> <code>ts|id</code> — the UI's scroll position in the mirror, held
+            in React Query's infinite pages, not persisted.
+            <strong>Page token</strong> — how far sync has read the provider,
+            <code>sync_state</code> scope <code>page:&lt;folderId&gt;</code>.
+            <strong>Delta cursor</strong> — what changed since last poll,
+            <code>folders.deltaCursor</code> column.
+          </p>
+        </details>
+
+        <details>
+          <summary>Where does Gmail's mailbox-wide historyId get stored, and why is that odd?</summary>
+          <p>
+            On the <strong>inbox folder row's</strong> <code>deltaCursor</code> column. It is odd
+            because the cursor is not per-folder at all — but <code>deltaCursor</code> is a per-folder
+            column, and <code>google/folders.ts</code>'s <code>pollTargets</code> returns only the
+            inbox row, tagged <code>folderKey: null</code> to signal "this speaks for the whole
+            mailbox".
+          </p>
+        </details>
+
+        <details>
+          <summary>You scroll past the end of the mirror. Trace what happens.</summary>
+          <p>
+            <code>folderPage</code> sees a keyset cursor, reads SQLite, gets zero rows. It calls
+            <code>syncNextPage</code>, which reads the stored provider page token from
+            <code>sync_state</code> scope <code>page:&lt;folderId&gt;</code>, pulls that provider page
+            into the mirror, and stores the new token. Then it re-reads SQLite with the
+            <strong>same</strong> keyset cursor, which now finds rows. If the stored token was null,
+            <code>syncNextPage</code> returns false — the folder is fully mirrored.
+          </p>
+        </details>
+
+        <details>
+          <summary>Why <code>limit(maxResults + 1)</code>?</summary>
+          <p>
+            To answer "is there another page?" without a second <code>COUNT(*)</code> query. Fetch 26,
+            and if 26 came back, drop the extra and emit a cursor built from row 25.
+          </p>
+        </details>
+
+        <details>
+          <summary>What does <code>markRevalidated</code> prevent?</summary>
+          <p>
+            An infinite loop. A sync ends with <code>emitMirrorChanged</code>, which invalidates
+            <code>listThreads</code>, which re-runs the resolver, which would see a stale TTL and sync
+            again. <code>markRevalidated</code> stamps the target as just-refreshed without asking, so
+            the re-entry finds it fresh.
+          </p>
+        </details>
+
+        <details>
+          <summary>Why does <code>setSyncState</code> distinguish an omitted cursor from a null one?</summary>
+          <p>
+            So that <code>markFolderSynced</code> can refresh a TTL without destroying a stored
+            cursor. Omitted leaves it intact; <code>null</code> explicitly clears it — which is what
+            the <code>resyncRequired</code> path wants.
+          </p>
+        </details>
+
+        <details>
+          <summary>What survives a page reload, and what does not?</summary>
+          <p>
+            <strong>Survives:</strong> everything in OPFS — threads, messages, attachments, labels,
+            folders including <code>deltaCursor</code>, and the outbox.
+            <strong>Does not:</strong> the entire <code>sync_state</code> table, because
+            <code>activateLocal</code> calls <code>resetSyncState</code> on every activation. That
+            takes TTLs, page tokens and snooze wake times with it. See §8.3 — the snooze loss is a
+            genuine bug.
+          </p>
+        </details>
+
+        <details>
+          <summary>Which procedure type would you use for a route that only reads the mirror?</summary>
+          <p>
+            <code>dbProcedure</code> — unless it needs folder naming. <code>folderKey()</code> lives on
+            <code>ctx.sync</code>, which only <code>driverProcedure</code> supplies, so anything
+            translating a UI folder name needs the driver tier even if it never touches the network.
+          </p>
+        </details>
+
+        <details>
+          <summary>Why does the snoozed view never sync?</summary>
+          <p>
+            <code>SNOOZED</code> is a label that exists only in our SQLite. The provider has never
+            heard of it and still reports those threads as being in the inbox, so a sync would
+            immediately undo the snooze.
+          </p>
+        </details>
+
+        <details>
+          <summary>What is <code>folderMove</code> for?</summary>
+          <p>
+            Graph re-ids every message in a thread when the thread changes folder, so the message ids
+            in the mirror go stale. <code>folderMove</code> is the signal to re-read the whole thread
+            behind the response rather than trust the label edit.
+          </p>
+        </details>
+
+        <details>
+          <summary>Why must the Graph prune be bounded by date and restricted to the first page?</summary>
+          <p>
+            <strong>Date:</strong> threads older than the page's window were never candidates for
+            return, so their absence proves nothing. <strong>First page:</strong> a paged read is not
+            the current top of the folder, so it would prune threads that are simply on an earlier
+            page.
+          </p>
+        </details>
+
+        <details>
+          <summary>Why can't you use <code>db.transaction()</code>?</summary>
+          <p>
+            The <code>sqlite-proxy</code> driver does not implement it — it throws. Atomic
+            multi-statement writes go through <code>db.batch([...])</code>, which the client wires to
+            the worker's batch path.
+          </p>
+        </details>
+
+        <details>
+          <summary>What breaks if a Zod input schema is narrower than the caller sends?</summary>
+          <p>
+            Nothing throws — Zod strips undeclared keys silently. The handler then sees a field as
+            undefined that the caller definitely sent. This is why <code>mail.send</code>'s attachment
+            schema accepts both <code>base64</code> and <code>data</code>, and recipients accept both a
+            comma-joined string and an array.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <footer>
+      <span>apps/mail/app/local — local-first mail</span>
+      <span>print to PDF: Ctrl/Cmd + P</span>
+    </footer>
+  </main>
+</div>
+
+</body>
+</html>

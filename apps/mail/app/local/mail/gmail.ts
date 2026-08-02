@@ -1,14 +1,14 @@
 /**
- * Gmail REST driver — browser -> gmail.googleapis.com directly (CORS).
- * NOTE: thread summaries use an N+1 fetch (fine for a first page; batch later).
+ * Gmail driver — maps Gmail's wire shapes onto the local db's row types.
+ * Transport (auth, batching, URLs, response parsing) lives in ./gmail-client.
  */
 import type { TokenProvider } from '../auth/types';
 import type { InsertMessage, InsertAttachment } from '../db/queries';
 import { base64Url, base64UrlDecode, buildMime } from './mime';
+import { createGmailClient, GmailError } from './gmail-client';
+import type { GmailMessage, GmailPart, GmailThread, GmailHistoryPage } from './gmail-client';
 import type {
   MailDriver,
-  MailFolder,
-  FolderRole,
   SendInput,
   SendResult,
   NormalizedThread,
@@ -22,121 +22,9 @@ import type {
   LabelColor,
 } from './types';
 
-const API_PATH = '/gmail/v1/users/me';
-const BASE = `https://gmail.googleapis.com${API_PATH}`;
-const BATCH_URL = 'https://gmail.googleapis.com/batch/gmail/v1';
-/** Google allows 100 per batch but advises staying under 50. */
-const BATCH_LIMIT = 50;
-
-const THREAD_METADATA =
-  '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date';
-
-/** Gmail system-label id -> navigable folder role. */
-const GMAIL_ROLE: Record<string, FolderRole> = {
-  INBOX: 'inbox',
-  SENT: 'sent',
-  DRAFT: 'drafts',
-  TRASH: 'trash',
-  SPAM: 'spam',
-  STARRED: 'starred',
-  IMPORTANT: 'important',
-};
-
-interface GmailHistoryMessage {
-  message: { id: string; threadId: string };
-}
-
-interface GmailHistoryPage {
-  history?: {
-    messagesAdded?: GmailHistoryMessage[];
-    messagesDeleted?: GmailHistoryMessage[];
-    labelsAdded?: GmailHistoryMessage[];
-    labelsRemoved?: GmailHistoryMessage[];
-  }[];
-  historyId?: string;
-}
-
-interface GmailLabel {
-  id: string;
-  name: string;
-  type?: 'system' | 'user';
-  messagesUnread?: number;
-  messagesTotal?: number;
-}
-
-interface GmailHeader {
-  name: string;
-  value: string;
-}
-interface GmailPart {
-  mimeType?: string;
-  filename?: string;
-  headers?: GmailHeader[];
-  body?: { attachmentId?: string; size?: number; data?: string };
-  parts?: GmailPart[];
-}
-interface GmailMessage {
-  id: string;
-  threadId: string;
-  labelIds?: string[];
-  internalDate?: string;
-  snippet?: string;
-  payload?: GmailPart;
-}
-interface GmailThread {
-  id: string;
-  messages?: GmailMessage[];
-}
-
-/** Gmail has no hierarchy — nesting lives in the label name ('Work/Clients/Acme'). Rebuild the tree. */
-function nestGmailLabels(flat: MailFolder[]): MailFolder[] {
-  const byPath = new Map<string, MailFolder>();
-  const roots: MailFolder[] = [];
-
-  // Shallowest first, so a parent exists before its child looks for it.
-  const sorted = [...flat].sort((a, b) => a.name.split('/').length - b.name.split('/').length);
-
-  const ensure = (path: string): MailFolder => {
-    const existing = byPath.get(path);
-    if (existing) return existing;
-
-    const segments = path.split('/');
-    // 'a/b' can exist with no 'a' label. No provider folder backs this, so it must not be navigable.
-    const node: MailFolder = {
-      id: `virtual:${path}`,
-      name: segments[segments.length - 1]!,
-      role: null,
-      children: [],
-    };
-    byPath.set(path, node);
-    attach(node, segments);
-    return node;
-  };
-
-  const attach = (node: MailFolder, segments: string[]) => {
-    if (segments.length === 1) {
-      roots.push(node);
-      return;
-    }
-    const parent = ensure(segments.slice(0, -1).join('/'));
-    (parent.children ??= []).push(node);
-  };
-
-  for (const f of sorted) {
-    const segments = f.name.split('/');
-    const node: MailFolder = { ...f, name: segments[segments.length - 1]!, children: [] };
-
-    const placeholder = byPath.get(f.name);
-    if (placeholder) {
-      Object.assign(placeholder, { ...node, children: placeholder.children });
-      continue;
-    }
-
-    byPath.set(f.name, node);
-    attach(node, segments);
-  }
-
-  return roots;
+/** Gmail only accepts palette colors, so a half-specified one is dropped rather than sent. */
+function paletteColor(color?: LabelColor): LabelColor | undefined {
+  return color?.backgroundColor && color?.textColor ? color : undefined;
 }
 
 function headerOf(part: GmailPart | undefined, name: string): string | undefined {
@@ -202,93 +90,8 @@ function walkParts(part: GmailPart | undefined, acc: WalkAcc): void {
   else if (mime === 'text/plain') acc.text = (acc.text ?? '') + text;
 }
 
-class GmailError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = 'GmailError';
-  }
-}
-
 export function createGmailDriver(auth: TokenProvider, providerId: string): MailDriver {
-  async function call<T>(path: string, init?: RequestInit): Promise<T> {
-    const token = await auth.getAccessToken();
-    const res = await fetch(`${BASE}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...init?.headers,
-      },
-    });
-    if (!res.ok) {
-      throw new GmailError(
-        res.status,
-        `gmail ${init?.method ?? 'GET'} ${path} -> ${res.status} ${await res.text()}`,
-      );
-    }
-    // DELETE (drafts) and other 204s return no body.
-    if (res.status === 204) return null as T;
-    const text = await res.text();
-    return (text ? JSON.parse(text) : null) as T;
-  }
-
-  /**
-   * Many GETs as one multipart/mixed batch. Results keep the input order via Content-ID — the docs
-   * warn the server may run the parts in any order. A part that failed comes back null.
-   */
-  async function batchGet<T>(paths: string[]): Promise<(T | null)[]> {
-    const out: (T | null)[] = Array.from({ length: paths.length }, () => null);
-
-    for (let start = 0; start < paths.length; start += BATCH_LIMIT) {
-      const chunk = paths.slice(start, start + BATCH_LIMIT);
-      const token = await auth.getAccessToken();
-      const boundary = `zero_batch_${start}_${chunk.length}`;
-
-      const body =
-        chunk
-          .map(
-            (p, i) =>
-              `--${boundary}\r\n` +
-              `Content-Type: application/http\r\n` +
-              `Content-ID: <${start + i}>\r\n\r\n` +
-              `GET ${API_PATH}${p}\r\n\r\n`,
-          )
-          .join('') + `--${boundary}--\r\n`;
-
-      const res = await fetch(BATCH_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': `multipart/mixed; boundary=${boundary}`,
-        },
-        body,
-      });
-      if (!res.ok) {
-        throw new GmailError(res.status, `gmail batch -> ${res.status} ${await res.text()}`);
-      }
-
-      const text = await res.text();
-      const declared = /boundary=(?:"([^"]+)"|([^;\s]+))/.exec(res.headers.get('Content-Type') ?? '');
-      const sep = `--${declared?.[1] ?? declared?.[2] ?? boundary}`;
-
-      for (const part of text.split(sep)) {
-        const id = /Content-ID:\s*<response-(\d+)>/i.exec(part);
-        const open = part.indexOf('{');
-        const close = part.lastIndexOf('}');
-        if (!id || open === -1 || close < open) continue;
-        try {
-          out[Number(id[1])] = JSON.parse(part.slice(open, close + 1)) as T;
-        } catch {
-          // Leave the slot null; the caller drops it.
-        }
-      }
-    }
-
-    return out;
-  }
+  const client = createGmailClient(auth);
 
   function toNormalized(thread: GmailThread): NormalizedThread | null {
     const msgs = thread.messages ?? [];
@@ -330,67 +133,41 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
     };
   }
 
+  /** History reports message events; the mirror stores thread state, so fan them in by thread id. */
+  function touchedThreadIds(page: GmailHistoryPage): { threadIds: string[]; removed: string[] } {
+    const touched = new Set<string>();
+    const removed: string[] = [];
+    for (const h of page.history ?? []) {
+      for (const m of h.messagesDeleted ?? []) removed.push(m.message.id);
+      for (const group of [h.messagesAdded, h.labelsAdded, h.labelsRemoved]) {
+        for (const m of group ?? []) touched.add(m.message.threadId);
+      }
+    }
+    return { threadIds: [...touched], removed };
+  }
+
   return {
     providerId,
 
-    async listFolders(): Promise<MailFolder[]> {
-      const data = await call<{ labels?: GmailLabel[] }>(`/labels`);
-      const labels = data.labels ?? [];
-      // Keep user labels + folder-like system labels; drop internal ones (CATEGORY_*, CHAT, UNREAD).
-      const flat = labels
-        .filter((l) => l.type === 'user' || l.id in GMAIL_ROLE)
-        .map((l) => ({
-          id: l.id,
-          name: l.name,
-          role: GMAIL_ROLE[l.id] ?? null,
-          unread: l.messagesUnread ?? null,
-          total: l.messagesTotal ?? null,
-        }));
-      return nestGmailLabels(flat);
-    },
-
     async listThreads(opts = {}) {
-      const { pageToken, maxResults = 25, labelId, q } = opts;
-      const qs = new URLSearchParams({ maxResults: String(maxResults) });
-      if (pageToken) qs.set('pageToken', pageToken);
-      // Search query takes precedence; otherwise scope by label id.
-      if (q) qs.set('q', q);
-      else if (labelId) qs.set('labelIds', labelId);
-
-      const listed = await call<{
-        threads?: { id: string }[];
-        nextPageToken?: string;
-      }>(`/threads?${qs.toString()}`);
-
-      const ids = (listed.threads ?? []).map((t) => t.id);
-      const full = await batchGet<GmailThread>(ids.map((id) => `/threads/${id}${THREAD_METADATA}`));
-
-      const threads = full
-        .filter((t): t is GmailThread => t != null)
+      const { ids, nextPageToken } = await client.listThreadIds(opts);
+      const threads = (await client.getThreadsMetadata(ids))
         .map(toNormalized)
         .filter((t): t is NormalizedThread => t != null);
-      return { threads, nextPageToken: listed.nextPageToken ?? null };
+      return { threads, nextPageToken };
     },
 
     async listChanges(folderId: string | null, cursor: string | null): Promise<FolderChanges> {
       const empty = { threads: [], removedMessageIds: [] };
 
       if (!cursor) {
-        const profile = await call<{ historyId?: string }>('/profile');
+        const profile = await client.getProfile();
         return { ...empty, cursor: profile.historyId ?? null, resyncRequired: false };
-      }
-
-      // History is mailbox-wide; labelId only narrows it. Omitting it reports changes in every
-      // folder in one read — including the labelRemoved events that say a thread has left one.
-      const qs = new URLSearchParams({ startHistoryId: cursor });
-      if (folderId) qs.set('labelId', folderId);
-      for (const t of ['messageAdded', 'messageDeleted', 'labelAdded', 'labelRemoved']) {
-        qs.append('historyTypes', t);
       }
 
       let data: GmailHistoryPage;
       try {
-        data = await call<GmailHistoryPage>(`/history?${qs.toString()}`);
+        data = await client.listHistory(cursor, folderId ?? undefined);
       } catch (err) {
         // Gmail keeps history for ~a week; past that startHistoryId 404s.
         if (err instanceof GmailError && err.status === 404) {
@@ -399,29 +176,21 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
         throw err;
       }
 
-      const touched = new Set<string>();
-      const removedMessageIds: string[] = [];
-      for (const h of data.history ?? []) {
-        for (const m of h.messagesDeleted ?? []) removedMessageIds.push(m.message.id);
-        for (const group of [h.messagesAdded, h.labelsAdded, h.labelsRemoved]) {
-          for (const m of group ?? []) touched.add(m.message.threadId);
-        }
-      }
-
-      const fetched = await batchGet<GmailThread>(
-        [...touched].map((id) => `/threads/${id}${THREAD_METADATA}`),
-      );
-
-      const threads = fetched
-        .filter((t): t is GmailThread => t != null)
+      const { threadIds, removed } = touchedThreadIds(data);
+      const threads = (await client.getThreadsMetadata(threadIds))
         .map(toNormalized)
         .filter((t): t is NormalizedThread => t != null);
 
-      return { threads, removedMessageIds, cursor: data.historyId ?? cursor, resyncRequired: false };
+      return {
+        threads,
+        removedMessageIds: removed,
+        cursor: data.historyId ?? cursor,
+        resyncRequired: false,
+      };
     },
 
     async getThread(threadId: string): Promise<ThreadDetail> {
-      const full = await call<GmailThread>(`/threads/${threadId}?format=full`);
+      const full = await client.getThreadFull(threadId);
       const messages: InsertMessage[] = [];
       const attachments: InsertAttachment[] = [];
 
@@ -451,36 +220,22 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
     },
 
     async getAttachment(messageId: string, attachmentId: string): Promise<AttachmentBytes> {
-      const res = await call<{ data: string; size: number }>(
-        `/messages/${messageId}/attachments/${attachmentId}`,
-      );
-      // filename / mimeType come from the stored metadata, not this endpoint.
+      const res = await client.getAttachmentRaw(messageId, attachmentId);
       return { filename: null, mimeType: null, bytes: base64UrlDecode(res.data) };
     },
 
     async sendMessage(input: SendInput): Promise<SendResult> {
       const mime = buildMime(input, auth.getEmail() ?? undefined);
-      const body = JSON.stringify({
-        raw: base64Url(mime),
-        ...(input.threadId ? { threadId: input.threadId } : {}),
-      });
-      const res = await call<{ id: string; threadId: string }>(`/messages/send`, {
-        method: 'POST',
-        body,
-      });
+      const res = await client.sendRaw(base64Url(mime), input.threadId);
       return { id: res.id, threadId: res.threadId };
     },
 
-    async modifyLabels(threadId, addLabelIds, removeLabelIds) {
-      await call(`/threads/${threadId}/modify`, {
-        method: 'POST',
-        body: JSON.stringify({ addLabelIds, removeLabelIds }),
-      });
+    modifyLabels(threadId, addLabelIds, removeLabelIds) {
+      return client.modifyThread(threadId, addLabelIds, removeLabelIds);
     },
 
-    async trashThread(threadId) {
-      // Gmail has a first-class trash endpoint (moves every message + adds TRASH).
-      await call(`/threads/${threadId}/trash`, { method: 'POST' });
+    trashThread(threadId) {
+      return client.trashThread(threadId);
     },
 
     async createDraft(input: DraftInput): Promise<{ id: string }> {
@@ -488,16 +243,11 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
         { to: input.to, cc: input.cc, bcc: input.bcc, subject: input.subject, text: '', html: input.html },
         auth.getEmail() ?? undefined,
       );
-      const body = JSON.stringify({ message: { raw: base64Url(mime) } });
-      // id present => replace the existing draft in place (PUT), else create.
-      const res = input.id
-        ? await call<{ id: string }>(`/drafts/${input.id}`, { method: 'PUT', body })
-        : await call<{ id: string }>(`/drafts`, { method: 'POST', body });
-      return { id: res.id };
+      return client.putDraft(base64Url(mime), input.id);
     },
 
     async getDraft(id: string): Promise<ParsedDraftResult> {
-      const draft = await call<{ id: string; message?: GmailMessage }>(`/drafts/${id}?format=full`);
+      const draft = await client.getDraftRaw(id);
       const msg = draft.message;
       const acc: WalkAcc = { attachments: [] };
       if (msg) walkParts(msg.payload, acc);
@@ -513,29 +263,19 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
     },
 
     async listDrafts(opts = {}): Promise<DraftList> {
-      const { maxResults = 25, pageToken } = opts;
-      const qs = new URLSearchParams({ maxResults: String(maxResults) });
-      if (pageToken) qs.set('pageToken', pageToken);
-      const data = await call<{
-        drafts?: { id: string; message?: { id: string; threadId: string } }[];
-        nextPageToken?: string;
-      }>(`/drafts?${qs.toString()}`);
+      const { drafts, nextPageToken } = await client.listDraftsRaw(opts);
       return {
-        threads: (data.drafts ?? []).map((d) => ({ id: d.id, historyId: null, $raw: d })),
-        nextPageToken: data.nextPageToken ?? null,
+        threads: drafts.map((d) => ({ id: d.id, historyId: null, $raw: d })),
+        nextPageToken,
       };
     },
 
-    async deleteDraft(id: string): Promise<void> {
-      await call(`/drafts/${id}`, { method: 'DELETE' });
+    deleteDraft(id: string): Promise<void> {
+      return client.deleteDraft(id);
     },
 
     async getEmailAliases() {
-      // Gmail exposes configured send-as identities under settings.sendAs.
-      const data = await call<{
-        sendAs?: { sendAsEmail: string; displayName?: string; isPrimary?: boolean }[];
-      }>(`/settings/sendAs`);
-      const aliases = (data.sendAs ?? []).map((s) => ({
+      const aliases = (await client.listSendAs()).map((s) => ({
         email: s.sendAsEmail,
         name: s.displayName ?? '',
         primary: !!s.isPrimary,
@@ -544,33 +284,19 @@ export function createGmailDriver(auth: TokenProvider, providerId: string): Mail
     },
 
     async createLabel(input: { name: string; color?: LabelColor }): Promise<MailLabel> {
-      // Gmail only accepts palette colors; pass through only when both hex values are set.
-      const color =
-        input.color?.backgroundColor && input.color?.textColor ? input.color : undefined;
-      const res = await call<{ id: string; name: string }>(`/labels`, {
-        method: 'POST',
-        body: JSON.stringify({
-          name: input.name,
-          labelListVisibility: 'labelShow',
-          messageListVisibility: 'show',
-          ...(color ? { color } : {}),
-        }),
-      });
+      const color = paletteColor(input.color);
+      const res = await client.createLabelRaw({ name: input.name, color });
       return { id: res.id, name: res.name, color, type: 'user' };
     },
 
     async updateLabel(id: string, input: { name: string; color?: LabelColor }): Promise<MailLabel> {
-      const color =
-        input.color?.backgroundColor && input.color?.textColor ? input.color : undefined;
-      const res = await call<{ id: string; name: string }>(`/labels/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ name: input.name, ...(color ? { color } : {}) }),
-      });
+      const color = paletteColor(input.color);
+      const res = await client.updateLabelRaw(id, { name: input.name, color });
       return { id: res.id, name: res.name, color, type: 'user' };
     },
 
-    async deleteLabel(id: string): Promise<void> {
-      await call(`/labels/${id}`, { method: 'DELETE' });
+    deleteLabel(id: string): Promise<void> {
+      return client.deleteLabelRaw(id);
     },
   };
 }

@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useTRPC } from '@/providers/query-provider';
 import { createTokenProvider, type ProviderId } from '../auth';
+import { isMirrorPersistent } from '../db/client';
 import { isLocalActive } from './bridge';
-import { onMirrorChanged } from './mirror';
+import { onMirrorChanged } from './dedupe';
 import { activateLocal } from './activate';
-import { pollChanges } from './resolvers';
+import { pollChanges } from './local-utils';
 import { flushOutbox } from './outbox';
 
 const POLL_INTERVAL_MS = 2 * 60 * 1000;
@@ -23,10 +25,7 @@ export function LocalMode() {
       onMirrorChanged(() => {
         qc.invalidateQueries({ queryKey: trpc.mail.listThreads.infiniteQueryKey() });
         qc.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
-        // A thread's attachments land with its bodies, and this query holds them for an hour — so a
-        // row read before the sync would otherwise stay "no attachments" long after they arrived.
         qc.invalidateQueries({ queryKey: trpc.mail.getMessageAttachments.queryKey() });
-        // Drafts and queued sends live in the outbox, and the flusher moves them behind the UI's back.
         qc.invalidateQueries({ queryKey: trpc.drafts.get.queryKey() });
         qc.invalidateQueries({ queryKey: trpc.drafts.list.queryKey() });
       }),
@@ -42,6 +41,19 @@ export function LocalMode() {
     tick();
     const timer = setInterval(tick, POLL_INTERVAL_MS);
     return () => clearInterval(timer);
+  }, []);
+
+  // Without a SharedWorker only one tab can hold the OPFS file, and the others run in memory. Reads
+  // still work, but a draft or queued send written here dies with the tab — so say so rather than
+  // let it look normal.
+  useEffect(() => {
+    void isMirrorPersistent().then((ok) => {
+      if (ok) return;
+      toast.warning('Mail is open in another tab', {
+        description: 'Drafts and queued sends written in this tab will not be saved. Use the other tab.',
+        duration: Infinity,
+      });
+    });
   }, []);
 
   // Drain the outbox: queued sends, draft pushes, draft deletes. Runs while hidden — a send the user
@@ -74,7 +86,6 @@ export function LocalMode() {
         await activateLocal(p);
         if (cancelled) return;
         await qc.invalidateQueries();
-        // Re-run the thread list now the driver + token are ready (recovers a mid-activation error).
         await qc.refetchQueries({ queryKey: trpc.mail.listThreads.infiniteQueryKey() });
       } else {
         // Restore failed — clear the flags and bounce off any protected route.
