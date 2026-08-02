@@ -18,7 +18,8 @@ export interface LocalContext {
   driver: MailDriver;
 }
 
-const t = initTRPC.create();
+// The router runs in the browser by design — no server to guard against.
+const t = initTRPC.create({ allowOutsideOfServer: true });
 
 export const router = t.router;
 export const createCallerFactory = t.createCallerFactory;
